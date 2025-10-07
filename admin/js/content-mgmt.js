@@ -895,6 +895,14 @@ async function generateFormFields(data = null) {
                 </div>
                 <div><label class="${labelStyle}">ترتيب العرض (Index)</label><input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}"></div>
                 <div><label class="${labelStyle}">المدة بالدقائق (Duration in Minutes)</label><input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}"></div>
+                <div class="md:col-span-2 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-sm"></i></div>
+                    <div class="flex-1">
+                        <label class="${labelStyle} text-yellow-400/80">النقاط المكتسبة عند إكمال هذا المحتوى (XP)</label>
+                        <input type="number" id="f-base-xp" min="0" value="${data?.base_xp ?? 10}" placeholder="10" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold w-32">
+                    </div>
+                    <span class="text-xs text-gray-500">نقطة XP تُضاف لرصيد الطالب عند الإكمال</span>
+                </div>
                 <div><label class="${labelStyle}">اختبار مرتبط (اختياري)</label><select id="f-ref-quiz" class="${inputStyle}"><option value="">-- بدون اختبار --</option>${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.ref_quiz_id)}</select></div>
                 <div><label class="${labelStyle}">مشروع مرتبط (اختياري)</label><select id="f-ref-project" class="${inputStyle}"><option value="">-- بدون مشروع --</option>${buildOpts(hData.projects, 'id', 'title', data?.ref_project_id)}</select></div>
                 <div class="md:col-span-2 flex items-center gap-3 bg-black/30 p-4 rounded-xl border border-white/5"><input type="checkbox" id="f-status" ${!data || data?.status ? 'checked' : ''} class="w-4 h-4 rounded text-red-500"><label class="text-sm font-bold text-white cursor-pointer">مفعل للطلاب</label></div>
@@ -1025,7 +1033,7 @@ async function handleFormSubmit(e) {
         if (cmCurrentLevel === 'tracks') { payload = { name: document.getElementById('f-name').value, description: document.getElementById('f-desc').value, is_active: document.getElementById('f-active').checked }; } 
         else if (cmCurrentLevel === 'phases') { payload = { phase_id: document.getElementById('f-phase-id').value, track_id: document.getElementById('f-track-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, image_url: document.getElementById('f-img-url').value, 'Module Time': document.getElementById('f-module-time').value, prerequisites: document.getElementById('f-prereq').value, will_learn: document.getElementById('f-will-learn').value, is_active: document.getElementById('f-active').checked }; } 
         else if (cmCurrentLevel === 'courses') { payload = { course_id: document.getElementById('f-course-id').value, phase_id: document.getElementById('f-phase-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, type: document.getElementById('f-type').value, playlist_id: document.getElementById('f-playlist').value, image_url: document.getElementById('f-img-url').value, related_with: document.getElementById('f-related').value || null, auto_sync: document.getElementById('f-auto-sync').checked, is_active: document.getElementById('f-active').checked }; }
-        else if (cmCurrentLevel === 'course_materials') { payload = { content_id: document.getElementById('f-content-id').value, course_id: document.getElementById('f-course-id').value, title: document.getElementById('f-title').value, type: document.getElementById('f-type').value, video_id: document.getElementById('f-video-id').value, duration: Math.round(parseFloat(document.getElementById('f-duration').value) * 60) || 0, order_index: parseInt(document.getElementById('f-order').value) || 0, ref_quiz_id: document.getElementById('f-ref-quiz').value || null, ref_project_id: document.getElementById('f-ref-project').value || null, status: document.getElementById('f-status').checked }; }
+        else if (cmCurrentLevel === 'course_materials') { payload = { content_id: document.getElementById('f-content-id').value, course_id: document.getElementById('f-course-id').value, title: document.getElementById('f-title').value, type: document.getElementById('f-type').value, video_id: document.getElementById('f-video-id').value, duration: Math.round(parseFloat(document.getElementById('f-duration').value) * 60) || 0, order_index: parseInt(document.getElementById('f-order').value) || 0, base_xp: parseInt(document.getElementById('f-base-xp').value) || 0, ref_quiz_id: document.getElementById('f-ref-quiz').value || null, ref_project_id: document.getElementById('f-ref-project').value || null, status: document.getElementById('f-status').checked }; }
         else if (cmCurrentLevel === 'quizzes') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, passing_score: parseInt(document.getElementById('f-pass').value) || 50, max_xp: parseInt(document.getElementById('f-max-xp').value) || 50, attempts_allowed: parseInt(document.getElementById('f-attempts').value) || 3, questions_to_show: document.getElementById('f-q-show').value ? parseInt(document.getElementById('f-q-show').value) : null }; }
         else if (cmCurrentLevel === 'quiz_questions') { payload = { quiz_id: document.getElementById('f-quiz-id').value, question_text: document.getElementById('f-q-text').value, option_a: document.getElementById('f-opt-a').value, option_b: document.getElementById('f-opt-b').value, option_c: document.getElementById('f-opt-c').value, option_d: document.getElementById('f-opt-d').value, correct_answer: document.getElementById('f-correct').value, hint: document.getElementById('f-hint').value }; }
         else if (cmCurrentLevel === 'projects') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value }; }
@@ -1567,7 +1575,7 @@ window.ytImportEngine = {
                 const snippet = item.snippet;
                 const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../assets/icons/BUSLA-icon.png';
                 const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
-                return { id: `vid_${Date.now()}_${i}`, videoId: vId, title: snippet.title, duration: durationsMap[vId] || 0, thumbnail: thumb, order_index: i + 1, type: 'video', is_excluded: isDeleted };
+                return { id: `vid_${Date.now()}_${i}`, videoId: vId, title: snippet.title, duration: durationsMap[vId] || 0, thumbnail: thumb, order_index: i + 1, type: 'video', is_excluded: isDeleted, base_xp: 10 };
             });
 
             ytImportEngine.renderBuilder();
@@ -1615,12 +1623,17 @@ renderBuilder: () => {
         ytImportEngine.runHealthCheck();
     },
 
+
     updateVideosUI: () => {
         const container = document.getElementById('yt-builder-list');
         const activeVideos = ytImportEngine.state.videos.filter(v => !v.is_excluded);
         document.getElementById('yt-videos-count').innerText = activeVideos.length;
         const totalSecs = activeVideos.reduce((acc, curr) => acc + curr.duration, 0);
         document.getElementById('yt-total-time').innerText = new Date(totalSecs * 1000).toISOString().substr(11, 8);
+        const totalXP = activeVideos.filter(v => v.type !== 'section').reduce((acc, curr) => acc + (curr.base_xp || 0), 0);
+        const xpEl = document.getElementById('yt-total-xp');
+        if (xpEl) xpEl.innerText = totalXP;
+
 
         container.innerHTML = ytImportEngine.state.videos.map((vid, index) => {
             vid.order_index = index + 1; 
@@ -1642,7 +1655,12 @@ renderBuilder: () => {
                         <span class="text-[10px] text-gray-500 font-mono"><i class="far fa-clock mr-1"></i>${Math.floor(vid.duration/60)}m</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 pl-3 border-l border-white/10">
+                <div class="flex items-center gap-2 border-l border-white/10 pl-3">
+                    ${vid.type !== 'section' ? `
+                    <div class="flex flex-col items-center gap-0.5">
+                        <label class="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider"><i class="fas fa-star text-[8px]"></i> XP</label>
+                        <input type="number" min="0" value="${vid.base_xp ?? 10}" onchange="ytImportEngine.updateVidData(${index}, 'base_xp', parseInt(this.value)||0)" class="w-16 bg-black/60 border border-yellow-500/30 rounded-lg px-2 py-1 text-xs text-yellow-400 font-bold text-center outline-none focus:border-yellow-500 transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
+                    </div>` : '<div class="w-16"></div>'}
                     <button onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all ${vid.is_excluded ? 'bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-white/5 text-gray-400 hover:text-red-400'}" title="${vid.is_excluded ? 'Restore' : 'Exclude'}">
                         <i class="fas ${vid.is_excluded ? 'fa-undo' : 'fa-ban'}"></i>
                     </button>
@@ -1653,6 +1671,12 @@ renderBuilder: () => {
 
     updateVidData: (index, key, val) => { ytImportEngine.state.videos[index][key] = val; ytImportEngine.runHealthCheck(); },
     toggleExclude: (index) => { ytImportEngine.state.videos[index].is_excluded = !ytImportEngine.state.videos[index].is_excluded; ytImportEngine.updateVideosUI(); ytImportEngine.runHealthCheck(); },
+    applyBulkXP: () => {
+        const val = parseInt(document.getElementById('yt-bulk-xp').value) || 10;
+        ytImportEngine.state.videos.forEach(vid => { if (vid.type !== 'section') vid.base_xp = val; });
+        ytImportEngine.updateVideosUI();
+        window.showToast(`تم تطبيق ${val} XP على جميع الفيديوهات`, 'success');
+    },
     autoSplitSections: () => {
         ytImportEngine.state.videos.forEach(vid => {
             const t = vid.title.toLowerCase();
@@ -1734,6 +1758,7 @@ const coursePayload = {
                     video_id: vid.videoId,
                     duration: vid.duration,
                     order_index: actualOrderIndex++,
+                    base_xp: vid.type === 'section' ? 0 : (vid.base_xp ?? 10),
                     status: isActive,
                     "Note": vid.type === 'section' ? "Section Divider" : ""
                 }));
