@@ -1,7 +1,7 @@
 import { 
     auth, db, doc, getDoc, getDocs, collection, query, where, addDoc, serverTimestamp, onAuthStateChanged 
 } from './firebase-config.js';
-
+import { CONFIG } from './config.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
 import { initLeaderboard } from './leaderboard-handler.js';
@@ -15,7 +15,7 @@ let allData = { courses: [], tree: [], contents: [], projects: [], quizzes: [] }
 let lookupData = { projects: {}, quizzes: {}, contents: [] }; 
 let userSubmissions = {}; 
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfXoESIoTAIbIofv3PGdZdD65ktxXSuX0Rb-WOtoeRccJFbB5PzJTSDu4DDVSPNSW3/exec";
+const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
 
 window.openSettings = openSettings;
 // =========================================================

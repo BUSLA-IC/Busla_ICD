@@ -5,14 +5,14 @@
  */
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
+import { CONFIG } from './config.js';
 // ============================================================================
 // 1. CONFIGURATION
 // ============================================================================
 
 // ⚠️ REPLACE THESE WITH YOUR ACTUAL SUPABASE PROJECT CREDENTIALS
-const SUPABASE_URL = 'https://cllkrfcyymtenrrjfsed.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_W6IwMSR-Wi9B8X68S8OqEg_eohXeYYH';
+const SUPABASE_URL = CONFIG.SUPABASE.URL;
+const SUPABASE_ANON_KEY = CONFIG.SUPABASE.ANON_KEY;
 
 /**
  * Global Supabase Client Instance

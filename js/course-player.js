@@ -3,9 +3,9 @@ import {
     onAuthStateChanged, increment, serverTimestamp, 
     collection, query, where, orderBy, getDocs, addDoc 
 } from './firebase-config.js';
-
+import { CONFIG } from './config.js';
 // --- Configuration ---
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfXoESIoTAIbIofv3PGdZdD65ktxXSuX0Rb-WOtoeRccJFbB5PzJTSDu4DDVSPNSW3/exec";
+const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
 
 // --- Global State ---
 let courseId = null;

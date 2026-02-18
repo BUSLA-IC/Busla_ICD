@@ -11,6 +11,7 @@ import { initTeamSettingsModal, openTeamSettings } from './team-settings-handler
 import { initNotificationsSystem } from './notifications-handler.js';
 import { RANKS_DATA } from './badges-data.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
+import { CONFIG } from './config.js';
 function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => {
         const el = document.getElementById(id);
@@ -112,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 // --- Configuration ---
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfXoESIoTAIbIofv3PGdZdD65ktxXSuX0Rb-WOtoeRccJFbB5PzJTSDu4DDVSPNSW3/exec';
+const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
 const CACHE_KEY = 'busla_lms_v6';
 let lookupData = { projects: {}, quizzes: {}, videos: {} };
 // --- State Management ---

@@ -248,9 +248,10 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
+        import { CONFIG } from './js/config.js';
         document.getElementById('current-year').textContent = new Date().getFullYear();
    // رابط الـ API الخاص بك
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxdT6rx_JSPCEVni1pa9xf5lS0kjSEGPnc-kbMq-O3-qMhHaZgVzd_xSFtQRyigDZ-/exec';
+const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
 
 const CACHE_KEY = 'busla_home_data_v1'; // مفتاح التخزين في المتصفح
 
