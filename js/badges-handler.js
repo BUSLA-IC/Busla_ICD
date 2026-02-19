@@ -1,4 +1,4 @@
-import { auth, db, doc, getDoc, runTransaction, serverTimestamp } from './firebase-config.js';
+// import { auth, db, doc, getDoc, runTransaction, serverTimestamp } from './firebase-config.js';
 import { RANKS_DATA } from './badges-data.js';
 
 // ==========================================

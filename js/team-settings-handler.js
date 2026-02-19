@@ -1,4 +1,4 @@
-import { db, doc, getDoc, updateDoc } from './firebase-config.js';
+// import { db, doc, getDoc, updateDoc } from './firebase-config.js';
 
 // متغيرات العناصر
 let modal, form, nameInput, logoInput, uniInput, govInput;

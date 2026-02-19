@@ -1,7 +1,7 @@
-import { 
-    db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, 
-    query, orderBy, limit, serverTimestamp, getDoc, where 
-} from './firebase-config.js';
+// import { 
+//     db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, 
+//     query, orderBy, limit, serverTimestamp, getDoc, where 
+// } from './firebase-config.js';
 
 // ==========================================
 // 1. GLOBAL STATE & CONFIG

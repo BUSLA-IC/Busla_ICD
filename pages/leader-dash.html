@@ -410,14 +410,40 @@
                     <span id="squad-count-display" class="text-xl font-mono font-bold text-white">0 / 5</span>
                 </div>
             </div>
-
+<div id="requests-section" class="hidden mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white font-bold text-lg flex items-center gap-2">
+            <span class="w-2 h-8 bg-yellow-500 rounded-full"></span>
+            طلبات الانضمام المعلقة
+            <span id="requests-count" class="bg-yellow-500 text-black text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </h3>
+    </div>
+    
+    <div id="requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        </div>
+</div>
             <div id="squad-list-container" class="space-y-4 min-h-[200px]">
                 <div class="text-center py-12">
                     <i class="fas fa-circle-notch fa-spin text-b-primary text-3xl mb-4"></i>
                     <p class="text-gray-500">جاري تحميل الأبطال...</p>
                 </div>
             </div>
-            
+            <div id="invites-section" class="hidden mt-8 border-t border-white/10 pt-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white font-bold text-lg flex items-center gap-2">
+            <i class="fas fa-paper-plane text-blue-400"></i>
+            الدعوات المرسلة (المعلقة)
+        </h3>
+        <button onclick="openSentInvitesModal()" class="text-xs text-gray-400 hover:text-white underline">عرض الكل</button>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <tbody id="invites-container">
+                </tbody>
+        </table>
+    </div>
+</div>
             <div class="mt-8 pt-6 border-t border-white/5 text-center">
                 <button onclick="window.openLeaveTeamModal()" class="text-red-500/60 hover:text-red-500 text-sm font-bold flex items-center justify-center gap-2 mx-auto transition-colors">
                     <i class="fas fa-sign-out-alt"></i> مغادرة الفريق وتسليم القيادة
@@ -804,7 +830,7 @@
                 
                 <div class="lg:col-span-1 flex flex-col items-center gap-4 text-center border-l border-white/5 pl-4">
                     <div class="relative group">
-                        <img src="" id="preview-avatar" class="w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-2 ring-b-primary/50" onerror="this.src='https://ui-avatars.com/api/?name=User&background=006A67&color=fff'">
+                        <img src="" id="preview-avatar" class="w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-2 ring-b-primary/50" onerror="this.src='../assets/icons/icon.jpg'">
                     </div>
                     <div>
                         <h4 id="display-name-preview" class="text-white font-bold text-lg">---</h4>
@@ -818,7 +844,7 @@
                         <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">رابط الصورة</label>
                         <div class="flex gap-2">
                             <div class="relative flex-1">
-                                <input type="url" id="set-photo" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none pl-10" placeholder="https://drive.google.com/...">
+                                <input type="url" id="settings-photo" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none pl-10" placeholder="https://drive.google.com/...">
                                 <i class="fab fa-google-drive absolute left-4 top-3.5 text-gray-500"></i>
                             </div>
                             <button type="button" id="btn-preview-photo" class="bg-white/5 hover:bg-white/10 text-white px-4 rounded-xl border border-white/10 transition-all" title="تحديث المعاينة">
@@ -830,18 +856,18 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الاسم الكامل</label>
-                            <input type="text" id="set-name" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none">
+                            <input type="text" id="settings-name" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">البريد الإلكتروني</label>
-                            <input type="email" id="set-email" readonly class="w-full bg-white/5 border border-transparent rounded-xl px-4 py-3 text-gray-400 cursor-not-allowed">
+                            <input type="email" id="settings-email" readonly class="w-full bg-white/5 border border-transparent rounded-xl px-4 py-3 text-gray-400 cursor-not-allowed">
                         </div>
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">المحافظة</label>
-                            <select id="set-gov" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
+                            <select id="settings-gov" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
                                         <option value="" class="text-black/50" disabled selected>اختر المحافظة</option>
                                         <option value="Sharqia">الشرقية</option>
                                         <option value="Cairo">القاهرة</option>
@@ -875,7 +901,7 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الجامعة</label>
-                            <select id="set-uni" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
+                            <select id="settings-uni" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
                                 <option value="" class="text-black/50" disabled>اختر الجامعة</option>
                                     <optgroup class="text-black/50" label="الجامعات الحكومية">
                                         <option value="Zagazig">جامعة الزقازيق</option>
@@ -922,7 +948,7 @@
                     <div class="grid md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الكلية</label>
-                            <select id="set-faculty" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
+                            <select id="settings-faculty" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
                                 <option value="Engineering">هندسة</option>
                                 <option value="Computers">حاسبات ومعلومات</option>
                                 <option value="Science">علوم</option>
@@ -931,7 +957,7 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">القسم</label>
-                            <select id="set-dept" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
+                            <select id="settings-dept" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
                                 <option value="Electronics">إتصالات وإلكترونيات</option>
                                 <option value="CSE">حاسبات ونظم</option>
                                 <option value="Mechatronics">ميكاترونكس</option>
@@ -940,7 +966,7 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">السنة الدراسية</label>
-                            <select id="set-year" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
+                            <select id="settings-year" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
                                 <option value="Prep">إعدادي</option>
                                 <option value="1st Year">الفرقة الأولى</option>
                                 <option value="2nd Year">الفرقة الثانية</option>

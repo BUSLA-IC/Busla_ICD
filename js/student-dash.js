@@ -1,6 +1,6 @@
-import { 
-    auth, db, doc, getDoc, getDocs, collection, query, where, addDoc, serverTimestamp, onAuthStateChanged 
-} from './firebase-config.js';
+// import { 
+//     auth, db, doc, getDoc, getDocs, collection, query, where, addDoc, serverTimestamp, onAuthStateChanged 
+// } from './firebase-config.js';
 import { CONFIG } from './config.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
@@ -109,7 +109,79 @@ function resolveImageUrl(url, type = 'user') {
     return url;
 }
 
+async function updateDashboardUI(team) {
+    // 1. تحديث النصوص الأساسية (اسم الفريق، الجامعة)
+    setText('team-name-display', team.name);
+    setText('team-uni-display', team.university || 'غير محدد');
+    
+    // تحديث اللوجو
+    const logoImg = document.getElementById('team-logo-img');
+    if (logoImg && team.logo_url) logoImg.src = team.logo_url;
 
+    // 2. تحديث الإحصائيات (نقاط، أعضاء، ترتيب)
+    setText('team-total-score', team.total_score || 0);
+    
+    // حساب عدد الأعضاء (Profiles مصفوفة تأتي مع الفريق لأننا عملنا Join في TeamService)
+    const membersCount = team.profiles ? team.profiles.length : 0;
+    setText('team-members-count', membersCount);
+
+    // 3. حساب الترتيب العالمي (Rank)
+    // Supabase لا يعطي الترتيب مباشرة، نحسبه بعدد الفرق التي نقاطها أعلى
+    const { count } = await supabase
+        .from('teams')
+        .select('*', { count: 'exact', head: true })
+        .gt('total_score', team.total_score || 0); // الفرق التي نقاطها أكبر مني
+    
+    const rank = (count || 0) + 1; // ترتيبي هو (عدد اللي قبلي + 1)
+    setText('team-global-rank', `#${rank}`);
+
+    // 4. تحديث الرتبة الحالية (Badge)
+    updateTeamBadgeUI(team.total_score || 0);
+}
+// دالة لتحديث واجهة الوسام (Badge) بناءً على النقاط
+function updateTeamBadgeUI(score) {
+    // 1. استيراد مصفوفة الرتب (تأكد أنك استوردت TEAM_RANKS_DATA في بداية الملف)
+    // import { TEAM_RANKS_DATA } from './team-badges-data.js'; 
+    
+    // 2. تحديد الرتبة الحالية
+    let currentRank = TEAM_RANKS_DATA[0];
+    let nextRank = TEAM_RANKS_DATA[1];
+
+    for (let i = 0; i < TEAM_RANKS_DATA.length; i++) {
+        if (score >= TEAM_RANKS_DATA[i].points_required) {
+            currentRank = TEAM_RANKS_DATA[i];
+            nextRank = TEAM_RANKS_DATA[i + 1] || null;
+        } else {
+            break;
+        }
+    }
+
+    // 3. تحديث عناصر الواجهة (تأكد من وجود هذه الـ IDs في HTML)
+    const badgeImg = document.getElementById('team-badge-img');
+    const badgeTitle = document.getElementById('team-badge-title');
+    const badgeProgress = document.getElementById('team-badge-progress');
+    const nextRankPoints = document.getElementById('next-rank-points');
+
+    if (badgeImg) badgeImg.src = `../assets/team-badge/${currentRank.key}.png`; // تأكد من مسار الصور
+    if (badgeTitle) badgeTitle.innerText = currentRank.title;
+    
+    // حساب النسبة المئوية للتقدم
+    if (nextRank && badgeProgress) {
+        const totalNeeded = nextRank.points_required - currentRank.points_required;
+        const currentProgress = score - currentRank.points_required;
+        const percent = Math.min(100, Math.max(0, (currentProgress / totalNeeded) * 100));
+        
+        badgeProgress.style.width = `${percent}%`;
+        if (nextRankPoints) nextRankPoints.innerText = `${nextRank.points_required} XP`;
+    } else if (badgeProgress) {
+        badgeProgress.style.width = '100%'; // Max Level
+    }
+}
+// دالة مساعدة بسيطة لتحديث النصوص بأمان
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+}
 function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
     const xp = user.gamification?.total_points || 0;

@@ -1,9 +1,10 @@
-import { 
-    auth, db, doc, getDoc, setDoc, updateDoc, arrayUnion, 
-    onAuthStateChanged, increment, serverTimestamp, 
-    collection, query, where, orderBy, getDocs, addDoc 
-} from './firebase-config.js';
+// import { 
+//     auth, db, doc, getDoc, setDoc, updateDoc, arrayUnion, 
+//     onAuthStateChanged, increment, serverTimestamp, 
+//     collection, query, where, orderBy, getDocs, addDoc 
+// } from './firebase-config.js';
 import { CONFIG } from './config.js';
+
 // --- Configuration ---
 const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
 

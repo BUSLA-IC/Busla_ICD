@@ -1,4 +1,4 @@
-import { auth, db, doc, getDoc, getDocs, collection, query, where, orderBy, limit } from './firebase-config.js';
+// import { auth, db, doc, getDoc, getDocs, collection, query, where, orderBy, limit } from './firebase-config.js';
 import { RANKS_DATA } from './badges-data.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
 

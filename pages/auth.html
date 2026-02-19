@@ -40,56 +40,27 @@
         }
     </script>
     
-<style>
+    <style>
         body { font-family: 'Cairo', sans-serif; overflow-x: hidden; background-color: #000; }
 
-        /* 🟢 1. الخلفية الأساسية (شبكة واضحة) */
+        /* الخلفية والمؤثرات البصرية */
         .circuit-bg {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background-color: #050505;
             background-image: url('../assets/images/1.jpg');
-            background-size: cover;
-            z-index: -3;
+            background-size: cover; z-index: -3;
         }
-
-        /* 🟢 2. الإضاءة المتحركة (عشان تدي روح) */
         .circuit-overlay {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background: radial-gradient(circle at 50% 50%, rgba(0, 106, 103, 0.15), transparent 70%);
-            animation: pulse-bg 8s ease-in-out infinite alternate;
-            z-index: -2;
+            animation: pulse-bg 8s ease-in-out infinite alternate; z-index: -2;
         }
-
-        /* 🟢 3. الجزيئات المضيئة (Particles) */
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #22C45D;
-            box-shadow: 0 0 10px #22C45D; /* توهج */
-            border-radius: 50%;
-            animation: float 10s linear infinite;
-            opacity: 0.7;
-        }
-        /* توزيع الجزيئات */
-        .particle:nth-child(1) { top: 10%; left: 10%; animation-duration: 8s; }
-        .particle:nth-child(2) { top: 70%; left: 85%; animation-duration: 12s; }
-        .particle:nth-child(3) { top: 40%; left: 60%; animation-duration: 10s; }
-        .particle:nth-child(4) { top: 80%; left: 20%; animation-duration: 15s; }
-        .particle:nth-child(5) { top: 20%; left: 80%; animation-duration: 9s; }
-
-        /* 🟢 4. تأثير الزجاج (Glassmorphism) */
         .glass-panel {
-            background: rgba(20, 20, 20, 0.7); /* تغميق بسيط */
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 106, 103, 0.3); /* حدود بلون البراند */
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 106, 103, 0.3);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
-
-        /* باقي الستايلات زي ما هي */
         .input-glow {
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -100,29 +71,16 @@
             box-shadow: 0 0 15px rgba(34, 196, 93, 0.3);
             background: rgba(0, 0, 0, 0.8);
         }
-
         select.input-glow option { background-color: #000; color: #fff; }
-
         .gradient-text {
             background: linear-gradient(135deg, #22C45D 0%, #006A67 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
-        /* Animations */
-        @keyframes float {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
-        }
-        @keyframes pulse-bg {
-            0% { opacity: 0.5; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.1); }
-        }
+        @keyframes pulse-bg { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 1; transform: scale(1.1); } }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 relative">
-    <div class="circuit-bg"></div>
+ <div class="circuit-bg"></div>
     <div class="circuit-overlay"></div>
     
     <div class="particle"></div>
@@ -406,44 +364,35 @@
         </button>
     </div>
 </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
 <script type="module">
-    import { registerUser, loginUser } from '../js/auth-handler.js';
-    import { doc, getDoc, db } from '../js/firebase-config.js';
+    import { registerUser, loginUser, resendVerification } from '../js/auth-handler.js';
+    import { supabase } from '../js/supabase-config.js';
 
-    // Toggle Tabs Logic
+    // --- تبديل التبويبات (UI) ---
     const loginTab = document.getElementById('login-tab');
     const signupTab = document.getElementById('signup-tab');
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
 
     function switchAuthMode(mode) {
-        if (mode === 'login') {
-            loginTab.classList.add('text-b-primary', 'border-b-2', 'border-b-primary');
-            loginTab.classList.remove('text-gray-400');
-            signupTab.classList.remove('text-b-primary', 'border-b-2', 'border-b-primary');
-            signupTab.classList.add('text-gray-400');
-            loginForm.classList.remove('hidden');
-            signupForm.classList.add('hidden');
-        } else {
-            signupTab.classList.add('text-b-primary', 'border-b-2', 'border-b-primary');
-            signupTab.classList.remove('text-gray-400');
-            loginTab.classList.remove('text-b-primary', 'border-b-2', 'border-b-primary');
-            loginTab.classList.add('text-gray-400');
-            signupForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
-        }
+        const isLogin = mode === 'login';
+        loginTab.className = isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
+        signupTab.className = !isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
+        
+        if (isLogin) { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); }
+        else { signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); }
     }
-
     loginTab.addEventListener('click', () => switchAuthMode('login'));
     signupTab.addEventListener('click', () => switchAuthMode('signup'));
 
-    // ==========================================
-    // 1. منطق تسجيل الدخول
-    // ==========================================
+    // --- منطق تسجيل الدخول (تم الإصلاح والتحسين) ---
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btn-login');
         const err = document.getElementById('login-error');
+        const emailVal = document.getElementById('login-email').value;
         const originalText = btn.innerHTML;
         
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
@@ -451,65 +400,72 @@
         err.classList.add('hidden');
 
         try {
-            const result = await loginUser(
-                document.getElementById('login-email').value,
+            // 1. محاولة الدخول
+            const user = await loginUser(
+                emailVal,
                 document.getElementById('login-password').value
             );
 
-            if (result.emailVerified === false) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                err.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <span>⚠️ البريد الإلكتروني غير مفعل!</span>
-                        <span class="text-xs text-gray-400 mt-1">راجع صندوق الوارد (أو Spam) واضغط على الرابط.</span>
-                    </div>
-                `;
-                err.classList.remove('hidden');
-                return;
-            }
-
-            const userDoc = await getDoc(doc(db, "users", result.user.uid));
-            if (userDoc.exists()) {
-                const role = userDoc.data().system_info?.role || "Student";
-                window.location.href = role === 'Leader' ? "leader-dash.html" : "student-dash.html";
-            } else {
-                window.location.href = "student-dash.html";
-            }
-
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .maybeSingle(); 
+            const role = profile ? profile.role : "student";
+            window.location.href = role == 'leader'|| role == 'Leader' ? "leader-dash.html" : "student-dash.html";
         } catch (error) {
             btn.innerHTML = originalText;
             btn.disabled = false;
-            console.error(error);
-
-            let msg = "بيانات الدخول غير صحيحة";
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') msg = "هذا البريد غير مسجل أو كلمة المرور خطأ.";
-            if (error.code === 'auth/wrong-password') msg = "كلمة المرور خاطئة.";
-            if (error.code === 'auth/too-many-requests') msg = "تم حظر المحاولات مؤقتاً، انتظر قليلاً.";
             
-            err.textContent = msg;
-            err.classList.remove('hidden');
+            if (error.message === 'email_not_confirmed') {
+                err.innerHTML = `
+                    <div class="flex flex-col items-center gap-2">
+                        <span>⚠️ البريد الإلكتروني غير مفعل!</span>
+                        <button type="button" id="btn-resend" class="text-xs text-b-hl-light underline hover:text-white transition-colors">
+                            لم يصلك الرمز؟ أعد إرسال رسالة التفعيل
+                        </button>
+                    </div>
+                `;
+                err.classList.remove('hidden');
+
+                // تفعيل زر إعادة الإرسال
+                document.getElementById('btn-resend').addEventListener('click', async function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+                    this.disabled = true;
+                    try {
+                        await resendVerification(emailVal);
+                        this.innerHTML = '✅ تم الإرسال! راجع بريدك';
+                        this.classList.remove('text-b-hl-light', 'underline');
+                        this.classList.add('text-green-400', 'font-bold', 'no-underline');
+                    } catch (resendErr) {
+                        this.innerHTML = '❌ فشل الإرسال، حاول لاحقاً';
+                        console.error(resendErr);
+                    }
+                });
+            } else {
+                // عرض رسالة الخطأ العادية (كلمة مرور خطأ، إلخ)
+                err.textContent = error.message;
+                err.classList.remove('hidden');
+            }
         }
     });
 
-
-document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    // --- منطق إنشاء الحساب ---
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btn-signup');
         const err = document.getElementById('signup-error');
         const originalText = btn.innerHTML;
         
-        // تغيير حالة الزر للتحميل
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
         btn.disabled = true;
         err.classList.add('hidden');
 
-        // 1. تجميع البيانات بدقة
+        // تجميع البيانات...
         const personalInfo = {
             fullName: document.getElementById('signup-name').value,
             photoURL: document.getElementById('signup-photo')?.value
         };
-        
         const academicInfo = {
             governorate: document.getElementById('signup-gov')?.value || "Not Specified",
             university: document.getElementById('signup-uni')?.value || "Not Specified",
@@ -519,7 +475,6 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
         };
 
         try {
-            // 2. استدعاء دالة التسجيل (التي تحفظ في فايربيس وتطلب الإيميل)
             const result = await registerUser(
                 document.getElementById('signup-email').value,
                 document.getElementById('signup-password').value,
@@ -527,42 +482,19 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
                 academicInfo
             );
             
-            // 3. ✅ نجاح! إظهار المودال العائم
             if (result.verificationRequired) {
-                // وضع الإيميل في رسالة النجاح
                 const emailDisplay = document.getElementById('success-email-display');
                 if (emailDisplay) emailDisplay.innerText = document.getElementById('signup-email').value;
-                
-                // إظهار المودال
-                const modal = document.getElementById('success-modal');
-                if (modal) modal.classList.remove('hidden');
+                document.getElementById('success-modal').classList.remove('hidden');
             }
 
         } catch (error) {
-            // ❌ فشل! إعادة الزر وعرض الخطأ
             btn.innerHTML = originalText;
             btn.disabled = false;
-            
-            console.error(error); // للمطور
-            
-            let msg = "حدث خطأ غير معروف: " + error.message;
-            
-            if (error.code === 'auth/email-already-in-use') {
-                msg = "هذا البريد مسجل بالفعل! سيتم تحويلك لتسجيل الدخول...";
-                setTimeout(() => document.getElementById('login-tab').click(), 2000);
-            }
-            else if (error.code === 'auth/weak-password') {
-                msg = "كلمة المرور ضعيفة (يجب أن تكون 6 أحرف على الأقل).";
-            }
-            else if (error.code === 'auth/invalid-email') {
-                msg = "صيغة البريد الإلكتروني غير صحيحة.";
-            }
-            
-            err.textContent = msg;
+            err.textContent = error.message; // الرسالة المترجمة
             err.classList.remove('hidden');
         }
     });
-
 </script>
 </body>
 </html>

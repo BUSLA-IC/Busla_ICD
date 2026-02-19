@@ -1,4 +1,4 @@
-import { db, collection, addDoc, getDoc, doc, query, where, getDocs, serverTimestamp } from './firebase-config.js';
+// import { db, collection, addDoc, getDoc, doc, query, where, getDocs, serverTimestamp } from './firebase-config.js';
 
 // --- Constants ---
 const TEAMS_COLLECTION = "teams";

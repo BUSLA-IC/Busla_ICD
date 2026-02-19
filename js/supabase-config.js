@@ -68,40 +68,33 @@ export const AuthService = {
      * @param {string} password 
      * @param {Object} metadata - { full_name, university, faculty, governorate }
      */
+
+
+/**
+     * Sign up a new user
+     */
     async signUp(email, password, metadata) {
         try {
             // 1. Create Auth User
+            // الـ Trigger في قاعدة البيانات سيقوم بقراءة هذه البيانات وإنشاء البروفايل
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
-                options: { data: { full_name: metadata.full_name } }
+                options: { 
+                    data: { 
+                        full_name: metadata.full_name,
+                        avatar_url: metadata.avatar_url,       
+                        university: metadata.university,
+                        faculty: metadata.faculty,
+                        governorate: metadata.governorate,
+                        department: metadata.department,       
+                        academic_year: metadata.academic_year  
+                    } 
+                }
             });
 
             if (authError) throw authError;
-            if (!authData.user) throw new Error("User creation failed.");
-
-            // 2. Create Profile Entry (Manually ensuring consistency)
-            const profileData = {
-                id: authData.user.id,
-                full_name: metadata.full_name,
-                email: email,
-                university: metadata.university || null,
-                faculty: metadata.faculty || null,
-                governorate: metadata.governorate || null,
-                role: 'student',
-                xp_points: 0
-            };
-
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([profileData]);
-
-            if (profileError) {
-                // If profile creation fails, we might want to warn or retry, 
-                // but Auth is successful.
-                console.warn("Profile creation warning:", profileError);
-            }
-
+            
             return { success: true, data: authData.user, error: null };
 
         } catch (err) {
@@ -144,7 +137,21 @@ export const AuthService = {
             callback(session?.user || null, event);
         });
     },
-
+/**
+     * إعادة إرسال رسالة تفعيل البريد الإلكتروني
+     * @param {string} email 
+     */
+    async resendVerificationEmail(email) {
+        return handleRequest(
+            supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                    emailRedirectTo: window.location.origin + '/auth.html'
+                }
+            })
+        );
+    },
     /**
      * Send password reset email.
      * @param {string} email 
@@ -380,16 +387,21 @@ export const TeamService = {
      * Get team details by ID or by Leader ID.
      * @param {string} leaderId 
      */
+/**
+     * Get team details by Leader ID (for Leader Dashboard).
+     */
     async getTeamByLeader(leaderId) {
         return handleRequest(
             supabase
                 .from('teams')
-                .select(`*, profiles (*)`) // Fetch members
+                .select(`
+                    *,
+                    profiles:profiles!team_id (*) 
+                `) 
                 .eq('leader_id', leaderId)
                 .single()
         );
     },
-
     /**
      * Get global leaderboard (Top students).
      * @param {number} limit 
