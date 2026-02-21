@@ -1,4 +1,4 @@
-// import { auth, db, doc, getDoc, getDocs, collection, query, where, orderBy, limit } from './firebase-config.js';
+import { supabase } from './supabase-config.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
 
 // ==========================================
@@ -29,7 +29,6 @@ style.innerHTML = `
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
-    /* --- Flashlight Reveal Effect (250px) --- */
     .locked-badge-overlay {
         background: radial-gradient(
             circle 250px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
@@ -46,14 +45,13 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 // ==========================================
-// 2. MAIN LOGIC
+// 2. MAIN LOGIC (SUPABASE)
 // ==========================================
 
 export async function initTeamBadgesSystem() {
     const container = document.getElementById('team-rank-container');
     if (!container) return;
 
-    // Loader
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center py-48">
             <div class="relative">
@@ -62,39 +60,52 @@ export async function initTeamBadgesSystem() {
                 </div>
                 <div class="absolute inset-0 blur-md bg-white/20 animate-pulse"></div>
             </div>
-            <p class="text-gray-400 font-mono text-sm tracking-[0.4em] mt-6 uppercase">جاري تحميل مركز القيادة</p>
+            <p class="text-gray-400 font-mono text-sm tracking-[0.4em] mt-6 uppercase">SYSTEM INITIALIZATION...</p>
         </div>
     `;
 
-    const user = auth.currentUser;
-    if (!user) return;
-
     try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const teamId = userDoc.data().system_info?.team_id;
+        const { data: { user }, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !user) throw new Error("Authentication required");
+
+        const { data: profile, error: profileErr } = await supabase
+            .from('profiles')
+            .select('team_id')
+            .eq('id', user.id)
+            .single();
+
+        if (profileErr) throw profileErr;
+
+        const teamId = profile?.team_id;
 
         if (!teamId) {
-            container.innerHTML = `<div class="text-center py-32 text-gray-500 text-xl font-bold">لست عضواً في فريق بعد.</div>`;
+            container.innerHTML = `<div class="text-center py-32 text-gray-500 text-xl font-bold">You are not assigned to a team yet.</div>`;
             return;
         }
 
-        const teamDoc = await getDoc(doc(db, "teams", teamId));
-        if (!teamDoc.exists()) throw "TeamNotFound";
-        const teamData = teamDoc.data();
+        const { data: teamData, error: teamErr } = await supabase
+            .from('teams')
+            .select('*')
+            .eq('id', teamId)
+            .single();
 
-        const teamPoints = teamData.total_score || teamData.gamification?.total_points || 0;
+        if (teamErr || !teamData) throw new Error("Team data not found");
 
-        const membersQ = query(
-            collection(db, "users"), 
-            where("system_info.team_id", "==", teamId),
-            orderBy("gamification.total_points", "desc"),
-            limit(5)
-        );
-        const membersSnap = await getDocs(membersQ);
-        const contributors = membersSnap.docs.map(d => ({
-            name: d.data().personal_info.full_name,
-            points: d.data().gamification.total_points,
-            photo: d.data().personal_info.photo_url
+        const teamPoints = teamData.total_score || 0;
+
+        const { data: members, error: membersErr } = await supabase
+            .from('profiles')
+            .select('full_name, total_xp, avatar_url')
+            .eq('team_id', teamId)
+            .order('total_xp', { ascending: false })
+            .limit(5);
+
+        if (membersErr) throw membersErr;
+
+        const contributors = (members || []).map(m => ({
+            name: m.full_name || 'Unknown',
+            points: m.total_xp || 0,
+            photo: resolveImageUrl(m.avatar_url)
         }));
 
         let currentRankIndex = 0;
@@ -113,10 +124,13 @@ export async function initTeamBadgesSystem() {
 
     } catch (error) {
         console.error("Team Badges Error:", error);
-        container.innerHTML = `<div class="text-center py-32 text-red-500/80 font-mono text-lg">نظام القيادة غير متصل (System Malfunction)</div>`;
+        container.innerHTML = `<div class="text-center py-32 text-red-500/80 font-mono text-lg">System Malfunction (Connection Lost)</div>`;
     }
 }
 
+// ==========================================
+// 3. RENDER UI
+// ==========================================
 function renderCommandCenter(container, team, currentRank, nextRank, points, currentIndex, contributors) {
     let progressPercent = 100;
     if (nextRank) {
@@ -126,19 +140,19 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
     }
 
     const currentImgUrl = `../assets/team-badge/lv${currentRank.level}.png`;
-    const teamName = team.info?.name || team.name || "فريق بلا اسم";
+    const teamName = team.name || "Unnamed Team";
 
     container.innerHTML = `
         <div class="relative w-full h-[600px] rounded-[2.5rem] overflow-hidden mb-16 border border-white/10 group shadow-2xl">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-black to-black"></div>
-            <div class="absolute inset-0 bg-[${currentRank.stage_color}] mix-blend-overlay opacity-20"></div>
+            <div class="absolute inset-0 mix-blend-overlay opacity-20" style="background-color: ${currentRank.stage_color}"></div>
             <div class="absolute inset-0 bg-black/40 z-0"></div>
             
             <div class="relative z-10 h-full flex flex-col items-center justify-center pt-4 pb-32">
                 
                 <div class="relative w-56 h-56 flex items-center justify-center mb-6">
-                    <div class="absolute inset-[-30px] rounded-full border-[2px] border-[${currentRank.stage_color}]/30 animate-[spin_25s_linear_infinite] blur-[2px]"></div>
-                    <div class="absolute inset-[-15px] rounded-full border border-[${currentRank.stage_color}]/50 animate-[spin_18s_linear_infinite_reverse]"></div>
+                    <div class="absolute inset-[-30px] rounded-full border-[2px] animate-[spin_25s_linear_infinite] blur-[2px]" style="border-color: ${currentRank.stage_color}4D;"></div>
+                    <div class="absolute inset-[-15px] rounded-full border animate-[spin_18s_linear_infinite_reverse]" style="border-color: ${currentRank.stage_color}80;"></div>
                     
                     <div class="w-full h-full rounded-full overflow-hidden border-[6px] shadow-[0_0_60px_rgba(0,0,0,0.9)] relative z-20 bg-black"
                          style="border-color: ${currentRank.stage_color}; animation: medallion-float 8s ease-in-out infinite">
@@ -148,7 +162,7 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                              onerror="this.src='https://placehold.co/300x300/000/FFF?text=Team'">
                     </div>
                     
-                    <div class="absolute w-full h-full bg-[${currentRank.stage_color}] blur-[100px] opacity-40 z-0"></div>
+                    <div class="absolute w-full h-full blur-[100px] opacity-40 z-0" style="background-color: ${currentRank.stage_color}"></div>
                 </div>
 
                 <h1 class="text-5xl font-black text-white tracking-tight uppercase mb-4 drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] z-20 relative text-center px-4">
@@ -175,8 +189,8 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
             <div class="absolute bottom-0 w-full h-28 bg-[#0a0a0a]/90 backdrop-blur-xl border-t border-white/10 flex divide-x divide-white/5 divide-x-reverse z-30">
                 <div class="flex-1 flex flex-col items-center justify-center p-4 group hover:bg-white/5 transition-all duration-300">
                     <div class="flex items-center gap-2 mb-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-bolt text-[${currentRank.stage_color}]"></i>
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">القوة</span>
+                        <i class="fas fa-bolt" style="color: ${currentRank.stage_color}"></i>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Power</span>
                     </div>
                     <span class="text-3xl font-black text-white font-mono tracking-tight leading-none drop-shadow-lg">${points.toLocaleString()}</span>
                 </div>
@@ -184,7 +198,7 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                 <div class="flex-1 flex flex-col items-center justify-center p-4 group hover:bg-white/5 transition-all duration-300">
                     <div class="flex items-center gap-2 mb-1 opacity-70 group-hover:opacity-100 transition-opacity">
                         <i class="fas fa-users text-blue-400"></i>
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">الأعضاء</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Members</span>
                     </div>
                     <span class="text-3xl font-black text-white font-mono tracking-tight leading-none drop-shadow-lg">${contributors.length} <span class="text-lg text-gray-500">/ 5</span></span>
                 </div>
@@ -192,13 +206,13 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                 <div class="flex-1 flex flex-col items-center justify-center p-4 group hover:bg-white/5 transition-all duration-300 relative overflow-hidden">
                      <div class="flex items-center gap-2 mb-1 opacity-70 group-hover:opacity-100 transition-opacity relative z-10">
                         <i class="fas fa-flag-checkered text-yellow-500"></i>
-                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">التالي</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Next</span>
                     </div>
-                    <span class="text-3xl font-black text-[${nextRank ? nextRank.stage_color : '#fff'}] font-mono tracking-tight leading-none relative z-10 drop-shadow-lg">
+                    <span class="text-3xl font-black font-mono tracking-tight leading-none relative z-10 drop-shadow-lg" style="color: ${nextRank ? nextRank.stage_color : '#ffffff'}">
                         ${nextRank ? ((points / nextRank.points_required)*100).toFixed(1) + '%' : 'MAX'}
                     </span>
-                    <div class="absolute bottom-0 left-0 h-1.5 bg-[${currentRank.stage_color}]/20 w-full">
-                        <div class="h-full bg-[${currentRank.stage_color}]" style="width: ${progressPercent}%"></div>
+                    <div class="absolute bottom-0 left-0 h-1.5 w-full" style="background-color: ${currentRank.stage_color}33">
+                        <div class="h-full" style="width: ${progressPercent}%; background-color: ${currentRank.stage_color}"></div>
                     </div>
                 </div>
             </div>
@@ -220,24 +234,25 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                         const opacity = isUnlocked ? 'opacity-100' : 'opacity-40 grayscale-[80%]';
                         const scale = isCurrent ? 'scale-110' : 'scale-100';
                         const badgeSize = isCurrent ? 'w-48 h-48' : 'w-40 h-40';
-                        const borderGlow = isCurrent ? `border-[${rank.stage_color}] shadow-[0_0_40px_${rank.stage_color}60]` : `border-white/10 group-hover:border-white/30`;
-                        const textGlow = isCurrent ? `text-[${rank.stage_color}] drop-shadow-[0_0_15px_${rank.stage_color}50]` : 'text-gray-400 group-hover:text-gray-200';
+                        
+                        const borderGlow = isCurrent ? `border-color: ${rank.stage_color}; box-shadow: 0 0 40px ${rank.stage_color}99;` : `border-color: rgba(255,255,255,0.1);`;
+                        const textGlow = isCurrent ? `color: ${rank.stage_color}; filter: drop-shadow(0 0 15px ${rank.stage_color}80);` : `color: #9ca3af;`;
                         
                         return `
                         <div class="flex items-center justify-center relative group transition-all duration-700 ${isUnlocked ? '' : 'locked-rank'}">
                             
                             <div class="absolute right-[58%] text-right w-72 pr-10 hidden md:block ${opacity} transition-opacity duration-500 group-hover:opacity-100">
-                                <h3 class="text-3xl font-black uppercase tracking-tighter mb-2 transition-colors ${textGlow}">${rank.title}</h3>
+                                <h3 class="text-3xl font-black uppercase tracking-tighter mb-2 transition-colors" style="${textGlow}">${rank.title}</h3>
                                 <p class="text-lg font-mono text-gray-500">${rank.points_required.toLocaleString()} XP</p>
                             </div>
 
                             <div class="relative ${badgeSize} flex items-center justify-center transition-transform duration-500 ${scale} z-20 badge-container">
                                 
                                 <div class="absolute inset-2 bg-[#050505] rounded-full shadow-2xl"></div>
-                                ${isCurrent ? `<div class="absolute inset-[-10px] rounded-full border-[2px] border-[${rank.stage_color}] opacity-60 animate-ping"></div>` : ''}
+                                ${isCurrent ? `<div class="absolute inset-[-10px] rounded-full border-[2px] opacity-60 animate-ping" style="border-color: ${rank.stage_color}"></div>` : ''}
                                 
-                                <div class="w-full h-full rounded-full overflow-hidden border-[4px] shadow-[0_0_30px_rgba(0,0,0,0.5)] relative bg-[#080808] transition-all duration-500 ${borderGlow}"
-                                     style="border-color: ${isUnlocked ? rank.stage_color : '#333'}">
+                                <div class="w-full h-full rounded-full overflow-hidden border-[4px] shadow-[0_0_30px_rgba(0,0,0,0.5)] relative bg-[#080808] transition-all duration-500"
+                                     style="${borderGlow}">
                                     
                                     <img src="${badgeUrl}" 
                                          class="w-full h-full object-cover relative z-10 transition-all duration-700 ${isUnlocked ? '' : 'brightness-[0.2] group-hover:brightness-100'}"
@@ -248,7 +263,9 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                             </div>
 
                             <div class="absolute left-[58%] text-left w-72 pl-10 hidden md:block ${opacity} transition-opacity duration-500 group-hover:opacity-100">
-                                <p class="text-base text-gray-400 italic leading-relaxed border-l-4 border-white/5 pl-4 group-hover:border-[${rank.stage_color}]/50 transition-colors">
+                                <p class="text-base text-gray-400 italic leading-relaxed border-l-4 border-white/5 pl-4 transition-colors"
+                                   onmouseover="this.style.borderColor='${rank.stage_color}80'" 
+                                   onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
                                     "${rank.lore}"
                                 </p>
                             </div>
@@ -263,7 +280,7 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                     
                     <div class="team-glass-card rounded-[2rem] p-8">
                         <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3 uppercase tracking-wider">
-                            <i class="fas fa-shield-alt text-b-primary"></i> نخبة الفريق
+                            <i class="fas fa-shield-alt text-b-primary"></i> Team Elite
                         </h3>
                         
                         <div class="space-y-5">
@@ -271,7 +288,7 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                                 <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all hover:scale-[1.02] group">
                                     <div class="relative">
                                         <div class="w-12 h-12 rounded-full bg-gray-900 overflow-hidden border-2 border-white/10 group-hover:border-b-primary/50 transition-colors shadow-lg">
-                                            <img src="${member.photo || '../assets/icons/default-avatar.png'}" class="w-full h-full object-cover">
+                                            <img src="${member.photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/default-avatar.png'">
                                         </div>
                                         <div class="absolute -bottom-1 -right-1 w-6 h-6 flex items-center justify-center rounded-full bg-[#0a0a0a] border border-white/10 text-xs font-bold text-gray-400">
                                             #${i+1}
@@ -283,13 +300,13 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                                             <span class="text-b-primary font-mono font-bold">${member.points.toLocaleString()}</span>
                                         </div>
                                         <div class="h-1.5 bg-black/50 rounded-full overflow-hidden">
-                                            <div class="h-full bg-gradient-to-r from-b-primary to-white/80" style="width: ${(member.points / points * 100) || 0}%"></div>
+                                            <div class="h-full bg-gradient-to-r from-b-primary to-white/80" style="width: ${(member.points / (points || 1) * 100)}%"></div>
                                         </div>
                                     </div>
                                 </div>
                             `).join('')}
                             
-                            ${contributors.length === 0 ? '<p class="text-gray-500 text-sm text-center py-4">لا توجد بيانات مساهمة بعد.</p>' : ''}
+                            ${contributors.length === 0 ? '<p class="text-gray-500 text-sm text-center py-4">No member data available.</p>' : ''}
                         </div>
                     </div>
 
@@ -319,6 +336,9 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
     `;
 }
 
+// ==========================================
+// 4. UTILS
+// ==========================================
 function initFlashlightEffect() {
     const badgeContainers = document.querySelectorAll('.badge-container');
     
@@ -336,3 +356,19 @@ function initFlashlightEffect() {
         });
     });
 }
+
+function resolveImageUrl(url, type = 'user') {
+    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+        return type === 'team' ? '../assets/images/team-placeholder.jpg' : '../assets/icons/default-avatar.png';
+    }
+    try {
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
+            if (idMatch && idMatch[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+        }
+    } catch(e) {}
+    return url;
+}
+
+// Bind to window if triggered via Tab Click
+window.loadTeamRankSystem = initTeamBadgesSystem;
