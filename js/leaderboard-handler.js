@@ -1,4 +1,4 @@
-// import { auth, db, doc, getDoc, getDocs, collection, query, where, orderBy, limit } from './firebase-config.js';
+import { supabase } from './supabase-config.js';
 import { RANKS_DATA } from './badges-data.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
 
@@ -9,6 +9,7 @@ let currentType = 'students';
 let currentScope = 'global';
 let currentUserData = null;
 let currentTeamData = null;
+let allFetchedItems = []; // لتخزين البيانات محلياً من أجل البحث
 
 // ==========================================
 // 2. MAIN INIT
@@ -17,416 +18,403 @@ export async function initLeaderboard() {
     const container = document.getElementById('leaderboard-list');
     if (!container) return;
 
-    const user = auth.currentUser;
-    if (user && !currentUserData) {
-        try {
-            const snap = await getDoc(doc(db, "users", user.uid));
-            currentUserData = snap.data();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && !currentUserData) {
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            currentUserData = profile;
             
-            if (currentUserData.system_info?.team_id) {
-                const tSnap = await getDoc(doc(db, "teams", currentUserData.system_info.team_id));
-                if (tSnap.exists()) {
-                    currentTeamData = tSnap.data();
-                    currentTeamData.id = tSnap.id;
-                }
+            if (currentUserData && currentUserData.team_id) {
+                const { data: team } = await supabase.from('teams').select('*').eq('id', currentUserData.team_id).single();
+                currentTeamData = team;
             }
-        } catch (e) {
-            console.error("Context Load Error:", e);
         }
+    } catch (e) {
+        console.error("Context Load Error:", e);
     }
 
-    fetchAndRenderLeaderboard();
+    await loadGlobalHeroStats();
+    await window.fetchAndRenderLeaderboard();
 }
 
 // ==========================================
-// 3. FETCHING STRATEGY
+// 3. GLOBAL HERO STATS
 // ==========================================
-async function fetchAndRenderLeaderboard() {
-    const listContainer = document.getElementById('leaderboard-list');
-    const podiumContainer = document.getElementById('podium-container');
-    const headerContext = document.getElementById('col-header-context');
-    
-    // تحديث عنوان العمود
-    if (headerContext) {
-        headerContext.innerText = currentType === 'students' ? 'الفريق التابع له' : 'قائد الفريق';
-    }
-
-    listContainer.innerHTML = `<div class="text-center py-24"><i class="fas fa-circle-notch fa-spin text-b-primary text-4xl"></i></div>`;
-    podiumContainer.innerHTML = ''; 
+async function loadGlobalHeroStats() {
+    if (!currentUserData) return;
 
     try {
-        let q;
-        const collectionName = currentType === 'students' ? 'users' : 'teams';
-        const pointsField = currentType === 'students' ? 'gamification.total_points' : 'total_score'; 
-
-        // Query Construction
-        if (currentScope === 'global') {
-            q = query(collection(db, collectionName), orderBy(pointsField, "desc"), limit(50));
-        } 
-        else if (currentScope === 'university') {
-            const uni = currentType === 'students' 
-                ? (currentUserData?.academic_info?.university || 'Zagazig')
-                : (currentTeamData?.info?.university || 'Zagazig');
-            
-            const uniField = currentType === 'students' ? 'academic_info.university' : 'info.university';
-            
-            q = query(
-                collection(db, collectionName), 
-                where(uniField, '==', uni),
-                orderBy(pointsField, "desc"), 
-                limit(50)
-            );
-        }
-        else if (currentScope === 'governorate') {
-            const gov = currentType === 'students' 
-                ? (currentUserData?.personal_info?.governorate || 'Zagazig')
-                : (currentTeamData?.info?.governorate || 'Zagazig');
-
-            const govField = currentType === 'students' ? 'personal_info.governorate' : 'info.governorate';
-
-            q = query(
-                collection(db, collectionName), 
-                where(govField, '==', gov),
-                orderBy(pointsField, "desc"), 
-                limit(50)
-            );
+        const { data: students } = await supabase.from('profiles').select('id').in('role', ['student', 'leader']).order('total_xp', { ascending: false });
+        let sRank = '--';
+        if (students) {
+            const idx = students.findIndex(s => s.id === currentUserData.id);
+            if (idx !== -1) sRank = `#${idx + 1}`;
         }
 
-        const snapshot = await getDocs(q);
-        let rawData = [];
-        snapshot.forEach(doc => {
-            rawData.push({ id: doc.id, ...doc.data() });
-        });
+        let tRank = '--';
+        if (currentTeamData) {
+            const { data: teams } = await supabase.from('teams').select('id').order('total_score', { ascending: false });
+            if (teams) {
+                const idx = teams.findIndex(t => t.id === currentTeamData.id);
+                if (idx !== -1) tRank = `#${idx + 1}`;
+            }
+        }
 
-        // 🔥 CRITICAL STEP: Fetch Related Names (Teams/Leaders) 🔥
-        const enrichedData = await fetchRelatedData(rawData, currentType);
+        const sPts = currentUserData.total_xp || 0;
+        const tPts = currentTeamData?.total_score || 0;
 
-        // Update UI
-        updateHeroStats(enrichedData);
-        renderPodium(enrichedData.slice(0, 3));
-        renderTable(enrichedData);
-        checkStickyBar(enrichedData);
+        const hSRank = document.getElementById('hero-student-rank');
+        const hSBadge = document.getElementById('hero-student-badge');
+        const hSPts = document.getElementById('hero-student-points');
+        
+        if (hSRank) hSRank.innerText = sRank;
+        if (hSPts) hSPts.innerText = `${sPts} XP`;
+        if (hSBadge) {
+            const srData = getRankDataForMember(sPts);
+            hSBadge.innerText = srData.title;
+            hSBadge.className = `text-sm font-bold uppercase ${srData.color}`;
+        }
+
+        const hTRank = document.getElementById('hero-team-rank');
+        const hTBadge = document.getElementById('hero-team-badge');
+        const hTPts = document.getElementById('hero-team-points');
+
+        if (hTRank) hTRank.innerText = tRank;
+        if (hTPts) hTPts.innerText = `${tPts} XP`;
+        if (hTBadge) {
+            const trData = getRankDataForTeam(tPts);
+            hTBadge.innerText = trData.title;
+            hTBadge.className = `text-sm font-bold uppercase ${trData.color}`;
+        }
+    } catch (e) {}
+}
+
+// ==========================================
+// 4. FETCH & FILTER TABLE DATA
+// ==========================================
+window.fetchAndRenderLeaderboard = async () => {
+    const container = document.getElementById('leaderboard-list');
+    const podiumContainer = document.getElementById('podium-container');
+    const searchInput = document.getElementById('leaderboard-search');
+    
+    if (searchInput) searchInput.value = ''; // تصفير البحث عند تبديل التاب
+    if (container) container.innerHTML = '<div class="text-center py-20"><i class="fas fa-spinner fa-spin text-b-primary text-3xl"></i></div>';
+    if (podiumContainer) podiumContainer.innerHTML = '';
+
+    try {
+        let items = [];
+
+        if (currentType === 'students') {
+            // 🚀 جلب اسم الفريق مباشرة من قاعدة البيانات مع بيانات الطالب
+            let query = supabase.from('profiles').select('*, teams!fk_team(name)').in('role', ['student', 'leader']);
+            
+            if (currentScope === 'university' && currentUserData?.university) {
+                query = query.eq('university', currentUserData.university);
+            } else if (currentScope === 'governorate' && currentUserData?.governorate) {
+                query = query.eq('governorate', currentUserData.governorate);
+            }
+            
+            const { data } = await query.order('total_xp', { ascending: false }).limit(100);
+            items = data || [];
+
+        } else {
+            // جلب أسماء القادة للفرق
+            let query = supabase.from('teams').select('*, profiles!teams_leader_id_fkey(full_name)');
+            
+            if (currentScope === 'university' && currentTeamData?.university) {
+                query = query.eq('university', currentTeamData.university);
+            } else if (currentScope === 'governorate' && currentTeamData?.governorate) {
+                query = query.eq('governorate', currentTeamData.governorate);
+            }
+
+            const { data } = await query.order('total_score', { ascending: false }).limit(100);
+            
+            // حساب أعداد الأعضاء
+            if (data && data.length > 0) {
+                const teamIds = data.map(t => t.id);
+                const { data: memberCounts } = await supabase.from('profiles').select('team_id').in('team_id', teamIds);
+                
+                let countsMap = {};
+                memberCounts?.forEach(m => {
+                    countsMap[m.team_id] = (countsMap[m.team_id] || 0) + 1;
+                });
+                
+                data.forEach(t => t.member_count = countsMap[t.id] || 0);
+            }
+            items = data || [];
+        }
+
+        allFetchedItems = items; // حفظ البيانات للبحث المحلي
+        renderLeaderboard(items);
 
     } catch (error) {
-        console.error("Leaderboard Error:", error);
-        if (error.message.includes("requires an index")) {
-            listContainer.innerHTML = `<div class="text-center py-10 text-red-400 text-sm font-bold">⚠️ System Indexing Required (Check Console)</div>`;
-        } else {
-            listContainer.innerHTML = `<div class="text-center py-10 text-gray-500 text-sm">Failed to load data.</div>`;
-        }
+        console.error("Leaderboard fetch error:", error);
+        if (container) container.innerHTML = '<div class="text-center text-red-500 py-10">فشل في تحميل البيانات</div>';
     }
 }
 
-// 🔥 Helper to resolve IDs to Names
-async function fetchRelatedData(data, type) {
-    if (data.length === 0) return [];
-
-    const result = [...data];
+// ==========================================
+// 5. SEARCH LOGIC (NEW)
+// ==========================================
+window.filterLeaderboardSearch = () => {
+    const input = document.getElementById('leaderboard-search');
+    if (!input) return;
     
-    // 1. If listing Students -> Fetch Team Names
-    if (type === 'students') {
-        const teamIds = [...new Set(data.map(item => item.system_info?.team_id).filter(id => id))];
-        if (teamIds.length > 0) {
-            // Firestore 'in' limit is 10. For simplicity, we loop fetch if list is small, 
-            // or we could chunk. Assuming <50 items, loop is acceptable for now.
-            const teamMap = {};
-            // Using Promise.all for parallel fetching
-            await Promise.all(teamIds.map(async (tid) => {
-                try {
-                    const snap = await getDoc(doc(db, "teams", tid));
-                    if (snap.exists()) {
-                        teamMap[tid] = snap.data().info?.name || snap.data().name || "Unknown Team";
-                    }
-                } catch(e) { console.warn("Team fetch fail", tid); }
-            }));
-
-            // Map back to data
-            result.forEach(item => {
-                const tid = item.system_info?.team_id;
-                item._resolvedTeamName = tid ? (teamMap[tid] || "فريق غير معروف") : "مستقل";
-            });
-        }
-    } 
-    // 2. If listing Teams -> Fetch Leader Names (if missing)
-    else {
-        const leaderIds = [...new Set(data.map(item => item.leader_id).filter(id => id))];
-        if (leaderIds.length > 0) {
-            const userMap = {};
-            await Promise.all(leaderIds.map(async (uid) => {
-                try {
-                    const snap = await getDoc(doc(db, "users", uid));
-                    if (snap.exists()) {
-                        userMap[uid] = snap.data().personal_info?.full_name || "Unknown Leader";
-                    }
-                } catch(e) {}
-            }));
-
-            result.forEach(item => {
-                // Prefer leader_name in team doc, fallback to user doc fetch
-                item._resolvedLeaderName = item.leader_name || userMap[item.leader_id] || "غير معروف";
-            });
-        }
+    const query = input.value.trim().toLowerCase();
+    
+    // إخفاء/إظهار المنصة حسب البحث
+    const podiumContainer = document.getElementById('podium-container');
+    if (podiumContainer) {
+        podiumContainer.style.display = query.length > 0 ? 'none' : 'flex';
     }
 
-    return result;
-}
+    if (query.length === 0) {
+        renderLeaderboard(allFetchedItems);
+        return;
+    }
 
-// ==========================================
-// 4. RENDERING LOGIC (Fixed Fonts & Cols)
-// ==========================================
-
-function getRankTitle(points, type) {
-    const dataSet = type === 'students' ? RANKS_DATA : TEAM_RANKS_DATA;
-    let title = type === 'students' ? 'RECRUIT' : 'GROUP';
-    let color = '#555';
-
-    for (let i = 0; i < dataSet.length; i++) {
-        if (points >= dataSet[i].points_required) {
-            title = dataSet[i].title;
-            color = dataSet[i].stage_color || '#fff';
+    const filtered = allFetchedItems.filter(item => {
+        const name = currentType === 'students' ? (item.full_name || '') : (item.name || '');
+        const univ = item.university || '';
+        let subName = '';
+        
+        if (currentType === 'students') {
+            subName = item.teams?.name || '';
         } else {
-            break;
+            subName = item.profiles?.full_name || '';
         }
-    }
-    return { title: title.toUpperCase(), color };
-}
 
-function renderPodium(top3) {
-    const container = document.getElementById('podium-container');
-    const positions = [1, 0, 2]; // 2nd, 1st, 3rd
+        return name.toLowerCase().includes(query) || 
+               univ.toLowerCase().includes(query) || 
+               subName.toLowerCase().includes(query);
+    });
 
-    const podiumHTML = positions.map(idx => {
-        const item = top3[idx];
-        if (!item) return `<div class="w-1/3"></div>`; 
+    renderLeaderboard(filtered, true); // true = وضع البحث (إخفاء التميز للأوائل)
+};
 
-        const rank = idx + 1;
-        const isStudent = currentType === 'students';
-        
-        const name = isStudent 
-            ? (item.personal_info?.full_name || 'Unknown') 
-            : (item.info?.name || item.name || 'Team');
-        
-        const points = isStudent 
-            ? (item.gamification?.total_points || 0) 
-            : (item.total_score || 0);
-
-        const badgeData = getRankTitle(points, currentType);
-
-        // Styling
-        const height = rank === 1 ? 'h-44' : (rank === 2 ? 'h-36' : 'h-28');
-        const color = rank === 1 ? 'text-yellow-500 border-yellow-500' 
-                    : (rank === 2 ? 'text-gray-400 border-gray-400' : 'text-orange-700 border-orange-700');
-        const bg = rank === 1 ? 'from-yellow-500/10' : (rank === 2 ? 'from-gray-400/10' : 'from-orange-700/10');
-
-        return `
-            <div class="flex flex-col items-center justify-end w-1/3 group relative">
-                <div class="mb-3 text-2xl ${color} animate-bounce-slow">
-                    <i class="fas fa-${rank === 1 ? 'crown' : 'medal'}"></i>
-                </div>
-                <div class="w-full ${height} bg-gradient-to-t ${bg} to-transparent border-t-4 ${color} rounded-t-2xl relative flex flex-col items-center justify-start pt-6 transition-all hover:opacity-100 opacity-90 shadow-2xl">
-                    <span class="text-4xl font-black ${color} opacity-20 absolute bottom-2 font-mono">${rank}</span>
-                    <h3 class="text-white font-bold text-center px-1 line-clamp-1 text-sm md:text-base mb-1">${name}</h3>
-                    <span class="font-mono text-xs text-gray-300 font-bold">${points.toLocaleString()}</span>
-                    <span class="mt-2 text-[10px] uppercase tracking-widest px-2 py-0.5 border ${color} rounded text-white bg-black/60">
-                        ${badgeData.title}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    container.innerHTML = podiumHTML;
-}
-
-function renderTable(data) {
+// ==========================================
+// 6. RENDER UI
+// ==========================================
+function renderLeaderboard(items, isSearchMode = false) {
     const container = document.getElementById('leaderboard-list');
+    const contextHeader = document.getElementById('col-header-context');
+    const podiumContainer = document.getElementById('podium-container');
+
+    if (!container || !contextHeader) return;
     
-    container.innerHTML = data.map((item, index) => {
-        const rank = index + 1;
-        const isStudent = currentType === 'students';
-        const myId = auth.currentUser?.uid;
-        
-        // Identity Check
-        const isMe = isStudent ? (item.uid === myId) : (item.id === currentUserData?.system_info?.team_id);
-        
-        let name, centerColumnContent, points, badgeData, uni;
+    contextHeader.innerText = currentType === 'students' ? 'الفريق / الجامعة' : 'القائد / الجامعة';
 
-        if (isStudent) {
-            name = item.personal_info?.full_name || 'Unknown User';
-            points = item.gamification?.total_points || 0;
-            badgeData = getRankTitle(points, 'students');
-            uni = item.academic_info?.university || '---';
-            // Context: Resolved Team Name
-            centerColumnContent = item._resolvedTeamName || "مستقل";
+    if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-20 text-gray-500">لا توجد نتائج مطابقة للبحث.</div>`;
+        if(!isSearchMode && podiumContainer) podiumContainer.innerHTML = '';
+        return;
+    }
+
+    // رسم المنصة فقط إذا لم نكن في وضع البحث
+    if (!isSearchMode) {
+        const top3 = items.slice(0, 3);
+        renderPodium(top3, podiumContainer);
+    }
+
+    let html = '';
+    let userRankIndex = -1;
+
+    items.forEach((item, index) => {
+        // تحديد الترتيب الفعلي في القائمة الأصلية
+        const actualRank = isSearchMode ? (allFetchedItems.findIndex(i => i.id === item.id) + 1) : (index + 1);
+        
+        const isMe = currentType === 'students' ? (item.id === currentUserData?.id) : (item.id === currentTeamData?.id);
+        if (isMe && !isSearchMode) userRankIndex = actualRank;
+
+        const points = currentType === 'students' ? (item.total_xp || 0) : (item.total_score || 0);
+        const name = currentType === 'students' ? (item.full_name || 'طالب') : (item.name || 'فريق');
+        const avatar = currentType === 'students' ? resolveImageUrl(item.avatar_url, 'user') : resolveImageUrl(item.logo_url, 'team');
+        const rankData = currentType === 'students' ? getRankDataForMember(points) : getRankDataForTeam(points);
+        
+        let contextHTML = '';
+        let badgeHTML = '';
+        let roleBadge = ''; 
+        
+        if (currentType === 'students') {
+            // استخدام البيانات المجلوبة مباشرة من الـ Join
+            const teamName = item.teams?.name || 'بدون فريق';
+            const univ = item.university || 'جامعة غير محددة';
+            
+            const isLeader = item.role === 'leader';
+            roleBadge = isLeader 
+                ? `<span class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-crown ml-1 text-[8px]"></i>قائد</span>`
+                : `<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-user ml-1 text-[8px]"></i>طالب</span>`;
+            
+            contextHTML = `
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-gray-200 truncate" title="${teamName}"><i class="fas fa-shield-alt text-gray-500 ml-1"></i> ${teamName}</span>
+                    <span class="text-[11px] text-gray-500 truncate" title="${univ}">${univ}</span>
+                </div>
+            `;
+
+            badgeHTML = `
+                <div class="flex items-center bg-black/40 px-4 py-1.5 rounded-xl border border-white/5 w-fit mr-auto">
+                    <span class="text-xs font-bold uppercase tracking-wider ${rankData.color}">${rankData.title}</span>
+                </div>
+            `;
+            
         } else {
-            // Team
-            name = item.info?.name || item.name || 'Unnamed Team';
-            points = item.total_score || 0;
-            badgeData = getRankTitle(points, 'teams');
-            uni = item.info?.university || '---';
-            // Context: Leader Name
-            centerColumnContent = `<i class="fas fa-crown text-yellow-600 ml-1 text-xs"></i> ${item._resolvedLeaderName}`;
-        }
+            const leaderName = item.profiles?.full_name || 'بدون قائد';
+            const univ = item.university || 'جامعة غير محددة';
+            
+            contextHTML = `
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-gray-200 truncate" title="${leaderName}"><i class="fas fa-user-tie text-gray-500 ml-1"></i> ${leaderName}</span>
+                    <span class="text-[11px] text-gray-500 truncate" title="${univ}">${univ}</span>
+                </div>
+            `;
 
-        const rowClass = isMe 
-            ? 'bg-b-primary/20 border-l-4 border-l-b-primary' 
-            : 'hover:bg-white/5 border-l-4 border-l-transparent';
-        
-        const rankStyle = rank <= 3 
-            ? 'text-yellow-500 font-black text-xl' 
-            : 'text-gray-500 font-bold text-lg';
-
-        return `
-            <div class="grid grid-cols-12 gap-4 p-4 items-center transition-colors border-b border-white/5 ${rowClass}">
-                
-                <div class="col-span-1 text-center font-mono ${rankStyle}">#${rank}</div>
-
-                <div class="col-span-3 pr-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-white font-bold text-base truncate">
-                            ${name}
-                        </span>
-                        ${isMe ? '<span class="text-[10px] bg-b-primary px-2 py-0.5 rounded text-white font-bold">أنت</span>' : ''}
+            const mCount = item.member_count || 0;
+            
+            badgeHTML = `
+                <div class="flex flex-col gap-1.5 items-end">
+                    <div class="flex items-center bg-black/40 px-4 py-1 rounded-lg border border-white/5 w-fit">
+                        <span class="text-[11px] font-bold uppercase tracking-wider ${rankData.color}">${rankData.title}</span>
+                    </div>
+                    <div class="text-[10px] font-bold text-gray-400 bg-white/5 px-2 py-0.5 rounded w-fit border border-white/5">
+                        <i class="fas fa-users ml-1"></i> الأعضاء: <span class="text-white">${mCount}</span> / 5
                     </div>
                 </div>
+            `;
+        }
 
-                <div class="col-span-2 text-center">
-                    <span class="text-[15px] font-black uppercase tracking-widest px-2 py-1 rounded border" 
-                          style="color:${badgeData.color}; border-color:${badgeData.color}40; background:${badgeData.color}10">
-                        ${badgeData.title}
-                    </span>
-                </div>
+        let rowStyles = "hover:bg-white/5 border-r-4 border-r-transparent";
+        let rankDisplay = `<span class="text-gray-500 font-black text-xl">#${actualRank}</span>`;
 
-                <div class="col-span-3 text-center text-base text-gray-300 font-medium truncate bg-white/5 py-1 rounded">
-                    ${centerColumnContent}
-                </div>
+        // لا نميز الأوائل في وضع البحث لكي يبقى التصميم مرتباً
+        if (!isSearchMode) {
+            if (actualRank === 1) {
+                rowStyles = "bg-yellow-500/10 border-r-4 border-r-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]";
+                rankDisplay = `<i class="fas fa-crown text-yellow-500 text-3xl drop-shadow-md"></i>`;
+            } else if (actualRank === 2) {
+                rowStyles = "bg-gray-400/10 border-r-4 border-r-gray-400";
+                rankDisplay = `<i class="fas fa-medal text-gray-300 text-3xl drop-shadow-md"></i>`;
+            } else if (actualRank === 3) {
+                rowStyles = "bg-orange-500/10 border-r-4 border-r-orange-500";
+                rankDisplay = `<i class="fas fa-award text-orange-400 text-3xl drop-shadow-md"></i>`;
+            } else if (isMe) {
+                rowStyles = "bg-b-primary/10 border-r-4 border-r-b-primary";
+            }
+        } else if (isMe) {
+            rowStyles = "bg-b-primary/10 border-r-4 border-r-b-primary";
+        }
 
-                <div class="col-span-2 text-center">
-                    <span class="text-white font-mono font-bold text-lg tracking-tight">
-                        ${points.toLocaleString()} <span class="text-xs text-gray-500">XP</span>
-                    </span>
-                </div>
-
-                <div class="col-span-1 text-center text-[14px] font-bold text-gray-200">
-                    ${uni.substring(0, 10)}
+        html += `
+        <div class="flex items-center px-4 sm:px-6 py-4 transition-all ${rowStyles}">
+            <div class="w-12 sm:w-16 text-center">${rankDisplay}</div>
+            
+            <div class="flex-1 flex items-center gap-4 pr-4 border-l border-white/5 pl-4">
+                <img src="${avatar}" class="w-12 h-12 rounded-xl object-cover bg-black border border-white/10 shadow-md shrink-0">
+                <div class="min-w-0 flex flex-col justify-center">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h4 class="font-bold text-white text-base leading-tight truncate">${name}</h4>
+                        ${roleBadge}
+                    </div>
+                    <div class="sm:hidden">${contextHTML}</div>
                 </div>
             </div>
+            
+            <div class="hidden sm:block w-48 text-right px-2 border-l border-white/5 pl-4">
+                ${contextHTML}
+            </div>
+            
+            <div class="hidden md:flex w-48 flex-col justify-center text-right px-2 border-l border-white/5 pl-4">
+                ${badgeHTML}
+            </div>
+            
+            <div class="w-24 text-left pl-2">
+                <span class="text-xl sm:text-2xl font-black text-white font-mono">${points}</span>
+                <span class="text-xs text-yellow-500 block font-bold">XP</span>
+            </div>
+        </div>
         `;
-    }).join('');
+    });
+
+    container.innerHTML = html;
+    if (!isSearchMode) updateStickyBar(userRankIndex, items);
 }
 
-function updateHeroStats(data) {
-    const myId = auth.currentUser?.uid;
-    const myTeamId = currentUserData?.system_info?.team_id;
+function renderPodium(top3, container) {
+    if (!container || top3.length === 0) return;
+    
+    const orderedTop3 = [top3[1], top3[0], top3[2]];
+    
+    const positions = [
+        { rank: 2, height: 'h-32 sm:h-40', color: 'from-gray-400/20 to-gray-600/50', border: 'border-gray-400', badge: 'text-gray-300' },
+        { rank: 1, height: 'h-40 sm:h-48', color: 'from-yellow-400/20 to-yellow-600/50', border: 'border-yellow-400', badge: 'text-yellow-300' },
+        { rank: 3, height: 'h-24 sm:h-32', color: 'from-orange-400/20 to-orange-700/50', border: 'border-orange-500', badge: 'text-orange-400' }
+    ];
 
-    // --- 1. تحديث بيانات الطالب (دائماً) ---
-    const elStuRank = document.getElementById('hero-student-rank');
-    const elStuPoints = document.getElementById('hero-student-points');
-    const elStuBadge = document.getElementById('hero-student-badge');
-
-    let stuPoints = 0;
-    let stuRank = '--';
-
-    // محاولة العثور على الطالب في القائمة الحالية
-    if (currentType === 'students') {
-        const idx = data.findIndex(i => i.uid === myId);
-        if (idx !== -1) {
-            stuPoints = data[idx].gamification?.total_points || 0;
-            stuRank = `#${idx + 1}`;
-        } else if (currentUserData) {
-            stuPoints = currentUserData.gamification?.total_points || 0;
-        }
-    } else {
-        // لو في تبويب الفرق، نستخدم البيانات المحفوظة للطالب
-        if (currentUserData) {
-            stuPoints = currentUserData.gamification?.total_points || 0;
-            // يمكننا جلب الترتيب في الخلفية إذا أردت، أو تركه --
-        }
-    }
-
-    elStuPoints.innerText = `${stuPoints.toLocaleString()} XP`;
-    elStuBadge.innerText = getRankTitle(stuPoints, 'students').title;
-    if(stuRank !== '--' || elStuRank.innerText === '--') elStuRank.innerText = stuRank;
-
-
-    // --- 2. تحديث بيانات الفريق (دائماً) ---
-    const elTeamRank = document.getElementById('hero-team-rank');
-    const elTeamPoints = document.getElementById('hero-team-points');
-    const elTeamBadge = document.getElementById('hero-team-badge');
-
-    if (myTeamId) {
-        let teamPoints = 0;
-        let teamRank = '--';
-
-        // محاولة العثور على الفريق في القائمة الحالية
-        if (currentType === 'teams') {
-            const idx = data.findIndex(i => i.id === myTeamId);
-            if (idx !== -1) {
-                teamPoints = data[idx].total_score || 0;
-                teamRank = `#${idx + 1}`;
-            } else if (currentTeamData) {
-                teamPoints = currentTeamData.total_score || 0;
-            }
-        } else {
-            // 🔥 الإصلاح: نحن في تبويب الطلاب، لكننا سنعرض بيانات الفريق من الكاش
-            if (currentTeamData) {
-                teamPoints = currentTeamData.total_score || 0;
-                // جلب الترتيب الحقيقي في الخلفية لأننا لا نملكه في القائمة الحالية
-                fetchSpecificRank('teams', 'total_score', teamPoints).then(rank => {
-                    if(rank) document.getElementById('hero-team-rank').innerText = `#${rank}`;
-                });
-            }
-        }
+    let html = '';
+    orderedTop3.forEach((item, idx) => {
+        const pos = positions[idx];
         
-        elTeamPoints.innerText = `${teamPoints.toLocaleString()} XP`;
-        elTeamBadge.innerText = getRankTitle(teamPoints, 'teams').title;
-        if (teamRank !== '--') elTeamRank.innerText = teamRank;
-    }
+        if (!item) {
+            html += `<div class="w-1/3 flex flex-col justify-end items-center"><div class="w-full ${pos.height} bg-white/5 rounded-t-2xl"></div></div>`;
+            return;
+        }
+
+        const points = currentType === 'students' ? (item.total_xp || 0) : (item.total_score || 0);
+        const name = currentType === 'students' ? (item.full_name || 'طالب') : (item.name || 'فريق');
+        const avatar = currentType === 'students' ? resolveImageUrl(item.avatar_url, 'user') : resolveImageUrl(item.logo_url, 'team');
+
+        let roleBadge = '';
+        if (currentType === 'students') {
+            const isLeader = item.role === 'leader';
+            roleBadge = isLeader 
+                ? `<div class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit"><i class="fas fa-crown ml-1 text-[8px]"></i>قائد</div>`
+                : `<div class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit"><i class="fas fa-user ml-1 text-[8px]"></i>طالب</div>`;
+        }
+
+        html += `
+        <div class="w-1/3 flex flex-col items-center justify-end relative group px-1">
+            <div class="relative mb-4 flex flex-col items-center">
+                ${pos.rank === 1 ? '<i class="fas fa-crown text-yellow-400 text-3xl absolute -top-10 animate-bounce"></i>' : ''}
+                <div class="w-16 h-16 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr ${pos.color} shadow-2xl relative z-10 transform group-hover:scale-110 transition-transform">
+                    <img src="${avatar}" class="w-full h-full rounded-full object-cover border-4 ${pos.border}">
+                </div>
+                <div class="absolute -bottom-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black border border-white/20 flex items-center justify-center z-20 shadow-lg text-sm sm:text-lg font-black ${pos.badge}">
+                    ${pos.rank}
+                </div>
+            </div>
+            
+            <h4 class="text-white font-bold text-xs sm:text-base text-center truncate w-full px-2 mb-1 drop-shadow-md">${name}</h4>
+            ${roleBadge}
+            <span class="text-[10px] sm:text-sm font-mono font-bold text-yellow-500 mb-5 bg-black/50 px-3 py-0.5 rounded-full border border-white/5">${points} XP</span>
+
+            <div class="w-full ${pos.height} bg-gradient-to-t ${pos.color} rounded-t-3xl relative flex items-start justify-center pt-5 border-x border-t border-white/10 backdrop-blur-sm">
+                <div class="absolute inset-0 bg-black/30 rounded-t-3xl"></div>
+                <span class="text-4xl sm:text-6xl font-black text-white/20 relative z-10">${pos.rank}</span>
+            </div>
+        </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
-
-async function fetchSpecificRank(collectionName, fieldName, myScore) {
-    try {
-        const q = query(
-            collection(db, collectionName), 
-            where(fieldName, ">", myScore)
-        );
-        const snapshot = await getDocs(q); 
-        return snapshot.size + 1;
-    } catch (e) {
-        console.warn("Background rank fetch failed", e);
-        return null;
-    }
-}
-
-function checkStickyBar(data) {
+// ==========================================
+// 7. STICKY BAR UPDATE
+// ==========================================
+function updateStickyBar(rankIndex, items) {
     const stickyBar = document.getElementById('sticky-user-rank');
-    const myId = auth.currentUser?.uid;
-    const myTeamId = currentUserData?.system_info?.team_id;
+    if (!stickyBar) return;
 
-    const myIndex = data.findIndex(item => 
-        currentType === 'students' 
-        ? item.uid === myId 
-        : item.id === myTeamId
-    );
+    if (rankIndex !== -1 && rankIndex > 3) {
+        const myItem = items[rankIndex - 1];
+        const nextTarget = items[rankIndex - 2];
+        const myPoints = currentType === 'students' ? (myItem.total_xp || 0) : (myItem.total_score || 0);
+        const targetPoints = currentType === 'students' ? (nextTarget.total_xp || 0) : (nextTarget.total_score || 0);
+        const diff = targetPoints - myPoints + 1;
 
-    if (myIndex > 6) { // Show if out of view
-        const me = data[myIndex];
-        const prev = data[myIndex - 1];
-        
-        const points = currentType === 'students' 
-            ? (me.gamification?.total_points || 0) 
-            : (me.total_score || 0);
-            
-        const prevPoints = currentType === 'students' 
-            ? (prev.gamification?.total_points || 0) 
-            : (prev.total_score || 0);
-            
-        const diff = prevPoints - points;
-
-        document.getElementById('sticky-rank-num').innerText = `#${myIndex + 1}`;
-        document.getElementById('sticky-points').innerText = `${points.toLocaleString()} XP`;
-        document.getElementById('sticky-diff-text').innerText = `تحتاج ${diff} نقطة لتتجاوز المركز السابق`;
+        document.getElementById('sticky-rank-num').innerText = `#${rankIndex}`;
+        document.getElementById('sticky-points').innerText = `${myPoints} XP`;
+        document.getElementById('sticky-diff-text').innerText = `تحتاج ${diff} نقطة للتقدم مركزاً واحداً!`;
         
         stickyBar.classList.remove('translate-y-[200%]');
     } else {
@@ -434,31 +422,79 @@ function checkStickyBar(data) {
     }
 }
 
-// Global Window Functions
+// ==========================================
+// 8. GLOBAL WINDOW FUNCTIONS (EVENTS)
+// ==========================================
 window.switchLeaderboardType = (type) => {
     currentType = type;
-    
     const btnS = document.getElementById('tab-students');
     const btnT = document.getElementById('tab-teams');
+    const searchInput = document.getElementById('leaderboard-search');
+    if(searchInput) searchInput.value = '';
     
     if (type === 'students') {
-        btnS.className = "px-8 py-2.5 rounded-md text-sm font-bold transition-all bg-white text-black shadow-lg";
-        btnT.className = "px-8 py-2.5 rounded-md text-sm font-bold text-gray-500 hover:text-white transition-all";
+        btnS.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg";
+        btnT.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold text-gray-500 hover:text-white transition-all";
     } else {
-        btnT.className = "px-8 py-2.5 rounded-md text-sm font-bold transition-all bg-white text-black shadow-lg";
-        btnS.className = "px-8 py-2.5 rounded-md text-sm font-bold text-gray-500 hover:text-white transition-all";
+        btnT.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg";
+        btnS.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold text-gray-500 hover:text-white transition-all";
     }
-
-    fetchAndRenderLeaderboard();
+    window.fetchAndRenderLeaderboard();
 };
 
 window.switchLeaderboardScope = (scope) => {
     currentScope = scope;
-    document.querySelectorAll('.scope-btn').forEach(btn => {
-        btn.className = "scope-btn px-4 py-2 rounded-lg text-xs font-bold text-gray-500 hover:bg-white/5 border border-transparent";
-    });
-    const activeBtn = document.getElementById(`scope-${scope}`);
-    activeBtn.className = "scope-btn px-4 py-2 rounded-lg text-xs font-bold bg-white/10 text-white border border-white/20";
+    const searchInput = document.getElementById('leaderboard-search');
+    if(searchInput) searchInput.value = '';
 
-    fetchAndRenderLeaderboard();
+    document.querySelectorAll('.scope-btn').forEach(btn => {
+        btn.className = "scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold text-gray-500 hover:bg-white/5 border border-transparent transition-all";
+    });
+    
+    const activeBtn = document.getElementById(`scope-${scope}`);
+    if (activeBtn) activeBtn.className = "scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold bg-white/10 text-white border border-white/20 shadow-md transition-all";
+    
+    window.fetchAndRenderLeaderboard();
 };
+
+// ==========================================
+// 9. UTILS
+// ==========================================
+function resolveImageUrl(url, type = 'user') {
+    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+        return '../assets/icons/icon.jpg';
+    }
+    try {
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
+            if (idMatch && idMatch[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+        }
+    } catch(e) {}
+    return url;
+}
+
+function getRankDataForMember(points) {
+    if (!RANKS_DATA || RANKS_DATA.length === 0) {
+        return { title: 'Trainee', color: 'text-gray-400 bg-gray-400/10', icon: 'fa-star' };
+    }
+    
+    let rank = RANKS_DATA[0];
+    for (let i = 0; i < RANKS_DATA.length; i++) {
+        if (points >= RANKS_DATA[i].points_required) rank = RANKS_DATA[i];
+        else break;
+    }
+    return rank;
+}
+
+function getRankDataForTeam(points) {
+    if (!TEAM_RANKS_DATA || TEAM_RANKS_DATA.length === 0) {
+        return { title: 'Squad', color: 'text-blue-400 bg-blue-400/10', icon: 'fa-shield-alt' };
+    }
+
+    let rank = TEAM_RANKS_DATA[0];
+    for (let i = 0; i < TEAM_RANKS_DATA.length; i++) {
+        if (points >= TEAM_RANKS_DATA[i].points_required) rank = TEAM_RANKS_DATA[i];
+        else break;
+    }
+    return rank;
+}

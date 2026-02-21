@@ -1905,19 +1905,19 @@ function updateModalContent(task, details, type) {
 }
 
 // Global Modals
-window.openTaskDetailsModal = (taskId) => {
-    const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
-    if (!task) return;
+// window.openTaskDetailsModal = (taskId) => {
+//     const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
+//     if (!task) return;
 
-    document.getElementById('modal-task-title').innerText = task.title || 'Untitled';
-    document.getElementById('modal-task-desc').innerText = task.description || 'No Description.';
-    document.getElementById('modal-task-duration').innerText = formatDuration(task.duration) || '--:--';
+//     document.getElementById('modal-task-title').innerText = task.title || 'Untitled';
+//     document.getElementById('modal-task-desc').innerText = task.description || 'No Description.';
+//     document.getElementById('modal-task-duration').innerText = formatDuration(task.duration) || '--:--';
     
-    const playerLink = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
-    document.getElementById('modal-task-link').href = playerLink;
+//     const playerLink = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
+//     document.getElementById('modal-task-link').href = playerLink;
 
-    document.getElementById('task-details-modal').classList.remove('hidden');
-};
+//     document.getElementById('task-details-modal').classList.remove('hidden');
+// };
 window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
 window.openCustomTaskModal = () => document.getElementById('custom-task-modal').classList.remove('hidden');
 window.openBroadcastModal = () => document.getElementById('broadcast-modal').classList.remove('hidden');
@@ -2013,6 +2013,10 @@ function formatDuration(rawTime) {
 }
 
 function resolveImageUrl(url, type = 'course') {
+    try {
+    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+        return '../assets/icons/icon.jpg';
+    }
     if (!url || url.trim() === "" || url === "null" || url === "undefined") {
         return '../assets/icons/icon.jpg';
     }
@@ -2025,6 +2029,7 @@ function resolveImageUrl(url, type = 'course') {
     if (url.includes('dropbox.com')) {
         return url.replace('?dl=0', '?raw=1');
     }
+    } catch(e) {}
     return url;
 }
 
@@ -2072,13 +2077,15 @@ function getCurrentWeekCycle() {
 }
 
 function getRankDataForMember(points) {
+    // 🛡️ حماية ضد غياب مصفوفة الشارات
+    if (!RANKS_DATA || RANKS_DATA.length === 0) {
+        return { title: 'Trainee', color: 'text-gray-400 bg-gray-400/10', icon: 'fa-star' };
+    }
+    
     let rank = RANKS_DATA[0];
     for (let i = 0; i < RANKS_DATA.length; i++) {
-        if (points >= RANKS_DATA[i].points_required) {
-            rank = RANKS_DATA[i];
-        } else {
-            break;
-        }
+        if (points >= RANKS_DATA[i].points_required) rank = RANKS_DATA[i];
+        else break;
     }
     return rank;
 }
@@ -2195,7 +2202,7 @@ window.loadPendingSubmissions = async () => {
     }
 };
 
-// --- 2. TASK TRACKING LOGIC (NEW) ---
+// --- 2. TASK TRACKING LOGIC (NEW - FIXED) ---
 window.loadTaskTracking = async () => {
     const list = document.getElementById('tracking-tasks-list');
     if (!list) return;
@@ -2204,24 +2211,61 @@ window.loadTaskTracking = async () => {
     if(!currentTeam || !currentTeam.team_id) return;
 
     try {
+        // 1. جلب أعضاء الفريق
         const {data: members} = await supabase.from('profiles').select('id').eq('team_id', currentTeam.team_id);
         const totalMembers = members ? members.length : 0;
+        const memberIds = (members || []).map(m => m.id);
 
+        if (totalMembers === 0) {
+            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">لا يوجد أعضاء في الفريق حتى الآن.</p>`;
+            return;
+        }
+
+        // 2. جلب كل المهام الموكلة للفريق
         const {data: tasks} = await supabase.from('team_tasks')
             .select('*')
             .eq('team_id', currentTeam.team_id)
             .order('created_at', {ascending: false});
-        
+            
+        if (!tasks || tasks.length === 0) {
+            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl">لا توجد مهام حالية أو متأخرة.</p>`;
+            return;
+        }
+
+        // 3. جلب الإنجازات الفعلية من قاعدة البيانات (لتجنب أخطاء العدادات الوهمية)
+        const { data: completedVideos } = await supabase.from('completed_materials')
+            .select('material_id, user_id').in('user_id', memberIds);
+            
+        const { data: passedQuizzes } = await supabase.from('quiz_attempts')
+            .select('quiz_id, user_id').eq('passed', true).in('user_id', memberIds);
+            
+        const { data: gradedProjects } = await supabase.from('project_submissions')
+            .select('project_id, user_id').in('status', ['graded', 'remarked']).in('user_id', memberIds);
+
         const currentWeekId = getCurrentWeekCycle().id;
         let html = '';
         
         tasks.forEach(task => {
-            const compCount = task.stats?.completed_count || 0;
+            // حساب الإنجاز الفعلي (باستخدام Set لمنع تكرار نفس الطالب)
+            let completedSet = new Set();
+
+            if (task.type === 'video') {
+                completedVideos?.forEach(v => { if (v.material_id === task.content_id) completedSet.add(v.user_id); });
+            } else if (task.type === 'quiz') {
+                passedQuizzes?.forEach(q => { if (q.quiz_id === task.content_id) completedSet.add(q.user_id); });
+            } else if (task.type === 'project') {
+                gradedProjects?.forEach(p => { if (p.project_id === task.content_id) completedSet.add(p.user_id); });
+            }
+
+            // تأمين النسبة لكي لا تتعدى عدد الأعضاء الإجمالي أبداً
+            const compCount = Math.min(completedSet.size, totalMembers);
+            
             const isFullyCompleted = totalMembers > 0 && compCount >= totalMembers;
             const isCurrentWeek = task.week_id === currentWeekId;
             
-            // Logic: Show if current week OR if (past week AND NOT fully completed)
-            if (isCurrentWeek || !isFullyCompleted) {
+            // 🚀 المنطق المطلوب: إظهار المهمة إذا كانت في الأسبوع الحالي، أو (سابقة ولكن غير مكتملة)
+            if (isCurrentWeek || (!isCurrentWeek && !isFullyCompleted)) {
+                
                 const progress = totalMembers > 0 ? Math.round((compCount / totalMembers) * 100) : 0;
                 const lateBadge = (!isCurrentWeek && !isFullyCompleted) ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-clock mr-1"></i> متأخرة</span>` : '';
                 
@@ -2245,23 +2289,23 @@ window.loadTaskTracking = async () => {
                     <div class="space-y-2 mt-auto">
                         <div class="flex justify-between text-xs text-gray-400 font-bold">
                             <span>نسبة الإنجاز</span>
-                            <span class="${progress === 100 ? 'text-green-400' : 'text-b-primary'}">${progress}%</span>
+                            <span class="${progress === 100 ? 'text-green-400' : 'text-b-primary'} font-mono">${progress}%</span>
                         </div>
                         <div class="w-full h-1.5 bg-black rounded-full overflow-hidden border border-white/5">
                             <div class="h-full ${progress === 100 ? 'bg-green-500' : 'bg-b-primary'} transition-all" style="width: ${progress}%"></div>
                         </div>
-                        <div class="text-[10px] text-gray-500 text-left pt-1 font-mono">${compCount} / ${totalMembers} Students</div>
+                        <div class="text-[10px] text-gray-500 text-left pt-1 font-mono">${compCount} / ${totalMembers} 👨‍🎓</div>
                     </div>
                 </div>`;
             }
         });
         
-        if(!html) html = `<p class="col-span-full text-center text-gray-500 py-10">لا توجد مهام حالية أو متأخرة.</p>`;
+        if(!html) html = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl">الفريق متفوق! لا توجد مهام حالية أو متأخرة للعمل عليها.</p>`;
         list.innerHTML = html;
 
     } catch(e) {
         console.error("Task Tracking Error:", e);
-        list.innerHTML = `<p class="col-span-full text-center text-red-500 py-10">خطأ في جلب المهام</p>`;
+        list.innerHTML = `<p class="col-span-full text-center text-red-500 py-10">حدث خطأ أثناء جلب المهام.</p>`;
     }
 };
 
@@ -2274,6 +2318,7 @@ window.openTaskDetailsModal = async (taskId) => {
     list.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
     
     try {
+        // جلب بيانات المهمة والأعضاء
         const {data: task} = await supabase.from('team_tasks').select('*').eq('id', taskId).single();
         const {data: members} = await supabase.from('profiles').select('id, full_name, avatar_url').eq('team_id', currentTeam.team_id);
         
@@ -2287,26 +2332,57 @@ window.openTaskDetailsModal = async (taskId) => {
         const memberIds = members.map(m => m.id);
         let completedMembersMap = {}; 
 
-        // Fetching specific completion logic based on task type
+        // 1. جلب البيانات وحساب (النقاط، النسب، المحاولات) حسب نوع المهمة
         if (task.type === 'video') {
             const {data: comps} = await supabase.from('completed_materials').select('user_id').eq('material_id', task.content_id).in('user_id', memberIds);
             comps?.forEach(c => completedMembersMap[c.user_id] = { status: 'completed' });
         } 
         else if (task.type === 'quiz') {
+            // جلب أقصى نقاط للكويز لحساب النقاط المكتسبة
+            const {data: quizMeta} = await supabase.from('quizzes').select('max_xp').eq('quiz_id', task.content_id).single();
+            const maxXP = quizMeta?.max_xp || 0;
+
+            // جلب كل المحاولات لحساب العدد والنتيجة
             const {data: atts} = await supabase.from('quiz_attempts').select('user_id, score, passed').eq('quiz_id', task.content_id).in('user_id', memberIds);
+            
             atts?.forEach(a => {
-                if (!completedMembersMap[a.user_id] || a.score > completedMembersMap[a.user_id].score) {
-                    completedMembersMap[a.user_id] = { status: 'completed', score: a.score, passed: a.passed };
+                if (!completedMembersMap[a.user_id]) {
+                    completedMembersMap[a.user_id] = { 
+                        status: 'completed', 
+                        score: a.score, 
+                        passed: a.passed,
+                        attempts: 1,
+                        xp: a.passed ? Math.round((a.score / 100) * maxXP) : 0
+                    };
+                } else {
+                    completedMembersMap[a.user_id].attempts += 1;
+                    // الاحتفاظ بأفضل نتيجة
+                    if (a.score > completedMembersMap[a.user_id].score) {
+                        completedMembersMap[a.user_id].score = a.score;
+                        completedMembersMap[a.user_id].passed = a.passed;
+                        completedMembersMap[a.user_id].xp = a.passed ? Math.round((a.score / 100) * maxXP) : 0;
+                    }
                 }
             });
         }
         else if (task.type === 'project') {
+            // جلب الدرجة النهائية للمشروع لحساب النسبة المئوية
+            const {data: projMeta} = await supabase.from('projects').select('max_points').eq('id', task.content_id).single();
+            const maxPts = projMeta?.max_points || 100;
+
             const {data: subs} = await supabase.from('project_submissions').select('user_id, status, grade').eq('project_id', task.content_id).in('user_id', memberIds);
             subs?.forEach(s => {
-                completedMembersMap[s.user_id] = { status: s.status, grade: s.grade };
+                const grade = s.grade || 0;
+                const percentage = Math.round((grade / maxPts) * 100);
+                completedMembersMap[s.user_id] = { 
+                    status: s.status, 
+                    grade: grade, 
+                    percentage: percentage 
+                };
             });
         }
 
+        // 2. رسم الأعضاء والبيانات
         let compCount = 0;
         let html = '';
         
@@ -2321,33 +2397,50 @@ window.openTaskDetailsModal = async (taskId) => {
                 if (task.type === 'video') {
                     compCount++;
                     statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check"></i> مكتمل</span>`;
-                } else if (task.type === 'quiz') {
+                } 
+                else if (task.type === 'quiz') {
                     if(detail.passed) compCount++;
                     const color = detail.passed ? 'green' : 'yellow';
                     const text = detail.passed ? 'نجاح' : 'لم يجتز';
                     const icon = detail.passed ? 'fa-check' : 'fa-exclamation-triangle';
                     statusBadge = `<span class="bg-${color}-500/10 text-${color}-400 border border-${color}-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas ${icon}"></i> ${text}</span>`;
-                    extraInfo = `<div class="text-sm font-bold text-white bg-black px-3 py-1 rounded-lg border border-white/10 font-mono">${detail.score}%</div>`;
-                } else if (task.type === 'project') {
+                    
+                    // إظهار المحاولات، النسبة، والنقاط للكويزات
+                    extraInfo = `
+                        <div class="flex items-center gap-2 mr-3" dir="ltr">
+                            <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[10px] font-mono" title="عدد المحاولات"><i class="fas fa-redo text-[8px] mr-1"></i>${detail.attempts}</span>
+                            <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="النسبة المئوية">${detail.score}%</span>
+                            <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="النقاط (XP)">+${detail.xp} XP</span>
+                        </div>
+                    `;
+                } 
+                else if (task.type === 'project') {
                     if (detail.status === 'graded' || detail.status === 'remarked') compCount++;
                     
                     if (detail.status === 'pending') {
                         statusBadge = `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-clock"></i> قيد المراجعة</span>`;
                     } else if (detail.status === 'graded' || detail.status === 'remarked') {
                         statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-double"></i> تم التقييم</span>`;
-                        extraInfo = `<div class="text-sm font-bold text-white bg-black px-3 py-1 rounded-lg border border-white/10 font-mono">${detail.grade} XP</div>`;
+                        
+                        // إظهار النسبة، والنقاط للمشاريع
+                        extraInfo = `
+                            <div class="flex items-center gap-2 mr-3" dir="ltr">
+                                <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="النسبة المئوية">${detail.percentage}%</span>
+                                <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="النقاط (XP)">+${detail.grade} XP</span>
+                            </div>
+                        `;
                     }
                 }
             }
 
-            const avatar = resolveImageUrl(m.avatar_url);
+            const avatar = resolveImageUrl(m.avatar_url, 'user');
             html += `
             <div class="flex items-center justify-between p-3.5 bg-black/40 rounded-xl border border-white/5 hover:bg-white/5 transition-colors group">
                 <div class="flex items-center gap-3">
                     <img src="${avatar}" class="w-10 h-10 rounded-full border border-white/10 object-cover bg-black">
                     <span class="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">${m.full_name || 'طالب'}</span>
                 </div>
-                <div class="flex items-center gap-3" dir="ltr">
+                <div class="flex items-center">
                     ${extraInfo}
                     ${statusBadge}
                 </div>
@@ -2369,7 +2462,6 @@ window.openTaskDetailsModal = async (taskId) => {
         list.innerHTML = `<p class="text-red-500 text-center py-10">حدث خطأ أثناء جلب التفاصيل.</p>`;
     }
 };
-
 window.closeTaskDetailsModal = () => {
     document.getElementById('task-details-modal')?.classList.add('hidden');
 };

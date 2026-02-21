@@ -1,4 +1,4 @@
-// import { auth, db, doc, getDoc, runTransaction, serverTimestamp } from './firebase-config.js';
+import { supabase } from './supabase-config.js';
 import { RANKS_DATA } from './badges-data.js';
 
 // ==========================================
@@ -55,8 +55,6 @@ document.head.appendChild(style);
 // ==========================================
 // 2. UI HELPERS (TOASTS & MODALS)
 // ==========================================
-
-// Helper to show custom toasts (No browser alerts)
 function showCustomToast(msg, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -75,7 +73,6 @@ function showCustomToast(msg, type = 'success') {
     }, 4000);
 }
 
-// Logic to handle the Rank Up Modal
 function triggerRankUpModal(newRankKey) {
     const modal = document.getElementById('rank-up-modal');
     const card = document.getElementById('rank-up-card');
@@ -85,33 +82,35 @@ function triggerRankUpModal(newRankKey) {
     const rankData = RANKS_DATA.find(r => r.key === newRankKey);
     if (!rankData || !modal) return;
 
-    img.src = `../assets/user-badge/lv${rankData.level}.png`;
-    title.innerText = rankData.title;
-    title.style.color = rankData.stage_color;
+    if (img) img.src = `../assets/user-badge/lv${rankData.level}.png`;
+    if (title) {
+        title.innerText = rankData.title;
+        title.style.color = rankData.stage_color;
+    }
 
     modal.classList.remove('hidden');
     setTimeout(() => {
-        card.classList.remove('scale-90', 'opacity-0');
-        card.classList.add('scale-100', 'opacity-100');
+        if (card) {
+            card.classList.remove('scale-90', 'opacity-0');
+            card.classList.add('scale-100', 'opacity-100');
+        }
     }, 50);
 }
 
 window.closeRankUpModal = () => {
     const modal = document.getElementById('rank-up-modal');
     const card = document.getElementById('rank-up-card');
-    card.classList.add('scale-90', 'opacity-0');
-    setTimeout(() => modal.classList.add('hidden'), 500);
+    if (card) card.classList.add('scale-90', 'opacity-0');
+    setTimeout(() => modal?.classList.add('hidden'), 500);
 };
 
 // ==========================================
 // 3. MAIN BADGES UI RENDERER
 // ==========================================
-
 export async function initBadgesSystem() {
     const container = document.getElementById('rank-container');
     if (!container) return; 
 
-    // Cinematic Loading
     container.innerHTML = `
         <div class="flex flex-col items-center justify-center py-32 space-y-4">
             <div class="relative w-16 h-16">
@@ -122,13 +121,14 @@ export async function initBadgesSystem() {
         </div>
     `;
 
-    const user = auth.currentUser;
-    if (!user) return;
-
     try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-        const currentPoints = userData.gamification?.total_points || 0;
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) throw new Error("Auth Failed");
+
+        const { data: userData, error: dbError } = await supabase.from('profiles').select('total_xp, current_rank').eq('id', user.id).single();
+        if (dbError) throw dbError;
+
+        const currentPoints = userData?.total_xp || 0;
 
         let currentRankIndex = 0;
         for (let i = 0; i < RANKS_DATA.length; i++) {
@@ -147,9 +147,12 @@ export async function initBadgesSystem() {
 
     } catch (error) {
         console.error("Badges Error:", error);
-        container.innerHTML = `<div class="text-red-500 text-center py-20 border border-red-500/20 rounded-xl bg-red-900/10">فشل تحميل البيانات</div>`;
+        container.innerHTML = `<div class="text-red-500 text-center py-20 border border-red-500/20 rounded-xl bg-red-900/10">Failed to load data</div>`;
     }
 }
+
+// Bind to window for HTML tabs
+window.loadRankSystem = initBadgesSystem;
 
 function renderCinematicPage(container, currentRank, nextRank, points, currentIndex) {
     let progressPercent = 100;
@@ -166,25 +169,19 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
 
     container.innerHTML = `
         <div class="relative w-full mb-24 perspective-1000 group">
-            
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[${currentRank.stage_color}] blur-[180px] opacity-10 pointer-events-none transition-opacity duration-700 group-hover:opacity-20"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] blur-[180px] opacity-10 pointer-events-none transition-opacity duration-700 group-hover:opacity-20" style="background-color: ${currentRank.stage_color}"></div>
             
             <div id="hero-card" class="relative bg-black/40 border border-white/10 backdrop-blur-xl rounded-[3rem] p-10 overflow-hidden shadow-2xl transition-transform duration-100 ease-out">
                 
                 <div id="particles-container" class="absolute inset-0 pointer-events-none"></div>
-
                 <div class="card-spotlight absolute inset-0 pointer-events-none z-20"></div>
 
                 <div class="relative z-30 flex flex-col items-center">
                     
                     <div id="hero-badge" class="relative w-64 h-64 mb-8 transition-transform duration-200 ease-out cursor-pointer" style="animation: float-slow 6s ease-in-out infinite;">
-                        <div class="absolute inset-0 rounded-full bg-[${currentRank.stage_color}] blur-2xl opacity-40 animate-pulse"></div>
-                        
+                        <div class="absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse" style="background-color: ${currentRank.stage_color}"></div>
                         <div class="relative w-full h-full rounded-[12%] overflow-hidden border-4 shadow-2xl" style="border-color: ${currentRank.stage_color}">
-                            <img src="${currentImgUrl}" 
-                                 class="w-full h-full object-cover"
-                                 alt="${currentRank.title}"
-                                 onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${currentRank.level}'">
+                            <img src="${currentImgUrl}" class="w-full h-full object-cover" alt="${currentRank.title}" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${currentRank.level}'">
                         </div>
                     </div>
 
@@ -198,13 +195,13 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
                             ${currentRank.title}
                         </h1>
                         
-                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 border-[${currentRank.stage_color}] pl-4 text-right">
+                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 pl-4 text-right" style="border-left-color: ${currentRank.stage_color}">
                             "${currentRank.lore}"
                         </p>
                     </div>
 
                     <div class="w-full max-w-2xl bg-black/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden group/stats hover:border-white/20 transition-all">
-                        <div class="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-[${currentRank.stage_color}]/10 to-transparent"></div>
+                        <div class="absolute top-0 right-0 w-20 h-full" style="background: linear-gradient(to left, ${currentRank.stage_color}1A, transparent)"></div>
                         
                         <div class="flex justify-between items-end mb-3">
                             <div>
@@ -213,15 +210,15 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
                             </div>
                             <div class="text-right">
                                 <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">الهدف القادم</span>
-                                <span class="text-sm font-bold text-[${currentRank.stage_color}]">
+                                <span class="text-sm font-bold" style="color: ${currentRank.stage_color}">
                                     ${nextRank ? nextRank.title : 'MAX'}
                                 </span>
                             </div>
                         </div>
 
                         <div class="h-2 bg-white/5 rounded-full overflow-hidden relative">
-                            <div class="absolute inset-0 w-full h-full bg-[${currentRank.stage_color}]/20 blur-[2px]"></div>
-                            <div class="h-full bg-gradient-to-r from-[${currentRank.stage_color}] to-white transition-all duration-1000 ease-out relative" style="width: ${progressPercent}%">
+                            <div class="absolute inset-0 w-full h-full blur-[2px]" style="background-color: ${currentRank.stage_color}33"></div>
+                            <div class="h-full transition-all duration-1000 ease-out relative" style="width: ${progressPercent}%; background: linear-gradient(to right, ${currentRank.stage_color}, white)">
                                 <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-6 bg-white blur-[4px] opacity-70"></div>
                             </div>
                         </div>
@@ -235,54 +232,51 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
         </div>
 
         <div class="relative pl-0 md:pl-0 mt-32 max-w-4xl mx-auto">
-            
             <div class="absolute right-6 md:right-1/2 top-0 bottom-0 w-[2px] energy-line" style="--rank-color: ${currentRank.stage_color}"></div>
-            
             <div class="space-y-24 pb-32">
                 ${RANKS_DATA.map((rank, index) => {
                     const isUnlocked = index <= currentIndex;
                     const isCurrent = index === currentIndex;
-                    
                     const isEven = index % 2 === 0;
+                    
                     const alignClass = isEven ? 'md:flex-row' : 'md:flex-row-reverse';
                     const textAlign = isEven ? 'md:text-left' : 'md:text-right';
                     const paddingAlign = isEven ? 'md:pl-24' : 'md:pr-24';
                     
                     let opacity = isUnlocked ? 'opacity-100' : 'opacity-30 blur-[1px]';
                     let scale = isCurrent ? 'scale-110' : 'scale-100';
-                    let badgeGlow = isCurrent ? `drop-shadow-[0_0_25px_${rank.stage_color}]` : '';
+                    let badgeGlow = isCurrent ? `drop-shadow(0 0 25px ${rank.stage_color})` : 'none';
                     let imgFilter = isUnlocked ? 'grayscale(0)' : 'grayscale(100%) brightness(50%)';
+                    let borderColor = isUnlocked ? rank.stage_color : '#333333';
+                    let titleColor = isUnlocked ? rank.stage_color : 'white';
                     
                     const badgeUrl = `../assets/user-badge/lv${rank.level}.png`;
 
                     return `
                     <div class="reveal-element flex items-center ${alignClass} relative group" data-index="${index}">
-                        
                         <div class="w-full md:w-1/2 pl-20 pr-4 md:px-0 ${paddingAlign} ${textAlign} ${opacity} transition-all duration-500 hover:opacity-100 hover:blur-0">
                             <div class="inline-block">
                                 <span class="text-[10px] font-mono text-gray-500 border border-white/10 px-2 py-0.5 rounded uppercase tracking-wider mb-2 block w-fit ${isEven ? '' : 'ml-auto'}">
                                     LVL ${rank.level}
                                 </span>
-                                <h3 class="text-3xl font-bold text-white mb-2 tracking-tight" style="color: ${isUnlocked ? rank.stage_color : 'white'}">${rank.title}</h3>
-                                <p class="text-sm font-mono text-[${rank.stage_color}] mb-3">${rank.points_required.toLocaleString()} XP</p>
+                                <h3 class="text-3xl font-bold mb-2 tracking-tight" style="color: ${titleColor}">${rank.title}</h3>
+                                <p class="text-sm font-mono mb-3" style="color: ${rank.stage_color}">${rank.points_required.toLocaleString()} XP</p>
                                 <p class="text-base text-gray-400 leading-relaxed max-w-sm hidden md:block">${rank.description}</p>
                             </div>
                         </div>
 
-                        <div class="absolute right-6 md:right-1/2 translate-x-1/2 w-4 h-4 rounded-full bg-black border-2 z-20" style="border-color: ${isUnlocked ? rank.stage_color : '#333'}">
-                            ${isCurrent ? `<div class="absolute inset-0 bg-[${rank.stage_color}] blur-md animate-pulse"></div>` : ''}
+                        <div class="absolute right-6 md:right-1/2 translate-x-1/2 w-4 h-4 rounded-full bg-black border-2 z-20" style="border-color: ${borderColor}">
+                            ${isCurrent ? `<div class="absolute inset-0 blur-md animate-pulse" style="background-color: ${rank.stage_color}"></div>` : ''}
                         </div>
 
                         <div class="absolute right-6 md:right-1/2 translate-x-1/2 -translate-y-1/2 top-1/2 w-24 h-24 flex items-center justify-center z-30 transition-all duration-700 ease-out group-hover:scale-125 ${scale}">
-                            
-                            <div class="w-full h-full rounded-[12%] overflow-hidden border-2 shadow-lg relative bg-black" style="border-color: ${isUnlocked ? rank.stage_color : '#333'}">
+                            <div class="w-full h-full rounded-[12%] overflow-hidden border-2 shadow-lg relative bg-black" style="border-color: ${borderColor}">
                                 <img src="${badgeUrl}" 
                                      class="w-full h-full object-cover transition-all duration-500"
-                                     style="filter: ${imgFilter} ${badgeGlow}; transform: translateZ(20px);"
+                                     style="filter: ${imgFilter}; filter: ${badgeGlow}; transform: translateZ(20px);"
                                      onerror="this.style.display='none';">
                             </div>
                         </div>
-
                         <div class="hidden md:block w-1/2"></div>
                     </div>
                     `;
@@ -293,8 +287,6 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
 }
 
 function initVisualEffects() {
-    
-    // Mouse Spotlight Logic
     const card = document.getElementById('hero-card');
     const badge = document.getElementById('hero-badge');
 
@@ -322,12 +314,7 @@ function initVisualEffects() {
         });
     }
 
-    // Scroll Reveal
-    const observerOptions = {
-        threshold: 0.15, 
-        rootMargin: "0px 0px -50px 0px"
-    };
-
+    const observerOptions = { threshold: 0.15, rootMargin: "0px 0px -50px 0px" };
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -342,14 +329,10 @@ function initVisualEffects() {
         observer.observe(el);
     });
 
-    // Particle System
     const particleContainer = document.getElementById('particles-container');
     if(particleContainer) {
-        // Clear previous particles if any
         particleContainer.innerHTML = '';
-        for(let i=0; i<25; i++) {
-            createParticle(particleContainer);
-        }
+        for(let i=0; i<25; i++) createParticle(particleContainer);
     }
 }
 
@@ -374,68 +357,46 @@ function createParticle(container) {
 }
 
 // ==========================================
-// 4. POINT SYSTEM LOGIC (Backend)
+// 4. POINT SYSTEM LOGIC
 // ==========================================
-
 export async function addGamificationPoints(userId, pointsToAdd, activityId, activityType) {
     if (!userId || !pointsToAdd || !activityId) return;
 
-    const userRef = doc(db, "users", userId);
-    const logRef = doc(db, "users", userId, "point_logs", activityId);
-
     try {
-        const result = await runTransaction(db, async (transaction) => {
-            const logDoc = await transaction.get(logRef);
-            if (logDoc.exists()) throw "Duplicate";
+        const { data: existingLog } = await supabase.from('student_xp_logs').select('id').eq('user_id', userId).eq('source_id', String(activityId)).single();
+        if (existingLog) return { success: false, reason: "Duplicate" }; 
 
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) throw "UserNotFound";
+        const { data: profile } = await supabase.from('profiles').select('total_xp, current_rank').eq('id', userId).single();
+        const currentPoints = profile?.total_xp || 0;
+        const oldRankKey = profile?.current_rank || 'recruit';
+        const newTotal = currentPoints + pointsToAdd;
 
-            const userData = userDoc.data();
-            const currentPoints = userData.gamification?.total_points || 0;
-            const newTotal = currentPoints + pointsToAdd;
+        let newRankObj = RANKS_DATA[0];
+        for (let i = 0; i < RANKS_DATA.length; i++) {
+            if (newTotal >= RANKS_DATA[i].points_required) {
+                newRankObj = RANKS_DATA[i];
+            } else break;
+        }
 
-            let newRankObj = RANKS_DATA[0];
-            for (let i = 0; i < RANKS_DATA.length; i++) {
-                if (newTotal >= RANKS_DATA[i].points_required) {
-                    newRankObj = RANKS_DATA[i];
-                } else {
-                    break;
-                }
-            }
+        await supabase.from('profiles').update({ total_xp: newTotal, current_rank: newRankObj.key }).eq('id', userId);
 
-            transaction.update(userRef, {
-                "gamification.total_points": newTotal,
-                "gamification.current_rank": newRankObj.key,
-                "gamification.last_updated": serverTimestamp()
-            });
-
-            transaction.set(logRef, {
-                points: pointsToAdd,
-                type: activityType,
-                timestamp: serverTimestamp(),
-                description: `Completed ${activityType}: ${activityId}`
-            });
-
-            const oldRankKey = userData.gamification?.current_rank || "recruit";
-            const isRankUp = newRankObj.key !== oldRankKey;
-
-            return { success: true, newTotal, isRankUp, newRankKey: newRankObj.key };
+        await supabase.from('student_xp_logs').insert({
+            user_id: userId,
+            amount: pointsToAdd,
+            reason: activityType,
+            source_id: String(activityId)
         });
 
-        if (result.success) {
-            console.log(`XP Added: ${result.newTotal}`);
-            showCustomToast(`+${pointsToAdd} XP Gained`, 'success');
+        const isRankUp = newRankObj.key !== oldRankKey;
 
-            if (result.isRankUp) {
-                triggerRankUpModal(result.newRankKey);
-            }
-        }
+        if (isRankUp) triggerRankUpModal(newRankObj.key);
+        showCustomToast(`+${pointsToAdd} XP Gained`, 'success');
+
+        return { success: true, newTotal, isRankUp, newRankKey: newRankObj.key };
 
     } catch (e) {
-        if (e !== "Duplicate") {
-            console.error("Points Error:", e);
-            showCustomToast("System Error while saving progress", 'error');
-        }
+        console.error("Points Error:", e);
+        showCustomToast("System Error while saving progress", 'error');
+        return { success: false };
     }
 }
