@@ -1,18 +1,38 @@
-// import { db, doc, getDoc, updateDoc } from './firebase-config.js';
+import { supabase } from './supabase-config.js';
 
-// متغيرات العناصر
 let modal, form, nameInput, logoInput, uniInput, govInput;
 let previewImg, displayNamePreview;
 let currentTeamId = null;
 
 // =========================================================
-// 1. تهيئة المودال
+// UTILITIES
 // =========================================================
+
+function getDirectImageLink(url) {
+    if (!url || url.trim() === "") return "../assets/icons/icon.jpg";
+    try {
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
+            if (idMatch && idMatch[1]) {
+                return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`; 
+            }
+        }
+    } catch (e) {
+        console.warn("[Team Settings] URL Parse Error:", e);
+    }
+    return url;
+}
+
+// =========================================================
+// INITIALIZATION
+// =========================================================
+
 export function initTeamSettingsModal() {
+    console.log("[Team Settings] --- INITIALIZING MODAL ---");
+    
     modal = document.getElementById('team-settings-modal');
     form = document.getElementById('team-settings-form');
     
-    // ربط العناصر
     nameInput = document.getElementById('team-set-name');
     logoInput = document.getElementById('team-set-logo');
     uniInput = document.getElementById('team-set-uni');
@@ -20,211 +40,180 @@ export function initTeamSettingsModal() {
     previewImg = document.getElementById('team-preview-logo');
     displayNamePreview = document.getElementById('team-name-preview');
 
-    // أزرار الإغلاق
+    if (!modal || !form) {
+        console.warn("[Team Settings] Modal or Form not found in DOM.");
+        return;
+    }
+
     const closeBtn = document.getElementById('close-team-settings');
-    if(closeBtn) closeBtn.addEventListener('click', closeTeamSettings);
+    if (closeBtn) closeBtn.addEventListener('click', closeTeamSettings);
 
-    // زر تحديث المعاينة
     const previewBtn = document.getElementById('btn-preview-team-logo');
-    if(previewBtn) previewBtn.addEventListener('click', () => {
-        updateTeamPreviewUI();
-        showToast("تم تحديث معاينة اللوجو", "info");
-    });
+    if (previewBtn) {
+        previewBtn.addEventListener('click', () => {
+            updateTeamPreviewUI();
+            showToast("Preview updated", "info");
+        });
+    }
 
-    // معالجة الحفظ
-    if(form) form.addEventListener('submit', saveTeamSettings);
+    if (nameInput) nameInput.addEventListener('input', updateTeamPreviewUI);
+    if (logoInput) logoInput.addEventListener('input', updateTeamPreviewUI);
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        executeTeamSave();
+    });
 }
 
 // =========================================================
-// 2. الفتح والعرض
+// OPEN / CLOSE LOGIC
 // =========================================================
-export async function openTeamSettings(teamId, isLeader) {
+
+export async function openTeamSettings(teamId, isLeader = false) {
+    if (!teamId) {
+        showToast("Team ID is missing", "error");
+        return;
+    }
     if (!isLeader) {
-        showToast("عذراً، إعدادات الفريق متاحة للقائد فقط 🔒", "error");
+        showToast("Only the Team Leader can edit settings.", "error");
         return;
     }
 
     currentTeamId = teamId;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    const btn = document.getElementById('open-team-settings-btn');
+    const originalContent = btn ? btn.innerHTML : '';
+    
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-    // جلب أحدث بيانات للفريق من السيرفر (لضمان الدقة)
     try {
-        const docRef = doc(db, "teams", teamId);
-        const docSnap = await getDoc(docRef);
+        console.log(`[Team Settings] Fetching data for team: ${teamId}`);
+        const { data: teamData, error } = await supabase
+            .from('teams')
+            .select('*')
+            .eq('id', teamId)
+            .single();
 
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const info = data.info || {};
+        if (error) throw error;
+        if (!teamData) throw new Error("Team not found in database.");
 
-            // تعبئة الحقول
-            nameInput.value = info.name || data.name || "";
-            logoInput.value = info.logo_url || data.logo_url || "";
-            uniInput.value = info.university || "";
-            govInput.value = info.governorate || "";
+        populateForm(teamData);
+        updateTeamPreviewUI();
 
-            updateTeamPreviewUI();
-        }
+        if (modal) modal.classList.remove('hidden');
+
     } catch (error) {
-        console.error("Error fetching team settings:", error);
-        showToast("فشل تحميل بيانات الفريق", "error");
+        console.error("[Team Settings] Load Error:", error);
+        showToast("Failed to load team settings.", "error");
+    } finally {
+        if (btn) btn.innerHTML = originalContent;
     }
 }
 
 export function closeTeamSettings() {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    if (modal) modal.classList.add('hidden');
+    currentTeamId = null;
+}
+
+// =========================================================
+// UI UPDATES
+// =========================================================
+
+function populateForm(teamData) {
+    if (nameInput) nameInput.value = teamData.name || '';
+    if (logoInput) logoInput.value = teamData.logo_url || '';
+    
+    // For selects, setting the value works if the option exists
+    if (uniInput) uniInput.value = teamData.university || '';
+    if (govInput) govInput.value = teamData.governorate || '';
 }
 
 function updateTeamPreviewUI() {
-    const rawUrl = logoInput.value.trim();
-    const name = nameInput.value.trim() || 'فريق جديد';
-    
-    const directUrl = getDirectImageLink(rawUrl);
-    
-    if (previewImg) {
-        previewImg.src = directUrl;
-        previewImg.onerror = function() {
-            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=006A67&color=fff&size=256`;
-        };
+    if (previewImg && logoInput) {
+        previewImg.src = getDirectImageLink(logoInput.value.trim());
     }
-
-    if (displayNamePreview) displayNamePreview.textContent = name;
-}
-
-async function saveTeamSettings(e) {
-    e.preventDefault();
-    
-    // 1. فتح مودال التأكيد الموجود في HTML
-    const confirmModal = document.getElementById('general-confirm-modal');
-    const msgEl = document.getElementById('general-confirm-msg');
-    const yesBtn = document.getElementById('btn-general-yes');
-
-    if (confirmModal && msgEl && yesBtn) {
-        msgEl.innerText = "هل أنت متأكد من حفظ التعديلات على بيانات الفريق؟";
-        confirmModal.classList.remove('hidden');
-
-        // 2. تنظيف الزر من أي أحداث سابقة (عشان ميعملش Save مرتين)
-        const newYesBtn = yesBtn.cloneNode(true);
-        yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-
-        // 3. ربط الزر بدالة التنفيذ الفعلي
-        newYesBtn.addEventListener('click', () => {
-            // إخفاء مودال التأكيد
-            confirmModal.classList.add('hidden');
-            // استدعاء دالة الحفظ الحقيقية
-            executeTeamSave(); 
-        });
-    } else {
-        // لو المودال مش موجود لأي سبب، نحفظ علطول
-        executeTeamSave();
+    if (displayNamePreview && nameInput) {
+        displayNamePreview.innerText = nameInput.value.trim() || "Team Name";
     }
 }
 
-function showToast(msg, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
+// =========================================================
+// DATA SAVING
+// =========================================================
 
-    const toast = document.createElement('div');
-    
-    // إعدادات الألوان الصريحة لضمان عدم ظهور اللون الأحمر بالخطأ
-    let bgStyle = '';
-    let borderStyle = '';
-    let textStyle = '';
-    let icon = '';
-
-    if (type === 'success') {
-        // حالة النجاح: خلفية خضراء داكنة جداً + حدود خضراء فاقعة
-        bgStyle = 'bg-[#064e3b]'; // Green-900 equivalent but explicit
-        borderStyle = 'border-green-500';
-        textStyle = 'text-green-100';
-        icon = 'fa-check-circle';
-    } else if (type === 'error') {
-        // حالة الخطأ: خلفية حمراء داكنة + حدود حمراء
-        bgStyle = 'bg-[#7f1d1d]'; // Red-900 equivalent
-        borderStyle = 'border-red-500';
-        textStyle = 'text-red-100';
-        icon = 'fa-exclamation-triangle';
-    } else {
-        // حالة المعلومات
-        bgStyle = 'bg-[#1e3a8a]'; // Blue-900 equivalent
-        borderStyle = 'border-blue-500';
-        textStyle = 'text-blue-100';
-        icon = 'fa-info-circle';
-    }
-
-    // تجميع الكلاسات
-    toast.className = `pointer-events-auto flex items-center gap-4 px-6 py-4 rounded-xl border-l-4 shadow-2xl backdrop-blur-md animate-slide-in min-w-[320px] mb-3 ${bgStyle} ${borderStyle} ${textStyle}`;
-    
-    toast.innerHTML = `
-        <i class="fas ${icon} text-2xl"></i>
-        <div class="flex flex-col">
-            <span class="font-bold text-sm leading-tight">${msg}</span>
-        </div>
-    `;
-    
-    container.appendChild(toast);
-    
-    // حذف التوست بعد 4 ثواني
-    setTimeout(() => {
-        toast.style.transition = 'all 0.5s ease';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(-20px)';
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
-}
-function getDirectImageLink(url) {
-    if (!url) return "https://ui-avatars.com/api/?name=User&background=006A67&color=fff";
-    
-    try {
-        if (url.includes('drive.google.com')) {
-            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
-            if (idMatch && idMatch[1]) {
-                return `https://lh3.googleusercontent.com/d/${idMatch[1]}=s220`; // رابط سريع وآمن
-            }
-        }
-    } catch (e) {
-        console.warn("Error parsing image URL:", e);
-    }
-    return url;
-}
 async function executeTeamSave() {
-    const btn = document.getElementById('btn-save-team');
-    const originalText = btn.innerHTML;
+    if (!currentTeamId) return;
+
+    const btn = document.getElementById('btn-save-team') || document.querySelector('button[form="team-settings-form"]');
+    const originalText = btn ? btn.innerHTML : "Save";
     
-    // Loading State
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
-    btn.disabled = true;
-    btn.classList.add('opacity-75');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+    }
 
     try {
-        const teamRef = doc(db, "teams", currentTeamId);
-        
-        await updateDoc(teamRef, {
-            "info.name": nameInput.value,
-            "info.logo_url": logoInput.value,
-            "info.university": uniInput.value,
-            "info.governorate": govInput.value,
-            
-            // Legacy Support (لضمان عمل الكود القديم)
-            "name": nameInput.value,
-            "logo_url": logoInput.value
-        });
+        const updates = {
+            name: nameInput?.value.trim() || null,
+            logo_url: logoInput?.value.trim() || null,
+            university: uniInput?.value || null,
+            governorate: govInput?.value || null
+        };
 
-        // إظهار رسالة النجاح (باللون الأخضر)
-        showToast("تم تحديث بيانات الفريق بنجاح! 🎉", "success");
+        console.log("[Team Settings] Updating team data:", updates);
+
+        const { error } = await supabase
+            .from('teams')
+            .update(updates)
+            .eq('id', currentTeamId);
+
+        if (error) throw error;
+
+        showToast("Team settings updated successfully!", "success");
         closeTeamSettings();
         
-        // إعادة تحميل الصفحة لتطبيق التغييرات
         setTimeout(() => window.location.reload(), 1500);
 
     } catch (error) {
-        console.error("Save Team Error:", error);
-        showToast("حدث خطأ أثناء الحفظ: " + error.message, "error");
+        console.error("[Team Settings] Save Error:", error);
+        showToast(`Update failed: ${error.message}`, "error");
     } finally {
-        // إعادة الزر لحالته الأصلية
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        btn.classList.remove('opacity-75');
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
+}
+
+// =========================================================
+// TOAST NOTIFICATIONS
+// =========================================================
+
+function showToast(msg, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-4 left-4 z-50 flex flex-col gap-2 pointer-events-none';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    const color = type === 'success' ? 'border-green-500 text-green-400' : 
+                  type === 'error' ? 'border-red-500 text-red-400' : 
+                  'border-blue-500 text-blue-400';
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'error' ? 'fa-exclamation-circle' : 
+                 'fa-info-circle';
+
+    toast.className = `bg-gray-900 px-6 py-4 rounded-xl border-l-4 ${color} shadow-2xl backdrop-blur flex items-center gap-3 animate-slide-in min-w-[300px] mb-2`;
+    toast.innerHTML = `<i class="fas ${icon} text-xl"></i><span class="text-white text-sm font-bold">${msg}</span>`;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-20px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }

@@ -1074,12 +1074,7 @@ async function renderTeamOverview(tasks) {
     });
 }
 
-function renderGrading() {
-    const grid = document.getElementById('submissions-grid');
-    if(grid) {
-        grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-20"><i class="fas fa-check-circle text-4xl mb-4 text-green-500/20"></i><p>No submissions.</p></div>`;
-    }
-}
+
 
 // ==========================================
 // 7. TEAM MANAGEMENT (Squad, Invites, Requests)
@@ -2097,3 +2092,453 @@ function showToast(msg, type='info') {
     container.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3500);
 }
+
+// ==========================================
+// 11. GRADING & TASK TRACKING SYSTEM
+// ==========================================
+
+// --- TAB SWITCHING LOGIC ---
+window.switchGradingTab = (tab) => {
+    document.getElementById('tab-content-pending').classList.toggle('hidden', tab !== 'pending');
+    document.getElementById('tab-content-tracking').classList.toggle('hidden', tab !== 'tracking');
+    
+    const btnP = document.getElementById('tab-btn-pending');
+    const btnT = document.getElementById('tab-btn-tracking');
+    
+    if(tab === 'pending') {
+        btnP.className = "px-6 py-3 font-bold text-b-primary border-b-2 border-b-primary transition-colors flex items-center gap-2";
+        btnT.className = "px-6 py-3 font-bold text-gray-400 border-b-2 border-transparent hover:text-white transition-colors flex items-center gap-2";
+        if(window.loadPendingSubmissions) window.loadPendingSubmissions();
+    } else {
+        btnT.className = "px-6 py-3 font-bold text-b-primary border-b-2 border-b-primary transition-colors flex items-center gap-2";
+        btnP.className = "px-6 py-3 font-bold text-gray-400 border-b-2 border-transparent hover:text-white transition-colors flex items-center gap-2";
+        if(window.loadTaskTracking) window.loadTaskTracking();
+    }
+};
+
+// Aliasing for initial tab load
+function renderGrading() {
+    window.switchGradingTab('pending');
+}
+
+// --- 1. PENDING SUBMISSIONS LOGIC (EXISTING) ---
+window.loadPendingSubmissions = async () => {
+    const listContainer = document.getElementById('submissions-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = `<div class="col-span-full text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-3xl"></i></div>`;
+
+    if (!currentTeam || !currentTeam.team_id) return;
+
+    try {
+        const { data: teamMembers } = await supabase.from('profiles').select('id').eq('team_id', currentTeam.team_id);
+        const memberIds = (teamMembers || []).map(m => m.id);
+        
+        if (memberIds.length === 0) {
+            listContainer.innerHTML = `<p class="text-gray-500 text-center col-span-full py-8">لا يوجد أعضاء في الفريق حالياً.</p>`;
+            return;
+        }
+
+        const { data: submissions, error } = await supabase
+            .from('project_submissions')
+            .select(`*, projects (title, max_points, rubric_json), profiles!user_id (full_name, avatar_url)`)
+            .in('user_id', memberIds)
+            .eq('status', 'pending')
+            .order('submitted_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (!submissions || submissions.length === 0) {
+            listContainer.innerHTML = `
+                <div class="col-span-full text-center text-gray-500 py-20 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                    <i class="fas fa-check-circle text-5xl mb-4 text-green-500/20"></i>
+                    <p>عمل رائع! لا توجد مشاريع معلقة للتقييم.</p>
+                </div>`;
+            return;
+        }
+
+        listContainer.innerHTML = submissions.map(sub => {
+            const dateStr = new Date(sub.submitted_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const studentName = sub.profiles?.full_name || 'طالب غير معروف';
+            const avatar = resolveImageUrl(sub.profiles?.avatar_url);
+            const projectTitle = sub.projects?.title || 'مشروع بدون عنوان';
+            const safeData = encodeURIComponent(JSON.stringify(sub));
+
+            return `
+                <div class="bg-black/40 border border-white/10 rounded-2xl p-5 hover:border-b-primary transition-all group relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <img src="${avatar}" class="w-10 h-10 rounded-full border border-white/10 object-cover bg-black">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${studentName}</h4>
+                                <p class="text-[10px] text-gray-400 font-mono">${dateStr}</p>
+                            </div>
+                        </div>
+                        <span class="bg-yellow-500/10 text-yellow-500 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider border border-yellow-500/20 animate-pulse">Pending</span>
+                    </div>
+                    <div class="mb-5">
+                        <h5 class="text-sm font-bold text-gray-200 mb-2 line-clamp-1" title="${projectTitle}">${projectTitle}</h5>
+                        <a href="${sub.submission_link}" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1.5 bg-blue-900/20 w-fit px-3 py-1.5 rounded-lg border border-blue-500/20">
+                            <i class="fas fa-external-link-alt"></i> فتح رابط التسليم
+                        </a>
+                    </div>
+                    <button onclick="window.openGradeModal('${safeData}')" class="w-full py-2.5 rounded-xl bg-b-primary/10 text-b-primary hover:bg-b-primary hover:text-white font-bold transition-all text-sm flex items-center justify-center gap-2 group-hover:shadow-[0_0_15px_rgba(0,106,103,0.3)]">
+                        <i class="fas fa-check-double"></i> تقييم ورصد الدرجة
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("Fetch Submissions Error:", e);
+        listContainer.innerHTML = `<p class="text-red-400 text-center col-span-full py-8">فشل في جلب البيانات.</p>`;
+    }
+};
+
+// --- 2. TASK TRACKING LOGIC (NEW) ---
+window.loadTaskTracking = async () => {
+    const list = document.getElementById('tracking-tasks-list');
+    if (!list) return;
+    list.innerHTML = `<div class="col-span-full text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-3xl"></i></div>`;
+    
+    if(!currentTeam || !currentTeam.team_id) return;
+
+    try {
+        const {data: members} = await supabase.from('profiles').select('id').eq('team_id', currentTeam.team_id);
+        const totalMembers = members ? members.length : 0;
+
+        const {data: tasks} = await supabase.from('team_tasks')
+            .select('*')
+            .eq('team_id', currentTeam.team_id)
+            .order('created_at', {ascending: false});
+        
+        const currentWeekId = getCurrentWeekCycle().id;
+        let html = '';
+        
+        tasks.forEach(task => {
+            const compCount = task.stats?.completed_count || 0;
+            const isFullyCompleted = totalMembers > 0 && compCount >= totalMembers;
+            const isCurrentWeek = task.week_id === currentWeekId;
+            
+            // Logic: Show if current week OR if (past week AND NOT fully completed)
+            if (isCurrentWeek || !isFullyCompleted) {
+                const progress = totalMembers > 0 ? Math.round((compCount / totalMembers) * 100) : 0;
+                const lateBadge = (!isCurrentWeek && !isFullyCompleted) ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-clock mr-1"></i> متأخرة</span>` : '';
+                
+                let icon = 'fa-play-circle text-b-primary';
+                if(task.type === 'quiz') icon = 'fa-clipboard-question text-yellow-500';
+                if(task.type === 'project') icon = 'fa-laptop-code text-purple-500';
+
+                html += `
+                <div onclick="window.openTaskDetailsModal('${task.id}')" class="bg-black/40 border border-white/5 p-5 rounded-2xl hover:bg-white/5 cursor-pointer transition-all hover:border-b-primary relative group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-2 bg-white/5 px-2 py-1 rounded border border-white/5">
+                                <i class="fas ${icon} text-sm"></i>
+                                <span class="text-[10px] text-gray-300 font-mono uppercase tracking-wider">${task.type}</span>
+                            </div>
+                            ${lateBadge}
+                        </div>
+                        <h4 class="text-sm font-bold text-white mb-6 line-clamp-2 leading-relaxed" title="${task.title}">${task.title}</h4>
+                    </div>
+                    
+                    <div class="space-y-2 mt-auto">
+                        <div class="flex justify-between text-xs text-gray-400 font-bold">
+                            <span>نسبة الإنجاز</span>
+                            <span class="${progress === 100 ? 'text-green-400' : 'text-b-primary'}">${progress}%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-black rounded-full overflow-hidden border border-white/5">
+                            <div class="h-full ${progress === 100 ? 'bg-green-500' : 'bg-b-primary'} transition-all" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="text-[10px] text-gray-500 text-left pt-1 font-mono">${compCount} / ${totalMembers} Students</div>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        if(!html) html = `<p class="col-span-full text-center text-gray-500 py-10">لا توجد مهام حالية أو متأخرة.</p>`;
+        list.innerHTML = html;
+
+    } catch(e) {
+        console.error("Task Tracking Error:", e);
+        list.innerHTML = `<p class="col-span-full text-center text-red-500 py-10">خطأ في جلب المهام</p>`;
+    }
+};
+
+window.openTaskDetailsModal = async (taskId) => {
+    const modal = document.getElementById('task-details-modal');
+    if(!modal) return;
+    modal.classList.remove('hidden');
+    
+    const list = document.getElementById('td-members-list');
+    list.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
+    
+    try {
+        const {data: task} = await supabase.from('team_tasks').select('*').eq('id', taskId).single();
+        const {data: members} = await supabase.from('profiles').select('id, full_name, avatar_url').eq('team_id', currentTeam.team_id);
+        
+        let iconClass = 'fa-play-circle text-b-primary';
+        if(task.type === 'quiz') iconClass = 'fa-clipboard-question text-yellow-500';
+        if(task.type === 'project') iconClass = 'fa-laptop-code text-purple-500';
+
+        document.getElementById('td-modal-title').innerHTML = `<i class="fas ${iconClass}"></i> ${task.title}`;
+        document.getElementById('td-modal-subtitle').innerText = task.type;
+
+        const memberIds = members.map(m => m.id);
+        let completedMembersMap = {}; 
+
+        // Fetching specific completion logic based on task type
+        if (task.type === 'video') {
+            const {data: comps} = await supabase.from('completed_materials').select('user_id').eq('material_id', task.content_id).in('user_id', memberIds);
+            comps?.forEach(c => completedMembersMap[c.user_id] = { status: 'completed' });
+        } 
+        else if (task.type === 'quiz') {
+            const {data: atts} = await supabase.from('quiz_attempts').select('user_id, score, passed').eq('quiz_id', task.content_id).in('user_id', memberIds);
+            atts?.forEach(a => {
+                if (!completedMembersMap[a.user_id] || a.score > completedMembersMap[a.user_id].score) {
+                    completedMembersMap[a.user_id] = { status: 'completed', score: a.score, passed: a.passed };
+                }
+            });
+        }
+        else if (task.type === 'project') {
+            const {data: subs} = await supabase.from('project_submissions').select('user_id, status, grade').eq('project_id', task.content_id).in('user_id', memberIds);
+            subs?.forEach(s => {
+                completedMembersMap[s.user_id] = { status: s.status, grade: s.grade };
+            });
+        }
+
+        let compCount = 0;
+        let html = '';
+        
+        members.forEach(m => {
+            const detail = completedMembersMap[m.id];
+            let isDone = !!detail;
+            
+            let statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-times"></i> لم يُنجز</span>`;
+            let extraInfo = '';
+
+            if (isDone) {
+                if (task.type === 'video') {
+                    compCount++;
+                    statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check"></i> مكتمل</span>`;
+                } else if (task.type === 'quiz') {
+                    if(detail.passed) compCount++;
+                    const color = detail.passed ? 'green' : 'yellow';
+                    const text = detail.passed ? 'نجاح' : 'لم يجتز';
+                    const icon = detail.passed ? 'fa-check' : 'fa-exclamation-triangle';
+                    statusBadge = `<span class="bg-${color}-500/10 text-${color}-400 border border-${color}-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas ${icon}"></i> ${text}</span>`;
+                    extraInfo = `<div class="text-sm font-bold text-white bg-black px-3 py-1 rounded-lg border border-white/10 font-mono">${detail.score}%</div>`;
+                } else if (task.type === 'project') {
+                    if (detail.status === 'graded' || detail.status === 'remarked') compCount++;
+                    
+                    if (detail.status === 'pending') {
+                        statusBadge = `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-clock"></i> قيد المراجعة</span>`;
+                    } else if (detail.status === 'graded' || detail.status === 'remarked') {
+                        statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-double"></i> تم التقييم</span>`;
+                        extraInfo = `<div class="text-sm font-bold text-white bg-black px-3 py-1 rounded-lg border border-white/10 font-mono">${detail.grade} XP</div>`;
+                    }
+                }
+            }
+
+            const avatar = resolveImageUrl(m.avatar_url);
+            html += `
+            <div class="flex items-center justify-between p-3.5 bg-black/40 rounded-xl border border-white/5 hover:bg-white/5 transition-colors group">
+                <div class="flex items-center gap-3">
+                    <img src="${avatar}" class="w-10 h-10 rounded-full border border-white/10 object-cover bg-black">
+                    <span class="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">${m.full_name || 'طالب'}</span>
+                </div>
+                <div class="flex items-center gap-3" dir="ltr">
+                    ${extraInfo}
+                    ${statusBadge}
+                </div>
+            </div>`;
+        });
+
+        document.getElementById('td-modal-completed-count').innerText = compCount;
+        document.getElementById('td-modal-total-count').innerText = `/ ${members.length}`;
+        
+        const prog = members.length > 0 ? Math.round((compCount / members.length) * 100) : 0;
+        const progEl = document.getElementById('td-modal-progress-txt');
+        progEl.innerText = `${prog}%`;
+        progEl.className = `text-3xl font-black font-mono ${prog === 100 ? 'text-green-400' : 'text-b-primary'}`;
+
+        list.innerHTML = html;
+
+    } catch(e) {
+        console.error(e);
+        list.innerHTML = `<p class="text-red-500 text-center py-10">حدث خطأ أثناء جلب التفاصيل.</p>`;
+    }
+};
+
+window.closeTaskDetailsModal = () => {
+    document.getElementById('task-details-modal')?.classList.add('hidden');
+};
+
+// --- 3. GRADING MODAL LOGIC (EXISTING) ---
+let currentGradingSubmission = null;
+
+window.openGradeModal = (encodedData) => {
+    try {
+        const sub = JSON.parse(decodeURIComponent(encodedData));
+        currentGradingSubmission = sub;
+        
+        const modal = document.getElementById('grading-modal');
+        if(!modal) return;
+
+        const studentNameEl = document.getElementById('grade-student-name');
+        if (studentNameEl) studentNameEl.innerText = sub.profiles?.full_name || 'Student';
+        const projectTitleEl = document.getElementById('grade-project-title');
+        if (projectTitleEl) projectTitleEl.innerText = sub.projects?.title || 'Project';
+        const linkEl = document.getElementById('grade-submission-link');
+        if (linkEl) linkEl.href = sub.submission_link;
+        
+        let criteria = [];
+        try {
+            const rubricRaw = sub.projects?.rubric_json;
+            if (typeof rubricRaw === 'string') criteria = JSON.parse(rubricRaw).criteria || [];
+            else if (typeof rubricRaw === 'object') criteria = rubricRaw?.criteria || [];
+        } catch(e) {}
+
+        const rubricContainer = document.getElementById('grade-rubric-container');
+        const autoCalcArea = document.getElementById('grade-auto-calc-area');
+        const manualArea = document.getElementById('grade-manual-input-area');
+        
+        if (criteria && criteria.length > 0) {
+            if (rubricContainer) {
+                rubricContainer.innerHTML = criteria.map((c, idx) => `
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-white text-sm">${c.aspect}</h4>
+                            <p class="text-xs text-gray-400 mt-1">${c.description}</p>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0" dir="ltr">
+                            <input type="number" id="score-input-${idx}" class="rubric-score-input w-20 bg-black border border-white/20 rounded-lg text-center text-white py-1.5 focus:border-b-primary outline-none font-mono" min="0" max="${c.points}" value="${c.points}" data-aspect="${c.aspect}" data-max="${c.points}" oninput="window.updateTotalGrade()">
+                            <span class="text-xs text-gray-500 font-mono">/ ${c.points}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            if(autoCalcArea) autoCalcArea.classList.remove('hidden');
+            if(manualArea) manualArea.classList.add('hidden');
+            window.updateTotalGrade(); 
+        } else {
+            if(rubricContainer) rubricContainer.innerHTML = `<p class="text-gray-500 text-xs italic">لا يوجد معايير، أدخل الدرجة النهائية يدوياً.</p>`;
+            if(autoCalcArea) autoCalcArea.classList.add('hidden');
+            if(manualArea) manualArea.classList.remove('hidden');
+            const maxP = sub.projects?.max_points || 100;
+            const manualMaxEl = document.getElementById('manual-max-points');
+            if(manualMaxEl) manualMaxEl.innerText = maxP;
+            const manInp = document.getElementById('manual-score-input');
+            if(manInp) { manInp.max = maxP; manInp.value = maxP; }
+        }
+
+        const feedbackEl = document.getElementById('grade-feedback');
+        if(feedbackEl) feedbackEl.value = '';
+        modal.classList.remove('hidden');
+
+    } catch(e) { console.error("Open Modal Error:", e); }
+};
+
+window.closeGradeModal = () => {
+    document.getElementById('grading-modal')?.classList.add('hidden');
+    currentGradingSubmission = null;
+};
+
+window.updateTotalGrade = () => {
+    const inputs = document.querySelectorAll('.rubric-score-input');
+    let total = 0;
+    inputs.forEach(input => {
+        const val = parseInt(input.value) || 0;
+        const max = parseInt(input.getAttribute('data-max')) || 0;
+        if (val > max) input.value = max;
+        if (val < 0) input.value = 0;
+        total += parseInt(input.value) || 0;
+    });
+    const maxTotal = currentGradingSubmission?.projects?.max_points || 100;
+    const tScore = document.getElementById('calc-total-score');
+    if(tScore) {
+        tScore.innerText = total;
+        tScore.className = `font-black text-2xl font-mono ${total / maxTotal >= 0.5 ? 'text-green-400' : 'text-red-400'}`;
+    }
+    const mScore = document.getElementById('calc-max-score');
+    if(mScore) mScore.innerText = maxTotal;
+};
+
+window.submitGrade = async () => {
+    if (!currentGradingSubmission) return;
+
+    const btn = document.getElementById('btn-submit-grade');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.disabled = true;
+
+    try {
+        const sub = currentGradingSubmission;
+        let finalGrade = 0;
+        let rubricScores = {};
+        const maxPoints = sub.projects?.max_points || 100;
+
+        const inputs = document.querySelectorAll('.rubric-score-input');
+        if (inputs.length > 0) {
+            inputs.forEach(input => {
+                const aspect = input.getAttribute('data-aspect');
+                const score = parseInt(input.value) || 0;
+                rubricScores[aspect] = score;
+                finalGrade += score;
+            });
+        } else {
+            finalGrade = parseInt(document.getElementById('manual-score-input').value) || 0;
+        }
+
+        if (finalGrade > maxPoints) finalGrade = maxPoints;
+        if (finalGrade < 0) finalGrade = 0;
+
+        const feedback = document.getElementById('grade-feedback').value.trim();
+
+        const { error: updateError } = await supabase.from('project_submissions').update({
+            status: 'graded',
+            grade: finalGrade,
+            feedback_text: feedback,
+            rubric_scores: rubricScores, 
+            graded_at: new Date(),
+            graded_by: currentUser.id,
+            graded_by_name: currentUserData?.full_name || 'Leader'
+        }).eq('id', sub.id);
+
+        if (updateError) throw updateError;
+
+        if (finalGrade > 0) {
+            const studentId = sub.user_id;
+            const { data: studentProf } = await supabase.from('profiles').select('total_xp').eq('id', studentId).single();
+            const newXp = (studentProf?.total_xp || 0) + finalGrade;
+            await supabase.from('profiles').update({ total_xp: newXp }).eq('id', studentId);
+            
+            await supabase.from('student_xp_logs').insert({
+                user_id: studentId,
+                amount: finalGrade,
+                reason: `تقييم مشروع: ${sub.projects?.title}`,
+                source_id: sub.project_id
+            });
+
+            const teamId = currentTeam.team_id;
+            if (teamId) {
+                const { data: teamProf } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
+                await supabase.from('teams').update({ total_score: (teamProf?.total_score || 0) + finalGrade }).eq('id', teamId);
+                await supabase.from('team_score_logs').insert({
+                    team_id: teamId, contributor_id: studentId, amount: finalGrade, reason: `مكافأة تسليم مشروع`
+                });
+            }
+        }
+
+        showToast("تم اعتماد الدرجة بنجاح!", "success");
+        window.closeGradeModal();
+        window.loadPendingSubmissions(); 
+
+    } catch (e) {
+        console.error("Submit Grade Error:", e);
+        showToast("حدث خطأ أثناء حفظ التقييم", "error");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};

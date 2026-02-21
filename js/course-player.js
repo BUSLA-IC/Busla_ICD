@@ -1,91 +1,58 @@
-// import { 
-//     auth, db, doc, getDoc, setDoc, updateDoc, arrayUnion, 
-//     onAuthStateChanged, increment, serverTimestamp, 
-//     collection, query, where, orderBy, getDocs, addDoc 
-// } from './firebase-config.js';
-import { CONFIG } from './config.js';
+import { supabase } from './supabase-config.js';
 
-// --- Configuration ---
-const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
-
-// --- Global State ---
+// ==========================================
+// 1. CONFIGURATION & GLOBAL STATE
+// ==========================================
 let courseId = null;
 let currentTaskId = null;
 let currentContent = null;
-let allCurriculumData = null;
-let courseContents = [];      
-let player = null; 
-let progressInterval = null; 
-let dbSaveInterval = null;   
-let userUid = null;
-let selectedQuality = 'hd720';
-let captionsRetryCount = 0;
-let currentUserTeamId = null;
-let currentPlayerControlsState = 0; 
 
-// --- Quiz State ---
+let courseData = null;
+let courseContents = [];
+let currentUserData = null;
+let currentTeamId = null;
+
+// Player State
+let player = null;
+let progressInterval = null;
+let dbSaveInterval = null;
+let selectedQuality = 'hd720';
+let currentPlayerControlsState = 0; 
+let isCurrentContentCompleted = false;
+let maxWatchedSeconds = 0;
+let currentVideoDuration = 0;
+
+// Quiz State
 let currentQuizState = {
     questions: [],
     userAnswers: {},
     currentIndex: 0,
     uniqueId: null,
     isReviewMode: false,
-    metaData: null
+    metaData: null,
+    savedState: null
 };
-
-// --- 1. INITIALIZATION ---
-document.addEventListener('DOMContentLoaded', () => {
+let quizzesLookup = {};
+let projectsLookup = {};
+// ==========================================
+// 2. INITIALIZATION & SETUP
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
     initSpeedOptions();
+    setupEventListeners();
 
     const urlParams = new URLSearchParams(window.location.search);
     courseId = urlParams.get('id');
-    currentTaskId = urlParams.get('task_id'); 
+    currentTaskId = urlParams.get('task_id');
 
     if (!courseId) {
-        showToast("لم يتم تحديد كورس!", "error");
+        showToast("Course ID is missing!", "error");
         setTimeout(() => window.location.href = "student-dash.html", 2000);
         return;
     }
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            userUid = user.uid;
-            initPlayer();
-        } else {
-            window.location.href = "auth.html";
-        }
-    });
-
-    setupEventListeners();
+    await initPlayer();
 });
-
-function resolveImageUrl(url, type = 'course') {
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        if (type === 'team') {
-            return '../assets/icons/icon.jpg';
-        } else if (type === 'user') {
-            return '../assets/icons/icon.jpg';
-        } else {
-            return '../assets/icons/icon.jpg';
-        }
-    }
-    if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-        const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
-        if (idMatch && idMatch[1]) {
-            return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-        }
-    }
-
-    if (url.includes('dropbox.com')) {
-        return url.replace('?dl=0', '?raw=1');
-    }
-    return url;
-}
-
-function getUniqueId(type, id) {
-    if (!id) return null;
-    return `${type}_${id}`;
-}
 
 function initSpeedOptions() {
     const select = document.getElementById('playback-speed');
@@ -102,45 +69,54 @@ function initSpeedOptions() {
 }
 
 function setupEventListeners() {
-    document.getElementById('btn-restart').onclick = () => {
-        if(player && player.seekTo) {
+    document.getElementById('btn-restart')?.addEventListener('click', () => {
+        if (player && typeof player.seekTo === 'function') {
             player.seekTo(0);
             player.playVideo();
-            showToast("تمت إعادة البدء");
+            showToast("Video Restarted", "info");
         }
-    };
+    });
 
-    document.getElementById('btn-rewind').onclick = () => {
-        if(player && player.getCurrentTime) {
+    document.getElementById('btn-rewind')?.addEventListener('click', () => {
+        if (player && typeof player.getCurrentTime === 'function') {
             const curr = player.getCurrentTime();
             player.seekTo(Math.max(0, curr - 10));
-            showToast("رجوع 10 ثواني");
+            showToast("-10 Seconds", "info");
         }
-    };
+    });
 
     const btnFull = document.getElementById('btn-fullscreen');
-    if(btnFull) btnFull.onclick = toggleFullscreen;
+    if (btnFull) btnFull.onclick = toggleFullscreen;
 
     const btnCap = document.getElementById('btn-captions');
-    if(btnCap) btnCap.onclick = (e) => {
+    if (btnCap) btnCap.onclick = (e) => {
         e.stopPropagation();
         closeAllMenus();
-        updateCaptionsMenu(); 
-        document.getElementById('captions-menu').classList.toggle('hidden');
+        updateCaptionsMenu();
+        document.getElementById('captions-menu')?.classList.toggle('hidden');
     };
 
     const btnQual = document.getElementById('btn-quality');
-    if(btnQual) btnQual.onclick = (e) => {
+    if (btnQual) btnQual.onclick = (e) => {
         e.stopPropagation();
         closeAllMenus();
         updateQualityMenu();
-        document.getElementById('quality-menu').classList.toggle('hidden');
+        document.getElementById('quality-menu')?.classList.toggle('hidden');
     };
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('#btn-captions') && !e.target.closest('#captions-menu') &&
             !e.target.closest('#btn-quality') && !e.target.closest('#quality-menu')) {
             closeAllMenus();
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        const header = document.getElementById('video-header');
+        const icon = document.querySelector('#btn-fullscreen i');
+        if (!document.fullscreenElement) {
+            if (header) header.classList.remove('hidden');
+            if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
         }
     });
 }
@@ -150,375 +126,456 @@ function closeAllMenus() {
     document.getElementById('quality-menu')?.classList.add('hidden');
 }
 
-window.showToast = (message, type = 'info') => {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    const colors = type === 'error' ? 'border-red-500 text-red-400' : type === 'success' ? 'border-green-500 text-green-400' : 'border-blue-500 text-blue-400';
-    const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
-    toast.className = `bg-b-surface/95 backdrop-blur border-r-4 ${colors} px-6 py-4 rounded-l-xl shadow-2xl flex items-center gap-3 animate-slide-in pointer-events-auto min-w-[300px]`;
-    toast.innerHTML = `<i class="fas ${icon} text-xl"></i><span class="font-bold text-sm text-white">${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3500);
-};
-
-// --- CORE LOGIC ---
+// ==========================================
+// 3. DATA FETCHING
+// ==========================================
 async function initPlayer() {
     try {
-        await fetchUserDataAndRank();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = "auth.html";
+            return;
+        }
 
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=getFullCurriculum`);
-        const data = await response.json();
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        currentUserData = profile;
+        currentTeamId = profile?.team_id;
+
+        await updateHeaderUserInfo();
+
+        const { data: course, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).single();
+        if (courseErr) throw courseErr;
+        courseData = course;
         
-        if (!data) throw new Error("فشل في جلب البيانات");
-        allCurriculumData = data;
+        const courseTitleEl = document.getElementById('course-title');
+        if (courseTitleEl) courseTitleEl.innerText = course.title || "Course Player";
 
-        const coursesList = allCurriculumData.courses || allCurriculumData.Courses || [];
-        const courseData = coursesList.find(c => c.course_id == courseId);
-        if (courseData) document.getElementById('course-title').innerText = courseData.title;
-
-        const contentsList = allCurriculumData.contents || allCurriculumData.Course_Contents || [];
-        courseContents = contentsList
-            .filter(c => c.course_id == courseId)
-            .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-
-        const progressRef = doc(db, "users", userUid, "courses_progress", String(courseId));
-        const progressSnap = await getDoc(progressRef);
-        const userProgress = progressSnap.exists() ? progressSnap.data() : { completed_items: [], points: 0 };
-
-        document.getElementById('stat-points').innerText = userProgress.points || 0;
+        const { data: materials, error: matErr } = await supabase
+            .from('course_materials')
+            .select('*')
+            .eq('course_id', courseId)
+            .order('order_index', { ascending: true });
         
-        renderSidebar(courseContents, userProgress.completed_items || []);
+        if (matErr) throw matErr;
+        courseContents = materials || [];
+
+        // 🚀 جلب البيانات الحقيقية للكويزات والمشاريع المرتبطة بهذا الكورس
+        const quizIds = courseContents.map(c => c.ref_quiz_id).filter(Boolean);
+        const projectIds = courseContents.map(c => c.ref_project_id).filter(Boolean);
+
+        if (quizIds.length > 0) {
+            const { data: qData } = await supabase.from('quizzes').select('quiz_id, title, max_xp').in('quiz_id', quizIds);
+            if (qData) quizzesLookup = qData.reduce((acc, q) => ({...acc, [q.quiz_id]: q}), {});
+        }
+        if (projectIds.length > 0) {
+            const { data: pData } = await supabase.from('projects').select('id, title, max_points').in('id', projectIds);
+            if (pData) projectsLookup = pData.reduce((acc, p) => ({...acc, [p.id]: p}), {});
+        }
+
+        await ensureUserEnrolled();
+
+        let targetContentId = new URLSearchParams(window.location.search).get('content');
+
+        if (!targetContentId && currentTaskId) {
+            const { data: taskData } = await supabase
+                .from('team_tasks')
+                .select('content_id')
+                .eq('id', currentTaskId)
+                .maybeSingle();
+
+            if (taskData && taskData.content_id) {
+                targetContentId = taskData.content_id;
+            }
+        }
+
+        if (targetContentId) {
+            currentContent = courseContents.find(c => String(c.content_id) === String(targetContentId));
+        }
+        if (!currentContent && courseContents.length > 0) {
+            currentContent = courseContents[0];
+        }
+
+        await renderSidebar();
         
-        if (currentTaskId) {
-            const parts = currentTaskId.split('_');
-            const targetContentId = parts[parts.length - 1]; 
-            const targetContent = courseContents.find(c => String(c.content_id) === String(targetContentId));
-            if (targetContent) loadContent(targetContent);
-            else if (courseContents.length > 0) loadContent(courseContents[0]);
-        } else {
-            if (courseContents.length > 0) loadContent(courseContents[0]);
+        if (currentContent) {
+            await loadContent(currentContent);
         }
 
     } catch (err) {
         console.error("Initialization Error:", err);
-        showToast("حدث خطأ في تحميل البيانات", "error");
+        showToast("Error loading course data", "error");
     }
 }
 
-async function fetchUserDataAndRank() {
+async function ensureUserEnrolled() {
     try {
-        const userDocRef = doc(db, "users", userUid);
-        const userSnap = await getDoc(userDocRef);
-        
-        if (!userSnap.exists()) return;
-        const userData = userSnap.data();
+        const { data: enrollment } = await supabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', currentUserData.id)
+            .eq('course_id', courseId)
+            .maybeSingle();
 
-        const name = userData.personal_info?.full_name || "طالب";
-        const photo = resolveImageUrl(userData.personal_info?.photo_url);
-        const rankTitle = userData.gamification?.current_rank || "Newbie";
-        
-        const elName = document.getElementById('user-name');
-        const elAvatar = document.getElementById('user-avatar');
-        const elRank = document.getElementById('user-rank-title');
-
-        if(elName) elName.innerText = name;
-        if(elAvatar) elAvatar.src = photo;
-        if(elRank) elRank.innerText = rankTitle;
-
-        currentUserTeamId = userData.system_info?.team_id;
-        if (currentUserTeamId) {
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("system_info.team_id", "==", currentUserTeamId));
-            const teamMembersSnap = await getDocs(q);
-            
-            let membersList = [];
-            teamMembersSnap.forEach(doc => {
-                const d = doc.data();
-                membersList.push({ uid: doc.id, points: d.gamification?.total_points || 0 });
-            });
-
-            membersList.sort((a, b) => b.points - a.points);
-            const myRank = membersList.findIndex(m => m.uid === userUid) + 1;
-            const totalMembers = membersList.length;
-
-            const elRankDisplay = document.getElementById('team-rank-display');
-            const elTotalMembers = document.getElementById('team-total-members');
-            
-            if(elRankDisplay) elRankDisplay.innerText = `#${myRank}`;
-            if(elTotalMembers) elTotalMembers.innerText = `/ ${totalMembers}`;
+        if (!enrollment) {
+            await supabase.from('enrollments').insert([{
+                user_id: currentUserData.id,
+                course_id: courseId,
+                progress_percent: 0,
+                is_completed: false
+            }]);
+        } else {
+            await supabase.from('enrollments').update({ last_accessed_at: new Date() }).eq('id', enrollment.id);
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Enrollment error:", e);
+    }
 }
 
-// --- Task & Stats Tracking ---
-async function recordTaskStart(contentId) {
-    if (!currentUserTeamId || !contentId) return;
-    let targetTaskId = currentTaskId;
+async function updateHeaderUserInfo() {
+    if (!currentUserData) return;
+    
+    const name = currentUserData.full_name || "Student";
+    const photo = resolveImageUrl(currentUserData.avatar_url);
+    const rankTitle = currentUserData.current_rank || "Newbie";
 
-    if (!targetTaskId) {
+    const elName = document.getElementById('user-name');
+    const elAvatar = document.getElementById('user-avatar');
+    const elRank = document.getElementById('user-rank-title');
+    const elPoints = document.getElementById('stat-points');
+
+    if (elName) elName.innerText = name;
+    if (elAvatar) elAvatar.src = photo;
+    if (elRank) elRank.innerText = rankTitle;
+    if (elPoints) elPoints.innerText = currentUserData.total_xp || 0;
+
+    if (currentTeamId) {
         try {
-            const tasksRef = collection(db, "teams", currentUserTeamId, "tasks");
-            const q = query(tasksRef, where("content_id", "==", String(contentId)));
-            const snap = await getDocs(q);
-            if (!snap.empty) targetTaskId = snap.docs[0].id;
-        } catch (e) { console.error("Error searching task", e); }
+            const { data: members } = await supabase
+                .from('profiles')
+                .select('id, total_xp')
+                .eq('team_id', currentTeamId)
+                .order('total_xp', { ascending: false });
+
+            if (members) {
+                const myRank = members.findIndex(m => m.id === currentUserData.id) + 1;
+                const totalMembers = members.length;
+                
+                const elRankDisplay = document.getElementById('team-rank-display');
+                const elTotalMembers = document.getElementById('team-total-members');
+                
+                if (elRankDisplay) elRankDisplay.innerText = `#${myRank}`;
+                if (elTotalMembers) elTotalMembers.innerText = `/ ${totalMembers}`;
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+
+// ==========================================
+// 4. SIDEBAR RENDERING
+// ==========================================
+async function renderSidebar() {
+    const container = document.getElementById('playlist-container') || document.getElementById('playlist-items');
+    if (!container) return;
+
+    // 1. جلب الفيديوهات المكتملة
+    const { data: completedVideos } = await supabase
+        .from('completed_materials')
+        .select('material_id')
+        .eq('user_id', currentUserData.id)
+        .eq('course_id', courseId);
+        
+    // 2. جلب الكويزات الناجحة
+    const { data: passedQuizzes } = await supabase
+        .from('quiz_attempts')
+        .select('quiz_id')
+        .eq('user_id', currentUserData.id)
+        .eq('passed', true);
+
+    // 3. جلب المشاريع المسلمة والمقيمة
+    const { data: submittedProjects } = await supabase
+        .from('project_submissions')
+        .select('project_id')
+        .eq('user_id', currentUserData.id)
+        .in('status', ['graded', 'remarked']); // فقط المشاريع المقيمة تعتبر مكتملة كإنجاز
+
+    const completedVideoIds = (completedVideos || []).map(row => row.material_id);
+    const completedQuizIds = (passedQuizzes || []).map(row => row.quiz_id);
+    const completedProjectIds = (submittedProjects || []).map(row => row.project_id);
+
+    container.innerHTML = '';
+    let totalItemsCount = 0;
+    let completedCount = 0;
+    let mainIndex = 1;
+
+    courseContents.forEach((item) => {
+        // 🚀 رسم الفيديو الأساسي وحالته المنفصلة
+        const isVideoCompleted = completedVideoIds.includes(item.content_id);
+        renderSidebarItem(container, item, mainIndex, isVideoCompleted, false);
+        totalItemsCount++;
+        if (isVideoCompleted) completedCount++;
+        mainIndex++;
+
+        // 🚀 رسم الكويز (إن وجد) بنقاطه الحقيقية وحالته المنفصلة
+        if (item.ref_quiz_id) {
+            const qData = quizzesLookup[item.ref_quiz_id] || {};
+            const quizItem = {
+                content_id: item.content_id + '_quiz',
+                ref_quiz_id: item.ref_quiz_id,
+                title: 'اختبار: ' + (qData.title || 'تقييم الدرس'),
+                type: 'quiz',
+                base_xp: qData.max_xp || 0
+            };
+            const isQuizCompleted = completedQuizIds.includes(item.ref_quiz_id);
+            renderSidebarItem(container, quizItem, '', isQuizCompleted, true);
+            totalItemsCount++; 
+            if (isQuizCompleted) completedCount++;
+        }
+
+        // 🚀 رسم المشروع (إن وجد) بنقاطه الحقيقية وحالته المنفصلة
+        if (item.ref_project_id) {
+            const pData = projectsLookup[item.ref_project_id] || {};
+            const projectItem = {
+                content_id: item.content_id + '_project',
+                ref_project_id: item.ref_project_id,
+                title: 'مشروع: ' + (pData.title || 'تطبيق عملي'),
+                type: 'project',
+                base_xp: pData.max_points || 0
+            };
+            const isProjectCompleted = completedProjectIds.includes(item.ref_project_id);
+            renderSidebarItem(container, projectItem, '', isProjectCompleted, true);
+            totalItemsCount++;
+            if (isProjectCompleted) completedCount++;
+        }
+    });
+
+    updateProgressBar(completedCount, totalItemsCount);
+}
+
+function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
+    let isActive = false;
+    if (currentContent) {
+        if (currentContent.content_id === item.content_id) isActive = true;
+        if (item.type === 'quiz' && currentContent.ref_quiz_id === item.ref_quiz_id) isActive = true;
+        if (item.type === 'project' && currentContent.ref_project_id === item.ref_project_id) isActive = true;
     }
 
-    if (!targetTaskId) return;
+    let icon = "fa-play-circle";
+    let typeColor = "text-gray-500";
+    if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; }
+    if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; }
 
-    const viewerRef = doc(db, "teams", currentUserTeamId, "tasks", targetTaskId, "viewers", userUid);
-    try {
-        const viewerSnap = await getDoc(viewerRef);
-        if (!viewerSnap.exists()) {
-            await setDoc(viewerRef, { uid: userUid, started_at: serverTimestamp() });
-            const taskRef = doc(db, "teams", currentUserTeamId, "tasks", targetTaskId);
-            await updateDoc(taskRef, { "stats.started_count": increment(1) });
-        }
-    } catch (e) { console.error(e); }
+    const baseClasses = "flex items-center gap-3 p-3 cursor-pointer transition-all border relative";
+    const activeClasses = isActive ? "bg-b-primary/20 border-b-primary shadow-inner" : "bg-white/5 border-white/5 hover:bg-white/10";
+    const childClasses = isChild ? "ml-6 mr-2 rounded-lg mt-1 mb-3 scale-[0.98] border-r-2 border-r-white/20" : "rounded-xl mb-1 mt-2";
+    
+    const connectorHtml = isChild ? `<div class="absolute -right-4 top-1/2 w-4 h-[2px] bg-white/10"></div>` : '';
+    const displayTitle = isChild ? item.title : `${indexStr}. ${item.title}`;
+
+    const html = `
+        <div onclick="window.switchContentObj('${encodeURIComponent(JSON.stringify(item))}')" 
+             class="${baseClasses} ${activeClasses} ${childClasses}">
+            ${connectorHtml}
+            <div class="w-8 h-8 rounded-full ${isCompleted ? 'bg-green-500/20 text-green-500' : 'bg-black/50 ' + typeColor} flex items-center justify-center shrink-0 text-sm">
+                ${isCompleted ? '<i class="fas fa-check"></i>' : `<i class="fas ${icon}"></i>`}
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold ${isActive ? 'text-white' : (isChild ? 'text-gray-300' : 'text-gray-100')} truncate">${displayTitle}</h4>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-[10px] uppercase font-mono ${typeColor}">${item.type}</span>
+                    ${item.base_xp ? `<span class="text-[10px] text-yellow-500 font-bold bg-yellow-500/10 px-1.5 rounded"><i class="fas fa-star text-[8px]"></i> ${item.base_xp}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
 }
 
-async function updateTeamTaskStats(contentId) {
-    if (!currentUserTeamId || !contentId) return;
-    let targetTaskId = currentTaskId;
-    if (!targetTaskId) {
-        try {
-            const tasksRef = collection(db, "teams", currentUserTeamId, "tasks");
-            const q = query(tasksRef, where("content_id", "==", String(contentId)));
-            const snap = await getDocs(q);
-            if (!snap.empty) targetTaskId = snap.docs[0].id;
-        } catch (e) { console.error("Error searching task", e); }
+window.switchContentObj = async (encodedItemStr) => {
+    try {
+        const item = JSON.parse(decodeURIComponent(encodedItemStr));
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('content', item.content_id);
+        window.history.pushState({}, '', newUrl);
+        
+        await loadContent(item);
+        renderSidebar(); 
+    } catch (e) {
+        console.error("Error switching content:", e);
     }
+};
 
-    if (!targetTaskId) return;
-
-    const completerRef = doc(db, "teams", currentUserTeamId, "tasks", targetTaskId, "completers", userUid);
-    try {
-        const completerSnap = await getDoc(completerRef);
-        if (!completerSnap.exists()) {
-            await setDoc(completerRef, { uid: userUid, completed_at: serverTimestamp() });
-            const taskRef = doc(db, "teams", currentUserTeamId, "tasks", targetTaskId);
-            await updateDoc(taskRef, { "stats.completed_count": increment(1) });
-        }
-    } catch (e) { console.error("Error updating task stats", e); }
-}
-
-// --- STATE MANAGEMENT ---
-async function getContentState(uniqueId) {
-    const stateRef = doc(db, "users", userUid, "content_states", String(uniqueId));
-    const snap = await getDoc(stateRef);
-    return snap.exists() ? snap.data() : null;
-}
-
-async function saveContentState(uniqueId, data) {
-    const stateRef = doc(db, "users", userUid, "content_states", String(uniqueId));
-    await setDoc(stateRef, {
-        ...data,
-        last_updated: serverTimestamp()
-    }, { merge: true });
-}
-
-// --- LOAD CONTENT ---
+// ==========================================
+// 5. CONTENT LOADING & ROUTING
+// ==========================================
 async function loadContent(item) {
     if (!item) return;
-    
-    // Save previous video state
+
     if (currentContent && currentContent.type === 'video' && player && typeof player.getCurrentTime === 'function') {
-        await saveVideoState(true);
+        await saveVideoState(false);
     }
-    
+
     currentContent = item;
     updateVideoHeader(item);
     recordTaskStart(item.content_id);
 
-    const progressRef = doc(db, "users", userUid, "courses_progress", String(courseId));
-    getDoc(progressRef).then(snap => {
-        const ids = snap.exists() ? snap.data().completed_items : [];
-        renderSidebar(courseContents, ids);
-    });
-
     document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
     const progressPanel = document.getElementById('video-progress-panel');
+
+    const { data: completedCheck } = await supabase
+        .from('completed_materials')
+        .select('id')
+        .eq('user_id', currentUserData.id)
+        .eq('material_id', item.content_id)
+        .maybeSingle();
     
+    isCurrentContentCompleted = !!completedCheck;
+    maxWatchedSeconds = 0;
+
     if (item.type === 'video') {
-        document.getElementById('view-video').classList.remove('hidden');
-        document.getElementById('video-header').classList.remove('hidden');
+        document.getElementById('view-video')?.classList.remove('hidden');
+        document.getElementById('video-header')?.classList.remove('hidden');
         if (progressPanel) progressPanel.classList.remove('hidden');
-
-        const uniqueVideoId = getUniqueId('video', item.content_id);
-        const savedState = await getContentState(uniqueVideoId);
         
-        const startTime = savedState?.current_time || 0;
-        const isCompleted = savedState?.is_completed || false;
-        const savedSpeed = savedState?.playback_speed || 1;
-
-        if (item.video_id) {
-            loadVideo(item.video_id, startTime, isCompleted, savedSpeed);
-        }
+        loadVideo(item.video_id, 0, isCurrentContentCompleted, 1);
         
-        const timeDisplay = document.getElementById('saved-time-display');
-        const progBar = document.getElementById('saved-progress-bar');
-        if(timeDisplay) timeDisplay.innerText = formatTime(startTime);
-        if(progBar) progBar.style.width = '0%'; 
-
     } else if (item.type === 'quiz') {
-        document.getElementById('view-quiz').classList.remove('hidden');
+        document.getElementById('view-quiz')?.classList.remove('hidden');
         if (progressPanel) progressPanel.classList.add('hidden');
-
-        const qId = item.real_id || item.related_quiz_id;
-        const uniqueQuizId = getUniqueId('quiz', qId); 
-        loadQuizWithState(qId, uniqueQuizId);
-
+        loadQuizViewer(item.ref_quiz_id);
+        
     } else if (item.type === 'project') {
-        document.getElementById('view-project').classList.remove('hidden');
+        document.getElementById('view-project')?.classList.remove('hidden');
         if (progressPanel) progressPanel.classList.add('hidden');
-
-        const pId = item.real_id || item.related_project_id;
-        loadProjectFromData(pId);
+        loadProjectViewer(item.ref_project_id);
     }
 }
 
-// --- VIDEO PLAYER LOGIC ---
+function updateVideoHeader(item) {
+    const courseTitleEl = document.getElementById('header-course-title');
+    const authorEl = document.getElementById('header-author');
+    const videoTitleEl = document.getElementById('header-video-title');
+    const noteContainer = document.getElementById('header-note-container');
+    const noteText = document.getElementById('header-note-text');
+    const pointsBadge = document.getElementById('header-points-badge');
+    const pointsText = document.getElementById('header-points-text');
+
+    if (courseTitleEl) courseTitleEl.innerText = courseData ? courseData.title : "Course";
+    if (authorEl) authorEl.innerText = item.Author || "Busla";
+    if (videoTitleEl) videoTitleEl.innerText = item.title || "Untitled";
+
+    const points = item.base_xp || 0;
+    if (points > 0 && pointsBadge) {
+        pointsBadge.classList.remove('hidden'); pointsBadge.classList.add('flex');
+        if (pointsText) pointsText.innerText = points;
+    } else if (pointsBadge) {
+        pointsBadge.classList.add('hidden'); pointsBadge.classList.remove('flex');
+    }
+
+    const note = (item.Note || "").toString().trim();
+    if (noteContainer && noteText) {
+        if (note && note !== "undefined" && note !== "null") {
+            noteContainer.classList.remove('hidden'); noteText.innerText = note;
+        } else { noteContainer.classList.add('hidden'); }
+    }
+}
+
+// ==========================================
+// 6. YOUTUBE VIDEO PLAYER
+// ==========================================
 function loadVideo(videoId, startSeconds = 0, isCompleted = false, savedSpeed = 1) {
     if (!videoId) return;
 
-    // ✅ FIX: التحقق من تحميل مكتبة يوتيوب أولاً
-    // إذا لم تكن المكتبة جاهزة، انتظر 500ms وحاول مرة أخرى
     if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
-        console.warn("YouTube API not ready yet. Retrying in 500ms...");
         setTimeout(() => loadVideo(videoId, startSeconds, isCompleted, savedSpeed), 500);
         return;
     }
-    
-    // تنظيف رابط الفيديو
+
     if (videoId.includes('v=')) videoId = videoId.split('v=')[1];
     if (videoId.includes('&')) videoId = videoId.split('&')[0];
     if (videoId.includes('youtu.be/')) videoId = videoId.split('youtu.be/')[1];
 
     const desiredControlsState = isCompleted ? 1 : 0;
-
     const playerVars = {
-        'controls': desiredControlsState, 
+        'controls': desiredControlsState,
         'disablekb': isCompleted ? 0 : 1,
-        'rel': 0, 
+        'rel': 0,
         'modestbranding': 1,
-        'origin': window.location.origin, 
+        'origin': window.location.origin,
         'enablejsapi': 1,
         'cc_load_policy': 1,
         'playsinline': 1,
         'start': Math.floor(startSeconds)
     };
 
-    // التحكم في الطبقة الشفافة
     const overlay = document.getElementById('video-overlay');
-    if (isCompleted) {
-        overlay.classList.add('hidden');
-        overlay.style.pointerEvents = "none";
-    } else {
-        overlay.classList.remove('hidden');
-        overlay.style.pointerEvents = "auto";
+    if (overlay) {
+        if (isCompleted) {
+            overlay.classList.add('hidden');
+            overlay.style.pointerEvents = "none";
+        } else {
+            overlay.classList.remove('hidden');
+            overlay.style.pointerEvents = "auto";
+        }
     }
 
-    // تدمير المشغل إذا تغيرت حالة التحكم
-    if (player && (typeof player.destroy === 'function') && (currentPlayerControlsState !== desiredControlsState)) {
+    if (player && typeof player.destroy === 'function' && currentPlayerControlsState !== desiredControlsState) {
         player.destroy();
         player = null;
     }
 
     if (player && typeof player.loadVideoById === 'function') {
-        // --- الحالة 1: المشغل موجود (تحديث الفيديو فقط) ---
-        player.loadVideoById({
-            'videoId': videoId,
-            'startSeconds': startSeconds,
-            'suggestedQuality': selectedQuality
-        });
-        
-        const numericSpeed = parseFloat(savedSpeed) || 1;
-        player.setPlaybackRate(numericSpeed);
-        
+        player.loadVideoById({ 'videoId': videoId, 'startSeconds': startSeconds, 'suggestedQuality': selectedQuality });
+        player.setPlaybackRate(parseFloat(savedSpeed) || 1);
         const speedSelect = document.getElementById('playback-speed');
-        if (speedSelect) {
-            speedSelect.value = numericSpeed;
-        }
-
+        if (speedSelect) speedSelect.value = parseFloat(savedSpeed) || 1;
     } else {
-        // --- الحالة 2: إنشاء مشغل جديد ---
         currentPlayerControlsState = desiredControlsState;
         try {
             player = new YT.Player('youtube-player', {
                 height: '100%',
                 width: '100%',
                 videoId: videoId,
-                host: 'https://www.youtube.com',
                 playerVars: playerVars,
                 events: {
                     'onReady': (e) => onPlayerReady(e, savedSpeed),
                     'onStateChange': onPlayerStateChange,
                     'onApiChange': onPlayerApiChange,
-                    'onError': (e) => console.error("YouTube Player Error:", e)
+                    'onError': (e) => console.error("YT Error:", e)
                 }
             });
-        } catch (e) {
-            console.error("Error creating YouTube player:", e);
-        }
+        } catch (e) { console.error("Player creation error:", e); }
     }
 }
+
 function onPlayerReady(event, savedSpeed) {
     if (typeof player.loadModule === 'function') player.loadModule('captions');
 
-    document.getElementById('btn-play').onclick = () => {
-        const state = player.getPlayerState();
-        if (state === 1) player.pauseVideo();
-        else player.playVideo();
-    };
-    
+    const btnPlay = document.getElementById('btn-play');
+    if (btnPlay) {
+        btnPlay.onclick = () => {
+            const state = player.getPlayerState();
+            if (state === 1) player.pauseVideo();
+            else player.playVideo();
+        };
+    }
+
     const speedSelect = document.getElementById('playback-speed');
-    if(speedSelect) {
+    if (speedSelect) {
         speedSelect.value = savedSpeed;
         speedSelect.onchange = (e) => {
             player.setPlaybackRate(parseFloat(e.target.value));
         };
     }
+
     player.setPlaybackRate(savedSpeed);
     player.setPlaybackQuality(selectedQuality);
-    
+    currentVideoDuration = player.getDuration() || 100;
+
     clearInterval(progressInterval);
     clearInterval(dbSaveInterval);
-    progressInterval = setInterval(trackVideoProgress, 1000); 
-    dbSaveInterval = setInterval(() => saveVideoState(false), 60000); 
-}
-
-async function saveVideoState(isFinal = false) {
-    if (!player || typeof player.getCurrentTime !== 'function' || !currentContent || currentContent.type !== 'video') return;
-
-    const currentTime = player.getCurrentTime();
-    const duration = player.getDuration();
-    const speed = player.getPlaybackRate();
-    if (!duration || duration === 0) return;
-
-    const isNowCompleted = (currentTime / duration) >= 0.90;
-    const dataToSave = {
-        current_time: currentTime,
-        duration: duration,
-        playback_speed: speed,
-        last_viewed: serverTimestamp(),
-        title: currentContent.title
-    };
-
-    if (isNowCompleted) dataToSave.is_completed = true;
-
-    const uniqueVideoId = getUniqueId('video', currentContent.content_id);
-    await saveContentState(uniqueVideoId, dataToSave);
-
-    if (isNowCompleted) {
-        const points = parseInt(currentContent.base_points) || 10;
-        await markContentComplete('video', currentContent.content_id, points);
-        
-        const overlay = document.getElementById('video-overlay');
-        overlay.classList.add('hidden');
-        overlay.style.pointerEvents = "none";
-        currentPlayerControlsState = 1; 
-    }
+    progressInterval = setInterval(trackVideoProgress, 1000);
+    dbSaveInterval = setInterval(() => saveVideoState(false), 30000); 
 }
 
 async function trackVideoProgress() {
@@ -527,121 +584,210 @@ async function trackVideoProgress() {
     const duration = player.getDuration();
     if (duration === 0) return;
 
+    if (currentTime > maxWatchedSeconds) {
+        maxWatchedSeconds = currentTime;
+    }
+
     document.getElementById('time-current').innerText = formatTime(currentTime);
     document.getElementById('time-duration').innerText = formatTime(duration);
 
     const percent = (currentTime / duration) * 100;
     const savedBar = document.getElementById('saved-progress-bar');
     const savedTxt = document.getElementById('saved-time-display');
-    if(savedBar) savedBar.style.width = `${percent}%`;
-    if(savedTxt) savedTxt.innerText = formatTime(currentTime);
 
-    if (percent >= 90) {
-        if (!player.lastSave || Date.now() - player.lastSave > 5000) {
-            saveVideoState(true);
-            player.lastSave = Date.now();
-        }
+    if (savedBar) savedBar.style.width = `${percent}%`;
+    if (savedTxt) savedTxt.innerText = formatTime(currentTime);
+
+    if (!isCurrentContentCompleted && (maxWatchedSeconds / duration) >= 0.90) {
+        await saveVideoState(true);
     }
 }
 
-async function loadQuizWithState(quizId, uniqueContentId) {
-    const quizzesList = allCurriculumData.quizzes || allCurriculumData.Quizzes || [];
-    const quizData = quizzesList.find(q => String(q.quiz_id) === String(quizId));
+async function saveVideoState(isFinal = false) {
+    if (!player || !currentContent || currentContent.type !== 'video') return;
     
-    if (!quizData) { 
-        document.getElementById('quiz-questions-container').innerHTML = '<p class="text-center">بيانات الاختبار غير متوفرة</p>';
-        return; 
-    }
+    if (isFinal && !isCurrentContentCompleted) {
+        isCurrentContentCompleted = true;
+        const points = currentContent.base_xp || 10;
+        await markContentComplete(currentContent.content_id, points, 'video');
 
-    const savedState = await getContentState(uniqueContentId);
-    
-    currentQuizState.metaData = quizData;
-    currentQuizState.uniqueId = uniqueContentId;
-    currentQuizState.userAnswers = savedState?.user_answers || {};
-    
-    // ✅ تصحيح قراءة عدد المحاولات (قراءة Attempts أو attempts)
-    const maxAttempts = parseInt(quizData.Attempts) || parseInt(quizData.attempts) || 3; 
-    
-    const currentAttempts = savedState?.attempts_count || 0;
-    const isPassed = savedState?.passed || false;
-
-    updateQuizHeaderStats(quizData, savedState);
-
-    // التحقق من المحاولات
-    if (isPassed || currentAttempts >= maxAttempts) {
-        currentQuizState.isReviewMode = true;
-    } else {
-        currentQuizState.isReviewMode = false;
-    }
-
-    // ... (باقي كود جلب الأسئلة كما هو) ...
-    // ...
-    // ...
-    let questionsToRender = [];
-    if (savedState && savedState.questions && savedState.questions.length > 0) {
-        questionsToRender = savedState.questions;
-    } else {
-        const allQuestions = allCurriculumData.quiz_questions || allCurriculumData.Quiz_Questions || [];
-        const filtered = allQuestions.filter(q => String(q.quiz_id) === String(quizId));
+        const overlay = document.getElementById('video-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.pointerEvents = "none";
+        }
         
-        if (filtered.length === 0) {
-            document.getElementById('quiz-questions-container').innerHTML = '<div class="text-center py-10">لا توجد أسئلة.</div>';
+        const currentTime = player.getCurrentTime();
+        loadVideo(currentContent.video_id, currentTime, true, player.getPlaybackRate());
+    }
+}
+
+function onPlayerStateChange(event) {
+    const btnIcon = document.querySelector('#btn-play i');
+    if (event.data === 1) { 
+        if (btnIcon) btnIcon.className = "fas fa-pause"; 
+    } else { 
+        if (btnIcon) btnIcon.className = "fas fa-play"; 
+    }
+    
+    if (event.data === YT.PlayerState.BUFFERING || event.data === YT.PlayerState.PLAYING) {
+        if (selectedQuality !== 'default') player.setPlaybackQuality(selectedQuality);
+        updateCaptionsMenu(); updateQualityMenu();
+    }
+}
+
+function onPlayerApiChange() {
+    updateCaptionsMenu();
+    updateQualityMenu();
+}
+
+function updateCaptionsMenu() {
+    if (!player || typeof player.getOption !== 'function') return;
+    const tracks = player.getOption('captions', 'tracklist') || [];
+    const menu = document.getElementById('captions-menu');
+    if(!menu) return;
+    let html = `<button class="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-white/10 border-b border-white/5 font-bold" onclick="window.changeCaption('off')">🔕 Turn Off Captions</button>`;
+    html += `<button class="w-full text-left px-4 py-2 text-xs text-green-400 hover:bg-white/10 border-b border-white/5 font-bold" onclick="window.changeCaption('on')">💬 Turn On (Auto)</button>`;
+    if (tracks.length > 0) {
+        tracks.forEach(track => {
+            const isActive = track.languageCode === (player.getOption('captions', 'track') || {}).languageCode;
+            const activeClass = isActive ? 'text-b-primary font-bold bg-white/5' : 'text-gray-300';
+            const checkMark = isActive ? '<i class="fas fa-check text-[10px]"></i>' : '';
+            html += `<button class="w-full text-left px-4 py-2 text-xs hover:bg-white/10 flex justify-between items-center ${activeClass}" onclick="window.changeCaption('${track.languageCode}')"><span>${track.displayName}</span><div class="flex items-center gap-2"><span class="uppercase text-[9px] text-gray-500 bg-white/10 px-1 rounded">${track.languageCode}</span>${checkMark}</div></button>`;
+        });
+    } else { html += `<div class="px-4 py-2 text-[10px] text-gray-500 text-center animate-pulse">Searching...</div>`; }
+    menu.innerHTML = html;
+}
+
+window.changeCaption = (code) => {
+    if (!player) return;
+    if (code === 'off') { player.setOption('captions', 'track', {}); }
+    else if (code === 'on') {
+        player.loadModule('captions');
+        const tracks = player.getOption('captions', 'tracklist') || [];
+        if (tracks.length > 0) player.setOption('captions', 'track', { 'languageCode': tracks[0].languageCode }); 
+        else player.setOption('captions', 'reload', true);
+    }
+    else { player.setOption('captions', 'track', { 'languageCode': code }); }
+    closeAllMenus();
+};
+
+function updateQualityMenu() {
+    if (!player || typeof player.getAvailableQualityLevels !== 'function') return;
+    const levels = player.getAvailableQualityLevels();
+    const menu = document.getElementById('quality-menu');
+    if(!menu) return;
+    menu.innerHTML = '';
+    if (!levels || levels.length === 0) { menu.innerHTML = '<div class="px-4 py-2 text-xs text-gray-500 text-center">Auto only</div>'; return; }
+    const labelMap = { 'highres': '4K / Original', 'hd2160': '4K (2160p)', 'hd1440': '2K (1440p)', 'hd1080': 'HD (1080p)', 'hd720': 'HD (720p)', 'large': 'SD (480p)', 'medium': 'Low (360p)', 'small': 'Low (240p)', 'tiny': 'Low (144p)', 'auto': 'Auto' };
+    levels.forEach(level => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-center px-2 py-1.5 text-xs text-gray-300 hover:bg-white/10 hover:text-b-primary transition block";
+        if (level === selectedQuality) { btn.classList.add('text-b-primary', 'bg-white/5', 'font-bold'); btn.classList.remove('text-gray-300'); }
+        btn.innerText = labelMap[level] || level;
+        btn.onclick = () => window.changeQuality(level);
+        menu.appendChild(btn);
+    });
+}
+
+window.changeQuality = (quality) => {
+    if (!player) return;
+    selectedQuality = quality;
+    const currentTime = player.getCurrentTime();
+    const videoId = player.getVideoData().video_id;
+    player.loadVideoById({ 'videoId': videoId, 'startSeconds': currentTime, 'suggestedQuality': quality });
+    const txt = document.getElementById('current-quality-txt');
+    if (txt) txt.innerText = quality === 'auto' ? 'Auto' : quality.replace('hd', '') + 'p';
+    closeAllMenus();
+};
+
+// ==========================================
+// 7. QUIZ MODULE (ENHANCED LOGIC & UI)
+// ==========================================
+async function loadQuizViewer(quizId) {
+    const container = document.getElementById('quiz-questions-container');
+    if(!container) return;
+    
+    container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Loading Quiz...</p></div>';
+
+    try {
+        // Fetch Quiz Info
+        const { data: quiz } = await supabase.from('quizzes').select('*').eq('quiz_id', quizId).single();
+        if (!quiz) throw new Error("Quiz not found");
+
+        // Fetch History Attempts
+        const { data: attempts } = await supabase.from('quiz_attempts')
+            .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id)
+            .order('submitted_at', { ascending: false });
+
+        currentQuizState.metaData = quiz;
+        currentQuizState.allAttempts = attempts || [];
+        
+        const attemptsCount = currentQuizState.allAttempts.length;
+        const passedAttempt = currentQuizState.allAttempts.find(a => a.passed);
+
+        currentQuizState.savedState = { 
+            attempts_count: attemptsCount, 
+            passed: !!passedAttempt, 
+            last_score: passedAttempt ? passedAttempt.score : (currentQuizState.allAttempts[0]?.score || 0) 
+        };
+
+        updateQuizHeaderStats(quiz, currentQuizState.savedState);
+
+        // Check if there is an ongoing (active) attempt
+        const { data: activeState } = await supabase.from('active_quiz_states')
+            .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id).maybeSingle();
+
+        if (activeState && activeState.questions && activeState.questions.length > 0) {
+            // Resume the active attempt
+            currentQuizState.questions = activeState.questions;
+            currentQuizState.userAnswers = activeState.user_answers || {};
+            currentQuizState.currentIndex = 0;
+            currentQuizState.isReviewMode = false;
+            renderCurrentQuestion();
             return;
         }
 
-        const shuffled = filtered.sort(() => 0.5 - Math.random());
-        const showCount = parseInt(quizData.questions_to_show) || 5;
-        questionsToRender = shuffled.slice(0, showCount);
+        // If no active state, but user has past attempts -> Show Review page
+        if (attemptsCount > 0) {
+            window.showQuizReview(0); // 0 means latest attempt
+            return;
+        }
 
-        await saveContentState(uniqueContentId, {
-            questions: questionsToRender,
-            status: 'Started',
-            attempts_count: 0 
-        });
-    }
+        // If 0 attempts and no active state -> Start the very first attempt automatically
+        window.retryQuiz();
 
-    currentQuizState.questions = questionsToRender;
-    currentQuizState.currentIndex = 0;
-
-    if (currentQuizState.isReviewMode) {
-        showQuizReview(); 
-    } else {
-        renderCurrentQuestion(); 
+    } catch (e) {
+        container.innerHTML = `<p class="text-center text-red-500 py-20">${e.message}</p>`;
     }
 }
 
-function updateQuizHeaderStats(quizData, savedState = null) {
+function updateQuizHeaderStats(quizData, savedState) {
     const titleEl = document.getElementById('quiz-title');
     const descEl = document.getElementById('quiz-desc');
     
-    if(titleEl) titleEl.innerText = quizData.title;
-    
-    // ✅ تصحيح قراءة عدد المحاولات هنا أيضاً
-    const maxAttempts = parseInt(quizData.Attempts) || parseInt(quizData.attempts) || 3;
+    if (titleEl) titleEl.innerText = quizData.title;
+
+    const maxAttempts = quizData.attempts_allowed || 3;
     const usedAttempts = savedState?.attempts_count || 0;
-    
-    let statusText = `الدرجة: ${quizData.max_points || 0} XP | المحاولات: ${usedAttempts} / ${maxAttempts}`;
-    
-    // ... (باقي الدالة كما هي بدون تغيير) ...
+
+    let statusText = `Max XP: ${quizData.max_xp || 0} | Attempts: ${usedAttempts} / ${maxAttempts}`;
     let progressWidth = "0%";
     let progressColor = "bg-yellow-500";
     let scoreDisplay = "";
 
     if (savedState && (savedState.passed || usedAttempts >= maxAttempts)) {
         const score = savedState.last_score || 0;
-        const total = currentQuizState.questions.length || parseInt(quizData.questions_to_show) || 0;
-        const percent = total > 0 ? Math.round((score / total) * 100) : 0;
-        
-        const resultText = savedState.passed ? "ناجح" : "لم تجتز";
+        const resultText = savedState.passed ? "Passed" : "Failed";
         const resultColor = savedState.passed ? "text-green-400" : "text-red-400";
         
-        statusText = `${resultText} (${percent}%) | المحاولات: ${usedAttempts} / ${maxAttempts}`;
-        scoreDisplay = `<span class="${resultColor} font-bold ml-2">الدرجة: ${score}/${total}</span>`;
+        statusText = `${resultText} | Attempts: ${usedAttempts} / ${maxAttempts}`;
+        scoreDisplay = `<span class="${resultColor} font-bold ml-2">Score: ${score}%</span>`;
         progressWidth = "100%";
         progressColor = savedState.passed ? "bg-green-500" : "bg-red-500";
     }
-    
-    if(descEl) {
+
+    if (descEl) {
         descEl.innerHTML = `
             <div class="flex justify-between items-end">
                 <div><span class="text-gray-400 text-xs">${quizData.description || ''}</span></div>
@@ -651,7 +797,7 @@ function updateQuizHeaderStats(quizData, savedState = null) {
                 <div id="quiz-progress-bar" class="${progressColor} h-full w-0 transition-all duration-500" style="width: ${progressWidth}"></div>
             </div>
             <div class="flex justify-between text-[10px] text-gray-400 mt-1">
-                <span id="quiz-progress-text">${savedState?.is_completed ? "منتهي" : "جاري الحل..."}</span>
+                <span id="quiz-progress-text">${savedState?.passed || usedAttempts >= maxAttempts ? "Completed" : "In Progress..."}</span>
                 <span>${statusText}</span>
             </div>
         `;
@@ -666,13 +812,12 @@ function renderCurrentQuestion() {
     if (!q) return;
 
     const total = currentQuizState.questions.length;
-    const currentAns = currentQuizState.userAnswers[q.question_id];
+    const currentAns = currentQuizState.userAnswers[q.id];
 
-    // Update internal bar
     const progBar = document.getElementById('quiz-progress-bar');
     const progTxt = document.getElementById('quiz-progress-text');
     if(progBar) progBar.style.width = `${((currentQuizState.currentIndex + 1) / total) * 100}%`;
-    if(progTxt) progTxt.innerText = `السؤال ${currentQuizState.currentIndex + 1} من ${total}`;
+    if(progTxt) progTxt.innerText = `Question ${currentQuizState.currentIndex + 1} of ${total}`;
 
     const html = `
         <div class="question-block animate-fade-in">
@@ -685,27 +830,35 @@ function renderCurrentQuestion() {
                     if (!optText) return '';
                     const isChecked = currentAns === opt ? 'checked' : '';
                     const activeClass = isChecked ? 'border-yellow-500 bg-yellow-500/10' : 'border-white/10 bg-black/40 hover:bg-white/5';
-                    return `<label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${activeClass}" onclick="selectAnswer('${q.question_id}', '${opt}')"><div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${isChecked ? 'border-yellow-500' : 'border-gray-500'}">${isChecked ? '<div class="w-3 h-3 bg-yellow-500 rounded-full"></div>' : ''}</div><span class="text-sm text-gray-200">${optText}</span></label>`;
+                    return `<label class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${activeClass}" onclick="window.selectAnswer('${q.id}', '${opt}')"><div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${isChecked ? 'border-yellow-500' : 'border-gray-500'}">${isChecked ? '<div class="w-3 h-3 bg-yellow-500 rounded-full"></div>' : ''}</div><span class="text-sm text-gray-200">${optText}</span></label>`;
                 }).join('')}
             </div>
         </div>
         <div class="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
-            <button onclick="prevQuestion()" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-50" ${currentQuizState.currentIndex === 0 ? 'disabled' : ''}>السابق</button>
+            <button onclick="window.prevQuestion()" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-50" ${currentQuizState.currentIndex === 0 ? 'disabled' : ''}>Previous</button>
             ${currentQuizState.currentIndex === total - 1 ? 
-                `<button onclick="submitQuiz()" class="px-8 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg">إنهاء وإرسال</button>` : 
-                `<button onclick="nextQuestion()" class="px-6 py-2 rounded-lg bg-b-primary hover:bg-teal-600 text-white font-bold">التالي</button>`
+                `<button onclick="window.submitQuiz()" class="px-8 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg">Submit Answers</button>` : 
+                `<button onclick="window.nextQuestion()" class="px-6 py-2 rounded-lg bg-b-primary hover:bg-teal-600 text-white font-bold">Next Question</button>`
             }
         </div>
     `;
     container.innerHTML = html;
-    const oldBtn = document.getElementById('btn-submit-quiz');
-    if(oldBtn) oldBtn.classList.add('hidden');
 }
 
-window.selectAnswer = (qId, option) => {
+window.selectAnswer = async (qId, option) => {
     currentQuizState.userAnswers[qId] = option;
     renderCurrentQuestion();
-    saveContentState(currentQuizState.uniqueId, { user_answers: currentQuizState.userAnswers });
+
+    if(currentQuizState.metaData) {
+        supabase.from('active_quiz_states')
+            .update({ 
+                user_answers: currentQuizState.userAnswers,
+                updated_at: new Date()
+            })
+            .eq('quiz_id', currentQuizState.metaData.quiz_id)
+            .eq('user_id', currentUserData.id)
+            .then(); 
+    }
 };
 
 window.nextQuestion = () => {
@@ -721,356 +874,280 @@ window.prevQuestion = () => {
         renderCurrentQuestion();
     }
 };
-async function submitQuiz() {
-    let score = 0;
-    const questions = currentQuizState.questions;
-    
-    // 1. حساب الدرجة
-    questions.forEach(q => {
-        const userAns = currentQuizState.userAnswers[q.question_id];
-        if (userAns && String(userAns).toLowerCase() === String(q.correct_answer).toLowerCase()) {
-            score++;
-        }
-    });
 
-    const total = questions.length;
-    const passingScore = Math.ceil(total * 0.6); 
-    const isPassed = score >= passingScore;
-
-    // 2. تحديث البيانات
-    const currentState = await getContentState(currentQuizState.uniqueId);
-    const previousAttempts = currentState?.attempts_count || 0;
-    const newAttemptsCount = previousAttempts + 1;
-
-    const attemptLog = {
-        score: score,
-        total: total,
-        passed: isPassed,
-        timestamp: new Date(),
-        answers: currentQuizState.userAnswers
-    };
-
-    const newState = {
-        last_score: score,
-        passed: isPassed, 
-        is_completed: isPassed ? true : (currentState?.is_completed || false), 
-        status: isPassed ? 'Passed' : 'Failed',
-        user_answers: currentQuizState.userAnswers,
-        attempts_count: newAttemptsCount,
-        attempts_history: arrayUnion(attemptLog)
-    };
-
-    await saveContentState(currentQuizState.uniqueId, newState);
-    
-    if (currentQuizState.metaData) updateQuizHeaderStats(currentQuizState.metaData, newState);
-
-    // 3. معالجة النقاط
-    if (isPassed) {
-        const qId = currentQuizState.uniqueId.split('_')[1];
-        const points = parseInt(currentQuizState.metaData.max_points) || 20;
-        
-        await markContentComplete('quiz', qId, points); 
-        
-        showToast(`أحسنت! نجحت من المحاولة ${newAttemptsCount}`, "success");
-    } else {
-        // ✅ تصحيح قراءة عدد المحاولات هنا
-        const maxAttempts = parseInt(currentQuizState.metaData.Attempts) || parseInt(currentQuizState.metaData.attempts) || 3;
-        const left = maxAttempts - newAttemptsCount;
-        
-        if (left > 0) {
-            showToast(`لم تجتز. باقي لك ${left} محاولات.`, "warning");
-        } else {
-            showToast(`لقد استنفدت جميع المحاولات.`, "error");
-        }
+window.submitQuiz = async () => {
+    if (Object.keys(currentQuizState.userAnswers).length < currentQuizState.questions.length) {
+        return showToast("Please answer all questions before submitting.", "warning");
     }
 
-    currentQuizState.isReviewMode = true;
-    showQuizReview();
-}
+    openConfirmModal("Are you sure you want to submit your answers?", async () => {
+        closeConfirmModal();
 
-// ربط الدالة بالنافذة
-window.submitQuiz = submitQuiz;
+        const container = document.getElementById('quiz-questions-container');
+        container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Grading...</p></div>';
 
-function showQuizReview() {
-    const container = document.getElementById('quiz-questions-container');
-    const questions = currentQuizState.questions;
-    const oldBtn = document.getElementById('btn-submit-quiz');
-    if(oldBtn) oldBtn.classList.add('hidden');
-    
-    // ✅ تصحيح قراءة عدد المحاولات هنا أيضاً
-    const maxAttempts = parseInt(currentQuizState.metaData.Attempts) || parseInt(currentQuizState.metaData.attempts) || 3;
-
-    getContentState(currentQuizState.uniqueId).then(state => {
-        const attempts = state?.attempts_count || 0;
-        const passed = state?.passed || false;
-        const canRetry = !passed && (attempts < maxAttempts);
-
-        let html = `<div class="space-y-8 animate-fade-in">`;
-        
-        questions.forEach((q, idx) => {
-            const userAns = currentQuizState.userAnswers[q.question_id];
-            const correctAns = String(q.correct_answer).toLowerCase();
-            const isCorrect = userAns && String(userAns).toLowerCase() === correctAns;
-            
-            html += `
-            <div class="bg-black/20 p-6 rounded-xl border ${isCorrect ? 'border-green-500/30' : 'border-red-500/30'}">
-                <div class="flex justify-between items-start mb-4">
-                    <h4 class="font-bold text-white text-lg">س${idx + 1}: ${q.question_text}</h4>
-                    <span class="${isCorrect ? 'text-green-400' : 'text-red-400'} text-xl">
-                        <i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                    </span>
-                </div>
-                <div class="space-y-2 mb-4">
-                    ${['a', 'b', 'c', 'd'].map(opt => {
-                        const optText = q[`option_${opt}`];
-                        if (!optText) return '';
-                        let styleClass = "border-white/10 text-gray-400";
-                        if (opt === correctAns) styleClass = "bg-green-900/20 border-green-500 text-green-300 font-bold";
-                        else if (opt === userAns && !isCorrect) styleClass = "bg-red-900/20 border-red-500 text-red-300 line-through";
-                        
-                        return `<div class="p-3 rounded-lg border ${styleClass} text-sm">
-                            <span class="uppercase font-bold mr-2">${opt})</span> ${optText}
-                        </div>`;
-                    }).join('')}
-                </div>
-                ${!isCorrect && q.hint ? `<div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-xs text-blue-200"><i class="fas fa-lightbulb text-yellow-400 mr-1"></i> <strong>تلميح:</strong> ${q.hint}</div>` : ''}
-            </div>`;
+        let correctCount = 0;
+        currentQuizState.questions.forEach(q => {
+            if (currentQuizState.userAnswers[q.id] === q.correct_answer.toLowerCase()) correctCount++;
         });
 
-        html += `</div>`;
+        const totalQuestions = currentQuizState.questions.length;
+        const scorePercent = Math.round((correctCount / totalQuestions) * 100);
+        const passingScoreLimit = currentQuizState.metaData.passing_score || 50;
+        const passed = scorePercent >= passingScoreLimit;
+        const xpEarned = passed ? Math.round((scorePercent / 100) * (currentQuizState.metaData.max_xp || 50)) : 0;
 
-        html += `<div class="mt-8 flex justify-center gap-4">`;
-        
-        if (canRetry) {
-            html += `
-            <button onclick="retryQuiz()" class="px-8 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg shadow-teal-900/20">
-                <i class="fas fa-redo mr-2"></i> إعادة المحاولة (${maxAttempts - attempts} متبقية)
-            </button>`;
-        } else if (passed) {
-            html += `<div class="text-green-400 font-bold px-6 py-3 border border-green-500/30 rounded-xl bg-green-500/10">✨ لقد اجتزت هذا الاختبار بنجاح</div>`;
-        } else {
-            html += `<div class="text-red-400 font-bold px-6 py-3 border border-red-500/30 rounded-xl bg-red-500/10">🔒 لقد استنفدت جميع المحاولات</div>`;
+        try {
+            await supabase.from('quiz_attempts').insert([{
+                user_id: currentUserData.id,
+                quiz_id: currentQuizState.metaData.quiz_id,
+                score: scorePercent,
+                passed: passed,
+                answers: currentQuizState.userAnswers 
+            }]);
+
+            await supabase.from('active_quiz_states')
+                .delete()
+                .eq('quiz_id', currentQuizState.metaData.quiz_id)
+                .eq('user_id', currentUserData.id);
+
+            if (passed) {
+                await markContentComplete(currentContent.content_id, xpEarned, 'quiz');
+                showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP`, "success");
+            } else {
+                showToast(`Failed. Score: ${scorePercent}%`, "error");
+            }
+
+            // Reload to show review page
+            loadQuizViewer(currentQuizState.metaData.quiz_id);
+
+        } catch (e) {
+            console.error(e);
+            showToast("Error saving result", "error");
+            loadQuizViewer(currentQuizState.metaData.quiz_id);
         }
-
-        html += `
-            <button onclick="location.reload()" class="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold">
-                العودة للقائمة
-            </button>
-        </div>`;
-
-        container.innerHTML = html;
     });
-}
-// دالة إعادة المحاولة (Reset)
-window.retryQuiz = () => {
-    // تصفير الإجابات محلياً فقط (الأسئلة تظل كما هي)
-    currentQuizState.userAnswers = {};
-    currentQuizState.currentIndex = 0;
-    currentQuizState.isReviewMode = false;
-    
-    // إعادة رسم السؤال الأول
-    renderCurrentQuestion();
-    
-    // تحديث الهيدر
-    document.getElementById('quiz-progress-bar').style.width = '0%';
-    document.getElementById('quiz-progress-text').innerText = 'محاولة جديدة...';
-    
-    // إظهار زر التسليم مرة أخرى
-    const oldBtn = document.getElementById('btn-submit-quiz');
-    if(oldBtn) {
-        oldBtn.classList.remove('hidden');
-        oldBtn.innerText = "تسليم الإجابات";
-        oldBtn.classList.remove('bg-gray-600');
-    }
-}
+};
 
-// ✅✅✅ دالة الإكمال المصححة والكاملة ✅✅✅
-async function markContentComplete(type, contentId, points) {
-    if (!userUid || !courseId) return;
+window.showQuizReview = async (attemptIndex = 0) => {
+    attemptIndex = parseInt(attemptIndex);
+    const container = document.getElementById('quiz-questions-container');
+    const attempts = currentQuizState.allAttempts;
     
-    // 1. استخدام Unique ID
-    const uniqueId = getUniqueId(type, contentId);
-    const userRef = doc(db, "users", userUid, "courses_progress", String(courseId));
+    if (!attempts || attempts.length === 0) {
+         container.innerHTML = `<div class="text-center py-10 text-gray-400">No review details available.</div>`;
+         return;
+    }
+
+    container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Loading Review...</p></div>';
+
+    const currentAttempt = attempts[attemptIndex];
+    const userAnswers = currentAttempt.answers || {};
+    
+    // Fetch all questions to match the answers in this specific attempt
+    const { data: allQuestions } = await supabase.from('quiz_questions')
+        .select('*').eq('quiz_id', currentQuizState.metaData.quiz_id);
+        
+    const answeredQIds = Object.keys(userAnswers);
+    const questions = (allQuestions || []).filter(q => answeredQIds.includes(q.id));
+
+    const maxAttempts = currentQuizState.metaData.attempts_allowed || 3;
+    const totalAttemptsMade = attempts.length;
+    const overallPassed = attempts.some(a => a.passed);
+    const canRetry = !overallPassed && (totalAttemptsMade < maxAttempts);
+
+    let correctCount = 0;
+    questions.forEach(q => {
+        if (userAnswers[q.id] === String(q.correct_answer).toLowerCase()) correctCount++;
+    });
+
+    const totalQ = questions.length;
+    const percentage = currentAttempt.score;
+    const attemptPassed = currentAttempt.passed;
+    const maxXp = currentQuizState.metaData.max_xp || 0;
+    const earnedXp = attemptPassed ? Math.round((percentage / 100) * maxXp) : 0;
+
+    let html = `
+        <div class="bg-black/40 border ${attemptPassed ? 'border-green-500/50' : 'border-red-500/50'} rounded-2xl p-6 mb-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 ${attemptPassed ? 'bg-green-500' : 'bg-red-500'}"></div>
+            <i class="fas ${attemptPassed ? 'fa-medal text-green-400' : 'fa-times-circle text-red-400'} text-5xl mb-4 relative z-10 drop-shadow-lg"></i>
+            <h3 class="text-2xl font-black text-white mb-2 relative z-10">${attemptPassed ? 'عمل رائع! لقد اجتزت الاختبار' : 'لم تجتز الاختبار في هذه المحاولة'}</h3>
+            
+            <div class="flex flex-wrap justify-center gap-3 mt-4 relative z-10">
+                <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">الإجابات الصحيحة</p>
+                    <p class="text-xl font-black text-white">${correctCount} <span class="text-sm text-gray-500 font-normal">/ ${totalQ}</span></p>
+                </div>
+                <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">النتيجة</p>
+                    <p class="text-xl font-black ${attemptPassed ? 'text-green-400' : 'text-red-400'}">${percentage}%</p>
+                </div>
+                <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">النقاط (XP)</p>
+                    <p class="text-xl font-black text-yellow-500">+${earnedXp}</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Dropdown to switch between past attempts
+    if (attempts.length > 1) {
+        html += `
+        <div class="mb-6 flex items-center justify-between bg-b-surface p-4 rounded-xl border border-white/10 shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400">
+                    <i class="fas fa-history"></i>
+                </div>
+                <span class="text-sm font-bold text-white">سجل المحاولات السابقة:</span>
+            </div>
+            <select onchange="window.showQuizReview(this.value)" class="bg-black border border-white/20 rounded-xl text-sm font-bold text-gray-300 px-4 py-2 outline-none focus:border-b-primary transition-colors cursor-pointer dir-rtl">
+                ${attempts.map((att, idx) => `
+                    <option value="${idx}" ${idx === attemptIndex ? 'selected' : ''}>
+                        المحاولة رقم ${attempts.length - idx} &nbsp;—&nbsp; ${att.passed ? 'ناجح ✅' : 'راسب ❌'} &nbsp;(${att.score}%)
+                    </option>
+                `).join('')}
+            </select>
+        </div>
+        `;
+    }
+
+    html += `<div class="space-y-6 animate-fade-in">`;
+    
+    questions.forEach((q, idx) => {
+        const userAns = userAnswers[q.id];
+        const correctAns = String(q.correct_answer).toLowerCase();
+        const isCorrect = userAns && String(userAns).toLowerCase() === correctAns;
+        
+        html += `
+        <div class="bg-b-surface p-6 rounded-2xl border ${isCorrect ? 'border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.05)]' : 'border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.05)]'}">
+            <div class="flex justify-between items-start mb-5">
+                <h4 class="font-bold text-white text-lg leading-relaxed"><span class="text-gray-500 mr-1">${idx + 1}.</span> ${q.question_text}</h4>
+                <span class="${isCorrect ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'} w-8 h-8 flex items-center justify-center rounded-full text-lg shrink-0 border ${isCorrect ? 'border-green-500/20' : 'border-red-500/20'}">
+                    <i class="fas ${isCorrect ? 'fa-check' : 'fa-times'}"></i>
+                </span>
+            </div>
+            <div class="space-y-3 mb-2">
+                ${['a', 'b', 'c', 'd'].map(opt => {
+                    const optText = q[`option_${opt}`];
+                    if (!optText) return '';
+                    
+                    let styleClass = "border-white/5 bg-black/40 text-gray-400";
+                    let iconHtml = '<div class="w-5 h-5 rounded-full border border-gray-600 mr-3 shrink-0"></div>';
+                    
+                    if (opt === correctAns) {
+                        styleClass = "bg-green-900/20 border-green-500/50 text-green-300 font-bold";
+                        iconHtml = '<div class="w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center mr-3 shrink-0 text-[10px]"><i class="fas fa-check"></i></div>';
+                    } else if (opt === userAns && !isCorrect) {
+                        styleClass = "bg-red-900/20 border-red-500/50 text-red-300 line-through opacity-80";
+                        iconHtml = '<div class="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center mr-3 shrink-0 text-[10px]"><i class="fas fa-times"></i></div>';
+                    }
+                    
+                    return `
+                    <div class="flex items-center p-4 rounded-xl border ${styleClass} text-sm transition-all">
+                        ${iconHtml}
+                        <span class="uppercase font-black text-xs opacity-50 mr-2 border-r border-current pr-2">${opt}</span> 
+                        <span>${optText}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+            ${!isCorrect && q.hint ? `
+            <div class="mt-5 p-4 bg-blue-900/10 border border-blue-500/20 rounded-xl flex gap-3 items-start">
+                <i class="fas fa-lightbulb text-yellow-400 mt-0.5 text-lg"></i> 
+                <div>
+                    <strong class="block text-xs text-blue-300 mb-1">تلميح لمساعدتك:</strong>
+                    <span class="text-sm text-blue-100/70 leading-relaxed">${q.hint}</span>
+                </div>
+            </div>` : ''}
+        </div>`;
+    });
+
+    html += `</div>`;
+
+    html += `<div class="mt-10 flex flex-wrap justify-center gap-4 border-t border-white/10 pt-8">`;
+    
+    if (canRetry) {
+        html += `
+        <button onclick="window.retryQuiz()" class="px-8 py-3.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg shadow-teal-900/20 flex items-center gap-2 transform hover:scale-105 transition-all">
+            <i class="fas fa-redo"></i> بدء محاولة جديدة (${maxAttempts - totalAttemptsMade} متبقية)
+        </button>`;
+    } else if (overallPassed) {
+        html += `<div class="text-green-400 font-bold px-8 py-3.5 border border-green-500/30 rounded-xl bg-green-500/10 flex items-center gap-2"><i class="fas fa-check-circle text-xl"></i> لقد استنفدت جميع المحاولات (النتيجة محسومة)</div>`;
+    } else {
+        html += `<div class="text-red-400 font-bold px-8 py-3.5 border border-red-500/30 rounded-xl bg-red-500/10 flex items-center gap-2"><i class="fas fa-lock text-xl"></i> لقد استنفدت جميع المحاولات المتاحة</div>`;
+    }
+
+    html += `</div>`;
+
+    container.innerHTML = html;
+};
+
+window.retryQuiz = async () => {
+    const quizId = currentQuizState.metaData.quiz_id;
+    const attemptsCount = currentQuizState.allAttempts ? currentQuizState.allAttempts.length : 0;
+    const maxAttempts = currentQuizState.metaData.attempts_allowed || 3;
+    
+    if(attemptsCount >= maxAttempts) return; 
+
+    const container = document.getElementById('quiz-questions-container');
+    container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Generating new questions...</p></div>';
+
+    try {
+        const { data: allQuestions } = await supabase.from('quiz_questions').select('*').eq('quiz_id', quizId);
+        
+        const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+        const showCount = currentQuizState.metaData.questions_to_show || allQuestions.length;
+        const selectedQuestions = shuffled.slice(0, showCount);
+        
+        currentQuizState.questions = selectedQuestions;
+        currentQuizState.userAnswers = {};
+        currentQuizState.currentIndex = 0;
+        currentQuizState.isReviewMode = false;
+
+        await supabase.from('active_quiz_states').upsert({
+            user_id: currentUserData.id,
+            quiz_id: quizId,
+            questions: selectedQuestions,
+            user_answers: {},
+            current_attempt: attemptsCount + 1,
+            updated_at: new Date()
+        }, { onConflict: 'user_id,quiz_id' });
+
+        updateQuizHeaderStats(currentQuizState.metaData, { attempts_count: attemptsCount, passed: false });
+        renderCurrentQuestion();
+    } catch (e) {
+        console.error(e);
+        showToast("Error generating attempt", "error");
+    }
+};
+// ==========================================
+// 8. PROJECT MODULE (RESTORED OLD UI)
+// ==========================================
+async function loadProjectViewer(projectId) {
+    const container = document.getElementById('project-container');
+    const viewProj = document.getElementById('view-project');
+    if(!viewProj) return; // Note: You might need to adjust based on HTML container ids
     
     try {
-        // --- تحديث حالة المهمة في الفريق ---
-        await updateTeamTaskStats(contentId);
+        const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).single();
+        if (!project) throw new Error("Project not found");
 
-        // --- التحقق من التكرار ---
-        const docSnap = await getDoc(userRef);
-        let currentData = docSnap.exists() ? docSnap.data() : { completed_items: [], points: 0 };
-        
-        if ((currentData.completed_items || []).includes(uniqueId)) {
-            renderSidebar(courseContents, currentData.completed_items); 
-            return; 
-        }
+        const { data: sub } = await supabase.from('project_submissions')
+            .select('*').eq('project_id', projectId).eq('user_id', currentUserData.id).maybeSingle();
 
-        // --- تحديث الطالب ---
-        await setDoc(userRef, {
-            completed_items: arrayUnion(uniqueId),
-            points: increment(points),
-            last_updated: serverTimestamp()
-        }, { merge: true });
+        renderProjectUI(project, sub);
 
-        await updateDoc(doc(db, "users", userUid), { "gamification.total_points": increment(points) });
-
-        // --- تحديث الفريق (نقاط + سجل) ---
-        if (currentUserTeamId) {
-            const teamRef = doc(db, "teams", currentUserTeamId);
-            await updateDoc(teamRef, {
-                total_score: increment(points)
-            });
-
-            // إضافة سجل في Log الفريق
-            const userName = document.getElementById('user-name').innerText || "عضو";
-            const taskTitle = currentContent ? currentContent.title : "مهمة";
-
-            await addDoc(collection(db, "teams", currentUserTeamId, "point_logs"), {
-                member_uid: userUid,
-                member_name: userName,
-                action_type: "complete_content",
-                content_type: type,
-                content_title: taskTitle,
-                points_earned: points,
-                timestamp: serverTimestamp()
-            });
-        }
-        
-        // --- تحديث الواجهة ---
-        currentData.completed_items.push(uniqueId);
-        currentData.points = (currentData.points || 0) + points;
-        
-        renderSidebar(courseContents, currentData.completed_items);
-        document.getElementById('stat-points').innerText = currentData.points;
-        fetchUserDataAndRank();
-        showToast(`تم إكمال العنصر (+${points} XP)`, "success");
-
-    } catch (e) { console.error("Error saving progress:", e); }
-}
-
-
-function renderSidebar(contents, completedIds) {
-    const container = document.getElementById('playlist-container');
-    if (!container) return;
-    container.innerHTML = '';
-    let totalItems = 0; let completedCount = 0;
-    contents.forEach((item) => {
-        renderSidebarItem(container, item, completedIds, false);
-        totalItems++;
-        if (isItemCompleted(item.content_id, 'video', completedIds)) completedCount++;
-        if (item.related_quiz_id) {
-            const quizzes = allCurriculumData.quizzes || allCurriculumData.Quizzes || [];
-            const quizMeta = quizzes.find(q => String(q.quiz_id) === String(item.related_quiz_id));
-            if (quizMeta) {
-                const quizItem = { content_id: `quiz_${item.related_quiz_id}`, real_id: item.related_quiz_id, title: `اختبار: ${quizMeta.title}`, type: 'quiz', Duration: 'Quiz', related_quiz_id: item.related_quiz_id };
-                renderSidebarItem(container, quizItem, completedIds, true);
-                totalItems++;
-                if (isItemCompleted(item.related_quiz_id, 'quiz', completedIds)) completedCount++;
-            }
-        }
-        if (item.related_project_id) {
-            const projects = allCurriculumData.projects || allCurriculumData.Projects || [];
-            const projMeta = projects.find(p => String(p.project_id) === String(item.related_project_id));
-            if (projMeta) {
-                const projItem = { content_id: `proj_${item.related_project_id}`, real_id: item.related_project_id, title: `مشروع: ${projMeta.title}`, type: 'project', Duration: 'Project', related_project_id: item.related_project_id };
-                renderSidebarItem(container, projItem, completedIds, true);
-                totalItems++;
-                if (isItemCompleted(item.related_project_id, 'project', completedIds)) completedCount++;
-            }
-        }
-    });
-    const percent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
-    updateProgressBar(percent);
-}
-
-function renderSidebarItem(container, item, completedIds, isChild) {
-    const typeToCheck = item.type === 'quiz' ? 'quiz' : (item.type === 'project' ? 'project' : 'video');
-    const idToCheck = item.real_id || item.content_id;
-    const isCompleted = isItemCompleted(idToCheck, typeToCheck, completedIds);
-    let isActive = false;
-    if (currentContent) {
-        if (currentContent.content_id === item.content_id) isActive = true;
-        if (currentContent.real_id && currentContent.real_id == item.real_id) isActive = true;
-    }
-    const el = document.createElement('div');
-    const baseClasses = "p-3 rounded-lg cursor-pointer flex items-center gap-3 transition-all hover:bg-white/5 relative";
-    const childClasses = isChild ? "ml-4 mr-2 border-r-2 border-white/10 bg-white/5 mt-1 mb-2 scale-95" : "mb-1";
-    const activeClasses = isActive ? "bg-white/10 border-r-4 border-b-primary shadow-inner" : "";
-    el.className = `${baseClasses} ${childClasses} ${activeClasses}`;
-    el.onclick = () => loadContent(item);
-    let iconClass = 'fa-play-circle';
-    if (item.type === 'quiz') iconClass = 'fa-clipboard-question text-yellow-500';
-    if (item.type === 'project') iconClass = 'fa-laptop-code text-purple-500';
-    const connector = isChild ? `<div class="absolute -right-3 top-1/2 w-2 h-[1px] bg-white/20"></div>` : '';
-    let statusIcon = isCompleted ? '<i class="fas fa-check-circle text-green-500 text-xs"></i>' : '<i class="far fa-circle text-gray-600 text-xs"></i>';
-    el.innerHTML = `${connector}<div class="text-lg ${item.type === 'video' ? 'text-b-primary' : ''}"><i class="fas ${iconClass}"></i></div><div class="flex-1"><h4 class="text-sm font-semibold line-clamp-1 ${isChild ? 'text-gray-300' : 'text-white'}">${item.title}</h4><div class="flex justify-between items-center mt-1"><span class="text-[10px] text-gray-500">${item.Duration || item.type}</span>${statusIcon}</div></div>`;
-    container.appendChild(el);
-}
-
-function isItemCompleted(id, type, completedList) {
-    if (!completedList) return false;
-    const uniqueId = getUniqueId(type, id);
-    return completedList.includes(uniqueId);
-}
-
-function updateVideoHeader(item) {
-    const courseTitleEl = document.getElementById('header-course-title');
-    const authorEl = document.getElementById('header-author');
-    const videoTitleEl = document.getElementById('header-video-title');
-    const noteContainer = document.getElementById('header-note-container');
-    const noteText = document.getElementById('header-note-text');
-    const pointsBadge = document.getElementById('header-points-badge');
-    const pointsText = document.getElementById('header-points-text');
-    const coursesList = allCurriculumData?.courses || allCurriculumData?.Courses || [];
-    const courseData = coursesList.find(c => c.course_id == courseId);
-    if(courseTitleEl) courseTitleEl.innerText = courseData ? courseData.title : "الكورس";
-    if(authorEl) authorEl.innerText = item.Author || "Busla Team";
-    if(videoTitleEl) videoTitleEl.innerText = item.title || "فيديو بدون عنوان";
-    const points = parseInt(item.base_points) || 0; 
-    if(points > 0 && pointsBadge) {
-        pointsBadge.classList.remove('hidden'); pointsBadge.classList.add('flex');
-        if(pointsText) pointsText.innerText = points;
-    } else if(pointsBadge) {
-        pointsBadge.classList.add('hidden'); pointsBadge.classList.remove('flex');
-    }
-    const rawNote = item.Note || item.note || "";
-    const cleanNote = rawNote.toString().trim();
-    if(noteContainer && noteText) {
-        if(cleanNote !== "" && cleanNote !== "لاحقا" && cleanNote.toLowerCase() !== "undefined") {
-            noteContainer.classList.remove('hidden'); noteText.innerText = cleanNote;
-        } else { noteContainer.classList.add('hidden'); }
+    } catch (e) {
+        console.error(e);
+        showToast("Error loading project", "error");
     }
 }
 
-async function loadProjectFromData(projectId) {
-    // العثور على بيانات المشروع
-    const projectsList = allCurriculumData.projects || allCurriculumData.Projects || [];
-    const projectData = projectsList.find(p => String(p.project_id) === String(projectId));
-    
-    if (!projectData) {
-        console.error("Project not found:", projectId);
-        return;
-    }
-
-    // حفظ المشروع الحالي في الذاكرة
-    currentContent = { ...projectData, type: 'project', content_id: projectId };
-
-    // جلب حالة التسليم من الداتابيز (submission)
-    const submissionRef = doc(db, "submissions", `${userUid}_${projectId}`);
-    const subSnap = await getDoc(submissionRef);
-    const submissionData = subSnap.exists() ? subSnap.data() : null;
-
-    // استدعاء دالة الرسم
-    renderProjectUI(projectData, submissionData);
-}
 function renderProjectUI(projectData, submissionData) {
-    // أ) تعبئة الهيدر
     document.getElementById('project-title').innerText = projectData.title;
     document.getElementById('project-desc').innerHTML = projectData.description || "لا يوجد وصف.";
     document.getElementById('project-max-points').innerText = projectData.max_points || 100;
 
-    // اسم الدرس التابع له (اختياري)
-    const relatedLesson = courseContents.find(c => String(c.related_project_id) === String(projectData.project_id));
+    const relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
     const lessonTag = document.getElementById('project-lesson-tag');
     if (relatedLesson) {
         lessonTag.innerText = `تابع لدرس: ${relatedLesson.title}`;
@@ -1079,7 +1156,6 @@ function renderProjectUI(projectData, submissionData) {
         lessonTag.classList.add('hidden');
     }
 
-    // زر المتطلبات الخارجية
     const reqBtn = document.getElementById('btn-project-requirements');
     if (projectData.requirements_url) {
         reqBtn.href = projectData.requirements_url;
@@ -1089,40 +1165,34 @@ function renderProjectUI(projectData, submissionData) {
         reqBtn.classList.add('hidden');
     }
 
-    // ب) رسم معايير التقييم (Rubric)
     renderRubric(projectData.rubric_json, submissionData);
-
-    // ج) رسم كارت التسليم بناءً على الحالة
     renderSubmissionCard(projectData, submissionData);
 }
+
 function renderRubric(rubricJson, submissionData) {
     const container = document.getElementById('project-rubric-container');
     container.innerHTML = '';
 
     let criteria = [];
     try {
-        // محاولة فك الـ JSON (قد يكون نصاً أو كائناً)
         if (typeof rubricJson === 'string') {
             const parsed = JSON.parse(rubricJson);
             criteria = parsed.criteria || [];
         } else if (typeof rubricJson === 'object') {
-            criteria = rubricJson.criteria || [];
+            criteria = rubricJson?.criteria || [];
         }
     } catch (e) {
-        console.warn("Rubric Parsing Error:", e);
         container.innerHTML = '<p class="text-gray-500 text-sm">تفاصيل التقييم غير متاحة حالياً.</p>';
         return;
     }
 
-    // إذا تم التصحيح، نستخدم درجات الطالب. وإلا نستخدم الدرجة العظمى.
-    const isGraded = submissionData && submissionData.status === 'graded';
+    const isGraded = submissionData && (submissionData.status === 'graded' || submissionData.status === 'remarked');
     const studentScores = submissionData?.rubric_scores || {};
 
     criteria.forEach(item => {
         const studentScore = studentScores[item.aspect] || 0;
         const maxScore = item.points;
         
-        // تلوين الدرجة إذا تم التصحيح
         let scoreColor = "text-gray-400";
         let icon = '<i class="fas fa-circle text-[6px] text-gray-600"></i>';
         
@@ -1161,15 +1231,13 @@ function renderRubric(rubricJson, submissionData) {
 
 function renderSubmissionCard(projectData, submissionData) {
     const container = document.getElementById('submission-card');
-    const status = submissionData ? submissionData.status : 'new'; // new, pending, graded
+    const status = submissionData ? submissionData.status : 'new'; 
 
-    // --- الحالة 1: تم التصحيح (Graded) ---
     if (status === 'graded' || status === 'remarked') {
         const grade = submissionData.grade || 0;
         const max = projectData.max_points || 100;
         const percent = Math.round((grade / max) * 100);
         let gradeColor = percent >= 50 ? 'text-green-400' : 'text-red-400';
-        let progressColor = percent >= 50 ? 'bg-green-500' : 'bg-red-500';
 
         container.innerHTML = `
             <div class="text-center">
@@ -1178,23 +1246,26 @@ function renderSubmissionCard(projectData, submissionData) {
                     <span class="absolute text-[10px] text-gray-500 -bottom-6">من ${max}</span>
                 </div>
                 <h3 class="text-white font-bold text-lg mb-1">تم رصد الدرجة</h3>
-                <p class="text-xs text-gray-400 mb-6">بواسطة: ${submissionData.graded_by_name || 'Leader'}</p>
+                <p class="text-xs text-gray-400 mb-6">بواسطة: Leader</p>
                 
-                ${submissionData.feedback ? `
+                ${submissionData.feedback_text ? `
                 <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-right mb-6">
                     <h5 class="text-yellow-500 text-xs font-bold mb-2"><i class="fas fa-comment-alt ml-1"></i> ملاحظات الليدر:</h5>
-                    <p class="text-gray-300 text-sm leading-relaxed">"${submissionData.feedback}"</p>
+                    <p class="text-gray-300 text-sm leading-relaxed">"${submissionData.feedback_text}"</p>
                 </div>` : ''}
 
                 <div class="bg-white/5 rounded-lg p-3 text-xs text-gray-400 break-all border border-white/5">
-                    <i class="fab fa-github mr-1"></i> رابطك: <a href="${submissionData.link}" target="_blank" class="text-blue-400 hover:underline">فتح الرابط</a>
+                    <i class="fab fa-github mr-1"></i> رابطك: <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">فتح الرابط</a>
                 </div>
             </div>
         `;
+        
+        if (!isCurrentContentCompleted) {
+             markContentComplete(currentContent.content_id, grade, 'project');
+        }
         return;
     }
 
-    // --- الحالة 2: قيد الانتظار (Pending) ---
     if (status === 'pending') {
         container.innerHTML = `
             <div class="text-center py-6">
@@ -1206,14 +1277,14 @@ function renderSubmissionCard(projectData, submissionData) {
                 
                 <div class="bg-black/30 rounded-xl p-3 border border-white/5 text-left mb-4">
                     <p class="text-[10px] text-gray-500 mb-1">تاريخ التسليم</p>
-                    <p class="text-xs text-white font-mono">${submissionData.submitted_at ? new Date(submissionData.submitted_at.seconds * 1000).toLocaleDateString('ar-EG') : 'الآن'}</p>
+                    <p class="text-xs text-white font-mono">${new Date(submissionData.submitted_at).toLocaleDateString('ar-EG')}</p>
                 </div>
 
                 <div class="bg-white/5 rounded-lg p-3 text-xs text-gray-400 break-all border border-white/5">
-                    <i class="fas fa-link mr-1"></i> <a href="${submissionData.link}" target="_blank" class="text-blue-400 hover:underline">الرابط المرسل</a>
+                    <i class="fas fa-link mr-1"></i> <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">الرابط المرسل</a>
                 </div>
                 
-                <button onclick="resubmitProject('${projectData.project_id}')" class="mt-4 text-xs text-gray-500 hover:text-white underline">
+                <button onclick="window.resubmitProject('${projectData.id}')" class="mt-4 text-xs text-gray-500 hover:text-white underline">
                     هل أرسلت رابط خطأ؟ إعادة التسليم
                 </button>
             </div>
@@ -1221,7 +1292,6 @@ function renderSubmissionCard(projectData, submissionData) {
         return;
     }
 
-    // --- الحالة 3: جديد / لم يتم التسليم (New) ---
     const methodText = projectData.submission_method || "GitHub Link or Google Drive";
     
     container.innerHTML = `
@@ -1251,27 +1321,22 @@ function renderSubmissionCard(projectData, submissionData) {
                        class="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:border-purple-500 outline-none transition-colors dir-ltr">
             </div>
             
-            <button id="btn-submit-project-action" onclick="submitProjectAction('${projectData.project_id}', '${projectData.title}')" 
+            <button id="btn-submit-project-action" onclick="window.submitProjectAction('${projectData.id}', '${projectData.title}')" 
                     class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
                 <i class="fas fa-paper-plane"></i> إرسال للمراجعة
             </button>
         </div>
     `;
 }
-// 5. دالة تنفيذ التسليم (Submit Action)
+
 window.submitProjectAction = async (projectId, projectTitle) => {
     const input = document.getElementById('submission-url');
     const btn = document.getElementById('btn-submit-project-action');
     const link = input.value.trim();
 
-    if (!link) {
-        showToast("يرجى وضع رابط المشروع أولاً", "error");
-        input.focus();
-        return;
-    }
-
-    if (!isValidUrl(link)) {
+    if (!link || !link.startsWith('http')) {
         showToast("الرابط غير صالح، تأكد من بدايته بـ http/https", "error");
+        input.focus();
         return;
     }
 
@@ -1279,55 +1344,198 @@ window.submitProjectAction = async (projectId, projectTitle) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
 
     try {
-        // أ) تسجيل البيانات في submissions (للمراجعة من الليدر)
-        await setDoc(doc(db, "submissions", `${userUid}_${projectId}`), {
-            student_id: userUid,
-            student_name: document.getElementById('user-name').innerText, // جلب الاسم من الهيدر
-            project_id: String(projectId),
-            project_title: projectTitle,
-            link: link,
-            status: "pending",
-            submitted_at: serverTimestamp(),
-            team_id: currentUserTeamId // لسهولة الفلترة عند الليدر
-        });
+        const { error } = await supabase.from('project_submissions').upsert({
+            user_id: currentUserData.id,
+            project_id: projectId,
+            submission_link: link,
+            status: "pending"
+        }, { onConflict: 'user_id,project_id' });
 
-        // ب) تحديث حالة المهمة في الفريق (Task Stats) - ليعرف الليدر أنك أنجزت
-        // ملاحظة: لا نعطي نقاط XP هنا، النقاط تمنح عند التصحيح (Graded)
-        await updateTeamTaskStats(projectId); 
+        if (error) throw error; // إيقاف الكود فوراً إذا رفضت قاعدة البيانات التسليم
+
+        await updateTaskStatus('completed'); 
 
         showToast("تم تسليم المشروع بنجاح!", "success");
-        
-        // إعادة تحميل المشروع لتحديث الواجهة (إظهار حالة الانتظار)
-        loadProjectFromData(projectId);
+        loadProjectViewer(projectId);
 
     } catch (e) {
         console.error("Submission Error:", e);
-        showToast("حدث خطأ أثناء التسليم، حاول مرة أخرى", "error");
+        showToast("حدث خطأ أثناء التسليم", "error");
         btn.disabled = false;
-        btn.innerHTML = 'إعادة المحاولة';
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
     }
 };
+
 window.resubmitProject = (projectId) => {
     openConfirmModal(
-        "هل أنت متأكد من رغبتك في إعادة التسليم؟ سيتم إلغاء الرابط القديم.",
+        "هل أنت متأكد من رغبتك في إعادة التسليم؟ سيتم إلغاء وحذف الرابط القديم نهائياً.",
         async () => {
-            // نقوم فقط بإعادة رسم الواجهة كأنها "جديدة" ليتمكن من الإرسال مرة أخرى
-            // التحديث الفعلي للداتابيز سيحدث عند الضغط على "إرسال" مجدداً (Overwrite)
-            const projectData = currentContent; // البيانات المخزنة
-            renderSubmissionCard(projectData, null); // null submission data = new state
+            const container = document.getElementById('submission-card');
+            container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-purple-500 text-3xl"></i><p class="text-gray-400 mt-2 text-sm">جاري إلغاء التسليم السابق...</p></div>';
             document.getElementById('confirm-modal').classList.add('hidden');
+
+            try {
+                // حذف التسليم القديم من الداتابيز
+                const { error } = await supabase
+                    .from('project_submissions')
+                    .delete()
+                    .eq('project_id', projectId)
+                    .eq('user_id', currentUserData.id);
+
+                if (error) throw error;
+
+                showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن.", "success");
+                
+                // إعادة تحميل الواجهة من الداتابيز مباشرة لضمان أن الـ ID سليم
+                loadProjectViewer(projectId);
+
+            } catch (error) {
+                console.error("Delete Submission Error:", error);
+                showToast("حدث خطأ أثناء إلغاء التسليم، حاول مرة أخرى.", "error");
+                loadProjectViewer(projectId);
+            }
         }
     );
 };
+// ==========================================
+// 9. COMPLETION & PROGRESS SYNC
+// ==========================================
 
-// Helper: URL Validation
-function isValidUrl(string) {
+async function markContentComplete(contentId, pointsEarned = 0, type = 'video') {
+    if (!contentId) return;
+
     try {
-        new URL(string);
-        return true;
-    } catch (_) {
-        return false;
+        // إدخال البيانات في جدول completed_materials فقط إذا كان المحتوى "فيديو"
+        if (type === 'video') {
+            const { data: existing } = await supabase
+                .from('completed_materials')
+                .select('id')
+                .eq('user_id', currentUserData.id)
+                .eq('material_id', contentId)
+                .maybeSingle();
+
+            if (existing) {
+                isCurrentContentCompleted = true;
+                return; 
+            }
+
+            const { error } = await supabase.from('completed_materials').insert([{
+                user_id: currentUserData.id,
+                material_id: contentId,
+                course_id: courseId
+            }]);
+
+            if (error) {
+                if (error.code === '23505' || error.code === '409') {
+                    isCurrentContentCompleted = true;
+                    return;
+                }
+                throw error;
+            }
+            isCurrentContentCompleted = true; 
+        }
+
+        // إعطاء النقاط للطالب والفريق (سواء كان فيديو أو كويز أو مشروع)
+        if (pointsEarned > 0) {
+            await awardPoints(pointsEarned, `Completed: ${currentContent?.title || type}`);
+        }
+        
+        // تحديث الواجهة لتظهر علامة (صح)
+        renderSidebar(); 
+
+        if (currentTaskId) {
+            await updateTaskStatus('completed');
+        }
+
+    } catch (e) {
+        console.error("Completion Sync Error:", e);
     }
+}
+
+async function updateTaskStatus(action) {
+    if (!currentTaskId || !currentTeamId) return;
+    try {
+        const { data: task } = await supabase.from('team_tasks').select('stats').eq('id', currentTaskId).single();
+        if (!task) return;
+
+        let stats = task.stats || { started_count: 0, completed_count: 0, total_students: 0 };
+        
+        if (action === 'started') stats.started_count += 1;
+        else if (action === 'completed') stats.completed_count += 1;
+
+        await supabase.from('team_tasks').update({ stats: stats }).eq('id', currentTaskId);
+    } catch (e) {}
+}
+
+async function recordTaskStart(contentId) {
+    if (currentTaskId) await updateTaskStatus('started');
+}
+
+async function awardPoints(amount, reason) {
+    if (!amount || amount <= 0) return;
+
+    try {
+        const newTotalXP = (currentUserData.total_xp || 0) + amount;
+        await supabase.from('profiles').update({ total_xp: newTotalXP }).eq('id', currentUserData.id);
+        currentUserData.total_xp = newTotalXP; 
+        
+        const elPoints = document.getElementById('stat-points');
+        if(elPoints) elPoints.innerText = newTotalXP;
+
+        await supabase.from('student_xp_logs').insert([{
+            user_id: currentUserData.id,
+            amount: amount,
+            reason: reason,
+            source_id: courseId
+        }]);
+
+        if (currentTeamId) {
+            const { data: team } = await supabase.from('teams').select('total_score').eq('id', currentTeamId).single();
+            if (team) {
+                const newTeamScore = (team.total_score || 0) + amount;
+                await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', currentTeamId);
+                await supabase.from('team_score_logs').insert([{
+                    team_id: currentTeamId,
+                    contributor_id: currentUserData.id,
+                    amount: amount,
+                    reason: `Contribution from: ${currentUserData.full_name || 'Student'}`
+                }]);
+            }
+        }
+
+    } catch (e) { console.error("Award Points Error:", e); }
+}
+
+function updateProgressBar(completedCount, totalCount) {
+    if (totalCount === 0) return;
+    const progress = Math.round((completedCount / totalCount) * 100);
+    
+    const txt = document.getElementById('total-progress-txt');
+    const stat = document.getElementById('stat-completion');
+    const bar = document.getElementById('total-progress-bar') || document.getElementById('course-progress-bar');
+    
+    if (txt) txt.innerText = `${progress}%`;
+    if (stat) stat.innerText = `${progress}%`;
+    if (bar) bar.style.width = `${progress}%`;
+
+    supabase.from('enrollments').update({ 
+        progress_percent: progress,
+        is_completed: progress >= 100
+    }).eq('user_id', currentUserData.id).eq('course_id', courseId).then();
+}
+
+// ==========================================
+// 10. GLOBAL UTILS
+// ==========================================
+function resolveImageUrl(url) {
+    if (!url || url.trim() === "" || url === "null" || url === "undefined") return '../assets/icons/icon.jpg';
+    try {
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
+            if (idMatch && idMatch[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+        }
+    } catch (e) {}
+    return url;
 }
 
 function formatTime(seconds) {
@@ -1337,139 +1545,77 @@ function formatTime(seconds) {
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
-function updateProgressBar(percent) {
-    const bar = document.getElementById('total-progress-bar');
-    const txt = document.getElementById('total-progress-txt');
-    const stat = document.getElementById('stat-completion');
-    if(bar) bar.style.width = `${percent}%`;
-    if(txt) txt.innerText = `${percent}%`;
-    if(stat) stat.innerText = `${percent}%`;
-}
-
-function updateCaptionsMenu() {
-    if (!player || typeof player.getOption !== 'function') return;
-    const tracks = player.getOption('captions', 'tracklist') || [];
-    const menu = document.getElementById('captions-menu');
-    let html = `<button class="w-full text-right px-4 py-2 text-xs text-red-400 hover:bg-white/10 border-b border-white/5 font-bold" onclick="changeCaption('off')">🔕 إيقاف الترجمة</button>`;
-    html += `<button class="w-full text-right px-4 py-2 text-xs text-green-400 hover:bg-white/10 border-b border-white/5 font-bold" onclick="changeCaption('on')">💬 تشغيل (تلقائي)</button>`;
-    if (tracks.length > 0) {
-        tracks.forEach(track => {
-            const isActive = track.languageCode === (player.getOption('captions', 'track') || {}).languageCode;
-            const activeClass = isActive ? 'text-b-primary font-bold bg-white/5' : 'text-gray-300';
-            const checkMark = isActive ? '<i class="fas fa-check text-[10px]"></i>' : '';
-            html += `<button class="w-full text-right px-4 py-2 text-xs hover:bg-white/10 flex justify-between items-center ${activeClass}" onclick="changeCaption('${track.languageCode}')"><span>${track.displayName}</span><div class="flex items-center gap-2"><span class="uppercase text-[9px] text-gray-500 bg-white/10 px-1 rounded">${track.languageCode}</span>${checkMark}</div></button>`;
-        });
-    } else { html += `<div class="px-4 py-2 text-[10px] text-gray-500 text-center animate-pulse">جاري البحث عن ترجمات...</div>`; }
-    menu.innerHTML = html;
-}
-
-window.changeCaption = (code) => {
-    if (!player) return;
-    if (code === 'off') { player.setOption('captions', 'track', {}); document.getElementById('btn-captions').classList.remove('text-b-primary'); }
-    else if (code === 'on') { player.loadModule('captions'); const tracks = player.getOption('captions', 'tracklist') || []; if (tracks.length > 0) { player.setOption('captions', 'track', { 'languageCode': tracks[0].languageCode }); } else { player.setOption('captions', 'reload', true); } document.getElementById('btn-captions').classList.add('text-b-primary'); setTimeout(updateCaptionsMenu, 500); }
-    else { player.setOption('captions', 'track', { 'languageCode': code }); document.getElementById('btn-captions').classList.add('text-b-primary'); }
-    closeAllMenus();
+window.showToast = (message, type = 'info') => {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-4 left-4 z-50 flex flex-col gap-2 pointer-events-none';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const color = type === 'success' ? 'border-green-500 text-green-400' : type === 'error' ? 'border-red-500 text-red-400' : 'border-blue-500 text-blue-400';
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    toast.className = `bg-gray-900 px-6 py-4 rounded-xl border-l-4 ${color} shadow-2xl backdrop-blur flex items-center gap-3 animate-slide-in min-w-[300px] mb-2`;
+    toast.innerHTML = `<i class="fas ${icon} text-xl"></i><span class="text-white text-sm font-bold">${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-20px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 };
 
-function updateQualityMenu() {
-    if (!player || typeof player.getAvailableQualityLevels !== 'function') return;
-    const levels = player.getAvailableQualityLevels();
-    const menu = document.getElementById('quality-menu');
-    menu.innerHTML = '';
-    if (!levels || levels.length === 0) { menu.innerHTML = '<div class="px-4 py-2 text-xs text-gray-500 text-center">Auto only</div>'; return; }
-    const labelMap = { 'highres': '4K / Original', 'hd2160': '4K (2160p)', 'hd1440': '2K (1440p)', 'hd1080': 'HD (1080p)', 'hd720': 'HD (720p)', 'large': 'SD (480p)', 'medium': 'Low (360p)', 'small': 'Low (240p)', 'tiny': 'Low (144p)', 'auto': 'Auto' };
-    levels.forEach(level => {
-        const btn = document.createElement('button');
-        btn.className = "w-full text-center px-2 py-1.5 text-xs text-gray-300 hover:bg-white/10 hover:text-b-primary transition block";
-        if (level === selectedQuality) { btn.classList.add('text-b-primary', 'bg-white/5', 'font-bold'); btn.classList.remove('text-gray-300'); }
-        btn.innerText = labelMap[level] || level;
-        btn.onclick = () => window.changeQuality(level);
-        menu.appendChild(btn);
-    });
-}
-
-function onPlayerStateChange(event) {
-    const btnIcon = document.querySelector('#btn-play i');
-    if (event.data === 1) { if(btnIcon) btnIcon.className = "fas fa-pause"; } else { if(btnIcon) btnIcon.className = "fas fa-play"; }
-    if (event.data === YT.PlayerState.BUFFERING || event.data === YT.PlayerState.PLAYING) {
-        if (selectedQuality !== 'default') { player.setPlaybackQuality(selectedQuality); }
-        updateCaptionsMenu(); updateQualityMenu();
-    }
-}
-
-window.changeQuality = (quality) => {
-    if(!player) return;
-    selectedQuality = quality; 
-    const currentTime = player.getCurrentTime();
-    const videoId = player.getVideoData().video_id;
-    player.loadVideoById({ 'videoId': videoId, 'startSeconds': currentTime, 'suggestedQuality': quality });
-    updateQualityUI(quality);
-    closeAllMenus();
-};
-
-function updateQualityUI(quality) {
-    const labelMap = { 'highres': '4K', 'hd1080': '1080p', 'hd720': '720p', 'large': '480p', 'medium': '360p', 'small': '240p', 'auto': 'Auto' };
-    const txt = labelMap[quality] || (quality === 'auto' ? 'Auto' : quality);
-    document.getElementById('current-quality-txt').innerText = txt;
-}
-
-function toggleFullscreen() {
-    const wrapper = document.getElementById('video-wrapper');
-    const header = document.getElementById('video-header');
-    const icon = document.querySelector('#btn-fullscreen i');
-    if (!document.fullscreenElement) {
-        if (wrapper.requestFullscreen) wrapper.requestFullscreen(); else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
-        if(header) header.classList.add('hidden');
-        if(icon) { icon.classList.remove('fa-expand'); icon.classList.add('fa-compress'); }
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        if(header) header.classList.remove('hidden');
-        if(icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
-    }
-}
-
-document.addEventListener('fullscreenchange', () => {
-    const header = document.getElementById('video-header');
-    const icon = document.querySelector('#btn-fullscreen i');
-    if (!document.fullscreenElement) {
-        if(header) header.classList.remove('hidden');
-        if(icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
-    }
-});
-// --- Modal Logic (Confirm Dialog) ---
-let confirmCallback = null;
-
+// --- Confirm Modal logic ---
 window.openConfirmModal = (message, callback) => {
     const modal = document.getElementById('confirm-modal');
     if (!modal) {
-        // Fallback في حال نسيان كود الـ HTML
         if (confirm(message)) callback();
         return;
     }
-    
     const msgEl = document.getElementById('confirm-msg');
     const yesBtn = document.getElementById('btn-confirm-yes');
+
+    if (msgEl) msgEl.innerText = message;
     
-    if(msgEl) msgEl.innerText = message;
-    confirmCallback = callback;
-    
-    // إزالة أي مستمعين سابقين لتجنب التكرار (Cloning Trick)
     const newBtn = yesBtn.cloneNode(true);
     yesBtn.parentNode.replaceChild(newBtn, yesBtn);
-    
     newBtn.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        closeConfirmModal();
+        callback();
+        window.closeConfirmModal();
     });
-
     modal.classList.remove('hidden');
 };
 
 window.closeConfirmModal = () => {
-    const modal = document.getElementById('confirm-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        confirmCallback = null;
-    }
+    document.getElementById('confirm-modal')?.classList.add('hidden');
 };
-function onPlayerApiChange() { updateCaptionsMenu(); updateQualityMenu(); }
+
+function toggleFullscreen() {
+    const wrapper = document.getElementById('video-wrapper') || document.getElementById('youtube-player-container');
+    const header = document.getElementById('video-header');
+    const icon = document.querySelector('#btn-fullscreen i');
+    
+    if (!document.fullscreenElement) {
+        if (wrapper.requestFullscreen) {
+            wrapper.requestFullscreen();
+        } else if (wrapper.webkitRequestFullscreen) {
+            wrapper.webkitRequestFullscreen();
+        } else if (wrapper.msRequestFullscreen) { 
+            wrapper.msRequestFullscreen();
+        }
+        if (header) header.classList.add('hidden');
+        if (icon) { icon.classList.remove('fa-expand'); icon.classList.add('fa-compress'); }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { 
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { 
+            document.msExitFullscreen();
+        }
+        if (header) header.classList.remove('hidden');
+        if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
+    }
+}
