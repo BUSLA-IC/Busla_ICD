@@ -395,6 +395,7 @@ function renderAllTabs() {
     renderAssignments();
     renderSquad();
     renderGrading();
+    renderCalendarTab();
 }
 
 function renderOverview() {
@@ -475,13 +476,13 @@ function renderWeekInfo() {
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white text-lg">Current Week</h3>
-                    <p class="text-sm text-gray-300">From <span class="text-b-hl-light font-bold">${startStr}</span> To <span class="text-b-hl-light font-bold">${endStr}</span></p>
+                    <h3 class="font-bold text-white text-lg">الاسبوع الحالي</h3>
+                    <p class="text-sm text-gray-300">من <span class="text-b-hl-light font-bold">${startStr}</span> الى <span class="text-b-hl-light font-bold">${endStr}</span></p>
                 </div>
             </div>
             <div class="text-center md:text-left">
                 <div class="bg-black/40 px-4 py-2 rounded-lg border border-white/5">
-                    <p class="text-xs text-gray-400">Today</p>
+                    <p class="text-xs text-gray-400">اليوم</p>
                     <p class="font-bold text-white text-lg">${currentDayName}</p>
                 </div>
             </div>
@@ -994,86 +995,133 @@ window.submitCustomTask = async () => {
 async function renderTeamOverview(tasks) {
     const container = document.getElementById('overview-container');
     if (!container) return;
-    container.innerHTML = '';
+    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
 
     if (!tasks || tasks.length === 0) {
         container.innerHTML = `
             <div class="text-center py-12 text-gray-600 bg-white/5 rounded-2xl border border-white/5 border-dashed">
                 <i class="fas fa-clipboard-list text-5xl mb-4 opacity-50"></i>
-                <p>No active tasks for this week.</p>
+                <p>لا توجد مهام معينة حالياً.</p>
                 <button onclick="switchTab('assignments')" class="mt-4 text-b-primary hover:text-white text-sm font-bold underline">
-                    + Add New Tasks
+                    + تعيين مهام جديدة
                 </button>
             </div>`;
         return;
     }
 
-    const currentWeek = getCurrentWeekCycle();
-    // Sort tasks
-    tasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const currentWeekTasks = tasks.filter(t => t.week_id === currentWeek.id);
-
-    if (currentWeekTasks.length === 0) {
-        container.innerHTML = `<p class="text-gray-500 text-center py-4">No tasks in current week.</p>`;
-        return;
-    }
-
-    currentWeekTasks.forEach(task => {
-        let typeConfig = {
-            icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'Video'
-        };
+    try {
+        const userId = currentUser.id;
         
-        if (task.type === 'quiz') {
-            typeConfig = { icon: 'fa-clipboard-question', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-l-yellow-500', label: 'Quiz' };
-        } else if (task.type === 'project') {
-            typeConfig = { icon: 'fa-code-branch', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-l-purple-500', label: 'Project' };
+        // 1. جلب إنجازات الليدر شخصياً من قواعد البيانات
+        const [projRes, quizRes, matRes] = await Promise.all([
+            supabase.from('project_submissions').select('project_id').eq('user_id', userId),
+            supabase.from('quiz_attempts').select('quiz_id, passed').eq('user_id', userId),
+            supabase.from('completed_materials').select('material_id').eq('user_id', userId)
+        ]);
+
+        const completedProjects = new Set((projRes.data || []).map(p => p.project_id));
+        const passedQuizzes = new Set((quizRes.data || []).filter(q => q.passed).map(q => q.quiz_id));
+        const completedMats = new Set((matRes.data || []).map(m => m.material_id));
+
+        // 2. حساب الأسبوع الحالي
+        const currentWeek = getCurrentWeekCycle(); 
+        const displayTasks = [];
+
+        tasks.forEach(t => {
+            const taskDate = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
+            if (isNaN(taskDate.getTime())) return;
+
+            // هل الليدر أكمل هذه المهمة؟
+            let isCompleted = false;
+            if (t.type === 'project') isCompleted = completedProjects.has(t.content_id);
+            else if (t.type === 'quiz') isCompleted = passedQuizzes.has(t.content_id);
+            else isCompleted = completedMats.has(t.content_id);
+
+            const isCurrentWeek = t.week_id === currentWeek.id;
+            const isPastTask = taskDate < currentWeek.start && !isCurrentWeek;
+
+            // المنطق الذكي: 
+            // - إذا كانت في الأسبوع الحالي: تظهر سواء مكتملة أو لا.
+            // - إذا كانت متأخرة: تظهر فقط إذا لم يتم إكمالها. (إذا أُكملت، تختفي من الوجه).
+            if (isCurrentWeek) {
+                displayTasks.push({ ...t, isCompleted, isOverdue: false });
+            } else if (isPastTask && !isCompleted) {
+                displayTasks.push({ ...t, isCompleted, isOverdue: true });
+            }
+        });
+
+        // 3. ترتيب المهام: المتأخر أولاً -> الجاري -> المكتمل أخيراً
+        displayTasks.sort((a, b) => {
+            if (a.isOverdue && !b.isOverdue) return -1;
+            if (!a.isOverdue && b.isOverdue) return 1;
+            if (!a.isCompleted && b.isCompleted) return -1;
+            if (a.isCompleted && !b.isCompleted) return 1;
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        if (displayTasks.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 py-12 border border-dashed border-white/5 rounded-2xl bg-black/20">
+                    <i class="fas fa-check-circle text-green-500 text-4xl mb-3 opacity-80"></i>
+                    <p class="font-bold text-lg text-white">عمل رائع!</p>
+                    <p class="text-sm mt-1">لقد أنجزت جميع المهام المطلوبة منك.</p>
+                </div>`;
+            return;
         }
 
-        const canDelete = (!task.stats || task.stats.started_count === 0);
-        const title = task.title || "Untitled Task";
+        let html = '';
+        displayTasks.forEach(task => {
+            let typeConfig = { icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'فيديو' };
+            if (task.type === 'quiz') typeConfig = { icon: 'fa-clipboard-question', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-l-yellow-500', label: 'كويز' };
+            else if (task.type === 'project') typeConfig = { icon: 'fa-code-branch', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-l-purple-500', label: 'مشروع' };
 
-        const html = `
-            <div class="bg-b-surface border border-white/10 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all relative shadow-sm hover:shadow-md">
-                <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="openUnifiedTaskModal('${task.task_id}')">
-                    <div class="w-12 h-12 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-xl shadow-inner">
-                        <i class="fas ${typeConfig.icon}"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] ${typeConfig.color} bg-white/5 px-1.5 rounded border border-white/5">${typeConfig.label}</span>
-                            ${task.duration ? `<span class="text-[10px] text-gray-500"><i class="far fa-clock ml-1"></i>${formatDuration(task.duration)}</span>` : ''}
+            let statusBadge = '';
+            let opacityClass = 'opacity-100';
+
+            if (task.isCompleted) {
+                statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check"></i> مكتملة</span>`;
+                opacityClass = 'opacity-50 hover:opacity-100'; // جعلها باهتة
+                typeConfig.border = 'border-l-green-500/50'; 
+            } else if (task.isOverdue) {
+                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> متأخرة</span>`;
+                typeConfig.border = 'border-l-red-500'; // تلوين الحافة بالأحمر للتنبيه
+            } else {
+                statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> جارية</span>`;
+            }
+
+            html += `
+                <div class="bg-black/40 border border-white/5 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all shadow-sm ${opacityClass}">
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="w-10 h-10 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-lg shadow-inner shrink-0">
+                            <i class="fas ${typeConfig.icon}"></i>
                         </div>
-                        <h4 class="font-bold text-white text-base line-clamp-1 group-hover:text-b-primary transition-colors">
-                            ${title}
-                        </h4>
+                        <div class="flex-1 min-w-0 pr-2 text-right">
+                            <h4 class="font-bold text-white text-sm line-clamp-1 group-hover:text-b-primary transition-colors">
+                                ${task.title || "بدون عنوان"}
+                            </h4>
+                            <div class="flex items-center justify-end gap-2 mt-1.5">
+                                ${statusBadge}
+                                <span class="text-[10px] text-gray-400 bg-black px-2 py-0.5 rounded border border-white/5">${typeConfig.label}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}" 
+                           class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
+                           title="فتح المهمة">
+                            <i class="fas fa-play text-xs"></i>
+                        </a>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2 mr-4">
-                      <a href="course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}" 
-                        class="w-10 h-10 rounded-lg bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
-                        title="Open">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                    
-                    ${canDelete ? `
-                        <button onclick="deleteTask('${task.task_id}', '${task.week_id}')" 
-                                class="w-10 h-10 rounded-lg bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 transition-all flex items-center justify-center"
-                                title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    ` : `
-                        <div class="w-10 h-10 flex items-center justify-center text-gray-600 cursor-help" title="Locked">
-                            <i class="fas fa-lock"></i>
-                        </div>
-                    `}
-                </div>
-            </div>
-        `;
-        container.innerHTML += html;
-    });
+            `;
+        });
+        
+        container.innerHTML = html;
+    } catch (e) {
+        console.error("Error fetching leader progress:", e);
+        container.innerHTML = `<p class="text-red-500 text-center py-4">حدث خطأ في تحميل حالة المهام.</p>`;
+    }
 }
-
 
 
 // ==========================================
@@ -1641,12 +1689,23 @@ window.openLeaveTeamModal = async () => {
     }
 };
 
+
+
+
+
+
+
+
 // ==========================================
 // 8. CALENDAR SYSTEM
 // ==========================================
 
 function renderCalendarTab() {
-    if (!currentTeam || !currentTeam.weekly_tasks) return;
+    if (!currentTeam) return;
+    
+    if (typeof calendarDate === 'undefined' || !calendarDate) {
+        window.calendarDate = new Date();
+    }
 
     const container = document.getElementById('calendar-weeks-container');
     const monthTitle = document.getElementById('calendar-month-title');
@@ -1656,16 +1715,15 @@ function renderCalendarTab() {
     
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
     monthTitle.innerText = `${monthNames[month]} ${year}`;
 
-    // Calculate start date (previous Saturday)
     let currentDate = new Date(year, month, 1);
-    const dayOfWeek = currentDate.getDay(); // 0=Sun ... 6=Sat
+    const dayOfWeek = currentDate.getDay(); 
     const offset = (dayOfWeek + 1) % 7; 
     currentDate.setDate(currentDate.getDate() - offset);
 
-    const tasks = currentTeam.weekly_tasks || [];
+    const tasks = window.allTeamTasks || currentTeam.weekly_tasks || [];
 
     for (let i = 0; i < 5; i++) {
         const weekStart = new Date(currentDate);
@@ -1679,29 +1737,30 @@ function renderCalendarTab() {
         const endStr = weekEnd.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
 
         const weekTasks = tasks.filter(t => {
-            const taskDue = getSafeDate(t.due_date);
+            const taskDue = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
+            if(isNaN(taskDue.getTime())) return false; 
             return taskDue.getTime() >= weekStart.getTime() && taskDue.getTime() <= weekEnd.getTime();
         });
 
         const weekHTML = `
-            <div onclick="openWeekDetails('${weekStart.toISOString()}', '${weekEnd.toISOString()}')" 
-                 class="group bg-b-surface border border-white/10 rounded-xl p-5 hover:border-b-primary cursor-pointer transition-all relative overflow-hidden mb-3">
+            <div onclick="window.openWeekDetails('${weekStart.toISOString()}', '${weekEnd.toISOString()}')" 
+                 class="group bg-b-surface border border-white/10 rounded-xl p-5 hover:border-b-primary cursor-pointer transition-all relative overflow-hidden mb-3 shadow-sm">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl ${weekTasks.length > 0 ? 'bg-b-primary text-white' : 'bg-white/5 text-gray-500'} flex flex-col items-center justify-center font-bold transition-colors">
-                            <span class="text-[10px]">Week</span>
+                        <div class="w-12 h-12 rounded-xl ${weekTasks.length > 0 ? 'bg-b-primary text-white shadow-lg shadow-b-primary/20' : 'bg-white/5 text-gray-500'} flex flex-col items-center justify-center font-bold transition-colors">
+                            <span class="text-[10px] uppercase tracking-wider">Week</span>
                             <span class="text-lg">${i + 1}</span>
                         </div>
-                        <div>
+                        <div class="text-right">
                             <h4 class="font-bold text-white text-lg">${startStr} - ${endStr}</h4>
                             <p class="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                <span class="${weekTasks.length > 0 ? 'text-b-hl-light' : ''}">
-                                    <i class="fas fa-tasks ml-1"></i> ${weekTasks.length} tasks
+                                <span class="${weekTasks.length > 0 ? 'text-b-hl-light font-bold' : ''}">
+                                    ${weekTasks.length} مهام <i class="fas fa-tasks mr-1"></i>
                                 </span>
                             </p>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-left text-gray-600 group-hover:text-white transition-transform"></i>
+                    <i class="fas fa-chevron-left text-gray-600 group-hover:text-white transition-transform transform group-hover:-translate-x-1"></i>
                 </div>
             </div>
         `;
@@ -1711,88 +1770,134 @@ function renderCalendarTab() {
 }
 
 window.changeMonth = (offset) => {
+    if (typeof calendarDate === 'undefined' || !calendarDate) window.calendarDate = new Date();
     calendarDate.setMonth(calendarDate.getMonth() + offset);
     renderCalendarTab();
 };
 
+let currentViewedWeekStart = null;
+let currentViewedWeekEnd = null;
+
 window.openWeekDetails = (startIso, endIso) => {
+    currentViewedWeekStart = startIso;
+    currentViewedWeekEnd = endIso;
+
     const modal = document.getElementById('week-details-modal');
     const container = document.getElementById('week-modal-tasks');
     const headerTitle = document.getElementById('week-modal-title');
     const headerPoints = document.getElementById('week-modal-points');
 
+    if(!modal || !container) return;
+
     const startDate = new Date(startIso);
     const endDate = new Date(endIso);
     
-    const tasks = (currentTeam.weekly_tasks || []).filter(t => {
-        const d = getSafeDate(t.due_date);
+    const tasks = (window.allTeamTasks || currentTeam.weekly_tasks || []).filter(t => {
+        const d = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
+        if(isNaN(d.getTime())) return false;
         return d >= startDate && d <= endDate;
     });
 
-    headerTitle.innerText = `Week Details (${startDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})} - ${endDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})})`;
-    headerPoints.innerText = tasks.length * 10; 
+    if(headerTitle) headerTitle.innerText = `الخطة الأسبوعية (${startDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})} - ${endDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})})`;
+    if(headerPoints) headerPoints.innerText = `${tasks.length} مهام`; 
 
     if (tasks.length === 0) {
         container.innerHTML = `
-            <div class="text-center py-10 flex flex-col items-center justify-center text-gray-500">
+            <div class="text-center py-10 flex flex-col items-center justify-center text-gray-500 bg-white/5 rounded-2xl border border-white/5 border-dashed">
                 <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-coffee text-2xl"></i>
+                    <i class="fas fa-mug-hot text-2xl"></i>
                 </div>
-                <p>No tasks assigned this week</p>
+                <p class="font-bold">لا توجد مهام معينة في هذا الأسبوع</p>
             </div>`;
     } else {
-        container.innerHTML = tasks.map(t => `
-            <div class="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl hover:bg-black/40 transition-colors">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg ${t.stats?.completed_count > 0 ? 'bg-green-500/20 text-green-400' : 'bg-b-primary/20 text-b-primary'} flex items-center justify-center">
-                        <i class="fas ${t.type === 'quiz' ? 'fa-question' : 'fa-play'}"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-white text-sm">${t.title || 'Untitled'}</h4>
-                        <div class="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                            <span><i class="fas fa-eye ml-1"></i> ${t.stats?.started_count || 0} views</span>
-                            <span><i class="fas fa-check-circle ml-1"></i> ${t.stats?.completed_count || 0} done</span>
-                        </div>
-                    </div>
+        container.innerHTML = tasks.map(t => {
+            let icon = 'fa-play-circle text-b-primary';
+            let typeName = 'فيديو';
+            
+            if (t.type === 'quiz') { 
+                icon = 'fa-clipboard-question text-yellow-500'; 
+                typeName = 'كويز'; 
+            }
+            if (t.type === 'project') { 
+                icon = 'fa-laptop-code text-purple-500'; 
+                typeName = 'مشروع'; 
+            }
+
+            // هنا استدعينا الدالة الذكية الجديدة
+            return `
+            <div onclick="window.openCalendarTask('${t.id}')" 
+                 class="group bg-black/40 border border-white/5 p-4 rounded-xl hover:border-b-primary hover:bg-white/5 cursor-pointer transition-all flex items-center gap-4 relative overflow-hidden mb-3">
+                
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-white/10 to-transparent group-hover:via-b-primary transition-all"></div>
+                
+                <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-b-primary/30 transition-all shadow-md">
+                    <i class="fas ${icon} text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
-                <div>
-                      ${t.stats?.completed_count > 0 ? 
-                        '<span class="text-green-400 text-xs font-bold bg-green-900/20 px-2 py-1 rounded">Active</span>' : 
-                        '<span class="text-yellow-400 text-xs font-bold bg-yellow-900/20 px-2 py-1 rounded">Pending</span>'}
+                
+                <div class="flex-1 min-w-0 text-right">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-2 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
+                        <h4 class="text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate mr-3" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
+                    </div>
+
+                </div>
+                
+                <div class="w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
+                    <i class="fas fa-chevron-left text-xs"></i>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
     modal.classList.remove('hidden');
 };
 
-window.closeWeekModal = () => document.getElementById('week-details-modal').classList.add('hidden');
-window.openDayModal = (dateStr) => {
-    const modal = document.getElementById('day-details-modal');
-    const content = document.getElementById('day-modal-content');
-    const title = document.getElementById('day-modal-title');
+window.closeWeekModal = () => document.getElementById('week-details-modal')?.classList.add('hidden');
+
+
+window.openCalendarTask = (taskId) => {
+    window.closeWeekModal();
     
-    const tasks = (currentTeam.weekly_tasks || []).filter(t => t.due_date && t.due_date.startsWith(dateStr));
-    title.innerText = `Tasks for ${dateStr}`;
-    
-    if (tasks.length === 0) {
-        content.innerHTML = `<p class="text-center text-gray-500 py-6">No tasks due today.</p>`;
-    } else {
-        content.innerHTML = tasks.map(t => `
-            <div class="bg-black/30 p-3 rounded-lg border border-white/5 mb-2">
-                <h4 class="font-bold text-white text-sm">${t.title}</h4>
-                <div class="flex justify-between items-center mt-2 text-xs">
-                    <span class="text-gray-400">${t.type || 'Video'}</span>
-                    <span class="${t.stats?.completed_count > 0 ? 'text-green-400' : 'text-yellow-400'}">
-                        ${t.stats?.completed_count || 0} completed
-                    </span>
-                </div>
-            </div>
-        `).join('');
+    if (window.openTaskDetailsModal) {
+        window.openTaskDetailsModal(taskId);
     }
-    modal.classList.remove('hidden');
+    
+    setTimeout(() => {
+        const modal = document.getElementById('task-details-modal');
+        if (modal) {
+            const closeBtn = modal.querySelector('.fa-times')?.closest('button');
+            
+            if (closeBtn) {
+                closeBtn.innerHTML = '<i class="fas fa-arrow-right text-lg"></i>';
+                
+                closeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    
+                    if (window.closeTaskDetailsModal) window.closeTaskDetailsModal();
+                    else modal.classList.add('hidden');
+                    
+                    if (currentViewedWeekStart && currentViewedWeekEnd) {
+                        window.openWeekDetails(currentViewedWeekStart, currentViewedWeekEnd);
+                    }
+                    
+                    closeBtn.innerHTML = '<i class="fas fa-times text-lg"></i>';
+                    closeBtn.onclick = window.closeTaskDetailsModal;
+                };
+            }
+        }
+    }, 100); 
 };
-window.closeDayModal = () => document.getElementById('day-details-modal').classList.add('hidden');
+
+window.renderCalendarTab = renderCalendarTab;
+
+
+
+
+
+
+
+
+
 
 // ==========================================
 // 9. MODALS & UI HELPERS

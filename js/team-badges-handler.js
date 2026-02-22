@@ -288,7 +288,7 @@ function renderCommandCenter(container, team, currentRank, nextRank, points, cur
                                 <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all hover:scale-[1.02] group">
                                     <div class="relative">
                                         <div class="w-12 h-12 rounded-full bg-gray-900 overflow-hidden border-2 border-white/10 group-hover:border-b-primary/50 transition-colors shadow-lg">
-                                            <img src="${member.photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/default-avatar.png'">
+                                            <img src="${member.photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/icon.jpg'">
                                         </div>
                                         <div class="absolute -bottom-1 -right-1 w-6 h-6 flex items-center justify-center rounded-full bg-[#0a0a0a] border border-white/10 text-xs font-bold text-gray-400">
                                             #${i+1}
@@ -359,7 +359,7 @@ function initFlashlightEffect() {
 
 function resolveImageUrl(url, type = 'user') {
     if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        return type === 'team' ? '../assets/images/team-placeholder.jpg' : '../assets/icons/default-avatar.png';
+        return type === 'team' ? '../assets/images/logo.png' : '../assets/icons/icon.jpg';
     }
     try {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
