@@ -321,20 +321,40 @@ function updateHeaderInfo(user, team) {
     const userPoints = user.total_xp || user.xp_points || 0;
     const teamPoints = team.total_score || 0;
 
-    const getBadgeTitle = (points, dataSet) => {
-        let title = dataSet[0].title;
+    // دالة محسنة لترجع الكائن بالكامل
+    const getRankObject = (points, dataSet) => {
+        let rankObj = dataSet[0];
         for (let i = 0; i < dataSet.length; i++) {
             if (points >= dataSet[i].points_required) {
-                title = dataSet[i].title;
+                rankObj = dataSet[i];
             } else {
                 break;
             }
         }
-        return title;
+        return rankObj;
     };
 
-    safeText('header-user-badge', getBadgeTitle(userPoints, RANKS_DATA));
-    safeText('sidebar-team-badge', getBadgeTitle(teamPoints, TEAM_RANKS_DATA));
+    const userRank = getRankObject(userPoints, RANKS_DATA);
+    const teamRank = getRankObject(teamPoints, TEAM_RANKS_DATA);
+
+    safeText('header-user-badge', userRank.title);
+    safeText('sidebar-team-badge', teamRank.title);
+
+    // تحديث صور البادج في الـ Header (التي أضفناها للتو)
+    const badgeImgEl = document.getElementById('header-user-badge-img');
+    const badgeImgClearEl = document.getElementById('header-user-badge-img-clear');
+    const badgeUrl = `../assets/user-badge/lv${userRank.level}.png`;
+    
+    if (badgeImgEl) badgeImgEl.src = badgeUrl;
+    if (badgeImgClearEl) badgeImgClearEl.src = badgeUrl;
+
+    // تغيير لون نص الرتبة بناءً على لون المرحلة
+    const badgeTextEl = document.getElementById('header-user-badge');
+    if (badgeTextEl && userRank.stage_color) {
+        badgeTextEl.style.color = userRank.stage_color;
+        badgeTextEl.style.borderColor = userRank.stage_color + '80'; // 50% opacity
+        badgeTextEl.style.backgroundColor = userRank.stage_color + '1A'; // 10% opacity
+    }
 
     const userName = user.full_name || "Busla User";
     const teamName = team.name || "My Team";
