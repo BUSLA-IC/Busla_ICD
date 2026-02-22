@@ -9,7 +9,7 @@ import { RANKS_DATA } from './badges-data.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
 
 // ==========================================
-// 1. CONFIGURATION & STATE
+// 1. GLOBAL STATE & CONFIGURATION
 // ==========================================
 const CACHE_KEY = 'busla_lms_v6_supa';
 
@@ -22,11 +22,14 @@ let selectedAssignCourse = null;
 let expandedNodes = new Set();
 let confirmCallback = null;
 let calendarDate = new Date();
+let isInitialized = false;
+let currentViewedWeekStart = null;
+let currentViewedWeekEnd = null;
+let currentGradingSubmission = null;
 
 // ==========================================
 // 2. INITIALIZATION & LIFECYCLE
 // ==========================================
-let isInitialized = false;
 document.addEventListener('DOMContentLoaded', () => {
     initSettingsModal();
     initTeamSettingsModal();
@@ -46,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
-    // Settings Button
     const settingsBtn = document.getElementById('open-settings-btn'); 
     if(settingsBtn) {
         settingsBtn.addEventListener('click', (e) => {
@@ -55,7 +57,6 @@ function setupEventListeners() {
         });
     }
 
-    // Logout Button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
@@ -64,12 +65,10 @@ function setupEventListeners() {
         });
     }
 
-    // Team Settings Button
     const teamSettingsBtn = document.getElementById('open-team-settings-btn');
     if (teamSettingsBtn) {
         teamSettingsBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Leader check logic
             const isLeader = (currentUserData?.id === currentTeam?.leader_id) || (currentUserData?.role === 'leader');
             if (currentTeam && currentTeam.id) {
                 openTeamSettings(currentTeam.id, isLeader);
@@ -101,7 +100,6 @@ function setupEventListeners() {
 
 async function initDashboard(uid) {
     try {
-        // Fetch User Profile
         const { data: profile, error: profileError } = await UserService.getProfile(uid);
         if (profileError || !profile) throw new Error("User profile not found");
         
@@ -113,7 +111,6 @@ async function initDashboard(uid) {
             return;
         }
 
-        // Fetch Team Data
         const { data: teamData, error: teamError } = await supabase
             .from('teams')
             .select('*')
@@ -128,11 +125,11 @@ async function initDashboard(uid) {
         currentTeam = teamData;
         currentTeam.team_id = teamData.id; 
 
-        // Ensure JSON fields are initialized (للكورسات والطلبات فقط)
+        // Initialize JSON fields
         if (!currentTeam.courses_plan) currentTeam.courses_plan = [];
         if (!currentTeam.requests) currentTeam.requests = [];
 
-        // 🔥 التعديل هنا: جلب المهام من الجدول الجديد (team_tasks)
+        // Fetch team tasks
         const { data: tasksData, error: tasksError } = await supabase
             .from('team_tasks')
             .select('*')
@@ -140,10 +137,9 @@ async function initDashboard(uid) {
             
         if (tasksError) console.error("Error fetching tasks:", tasksError);
         
-        // ربط المهام بالفريق مع توحيد اسم الـ id ليكون task_id ليعمل مع باقي الواجهة
         currentTeam.weekly_tasks = tasksData ? tasksData.map(t => ({...t, task_id: t.id})) : [];
 
-        // Fetch Members
+        // Fetch members
         const { data: members } = await supabase
             .from('profiles')
             .select('id')
@@ -155,7 +151,6 @@ async function initDashboard(uid) {
         renderSquadTab(currentTeam);   
         updateHeaderInfo(currentUserData, currentTeam);
 
-        // Load Content (Cache then Network)
         const hasCache = loadFromCache();
         if (hasCache) {
             console.log("Rendering from Cache immediately...");
@@ -177,12 +172,10 @@ async function initDashboard(uid) {
 // ==========================================
 // 3. DATA FETCHING & CACHING
 // ==========================================
-
 async function fetchDataFromServer() {
     try {
         console.log("Fetching Fresh Data from Supabase...");
         
-        // 1. Fetch data without order_index for phases to avoid 400 error
         const [phasesRes, coursesRes, materialsRes, projectsRes, quizzesRes] = await Promise.all([
             supabase.from('phases').select('*'), 
             supabase.from('courses').select('*'),
@@ -195,7 +188,6 @@ async function fetchDataFromServer() {
         if (coursesRes.error) throw coursesRes.error;
         if (materialsRes.error) throw materialsRes.error;
 
-        // 2. Map IDs and fields correctly based on your SQL schema
         allData.phases = (phasesRes.data || []).map(p => ({
             ...p, 
             id: p.phase_id,
@@ -218,10 +210,8 @@ async function fetchDataFromServer() {
 
         allData.projects = (projectsRes.data || []).map(p => ({ ...p, id: p.id }));
         allData.quizzes = (quizzesRes.data || []).map(q => ({ ...q, id: q.quiz_id }));
-
         allData.rawContents = rawContents;
 
-        // 3. Process courses stats
         allData.courses = rawCourses.map(course => {
             const courseContents = rawContents.filter(c => c.course_id === course.id);
             const videoCount = courseContents.filter(c => c.type === 'video').length;
@@ -247,16 +237,11 @@ async function fetchDataFromServer() {
             };
         });
 
-        // 4. Build Tree
         allData.tree = allData.phases.map(phase => {
             const phaseCourses = allData.courses.filter(c => c.phase_id === phase.id);
-            return {
-                ...phase,
-                courses: phaseCourses
-            };
+            return { ...phase, courses: phaseCourses };
         });
 
-        // 5. Build Lookups
         lookupData = { projects: {}, quizzes: {}, videos: {}, contents: [] }; 
         allData.projects.forEach(p => lookupData.projects[String(p.id)] = p);
         allData.quizzes.forEach(q => lookupData.quizzes[String(q.id)] = q);
@@ -268,7 +253,6 @@ async function fetchDataFromServer() {
             related_project_id: c.ref_project_id
         })); 
 
-        // 6. Save & Log
         localStorage.setItem(CACHE_KEY, JSON.stringify(allData));
         console.log("✅ Data mapped successfully!", allData);
 
@@ -287,7 +271,6 @@ function loadFromCache() {
             console.log("Loading from Cache...");
             allData = JSON.parse(cached);
             
-            // Rebuild Lookups
             lookupData = { projects: {}, quizzes: {}, videos: {}, contents: [] }; 
             if (allData.projects) allData.projects.forEach(p => lookupData.projects[String(p.id)] = p);
             if (allData.quizzes) allData.quizzes.forEach(q => lookupData.quizzes[String(q.id)] = q);
@@ -308,10 +291,10 @@ function loadFromCache() {
     }
     return false;
 }
-// ==========================================
-// 4. UI RENDERING & NAVIGATION
-// ==========================================
 
+// ==========================================
+// 4. UI CORE & NAVIGATION
+// ==========================================
 function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => {
         const el = document.getElementById(id);
@@ -321,15 +304,11 @@ function updateHeaderInfo(user, team) {
     const userPoints = user.total_xp || user.xp_points || 0;
     const teamPoints = team.total_score || 0;
 
-    // دالة محسنة لترجع الكائن بالكامل
     const getRankObject = (points, dataSet) => {
         let rankObj = dataSet[0];
         for (let i = 0; i < dataSet.length; i++) {
-            if (points >= dataSet[i].points_required) {
-                rankObj = dataSet[i];
-            } else {
-                break;
-            }
+            if (points >= dataSet[i].points_required) rankObj = dataSet[i];
+            else break;
         }
         return rankObj;
     };
@@ -340,7 +319,6 @@ function updateHeaderInfo(user, team) {
     safeText('header-user-badge', userRank.title);
     safeText('sidebar-team-badge', teamRank.title);
 
-    // تحديث صور البادج في الـ Header (التي أضفناها للتو)
     const badgeImgEl = document.getElementById('header-user-badge-img');
     const badgeImgClearEl = document.getElementById('header-user-badge-img-clear');
     const badgeUrl = `../assets/user-badge/lv${userRank.level}.png`;
@@ -348,18 +326,15 @@ function updateHeaderInfo(user, team) {
     if (badgeImgEl) badgeImgEl.src = badgeUrl;
     if (badgeImgClearEl) badgeImgClearEl.src = badgeUrl;
 
-    // تغيير لون نص الرتبة بناءً على لون المرحلة
     const badgeTextEl = document.getElementById('header-user-badge');
     if (badgeTextEl && userRank.stage_color) {
         badgeTextEl.style.color = userRank.stage_color;
-        badgeTextEl.style.borderColor = userRank.stage_color + '80'; // 50% opacity
-        badgeTextEl.style.backgroundColor = userRank.stage_color + '1A'; // 10% opacity
+        badgeTextEl.style.borderColor = userRank.stage_color + '80';
+        badgeTextEl.style.backgroundColor = userRank.stage_color + '1A';
     }
 
     const userName = user.full_name || "Busla User";
     const teamName = team.name || "My Team";
-    
-    // For leader name, we might need to fetch if not present, but for now fallback
     const leaderName = "Team Leader"; 
 
     safeText('sidebar-team-name', teamName);
@@ -418,6 +393,9 @@ function renderAllTabs() {
     renderCalendarTab();
 }
 
+// ==========================================
+// 5. DASHBOARD OVERVIEW
+// ==========================================
 function renderOverview() {
     if (!currentTeam) return;
     
@@ -451,7 +429,6 @@ function renderActiveCourses(activeIds) {
 
     activeIds.forEach(courseId => {
         const courseData = allData.courses.find(c => String(c.id) === String(courseId));
-
         const title = courseData ? courseData.title : "Selected Course";
         let img = resolveImageUrl(courseData?.image_url, 'course');
 
@@ -510,10 +487,248 @@ function renderWeekInfo() {
     `;
 }
 
-// ==========================================
-// 5. ROADMAP & CURRICULUM LOGIC
-// ==========================================
+// Render overview tasks with smart status (Active, Completed, Overdue)
+async function renderTeamOverview(tasks) {
+    const container = document.getElementById('overview-container');
+    if (!container) return;
+    
+    // Show loading spinner
+    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
 
+    if (!tasks || tasks.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-gray-600 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                <i class="fas fa-clipboard-list text-5xl mb-4 opacity-50"></i>
+                <p>No active tasks currently.</p>
+                <button onclick="switchTab('assignments')" class="mt-4 text-b-primary hover:text-white text-sm font-bold underline">
+                    + Assign New Tasks
+                </button>
+            </div>`;
+        return;
+    }
+
+    try {
+        const userId = currentUser.id;
+        
+        // Fetch leader's personal progress to determine completion status
+        const [projRes, quizRes, matRes] = await Promise.all([
+            supabase.from('project_submissions').select('project_id').eq('user_id', userId),
+            supabase.from('quiz_attempts').select('quiz_id, passed').eq('user_id', userId),
+            supabase.from('completed_materials').select('material_id').eq('user_id', userId)
+        ]);
+
+        const completedProjects = new Set((projRes.data || []).map(p => p.project_id));
+        const passedQuizzes = new Set((quizRes.data || []).filter(q => q.passed).map(q => q.quiz_id));
+        const completedMats = new Set((matRes.data || []).map(m => m.material_id));
+
+        const currentWeek = getCurrentWeekCycle(); 
+        const displayTasks = [];
+
+        // Categorize tasks into current or overdue
+        tasks.forEach(t => {
+            const taskDate = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
+            if (isNaN(taskDate.getTime())) return;
+
+            let isCompleted = false;
+            if (t.type === 'project') isCompleted = completedProjects.has(t.content_id);
+            else if (t.type === 'quiz') isCompleted = passedQuizzes.has(t.content_id);
+            else isCompleted = completedMats.has(t.content_id);
+
+            const isCurrentWeek = t.week_id === currentWeek.id;
+            const isPastTask = taskDate < currentWeek.start && !isCurrentWeek;
+
+            if (isCurrentWeek) {
+                displayTasks.push({ ...t, isCompleted, isOverdue: false });
+            } else if (isPastTask && !isCompleted) {
+                displayTasks.push({ ...t, isCompleted, isOverdue: true });
+            }
+        });
+
+        // Sort: Overdue first, then Active, then Completed
+        displayTasks.sort((a, b) => {
+            if (a.isOverdue && !b.isOverdue) return -1;
+            if (!a.isOverdue && b.isOverdue) return 1;
+            if (!a.isCompleted && b.isCompleted) return -1;
+            if (a.isCompleted && !b.isCompleted) return 1;
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        if (displayTasks.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 py-12 border border-dashed border-white/5 rounded-2xl bg-black/20">
+                    <i class="fas fa-check-circle text-green-500 text-4xl mb-3 opacity-80"></i>
+                    <p class="font-bold text-lg text-white">Great Job!</p>
+                    <p class="text-sm mt-1">You have completed all your tasks.</p>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        displayTasks.forEach(task => {
+            // UI configuration based on type
+            let typeConfig = { icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'Video' };
+            if (task.type === 'quiz') typeConfig = { icon: 'fa-clipboard-question', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-l-yellow-500', label: 'Quiz' };
+            else if (task.type === 'project') typeConfig = { icon: 'fa-code-branch', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-l-purple-500', label: 'Project' };
+
+            let statusBadge = '';
+            let opacityClass = 'opacity-100';
+
+            if (task.isCompleted) {
+                statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check"></i> Completed</span>`;
+                opacityClass = 'opacity-50 hover:opacity-100'; 
+                typeConfig.border = 'border-l-green-500/50'; 
+            } else if (task.isOverdue) {
+                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> Overdue</span>`;
+                typeConfig.border = 'border-l-red-500'; 
+            } else {
+                statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> Active</span>`;
+            }
+
+            // Check if task can be deleted (Lock if students started it)
+            const canDelete = (!task.stats || task.stats.started_count === 0);
+            const taskId = task.id || task.task_id;
+
+            html += `
+                <div class="bg-black/40 border border-white/5 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all shadow-sm ${opacityClass}">
+                    
+                    <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="window.openUnifiedTaskModal('${taskId}')">
+                        <div class="w-10 h-10 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-lg shadow-inner shrink-0">
+                            <i class="fas ${typeConfig.icon}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0 pr-2 text-right">
+                            <h4 class="font-bold text-white text-sm line-clamp-1 group-hover:text-b-primary transition-colors">
+                                ${task.title || "Untitled Task"}
+                            </h4>
+                            <div class="flex items-center justify-end gap-2 mt-1.5 flex-row-reverse w-full">
+                                <span class="text-[10px] text-gray-400 bg-black px-2 py-0.5 rounded border border-white/5">${typeConfig.label}</span>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0 border-r border-white/10 pr-4 mr-2">
+                        ${canDelete ? `
+                        <button onclick="event.stopPropagation(); window.unassignTask('${taskId}')" 
+                                class="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all"
+                                title="Delete Task">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                        ` : `
+                        <div class="w-8 h-8 flex items-center justify-center text-gray-600 cursor-help" title="Locked (Started by students)">
+                            <i class="fas fa-lock text-xs"></i>
+                        </div>
+                        `}
+                        
+                        <a href="course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${taskId}" 
+                           onclick="event.stopPropagation();"
+                           class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
+                           title="Open Task">
+                            <i class="fas fa-external-link-alt text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    } catch (e) {
+        console.error("Error fetching tasks:", e);
+        container.innerHTML = `<p class="text-red-500 text-center py-4">Failed to load tasks.</p>`;
+    }
+}
+
+window.openUnifiedTaskModal = (taskId) => {
+    const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
+    if (!task) {
+        console.error("Task not found:", taskId);
+        return;
+    }
+
+    const modal = document.getElementById('unified-task-modal');
+    const type = task.type || 'video';
+    modal.classList.remove('hidden');
+    
+    let details = {};
+    if (type === 'quiz') {
+        details = lookupData.quizzes[String(task.content_id)];
+        if (!details) console.warn("Quiz details not in cache:", task.content_id);
+    } else if (type === 'project') {
+        details = lookupData.projects[String(task.content_id)];
+        if (!details) console.warn("Project details not in cache:", task.content_id);
+    } else {
+        const contentDetails = (lookupData.contents || []).find(c => String(c.id) === String(task.content_id) && c.type === 'video');
+        details = contentDetails || task; 
+    }
+
+    updateModalContent(task, details || task, type);
+};
+
+// Delete assigned task with safety checks
+window.unassignTask = (taskId) => {
+    // 1. Find task in local state
+    const task = (window.allTeamTasks || currentTeam?.weekly_tasks || []).find(t => t.id === taskId || t.task_id === taskId);
+    
+    if (!task) {
+        showToast("Task not found.", "error");
+        return;
+    }
+
+    // 2. Prevent deleting past tasks
+    const currentWeek = getCurrentWeekCycle();
+    if (task.week_id && task.week_id !== currentWeek.id) {
+        showToast("Cannot delete past tasks.", "error");
+        return;
+    }
+
+    // 3. Prevent deleting if started
+    if (task.stats && (task.stats.started_count > 0 || task.stats.completed_count > 0)) {
+        showToast("Cannot delete: Students have already started.", "error");
+        return;
+    }
+
+    // 4. Confirmation and Deletion
+    const confirmMessage = "Are you sure you want to delete this task?";
+    
+    const performDeletion = async () => {
+        try {
+            // Fix: Changed table name from 'weekly_tasks' to 'team_tasks'
+            const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
+            if (error) throw error;
+            
+            showToast("Task deleted successfully.", "success");
+            
+            // Update local state
+            if (window.allTeamTasks) {
+                window.allTeamTasks = window.allTeamTasks.filter(t => t.id !== taskId && t.task_id !== taskId);
+            }
+            if (currentTeam && currentTeam.weekly_tasks) {
+                currentTeam.weekly_tasks = currentTeam.weekly_tasks.filter(t => t.id !== taskId && t.task_id !== taskId);
+            }
+            
+            // Refresh UI
+            if (typeof renderTeamOverview === 'function') {
+                renderTeamOverview(window.allTeamTasks || currentTeam.weekly_tasks);
+            }
+            
+        } catch (err) {
+            console.error("Delete Task Error:", err);
+            showToast("Failed to delete task.", "error");
+        }
+    };
+
+    if (typeof openConfirmModal === 'function') {
+        openConfirmModal(confirmMessage, performDeletion);
+    } else {
+        if (confirm(confirmMessage)) {
+            performDeletion();
+        }
+    }
+};
+
+
+// ==========================================
+// 6. ROADMAP & CURRICULUM
+// ==========================================
 function renderRoadmapTree() {
     const container = document.getElementById('roadmap-tree-container');
     if (!container) return;
@@ -552,7 +767,7 @@ function renderRoadmapTree() {
             phase.courses.forEach(course => {
                 const courseId = String(course.id).trim();
                 const isActive = (currentTeam.courses_plan || []).includes(courseId);
-                const hasChildren = false; // Simplified for now as courses are flat in new structure
+                const hasChildren = false; 
                 const isExpanded = expandedNodes.has(courseId);
 
                 const itemHTML = document.createElement('div');
@@ -569,9 +784,7 @@ function renderRoadmapTree() {
                             <div class="truncate flex-1">
                                 <h4 class="font-bold text-base ${isActive ? 'text-white' : 'text-gray-200'} truncate">${course.title}</h4>
                                 <div class="flex items-center gap-3 mt-1">
-                                    <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono">
-                                        Module
-                                    </span>
+                                    <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono">Module</span>
                                     ${course.real_video_count ? `<span class="text-[10px] text-blue-400"><i class="fas fa-video ml-1"></i>${course.real_video_count}</span>` : ''}
                                 </div>
                             </div>
@@ -649,7 +862,6 @@ window.showDetails = (type, id, parentTitle = "") => {
     
     const typeLabel = type === 'phase' ? 'Educational Phase' : (item.type || 'Course');
     setText('detail-type', typeLabel);
-
     setText('detail-instructor', item.instructor || "Busla Team");
     
     const realDur = item.real_total_duration && item.real_total_duration !== "00:00:00" ? item.real_total_duration : "00:00:00";
@@ -664,7 +876,6 @@ window.showDetails = (type, id, parentTitle = "") => {
     const showSection = (contId, txtId, content) => {
         const cont = document.getElementById(contId);
         const txt = document.getElementById(txtId);
-        // Handle JSONB fields from Supabase
         let displayContent = content;
         if (Array.isArray(content)) displayContent = content.join(', ');
         
@@ -705,7 +916,6 @@ window.showDetails = (type, id, parentTitle = "") => {
 window.toggleActivate = async (id, isChecked) => {
     if(!currentTeam.courses_plan) currentTeam.courses_plan = [];
     
-    // Local Update
     if (isChecked) {
         if (!currentTeam.courses_plan.includes(id)) currentTeam.courses_plan.push(id);
     } else {
@@ -720,7 +930,6 @@ window.toggleActivate = async (id, isChecked) => {
     if(detailBtn) detailBtn.checked = isChecked;
 
     try {
-        // Supabase Update
         const { error } = await supabase
             .from('teams')
             .update({ courses_plan: currentTeam.courses_plan })
@@ -739,10 +948,10 @@ window.toggleActivate = async (id, isChecked) => {
     }
 };
 
-// ==========================================
-// 6. TASKS & ASSIGNMENTS LOGIC
-// ==========================================
 
+// ==========================================
+// 7. TASK ASSIGNMENTS & PUBLISHING
+// ==========================================
 function renderAssignments() {
     const list = document.getElementById('assign-courses-list');
     const activeIds = currentTeam.courses_plan || [];
@@ -791,7 +1000,6 @@ window.loadAssignContent = async (cid) => {
     const cont = document.getElementById('assign-content-list');
     cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
     
-    // Filter contents for this course from raw data
     const courseContents = (lookupData.contents || []).filter(c => String(c.course_id) === String(cid));
     courseContents.sort((a,b) => (a.order_index || 0) - (b.order_index || 0));
 
@@ -892,9 +1100,7 @@ window.publishSelectedTasks = async function() {
     try {
         const teamId = currentTeam.team_id;
         const weekCycle = getCurrentWeekCycle();
-        const now = new Date();
         const due = weekCycle.end.toISOString();
-        
         const newTasksToInsert = [];
 
         checkedBoxes.forEach(box => {
@@ -912,15 +1118,13 @@ window.publishSelectedTasks = async function() {
             });
         });
 
-        // 🔥 التعديل هنا: الإدراج في الجدول الجديد
         const { data: insertedTasks, error } = await supabase
             .from('team_tasks')
             .insert(newTasksToInsert)
-            .select(); // إرجاع البيانات المدخلة مع الـ IDs الجديدة
+            .select();
 
         if (error) throw error;
 
-        // تحديث الواجهة محلياً
         const mappedTasks = insertedTasks.map(t => ({...t, task_id: t.id}));
         currentTeam.weekly_tasks = [...(currentTeam.weekly_tasks || []), ...mappedTasks];
 
@@ -936,6 +1140,7 @@ window.publishSelectedTasks = async function() {
         btn.disabled = false;
     }
 };
+
 window.deleteTask = function(taskId, taskWeekId) {
     openConfirmModal("Are you sure? This task will be removed from team records.", async () => {
         const currentWeek = getCurrentWeekCycle();
@@ -945,14 +1150,12 @@ window.deleteTask = function(taskId, taskWeekId) {
         }
 
         try {
-            // تحقق محلي إذا كان أحد قد بدأ بها
             const taskToDelete = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
             if (taskToDelete && taskToDelete.stats && taskToDelete.stats.started_count > 0) {
                  showToast("Cannot delete: Students already started.", "error");
                  return;
             }
 
-            // 🔥 التعديل هنا: حذف من الجدول الجديد
             const { error } = await supabase
                 .from('team_tasks')
                 .delete()
@@ -960,9 +1163,7 @@ window.deleteTask = function(taskId, taskWeekId) {
 
             if (error) throw error;
 
-            // تحديث الواجهة محلياً
             currentTeam.weekly_tasks = currentTeam.weekly_tasks.filter(t => t.task_id !== taskId);
-
             showToast("Task deleted", "success");
             renderOverview(); 
 
@@ -979,7 +1180,6 @@ window.submitCustomTask = async () => {
     if(!t) return showToast("Title required", "error");
 
     const weekCycle = getCurrentWeekCycle();
-
     const taskData = {
         team_id: currentTeam.team_id,
         title: t,
@@ -991,7 +1191,6 @@ window.submitCustomTask = async () => {
     };
 
     try {
-        // 🔥 التعديل هنا: إدراج في الجدول الجديد
         const { data: insertedTask, error } = await supabase
             .from('team_tasks')
             .insert([taskData])
@@ -1000,7 +1199,6 @@ window.submitCustomTask = async () => {
 
         if (error) throw error;
 
-        // تحديث الواجهة محلياً
         currentTeam.weekly_tasks.push({...insertedTask, task_id: insertedTask.id});
         
         showToast("Task Published", "success");
@@ -1012,147 +1210,14 @@ window.submitCustomTask = async () => {
     }
 };
 
-async function renderTeamOverview(tasks) {
-    const container = document.getElementById('overview-container');
-    if (!container) return;
-    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
-
-    if (!tasks || tasks.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-12 text-gray-600 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                <i class="fas fa-clipboard-list text-5xl mb-4 opacity-50"></i>
-                <p>لا توجد مهام معينة حالياً.</p>
-                <button onclick="switchTab('assignments')" class="mt-4 text-b-primary hover:text-white text-sm font-bold underline">
-                    + تعيين مهام جديدة
-                </button>
-            </div>`;
-        return;
-    }
-
-    try {
-        const userId = currentUser.id;
-        
-        // 1. جلب إنجازات الليدر شخصياً من قواعد البيانات
-        const [projRes, quizRes, matRes] = await Promise.all([
-            supabase.from('project_submissions').select('project_id').eq('user_id', userId),
-            supabase.from('quiz_attempts').select('quiz_id, passed').eq('user_id', userId),
-            supabase.from('completed_materials').select('material_id').eq('user_id', userId)
-        ]);
-
-        const completedProjects = new Set((projRes.data || []).map(p => p.project_id));
-        const passedQuizzes = new Set((quizRes.data || []).filter(q => q.passed).map(q => q.quiz_id));
-        const completedMats = new Set((matRes.data || []).map(m => m.material_id));
-
-        // 2. حساب الأسبوع الحالي
-        const currentWeek = getCurrentWeekCycle(); 
-        const displayTasks = [];
-
-        tasks.forEach(t => {
-            const taskDate = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
-            if (isNaN(taskDate.getTime())) return;
-
-            // هل الليدر أكمل هذه المهمة؟
-            let isCompleted = false;
-            if (t.type === 'project') isCompleted = completedProjects.has(t.content_id);
-            else if (t.type === 'quiz') isCompleted = passedQuizzes.has(t.content_id);
-            else isCompleted = completedMats.has(t.content_id);
-
-            const isCurrentWeek = t.week_id === currentWeek.id;
-            const isPastTask = taskDate < currentWeek.start && !isCurrentWeek;
-
-            // المنطق الذكي: 
-            // - إذا كانت في الأسبوع الحالي: تظهر سواء مكتملة أو لا.
-            // - إذا كانت متأخرة: تظهر فقط إذا لم يتم إكمالها. (إذا أُكملت، تختفي من الوجه).
-            if (isCurrentWeek) {
-                displayTasks.push({ ...t, isCompleted, isOverdue: false });
-            } else if (isPastTask && !isCompleted) {
-                displayTasks.push({ ...t, isCompleted, isOverdue: true });
-            }
-        });
-
-        // 3. ترتيب المهام: المتأخر أولاً -> الجاري -> المكتمل أخيراً
-        displayTasks.sort((a, b) => {
-            if (a.isOverdue && !b.isOverdue) return -1;
-            if (!a.isOverdue && b.isOverdue) return 1;
-            if (!a.isCompleted && b.isCompleted) return -1;
-            if (a.isCompleted && !b.isCompleted) return 1;
-            return new Date(b.created_at) - new Date(a.created_at);
-        });
-
-        if (displayTasks.length === 0) {
-            container.innerHTML = `
-                <div class="text-center text-gray-400 py-12 border border-dashed border-white/5 rounded-2xl bg-black/20">
-                    <i class="fas fa-check-circle text-green-500 text-4xl mb-3 opacity-80"></i>
-                    <p class="font-bold text-lg text-white">عمل رائع!</p>
-                    <p class="text-sm mt-1">لقد أنجزت جميع المهام المطلوبة منك.</p>
-                </div>`;
-            return;
-        }
-
-        let html = '';
-        displayTasks.forEach(task => {
-            let typeConfig = { icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'فيديو' };
-            if (task.type === 'quiz') typeConfig = { icon: 'fa-clipboard-question', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-l-yellow-500', label: 'كويز' };
-            else if (task.type === 'project') typeConfig = { icon: 'fa-code-branch', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-l-purple-500', label: 'مشروع' };
-
-            let statusBadge = '';
-            let opacityClass = 'opacity-100';
-
-            if (task.isCompleted) {
-                statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check"></i> مكتملة</span>`;
-                opacityClass = 'opacity-50 hover:opacity-100'; // جعلها باهتة
-                typeConfig.border = 'border-l-green-500/50'; 
-            } else if (task.isOverdue) {
-                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> متأخرة</span>`;
-                typeConfig.border = 'border-l-red-500'; // تلوين الحافة بالأحمر للتنبيه
-            } else {
-                statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> جارية</span>`;
-            }
-
-            html += `
-                <div class="bg-black/40 border border-white/5 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all shadow-sm ${opacityClass}">
-                    <div class="flex items-center gap-4 flex-1">
-                        <div class="w-10 h-10 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-lg shadow-inner shrink-0">
-                            <i class="fas ${typeConfig.icon}"></i>
-                        </div>
-                        <div class="flex-1 min-w-0 pr-2 text-right">
-                            <h4 class="font-bold text-white text-sm line-clamp-1 group-hover:text-b-primary transition-colors">
-                                ${task.title || "بدون عنوان"}
-                            </h4>
-                            <div class="flex items-center justify-end gap-2 mt-1.5">
-                                ${statusBadge}
-                                <span class="text-[10px] text-gray-400 bg-black px-2 py-0.5 rounded border border-white/5">${typeConfig.label}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <a href="course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}" 
-                           class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
-                           title="فتح المهمة">
-                            <i class="fas fa-play text-xs"></i>
-                        </a>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-    } catch (e) {
-        console.error("Error fetching leader progress:", e);
-        container.innerHTML = `<p class="text-red-500 text-center py-4">حدث خطأ في تحميل حالة المهام.</p>`;
-    }
-}
-
 
 // ==========================================
-// 7. TEAM MANAGEMENT (Squad, Invites, Requests)
+// 8. TEAM & SQUAD MANAGEMENT
 // ==========================================
-
 async function renderSquadTab(teamData) {
     if (!teamData) return;
     await renderSquad(); 
     
-    // Requests Badge
     const requestsCount = (teamData.requests || []).length;
     const badge = document.getElementById('requests-badge');
     if (badge) {
@@ -1160,19 +1225,16 @@ async function renderSquadTab(teamData) {
         badge.classList.toggle('hidden', requestsCount === 0);
     }
     
-    // Render other lists
     renderJoinRequests(teamData);
     renderSentInvites(teamData);
 }
 
-// Fixed Squad Render (Solves missing members)
 async function renderSquad() {
     const list = document.getElementById('squad-list');
     const container = document.getElementById('squad-list-container');
     const countDisplay = document.getElementById('squad-count-display');
     const select = document.getElementById('new-leader-select');
     
-    // Clear
     if(list) list.innerHTML = '';
     if(container) container.innerHTML = '';
     if(select) {
@@ -1189,7 +1251,6 @@ async function renderSquad() {
     if(countDisplay) countDisplay.innerText = currentTeam.members.length;
 
     try {
-        // Fetch all members (profiles) based on team_id query to be safe
         const { data: membersData, error } = await supabase
             .from('profiles')
             .select('*')
@@ -1197,7 +1258,6 @@ async function renderSquad() {
 
         if (error) throw error;
 
-        // Sort by XP
         membersData.sort((a, b) => (b.total_xp || 0) - (a.total_xp || 0));
 
         if(select) {
@@ -1218,10 +1278,8 @@ async function renderSquad() {
 
             const isLeader = member.id === currentTeam.leader_id;
             const isMe = member.id === currentUser.id;
-            // Leader logic: only current leader can kick others
             const canKick = (currentUser.id === currentTeam.leader_id) && !isMe;
 
-            // 1. Render Table List
             if(list) {
                 const memberRow = document.createElement('div');
                 memberRow.className = "p-4 flex justify-between items-center hover:bg-white/5 transition-colors border-b border-white/5 last:border-0";
@@ -1249,7 +1307,6 @@ async function renderSquad() {
                 list.appendChild(memberRow);
             }
 
-            // 2. Render Card View
             if (container) {
                 containerHtml += `
                 <div class="group flex flex-col md:flex-row items-center bg-white/5 border border-white/5 rounded-3xl p-5 relative overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-2xl hover:shadow-black/50">
@@ -1292,7 +1349,6 @@ async function renderSquad() {
                 </div>`;
             }
 
-            // 3. Populate Select
             if (!isMe && select) {
                 const option = document.createElement('option');
                 option.value = member.id;
@@ -1315,8 +1371,9 @@ async function renderSquad() {
     }
 }
 
-// --- Invitations ---
-
+// ==========================================
+// 9. INVITATIONS & JOIN REQUESTS
+// ==========================================
 window.openInviteModal = () => {
     document.getElementById('invite-member-modal').classList.remove('hidden');
     document.getElementById('invite-email-input').value = ''; 
@@ -1338,22 +1395,15 @@ window.sendTeamInvitation = async () => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
 
     try {
-        // Check if user exists
         const { data: user, error: userError } = await supabase
             .from('profiles')
             .select('id, full_name, team_id')
             .eq('email', email)
             .single();
 
-        if (userError || !user) {
-            throw new Error("Email not registered.");
-        }
+        if (userError || !user) throw new Error("Email not registered.");
+        if (user.team_id) throw new Error("User already in a team.");
 
-        if (user.team_id) {
-            throw new Error("User already in a team.");
-        }
-
-        // Check if invite exists
         const { data: existing, error: existError } = await supabase
             .from('team_invitations')
             .select('id')
@@ -1361,9 +1411,7 @@ window.sendTeamInvitation = async () => {
             .eq('from_team_id', currentTeam.team_id)
             .eq('status', 'pending');
 
-        if (existing && existing.length > 0) {
-            throw new Error("Invitation already sent.");
-        }
+        if (existing && existing.length > 0) throw new Error("Invitation already sent.");
 
         const inviteData = {
             to_uid: user.id,
@@ -1378,10 +1426,7 @@ window.sendTeamInvitation = async () => {
             }
         };
 
-        const { error: insertError } = await supabase
-            .from('team_invitations')
-            .insert([inviteData]);
-
+        const { error: insertError } = await supabase.from('team_invitations').insert([inviteData]);
         if (insertError) throw insertError;
 
         showToast("Invitation sent!", "success");
@@ -1418,7 +1463,6 @@ async function renderSentInvitesList() {
             if (invite.status === 'accepted') return; 
 
             const date = new Date(invite.created_at).toLocaleDateString('ar-EG');
-            
             let statusBadge = '';
             if (invite.status === 'pending') statusBadge = '<span class="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/20">Pending</span>';
             if (invite.status === 'rejected') statusBadge = '<span class="bg-red-500/20 text-red-500 text-xs px-2 py-1 rounded border border-red-500/20">Rejected</span>';
@@ -1444,10 +1488,6 @@ async function renderSentInvitesList() {
 }
 
 function renderSentInvites(teamData) {
-    // This function originally rendered recent pending invites in a side panel.
-    // We will simulate fetching from the dedicated table since it's no longer in team doc.
-    // For now, we call the async fetch and populate.
-    
     const container = document.getElementById('invites-container');
     const section = document.getElementById('invites-section');
     
@@ -1499,7 +1539,6 @@ window.cancelInvitation = (inviteId) => {
                 showToast("Invitation cancelled", "success");
                 closeConfirmModal();
                 renderSentInvitesList(); 
-                // Refresh small panel
                 renderSentInvites(currentTeam);
             } catch (e) {
                 console.error("Cancel Error:", e);
@@ -1508,8 +1547,6 @@ window.cancelInvitation = (inviteId) => {
         }
     );
 };
-
-// --- Requests ---
 
 window.openRequestsModal = () => {
     document.getElementById('requests-modal').classList.remove('hidden');
@@ -1590,7 +1627,6 @@ function renderJoinRequests(teamData) {
 window.handleRequestAction = async (teamId, userId, userName, action) => {
     try {
         if (action === 'accept') {
-            // Update Profile team_id
             const { error: profileErr } = await supabase
                 .from('profiles')
                 .update({ team_id: teamId, joined_team_at: new Date() })
@@ -1598,7 +1634,6 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
             
             if (profileErr) throw profileErr;
 
-            // Remove request from array
             const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
             await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
 
@@ -1616,14 +1651,11 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
     }
 };
 
-// --- Member Actions ---
-
 window.confirmKickMember = (teamId, memberUid, memberName) => {
     openConfirmModal(
         `Are you sure you want to remove "${memberName}"? They will keep their points, and team score will not be affected.`,
         async () => {
             try {
-                // Update User
                 await supabase
                     .from('profiles')
                     .update({ team_id: null })
@@ -1710,16 +1742,9 @@ window.openLeaveTeamModal = async () => {
 };
 
 
-
-
-
-
-
-
 // ==========================================
-// 8. CALENDAR SYSTEM
+// 10. CALENDAR SYSTEM
 // ==========================================
-
 function renderCalendarTab() {
     if (!currentTeam) return;
     
@@ -1795,9 +1820,6 @@ window.changeMonth = (offset) => {
     renderCalendarTab();
 };
 
-let currentViewedWeekStart = null;
-let currentViewedWeekEnd = null;
-
 window.openWeekDetails = (startIso, endIso) => {
     currentViewedWeekStart = startIso;
     currentViewedWeekEnd = endIso;
@@ -1843,7 +1865,6 @@ window.openWeekDetails = (startIso, endIso) => {
                 typeName = 'مشروع'; 
             }
 
-            // هنا استدعينا الدالة الذكية الجديدة
             return `
             <div onclick="window.openCalendarTask('${t.id}')" 
                  class="group bg-black/40 border border-white/5 p-4 rounded-xl hover:border-b-primary hover:bg-white/5 cursor-pointer transition-all flex items-center gap-4 relative overflow-hidden mb-3">
@@ -1859,7 +1880,6 @@ window.openWeekDetails = (startIso, endIso) => {
                         <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-2 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
                         <h4 class="text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate mr-3" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
                     </div>
-
                 </div>
                 
                 <div class="w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
@@ -1873,7 +1893,6 @@ window.openWeekDetails = (startIso, endIso) => {
 };
 
 window.closeWeekModal = () => document.getElementById('week-details-modal')?.classList.add('hidden');
-
 
 window.openCalendarTask = (taskId) => {
     window.closeWeekModal();
@@ -1910,326 +1929,9 @@ window.openCalendarTask = (taskId) => {
 
 window.renderCalendarTab = renderCalendarTab;
 
-
-
-
-
-
-
-
-
-
 // ==========================================
-// 9. MODALS & UI HELPERS
+// 11. GRADING & TRACKING SYSTEM
 // ==========================================
-
-// Unified Task Modal
-window.openUnifiedTaskModal = (taskId) => {
-    const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
-    if (!task) {
-        console.error("Task not found:", taskId);
-        return;
-    }
-
-    const modal = document.getElementById('unified-task-modal');
-    const type = task.type || 'video';
-    modal.classList.remove('hidden');
-    
-    let details = {};
-    if (type === 'quiz') {
-        details = lookupData.quizzes[String(task.content_id)];
-        if (!details) console.warn("Quiz details not in cache:", task.content_id);
-    } else if (type === 'project') {
-        details = lookupData.projects[String(task.content_id)];
-        if (!details) console.warn("Project details not in cache:", task.content_id);
-    } else {
-        const contentDetails = (lookupData.contents || []).find(c => String(c.id) === String(task.content_id) && c.type === 'video');
-        details = contentDetails || task; 
-    }
-
-    updateModalContent(task, details || task, type);
-};
-
-function updateModalContent(task, details, type) {
-    const styles = {
-        video: { class: 'from-b-primary/20', icon: 'fa-play', color: 'text-b-primary', label: 'Video', btnText: 'Watch Lesson', btnIcon: 'fa-play', btnColor: 'bg-b-primary hover:bg-teal-700' },
-        quiz: { class: 'from-yellow-500/20', icon: 'fa-clipboard-question', color: 'text-yellow-500', label: 'Quiz', btnText: 'Start Quiz', btnIcon: 'fa-pencil-alt', btnColor: 'bg-yellow-600 hover:bg-yellow-700' },
-        project: { class: 'from-purple-500/20', icon: 'fa-laptop-code', color: 'text-purple-500', label: 'Project', btnText: 'Submit Project', btnIcon: 'fa-upload', btnColor: 'bg-purple-600 hover:bg-purple-700' }
-    };
-    const style = styles[type] || styles.video;
-
-    const headerBg = document.getElementById('modal-header-bg');
-    headerBg.className = `p-6 border-b border-white/10 bg-gradient-to-r ${style.class} to-transparent`;
-    document.getElementById('modal-type-icon').className = `fas ${style.icon} ${style.color}`;
-    document.getElementById('modal-type-badge').innerText = style.label;
-    document.getElementById('modal-type-badge').className = `text-[10px] uppercase font-bold tracking-wider bg-black/40 px-2 py-1 rounded border border-white/5 ${style.color}`;
-
-    let mainTitle = details.title || task.title || "Untitled";
-    let subTitle = ""; 
-    let description = "";
-    let gridHtml = "";
-
-    const addGridItem = (label, value, iconClass) => {
-        if(!value && value !== 0) return;
-        gridHtml += `
-            <div class="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col justify-between h-full">
-                <p class="text-[10px] text-gray-500 mb-1">${label}</p>
-                <p class="font-bold text-white text-sm line-clamp-2">
-                    <i class="fas ${iconClass} ${style.color} ml-1 opacity-70"></i> ${value}
-                </p>
-            </div>`;
-    };
-
-    if (type === 'project') {
-        const relatedLessonName = getRelatedLessonName(task.content_id, 'project'); 
-        subTitle = relatedLessonName ? `Project for: ${relatedLessonName}` : `Course: ${getCourseNameById(task.course_id)}`;
-        description = details.description ? String(details.description) : (task.description || "No description.");
-        addGridItem("Max Points", `${details.max_points || 0} pts`, "fa-star");
-
-    } else if (type === 'quiz') {
-        const relatedLessonName = getRelatedLessonName(task.content_id, 'quiz');
-        subTitle = relatedLessonName ? `Linked to: ${relatedLessonName}` : `Course: ${getCourseNameById(task.course_id)}`;
-        description = details.description ? String(details.description) : "Assessment Quiz.";
-        addGridItem("Questions", `${details.questions_to_show || '?'}`, "fa-list-ol");
-        addGridItem("Attempts", details.attempts_allowed || "Unlimited", "fa-redo");
-        addGridItem("Points", `${details.max_xp || 0} pts`, "fa-trophy");
-
-    } else {
-        const courseName = getCourseNameById(task.course_id);
-        subTitle = `In Course: ${courseName}`;
-        description = details.description || details.note || task.description || "No description.";
-        description = String(description);
-
-        let authorName = details.author || "Team";
-        if (!details.author || details.author === "Busla Team") {
-             const courseInfo = getCourseInfoById(task.course_id);
-             if (courseInfo && courseInfo.instructor) authorName = courseInfo.instructor;
-        }
-
-        const duration = formatDuration(details.duration || task.duration);
-        const points = details.base_xp || 10;
-        addGridItem("Instructor", authorName, "fa-chalkboard-teacher");
-        addGridItem("Duration", duration, "fa-clock");
-        addGridItem("Points", `${points} XP`, "fa-star");
-        addGridItem("Source", "Recorded Video", "fa-video");
-    }
-
-    document.getElementById('modal-title').innerText = mainTitle;
-    const subEl = document.getElementById('modal-subtitle');
-    if(subEl) subEl.innerText = subTitle;
-
-    const descEl = document.getElementById('modal-desc');
-    descEl.innerHTML = description ? String(description).replace(/\n/g, '<br>') : "No description.";
-    
-    document.getElementById('modal-details-grid').innerHTML = gridHtml;
-
-    const btn = document.getElementById('modal-action-btn');
-    btn.href = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
-    btn.innerHTML = `<i class="fas ${style.btnIcon}"></i> <span>${style.btnText}</span>`;
-    btn.className = `flex-1 py-3.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 transition-all shadow-lg text-white ${style.btnColor} hover:-translate-y-0.5`;
-}
-
-// Global Modals
-// window.openTaskDetailsModal = (taskId) => {
-//     const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
-//     if (!task) return;
-
-//     document.getElementById('modal-task-title').innerText = task.title || 'Untitled';
-//     document.getElementById('modal-task-desc').innerText = task.description || 'No Description.';
-//     document.getElementById('modal-task-duration').innerText = formatDuration(task.duration) || '--:--';
-    
-//     const playerLink = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
-//     document.getElementById('modal-task-link').href = playerLink;
-
-//     document.getElementById('task-details-modal').classList.remove('hidden');
-// };
-window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-window.openCustomTaskModal = () => document.getElementById('custom-task-modal').classList.remove('hidden');
-window.openBroadcastModal = () => document.getElementById('broadcast-modal').classList.remove('hidden');
-window.openAddMemberModal = () => showToast("Invite system coming soon", "info");
-
-window.sendBroadcast = () => {
-    if(document.getElementById('broadcast-text').value) {
-        showToast("Sent", "success");
-        closeModal('broadcast-modal');
-    }
-};
-
-window.openConfirmModal = (message, callback) => {
-    const modal = document.getElementById('confirm-modal');
-    const msgEl = document.getElementById('confirm-msg');
-    const yesBtn = document.getElementById('btn-confirm-yes');
-    
-    if(msgEl) msgEl.innerText = message;
-    confirmCallback = callback;
-    
-    const newBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newBtn, yesBtn);
-    
-    newBtn.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        closeConfirmModal();
-    });
-    modal.classList.remove('hidden');
-};
-
-window.closeConfirmModal = () => {
-    document.getElementById('confirm-modal').classList.add('hidden');
-    confirmCallback = null;
-};
-
-// ==========================================
-// 10. UTILITY FUNCTIONS
-// ==========================================
-
-function getSafeDate(dateVal) {
-    if (!dateVal) return new Date();
-    if (typeof dateVal.toDate === 'function') {
-        return dateVal.toDate();
-    }
-    return new Date(dateVal);
-}
-
-function parseDurationToSeconds(duration) {
-    if (!duration) return 0;
-    const str = String(duration);
-    const parts = str.split(':').map(Number);
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    return 0;
-}
-
-function formatSecondsToTime(totalSeconds) {
-    if (!totalSeconds) return "00:00:00";
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = Math.floor(totalSeconds % 60);
-    return (h > 0 ? h + ":" : "") + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-}
-
-function formatDuration(rawTime) {
-    if (!rawTime) return '';
-    const str = String(rawTime);
-
-    // If it's pure number (seconds)
-    if (!str.includes(':') && !isNaN(str)) {
-        return formatSecondsToTime(parseInt(str));
-    }
-
-    if (str.includes('T')) {
-        const match = str.match(/T(\d{2}):(\d{2}):(\d{2})/);
-        if (match) {
-            let h = parseInt(match[1]);
-            let m = parseInt(match[2]);
-            let s = parseInt(match[3]);
-            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            return `${m}:${s.toString().padStart(2, '0')}`;
-        }
-    }
-
-    if (str.includes(':')) {
-        const parts = str.split(':').map(Number);
-        if (parts.length === 3 && parts[0] === 0) {
-            return `${parts[1]}:${parts[2].toString().padStart(2, '0')}`;
-        }
-        return str.replace(/^00:/, '').replace(/^0/, '');
-    }
-    return str;
-}
-
-function resolveImageUrl(url, type = 'course') {
-    try {
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        return '../assets/icons/icon.jpg';
-    }
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        return '../assets/icons/icon.jpg';
-    }
-    if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-        const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
-        if (idMatch && idMatch[1]) {
-            return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-        }
-    }
-    if (url.includes('dropbox.com')) {
-        return url.replace('?dl=0', '?raw=1');
-    }
-    } catch(e) {}
-    return url;
-}
-
-function getRelatedLessonName(contentId, type) {
-    if (!lookupData.contents) return null;
-    const parentVideo = lookupData.contents.find(c => {
-        if (type === 'quiz') return String(c.ref_quiz_id) === String(contentId);
-        if (type === 'project') return String(c.ref_project_id) === String(contentId);
-        return false;
-    });
-    return parentVideo ? parentVideo.title : null;
-}
-
-function getCourseInfoById(courseId) {
-    return allData.courses.find(c => String(c.id) === String(courseId));
-}
-
-function getCourseNameById(courseId) {
-    if(!allData.courses) return "Unknown";
-    const course = allData.courses.find(c => String(c.id) === String(courseId));
-    return course ? course.title : "General Course";
-}
-
-function getCurrentWeekCycle() {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); 
-    const daysSinceSaturday = (dayOfWeek + 1) % 7;
-    
-    const startDate = new Date(now);
-    startDate.setDate(now.getDate() - daysSinceSaturday);
-    startDate.setHours(0, 0, 0, 0);
-    
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-    endDate.setHours(23, 59, 59, 999);
-    
-    const weekId = startDate.toISOString().split('T')[0];
-
-    return {
-        id: weekId,
-        start: startDate,
-        end: endDate,
-        isExpired: (dateToCheck) => dateToCheck > endDate
-    };
-}
-
-function getRankDataForMember(points) {
-    // 🛡️ حماية ضد غياب مصفوفة الشارات
-    if (!RANKS_DATA || RANKS_DATA.length === 0) {
-        return { title: 'Trainee', color: 'text-gray-400 bg-gray-400/10', icon: 'fa-star' };
-    }
-    
-    let rank = RANKS_DATA[0];
-    for (let i = 0; i < RANKS_DATA.length; i++) {
-        if (points >= RANKS_DATA[i].points_required) rank = RANKS_DATA[i];
-        else break;
-    }
-    return rank;
-}
-
-function showToast(msg, type='info') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    const color = type === 'success' ? 'border-green-500' : 'border-red-500';
-    toast.className = `bg-gray-900/95 text-white px-6 py-4 rounded-xl border-l-4 ${color} shadow-2xl backdrop-blur flex items-center gap-3 animate-slide-in pointer-events-auto min-w-[300px] mb-3`;
-    toast.innerHTML = `<span>${msg}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3500);
-}
-
-// ==========================================
-// 11. GRADING & TASK TRACKING SYSTEM
-// ==========================================
-
-// --- TAB SWITCHING LOGIC ---
 window.switchGradingTab = (tab) => {
     document.getElementById('tab-content-pending').classList.toggle('hidden', tab !== 'pending');
     document.getElementById('tab-content-tracking').classList.toggle('hidden', tab !== 'tracking');
@@ -2248,12 +1950,10 @@ window.switchGradingTab = (tab) => {
     }
 };
 
-// Aliasing for initial tab load
 function renderGrading() {
     window.switchGradingTab('pending');
 }
 
-// --- 1. PENDING SUBMISSIONS LOGIC (EXISTING) ---
 window.loadPendingSubmissions = async () => {
     const listContainer = document.getElementById('submissions-list');
     if (!listContainer) return;
@@ -2327,7 +2027,6 @@ window.loadPendingSubmissions = async () => {
     }
 };
 
-// --- 2. TASK TRACKING LOGIC (NEW - FIXED) ---
 window.loadTaskTracking = async () => {
     const list = document.getElementById('tracking-tasks-list');
     if (!list) return;
@@ -2336,7 +2035,6 @@ window.loadTaskTracking = async () => {
     if(!currentTeam || !currentTeam.team_id) return;
 
     try {
-        // 1. جلب أعضاء الفريق
         const {data: members} = await supabase.from('profiles').select('id').eq('team_id', currentTeam.team_id);
         const totalMembers = members ? members.length : 0;
         const memberIds = (members || []).map(m => m.id);
@@ -2346,7 +2044,6 @@ window.loadTaskTracking = async () => {
             return;
         }
 
-        // 2. جلب كل المهام الموكلة للفريق
         const {data: tasks} = await supabase.from('team_tasks')
             .select('*')
             .eq('team_id', currentTeam.team_id)
@@ -2357,7 +2054,6 @@ window.loadTaskTracking = async () => {
             return;
         }
 
-        // 3. جلب الإنجازات الفعلية من قاعدة البيانات (لتجنب أخطاء العدادات الوهمية)
         const { data: completedVideos } = await supabase.from('completed_materials')
             .select('material_id, user_id').in('user_id', memberIds);
             
@@ -2371,7 +2067,6 @@ window.loadTaskTracking = async () => {
         let html = '';
         
         tasks.forEach(task => {
-            // حساب الإنجاز الفعلي (باستخدام Set لمنع تكرار نفس الطالب)
             let completedSet = new Set();
 
             if (task.type === 'video') {
@@ -2382,13 +2077,10 @@ window.loadTaskTracking = async () => {
                 gradedProjects?.forEach(p => { if (p.project_id === task.content_id) completedSet.add(p.user_id); });
             }
 
-            // تأمين النسبة لكي لا تتعدى عدد الأعضاء الإجمالي أبداً
             const compCount = Math.min(completedSet.size, totalMembers);
-            
             const isFullyCompleted = totalMembers > 0 && compCount >= totalMembers;
             const isCurrentWeek = task.week_id === currentWeekId;
             
-            // 🚀 المنطق المطلوب: إظهار المهمة إذا كانت في الأسبوع الحالي، أو (سابقة ولكن غير مكتملة)
             if (isCurrentWeek || (!isCurrentWeek && !isFullyCompleted)) {
                 
                 const progress = totalMembers > 0 ? Math.round((compCount / totalMembers) * 100) : 0;
@@ -2443,7 +2135,6 @@ window.openTaskDetailsModal = async (taskId) => {
     list.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
     
     try {
-        // جلب بيانات المهمة والأعضاء
         const {data: task} = await supabase.from('team_tasks').select('*').eq('id', taskId).single();
         const {data: members} = await supabase.from('profiles').select('id, full_name, avatar_url').eq('team_id', currentTeam.team_id);
         
@@ -2457,17 +2148,14 @@ window.openTaskDetailsModal = async (taskId) => {
         const memberIds = members.map(m => m.id);
         let completedMembersMap = {}; 
 
-        // 1. جلب البيانات وحساب (النقاط، النسب، المحاولات) حسب نوع المهمة
         if (task.type === 'video') {
             const {data: comps} = await supabase.from('completed_materials').select('user_id').eq('material_id', task.content_id).in('user_id', memberIds);
             comps?.forEach(c => completedMembersMap[c.user_id] = { status: 'completed' });
         } 
         else if (task.type === 'quiz') {
-            // جلب أقصى نقاط للكويز لحساب النقاط المكتسبة
             const {data: quizMeta} = await supabase.from('quizzes').select('max_xp').eq('quiz_id', task.content_id).single();
             const maxXP = quizMeta?.max_xp || 0;
 
-            // جلب كل المحاولات لحساب العدد والنتيجة
             const {data: atts} = await supabase.from('quiz_attempts').select('user_id, score, passed').eq('quiz_id', task.content_id).in('user_id', memberIds);
             
             atts?.forEach(a => {
@@ -2481,7 +2169,6 @@ window.openTaskDetailsModal = async (taskId) => {
                     };
                 } else {
                     completedMembersMap[a.user_id].attempts += 1;
-                    // الاحتفاظ بأفضل نتيجة
                     if (a.score > completedMembersMap[a.user_id].score) {
                         completedMembersMap[a.user_id].score = a.score;
                         completedMembersMap[a.user_id].passed = a.passed;
@@ -2491,7 +2178,6 @@ window.openTaskDetailsModal = async (taskId) => {
             });
         }
         else if (task.type === 'project') {
-            // جلب الدرجة النهائية للمشروع لحساب النسبة المئوية
             const {data: projMeta} = await supabase.from('projects').select('max_points').eq('id', task.content_id).single();
             const maxPts = projMeta?.max_points || 100;
 
@@ -2507,7 +2193,6 @@ window.openTaskDetailsModal = async (taskId) => {
             });
         }
 
-        // 2. رسم الأعضاء والبيانات
         let compCount = 0;
         let html = '';
         
@@ -2530,7 +2215,6 @@ window.openTaskDetailsModal = async (taskId) => {
                     const icon = detail.passed ? 'fa-check' : 'fa-exclamation-triangle';
                     statusBadge = `<span class="bg-${color}-500/10 text-${color}-400 border border-${color}-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas ${icon}"></i> ${text}</span>`;
                     
-                    // إظهار المحاولات، النسبة، والنقاط للكويزات
                     extraInfo = `
                         <div class="flex items-center gap-2 mr-3" dir="ltr">
                             <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[10px] font-mono" title="عدد المحاولات"><i class="fas fa-redo text-[8px] mr-1"></i>${detail.attempts}</span>
@@ -2547,7 +2231,6 @@ window.openTaskDetailsModal = async (taskId) => {
                     } else if (detail.status === 'graded' || detail.status === 'remarked') {
                         statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-double"></i> تم التقييم</span>`;
                         
-                        // إظهار النسبة، والنقاط للمشاريع
                         extraInfo = `
                             <div class="flex items-center gap-2 mr-3" dir="ltr">
                                 <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="النسبة المئوية">${detail.percentage}%</span>
@@ -2587,12 +2270,10 @@ window.openTaskDetailsModal = async (taskId) => {
         list.innerHTML = `<p class="text-red-500 text-center py-10">حدث خطأ أثناء جلب التفاصيل.</p>`;
     }
 };
+
 window.closeTaskDetailsModal = () => {
     document.getElementById('task-details-modal')?.classList.add('hidden');
 };
-
-// --- 3. GRADING MODAL LOGIC (EXISTING) ---
-let currentGradingSubmission = null;
 
 window.openGradeModal = (encodedData) => {
     try {
@@ -2759,3 +2440,261 @@ window.submitGrade = async () => {
         btn.disabled = false;
     }
 };
+
+// ==========================================
+// 12. GLOBAL UI MODALS & HELPERS
+// ==========================================
+
+
+function updateModalContent(task, details, type) {
+    const styles = {
+        video: { class: 'from-b-primary/20', icon: 'fa-play', color: 'text-b-primary', label: 'Video', btnText: 'Watch Lesson', btnIcon: 'fa-play', btnColor: 'bg-b-primary hover:bg-teal-700' },
+        quiz: { class: 'from-yellow-500/20', icon: 'fa-clipboard-question', color: 'text-yellow-500', label: 'Quiz', btnText: 'Start Quiz', btnIcon: 'fa-pencil-alt', btnColor: 'bg-yellow-600 hover:bg-yellow-700' },
+        project: { class: 'from-purple-500/20', icon: 'fa-laptop-code', color: 'text-purple-500', label: 'Project', btnText: 'Submit Project', btnIcon: 'fa-upload', btnColor: 'bg-purple-600 hover:bg-purple-700' }
+    };
+    const style = styles[type] || styles.video;
+
+    const headerBg = document.getElementById('modal-header-bg');
+    headerBg.className = `p-6 border-b border-white/10 bg-gradient-to-r ${style.class} to-transparent`;
+    document.getElementById('modal-type-icon').className = `fas ${style.icon} ${style.color}`;
+    document.getElementById('modal-type-badge').innerText = style.label;
+    document.getElementById('modal-type-badge').className = `text-[10px] uppercase font-bold tracking-wider bg-black/40 px-2 py-1 rounded border border-white/5 ${style.color}`;
+
+    let mainTitle = details.title || task.title || "Untitled";
+    let subTitle = ""; 
+    let description = "";
+    let gridHtml = "";
+
+    const addGridItem = (label, value, iconClass) => {
+        if(!value && value !== 0) return;
+        gridHtml += `
+            <div class="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col justify-between h-full">
+                <p class="text-[10px] text-gray-500 mb-1">${label}</p>
+                <p class="font-bold text-white text-sm line-clamp-2">
+                    <i class="fas ${iconClass} ${style.color} ml-1 opacity-70"></i> ${value}
+                </p>
+            </div>`;
+    };
+
+    if (type === 'project') {
+        const relatedLessonName = getRelatedLessonName(task.content_id, 'project'); 
+        subTitle = relatedLessonName ? `Project for: ${relatedLessonName}` : `Course: ${getCourseNameById(task.course_id)}`;
+        description = details.description ? String(details.description) : (task.description || "No description.");
+        addGridItem("Max Points", `${details.max_points || 0} pts`, "fa-star");
+
+    } else if (type === 'quiz') {
+        const relatedLessonName = getRelatedLessonName(task.content_id, 'quiz');
+        subTitle = relatedLessonName ? `Linked to: ${relatedLessonName}` : `Course: ${getCourseNameById(task.course_id)}`;
+        description = details.description ? String(details.description) : "Assessment Quiz.";
+        addGridItem("Questions", `${details.questions_to_show || '?'}`, "fa-list-ol");
+        addGridItem("Attempts", details.attempts_allowed || "Unlimited", "fa-redo");
+        addGridItem("Points", `${details.max_xp || 0} pts`, "fa-trophy");
+
+    } else {
+        const courseName = getCourseNameById(task.course_id);
+        subTitle = `In Course: ${courseName}`;
+        description = details.description || details.note || task.description || "No description.";
+        description = String(description);
+
+        let authorName = details.author || "Team";
+        if (!details.author || details.author === "Busla Team") {
+             const courseInfo = getCourseInfoById(task.course_id);
+             if (courseInfo && courseInfo.instructor) authorName = courseInfo.instructor;
+        }
+
+        const duration = formatDuration(details.duration || task.duration);
+        const points = details.base_xp || 10;
+        addGridItem("Instructor", authorName, "fa-chalkboard-teacher");
+        addGridItem("Duration", duration, "fa-clock");
+        addGridItem("Points", `${points} XP`, "fa-star");
+        addGridItem("Source", "Recorded Video", "fa-video");
+    }
+
+    document.getElementById('modal-title').innerText = mainTitle;
+    const subEl = document.getElementById('modal-subtitle');
+    if(subEl) subEl.innerText = subTitle;
+
+    const descEl = document.getElementById('modal-desc');
+    descEl.innerHTML = description ? String(description).replace(/\n/g, '<br>') : "No description.";
+    
+    document.getElementById('modal-details-grid').innerHTML = gridHtml;
+
+    const btn = document.getElementById('modal-action-btn');
+    btn.href = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
+    btn.innerHTML = `<i class="fas ${style.btnIcon}"></i> <span>${style.btnText}</span>`;
+    btn.className = `flex-1 py-3.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 transition-all shadow-lg text-white ${style.btnColor} hover:-translate-y-0.5`;
+}
+
+window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+window.openCustomTaskModal = () => document.getElementById('custom-task-modal').classList.remove('hidden');
+window.openBroadcastModal = () => document.getElementById('broadcast-modal').classList.remove('hidden');
+window.openAddMemberModal = () => showToast("Invite system coming soon", "info");
+
+window.sendBroadcast = () => {
+    if(document.getElementById('broadcast-text').value) {
+        showToast("Sent", "success");
+        closeModal('broadcast-modal');
+    }
+};
+
+window.openConfirmModal = (message, callback) => {
+    const modal = document.getElementById('confirm-modal');
+    const msgEl = document.getElementById('confirm-msg');
+    const yesBtn = document.getElementById('btn-confirm-yes');
+    
+    if(msgEl) msgEl.innerText = message;
+    confirmCallback = callback;
+    
+    const newBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newBtn, yesBtn);
+    
+    newBtn.addEventListener('click', () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
+    });
+    modal.classList.remove('hidden');
+};
+
+window.closeConfirmModal = () => {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    confirmCallback = null;
+};
+
+// ==========================================
+// 13. UTILITY FUNCTIONS
+// ==========================================
+function getSafeDate(dateVal) {
+    if (!dateVal) return new Date();
+    if (typeof dateVal.toDate === 'function') return dateVal.toDate();
+    return new Date(dateVal);
+}
+
+function parseDurationToSeconds(duration) {
+    if (!duration) return 0;
+    const str = String(duration);
+    const parts = str.split(':').map(Number);
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    return 0;
+}
+
+function formatSecondsToTime(totalSeconds) {
+    if (!totalSeconds) return "00:00:00";
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
+    return (h > 0 ? h + ":" : "") + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+}
+
+function formatDuration(rawTime) {
+    if (!rawTime) return '';
+    const str = String(rawTime);
+
+    if (!str.includes(':') && !isNaN(str)) {
+        return formatSecondsToTime(parseInt(str));
+    }
+
+    if (str.includes('T')) {
+        const match = str.match(/T(\d{2}):(\d{2}):(\d{2})/);
+        if (match) {
+            let h = parseInt(match[1]);
+            let m = parseInt(match[2]);
+            let s = parseInt(match[3]);
+            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+    }
+
+    if (str.includes(':')) {
+        const parts = str.split(':').map(Number);
+        if (parts.length === 3 && parts[0] === 0) {
+            return `${parts[1]}:${parts[2].toString().padStart(2, '0')}`;
+        }
+        return str.replace(/^00:/, '').replace(/^0/, '');
+    }
+    return str;
+}
+
+function resolveImageUrl(url, type = 'course') {
+    try {
+        if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+            return '../assets/icons/icon.jpg';
+        }
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+            if (idMatch && idMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/$${idMatch[1]}`;
+            }
+        }
+        if (url.includes('dropbox.com')) {
+            return url.replace('?dl=0', '?raw=1');
+        }
+    } catch(e) {}
+    return url;
+}
+
+function getRelatedLessonName(contentId, type) {
+    if (!lookupData.contents) return null;
+    const parentVideo = lookupData.contents.find(c => {
+        if (type === 'quiz') return String(c.ref_quiz_id) === String(contentId);
+        if (type === 'project') return String(c.ref_project_id) === String(contentId);
+        return false;
+    });
+    return parentVideo ? parentVideo.title : null;
+}
+
+function getCourseInfoById(courseId) {
+    return allData.courses.find(c => String(c.id) === String(courseId));
+}
+
+function getCourseNameById(courseId) {
+    if(!allData.courses) return "Unknown";
+    const course = allData.courses.find(c => String(c.id) === String(courseId));
+    return course ? course.title : "General Course";
+}
+
+function getCurrentWeekCycle() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); 
+    const daysSinceSaturday = (dayOfWeek + 1) % 7;
+    
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - daysSinceSaturday);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const weekId = startDate.toISOString().split('T')[0];
+
+    return {
+        id: weekId,
+        start: startDate,
+        end: endDate,
+        isExpired: (dateToCheck) => dateToCheck > endDate
+    };
+}
+
+function getRankDataForMember(points) {
+    if (!RANKS_DATA || RANKS_DATA.length === 0) {
+        return { title: 'Trainee', color: 'text-gray-400 bg-gray-400/10', icon: 'fa-star' };
+    }
+    
+    let rank = RANKS_DATA[0];
+    for (let i = 0; i < RANKS_DATA.length; i++) {
+        if (points >= RANKS_DATA[i].points_required) rank = RANKS_DATA[i];
+        else break;
+    }
+    return rank;
+}
+
+function showToast(msg, type='info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const color = type === 'success' ? 'border-green-500' : 'border-red-500';
+    toast.className = `bg-gray-900/95 text-white px-6 py-4 rounded-xl border-l-4 ${color} shadow-2xl backdrop-blur flex items-center gap-3 animate-slide-in pointer-events-auto min-w-[300px] mb-3`;
+    toast.innerHTML = `<span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, 3500);
+}
