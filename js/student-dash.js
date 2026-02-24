@@ -781,13 +781,24 @@ window.unassignTask = (taskId) => {
 // ==========================================
 // 6. ROADMAP & CURRICULUM
 // ==========================================
+
+// 💡 دالة ذكية لمعالجة الروابط وتجنب خطأ 404
+window.formatExternalUrl = function(playlistId) {
+    if (!playlistId) return '#';
+    const str = String(playlistId).trim();
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+        return str;
+    }
+    return `https://www.youtube.com/playlist?list=${str}`;
+};
+
 function renderRoadmapTree() {
     const container = document.getElementById('roadmap-tree-container');
     if (!container) return;
     container.innerHTML = '';
 
     if (!allData.tree || allData.tree.length === 0) {
-         container.innerHTML = '<div class="text-center py-10 text-gray-500">Loading Content...</div>';
+         container.innerHTML = '<div class="text-center py-10 text-gray-500">جاري تحميل المحتوى...</div>';
          return;
     }
 
@@ -814,7 +825,7 @@ function renderRoadmapTree() {
         const itemsContainer = phaseEl.querySelector(`#content-phase-${phaseId}`);
 
         if (!phase.courses || phase.courses.length === 0) {
-            itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">No content.</p>';
+            itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">لا يوجد محتوى.</p>';
         } else {
             const mainCourses = phase.courses.filter(c => !c.related_with);
             const subCourses = phase.courses.filter(c => c.related_with);
@@ -825,13 +836,11 @@ function renderRoadmapTree() {
                 const hasChildren = children.length > 0;
                 const isExpanded = expandedNodes.has(`course-children-${courseId}`);
 
-                // 💡 بالنسبة للطالب، نحدد حالة الكورس بناءً على ما فعله الليدر (بدون قدرة على تغييره)
                 const isActive = (currentTeam?.courses_plan || []).includes(courseId);
 
                 const itemHTML = document.createElement('div');
                 itemHTML.className = `rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-sm ${isActive ? 'border-b-primary/50 bg-b-primary/5' : 'border-white/10 bg-black/40 hover:border-white/30'}`;
 
-                // HTML للسكاشن الفرعية
                 let childrenHtml = '';
                 if (hasChildren) {
                     childrenHtml = `<div id="course-children-${courseId}" class="${isExpanded ? '' : 'hidden'} bg-black/60 border-t border-white/5 p-3 space-y-2">`;
@@ -862,7 +871,6 @@ function renderRoadmapTree() {
                     childrenHtml += `</div>`;
                 }
 
-                // الكورس الأساسي
                 itemHTML.innerHTML = `
                     <div class="p-4 flex items-center justify-between cursor-pointer select-none"
                          onclick="window.handleItemClick('course', '${courseId}', ${hasChildren})">
@@ -886,7 +894,7 @@ function renderRoadmapTree() {
                                 <i class="fas fa-play text-sm"></i>
                             </a>
                             ${course.playlist_id ? `
-                            <a href="${course.playlist_id}" target="_blank" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors" title="المصدر الخارجي">
+                            <a href="${window.formatExternalUrl(course.playlist_id)}" target="_blank" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors" title="المصدر الخارجي">
                                 <i class="fas fa-external-link-alt text-sm"></i>
                             </a>
                             ` : ''}
@@ -934,18 +942,6 @@ window.togglePhaseContent = (phaseId) => {
     if (content) content.classList.toggle('hidden');
     if (icon) icon.classList.toggle('rotate-180');
 };
-
-
-function getValidExternalUrl(playlistId) {
-    if (!playlistId) return '';
-    const str = String(playlistId).trim();
-    // إذا كان رابطاً كاملاً وجاهزاً
-    if (str.startsWith('http://') || str.startsWith('https://')) {
-        return str;
-    }
-    // إذا كان مجرد Playlist ID الخاص بيوتيوب
-    return `https://www.youtube.com/playlist?list=${str}`;
-}
 
 window.showDetails = (type, id, parentTitle = "") => {
     const ph = document.getElementById('node-details-placeholder');
@@ -1009,21 +1005,20 @@ window.showDetails = (type, id, parentTitle = "") => {
         imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/images/1.jpg';
     }
 
-// 💡 تعديل قسم الأزرار في الجانب الأيمن ليكون مخصصاً للطالب
     const toggleArea = document.getElementById('course-action-area');
     if (type === 'phase') {
         toggleArea.classList.add('hidden');
     } else {
         toggleArea.classList.remove('hidden');
         
-        // استبدال زر التفعيل بأزرار الفتح ومعالجة الرابط الخارجي
+        // 💡 تم تطبيق دالة الحماية (formatExternalUrl) هنا أيضاً
         toggleArea.innerHTML = `
             <div class="flex gap-3">
                 <a href="course-player.html?id=${id}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
                     <i class="fas fa-play"></i> فتح الكورس
                 </a>
                 ${item.playlist_id ? `
-                <a href="${getValidExternalUrl(item.playlist_id)}" target="_blank" class="w-12 h-12 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl transition-all flex items-center justify-center border border-white/10" title="المصدر الخارجي">
+                <a href="${window.formatExternalUrl(item.playlist_id)}" target="_blank" class="w-12 h-12 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl transition-all flex items-center justify-center border border-white/10" title="المصدر الخارجي">
                     <i class="fas fa-external-link-alt"></i>
                 </a>
                 ` : ''}
@@ -1033,8 +1028,7 @@ window.showDetails = (type, id, parentTitle = "") => {
             ` : ''}
         `;
     }
-}
-
+};
 // ==========================================
 // 7. TASK ASSIGNMENTS & PUBLISHING
 // ==========================================
