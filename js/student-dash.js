@@ -799,12 +799,12 @@ function renderRoadmapTree() {
         phaseEl.innerHTML = `
             <div class="absolute -left-[11px] top-0 w-5 h-5 bg-b-primary rounded-full border-4 border-black box-content shadow-[0_0_10px_rgba(0,106,103,0.5)]"></div>
             
-            <div class="flex items-center justify-between mb-5 select-none group">
-                <div class="cursor-pointer flex-1" onclick="window.showDetails('phase', '${phaseId}')">
+            <div class="flex items-center justify-between mb-5 select-none group cursor-pointer" onclick="window.togglePhaseContent('${phaseId}')">
+                <div class="flex-1" onclick="event.stopPropagation(); window.showDetails('phase', '${phaseId}')">
                     <h3 class="font-bold text-xl text-white group-hover:text-b-primary transition-colors">${phase.title}</h3>
                     <span class="text-xs text-gray-400 font-mono mt-1 block">${phase.description || ''}</span>
                 </div>
-                <div class="p-2 cursor-pointer hover:bg-white/10 rounded-full transition-all" onclick="window.togglePhaseContent('${phaseId}')">
+                <div class="p-2 hover:bg-white/10 rounded-full transition-all">
                     <i class="fas fa-chevron-down text-white transition-transform duration-300" id="icon-phase-${phaseId}"></i>
                 </div>
             </div>
@@ -816,42 +816,89 @@ function renderRoadmapTree() {
         if (!phase.courses || phase.courses.length === 0) {
             itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">No content.</p>';
         } else {
-            phase.courses.forEach(course => {
+            const mainCourses = phase.courses.filter(c => !c.related_with);
+            const subCourses = phase.courses.filter(c => c.related_with);
+
+            mainCourses.forEach(course => {
                 const courseId = String(course.id).trim();
-                const isActive = (currentTeam.courses_plan || []).includes(courseId);
-                const hasChildren = false; 
-                const isExpanded = expandedNodes.has(courseId);
+                const children = subCourses.filter(c => String(c.related_with).trim() === courseId);
+                const hasChildren = children.length > 0;
+                const isExpanded = expandedNodes.has(`course-children-${courseId}`);
+
+                // 💡 بالنسبة للطالب، نحدد حالة الكورس بناءً على ما فعله الليدر (بدون قدرة على تغييره)
+                const isActive = (currentTeam?.courses_plan || []).includes(courseId);
 
                 const itemHTML = document.createElement('div');
-                itemHTML.className = `rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-sm ${isActive ? 'border-green-500/40 bg-green-900/10' : 'border-white/10 bg-black/40 hover:border-white/30'}`;
+                itemHTML.className = `rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-sm ${isActive ? 'border-b-primary/50 bg-b-primary/5' : 'border-white/10 bg-black/40 hover:border-white/30'}`;
 
+                // HTML للسكاشن الفرعية
+                let childrenHtml = '';
+                if (hasChildren) {
+                    childrenHtml = `<div id="course-children-${courseId}" class="${isExpanded ? '' : 'hidden'} bg-black/60 border-t border-white/5 p-3 space-y-2">`;
+                    
+                    children.forEach(child => {
+                        const childId = String(child.id).trim();
+                        const isChildActive = (currentTeam?.courses_plan || []).includes(childId);
+                        
+                        childrenHtml += `
+                            <div class="flex items-center justify-between p-3 rounded-lg border border-white/5 hover:bg-white/5 transition-colors ${isChildActive ? 'bg-b-primary/10 border-b-primary/30' : 'bg-b-surface mr-4'}">
+                                <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="window.showDetails('course', '${childId}')">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-black/40 border border-white/10 shrink-0">
+                                        ${isChildActive ? '<i class="fas fa-unlock text-b-primary text-sm"></i>' : '<i class="fas fa-lock text-gray-500 text-sm"></i>'}
+                                    </div>
+                                    <div class="truncate flex-1">
+                                        <h5 class="font-bold text-sm ${isChildActive ? 'text-white' : 'text-gray-300'} truncate">${child.title}</h5>
+                                        ${child.real_video_count ? `<span class="text-[10px] text-blue-400"><i class="fas fa-video mr-1"></i> ${child.real_video_count} درس</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="pl-3 border-l border-white/10 flex gap-2">
+                                    <a href="course-player.html?id=${childId}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-b-primary hover:text-white transition-colors text-gray-400" title="فتح المشغل">
+                                        <i class="fas fa-play text-xs"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    childrenHtml += `</div>`;
+                }
+
+                // الكورس الأساسي
                 itemHTML.innerHTML = `
                     <div class="p-4 flex items-center justify-between cursor-pointer select-none"
                          onclick="window.handleItemClick('course', '${courseId}', ${hasChildren})">
                         
                         <div class="flex items-center gap-4 overflow-hidden flex-1">
                             <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-black/40 border border-white/10 shrink-0 text-lg shadow-inner">
-                                ${isActive ? '<i class="fas fa-check-circle text-green-400 text-xl"></i>' : '<i class="fas fa-book text-purple-400"></i>'}
+                                ${isActive ? '<i class="fas fa-unlock text-b-primary text-xl"></i>' : '<i class="fas fa-lock text-gray-500"></i>'}
                             </div>
                             <div class="truncate flex-1">
                                 <h4 class="font-bold text-base ${isActive ? 'text-white' : 'text-gray-200'} truncate">${course.title}</h4>
                                 <div class="flex items-center gap-3 mt-1">
                                     <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono">Module</span>
                                     ${course.real_video_count ? `<span class="text-[10px] text-blue-400"><i class="fas fa-video ml-1"></i>${course.real_video_count}</span>` : ''}
+                                    ${hasChildren ? `<span class="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20"><i class="fas fa-sitemap ml-1"></i>${children.length} أقسام</span>` : ''}
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-2 pl-2">
-                            <div class="relative flex items-center justify-center p-2 rounded-full hover:bg-white/10" onclick="event.stopPropagation()">
-                                <input type="checkbox" 
-                                       class="appearance-none w-6 h-6 rounded-lg border-2 border-gray-600 bg-black checked:bg-green-500 checked:border-green-500 transition-all cursor-pointer"
-                                       ${isActive ? 'checked' : ''} 
-                                       onchange="window.toggleActivate('${courseId}', this.checked)">
-                                <i class="fas fa-check text-white text-xs absolute pointer-events-none opacity-0 ${isActive ? 'opacity-100' : ''}"></i>
+                            <a href="course-player.html?id=${courseId}" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-b-primary/20 text-b-primary hover:bg-b-primary hover:text-white transition-colors" title="فتح المشغل">
+                                <i class="fas fa-play text-sm"></i>
+                            </a>
+                            ${course.playlist_id ? `
+                            <a href="${course.playlist_id}" target="_blank" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors" title="المصدر الخارجي">
+                                <i class="fas fa-external-link-alt text-sm"></i>
+                            </a>
+                            ` : ''}
+
+                            ${hasChildren ? `
+                            <div class="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors text-gray-400 ml-2" onclick="event.stopPropagation(); window.toggleCourseChildren('${courseId}')">
+                                <i class="fas fa-chevron-down transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}" id="icon-course-${courseId}"></i>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
+                    ${childrenHtml}
                 `;
                 itemsContainer.appendChild(itemHTML);
             });
@@ -863,10 +910,21 @@ function renderRoadmapTree() {
 window.handleItemClick = (type, id, hasChildren) => {
     window.showDetails(type, id);
     if (hasChildren) {
-        const content = document.getElementById(`details-${id}`);
-        if (content && content.classList.contains('hidden')) {
-            window.toggleCourseContent(id);
-        }
+        window.toggleCourseChildren(id);
+    }
+};
+
+window.toggleCourseChildren = (courseId) => {
+    const contentId = `course-children-${courseId}`;
+    const content = document.getElementById(contentId);
+    const icon = document.getElementById(`icon-course-${courseId}`);
+    
+    if (content) {
+        const isHidden = content.classList.toggle('hidden');
+        if (icon) icon.classList.toggle('rotate-180');
+        
+        if (!isHidden) expandedNodes.add(contentId);
+        else expandedNodes.delete(contentId);
     }
 };
 
@@ -877,16 +935,17 @@ window.togglePhaseContent = (phaseId) => {
     if (icon) icon.classList.toggle('rotate-180');
 };
 
-window.toggleCourseContent = (courseId) => {
-    const content = document.getElementById(`details-${courseId}`);
-    const icon = document.getElementById(`icon-${courseId}`);
-    if (content) {
-        const isHidden = content.classList.toggle('hidden');
-        if (icon) icon.classList.toggle('rotate-180');
-        if (!isHidden) expandedNodes.add(String(courseId));
-        else expandedNodes.delete(String(courseId));
+
+function getValidExternalUrl(playlistId) {
+    if (!playlistId) return '';
+    const str = String(playlistId).trim();
+    // إذا كان رابطاً كاملاً وجاهزاً
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+        return str;
     }
-};
+    // إذا كان مجرد Playlist ID الخاص بيوتيوب
+    return `https://www.youtube.com/playlist?list=${str}`;
+}
 
 window.showDetails = (type, id, parentTitle = "") => {
     const ph = document.getElementById('node-details-placeholder');
@@ -950,56 +1009,31 @@ window.showDetails = (type, id, parentTitle = "") => {
         imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/images/1.jpg';
     }
 
+// 💡 تعديل قسم الأزرار في الجانب الأيمن ليكون مخصصاً للطالب
     const toggleArea = document.getElementById('course-action-area');
     if (type === 'phase') {
         toggleArea.classList.add('hidden');
     } else {
         toggleArea.classList.remove('hidden');
-        const chk = document.getElementById('course-toggle-btn');
-        if(chk) {
-            const newChk = chk.cloneNode(true);
-            chk.parentNode.replaceChild(newChk, chk);
-            newChk.checked = (currentTeam.courses_plan || []).includes(String(id));
-            newChk.addEventListener('change', (e) => window.toggleActivate(String(id), e.target.checked));
-        }
+        
+        // استبدال زر التفعيل بأزرار الفتح ومعالجة الرابط الخارجي
+        toggleArea.innerHTML = `
+            <div class="flex gap-3">
+                <a href="course-player.html?id=${id}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-play"></i> فتح الكورس
+                </a>
+                ${item.playlist_id ? `
+                <a href="${getValidExternalUrl(item.playlist_id)}" target="_blank" class="w-12 h-12 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl transition-all flex items-center justify-center border border-white/10" title="المصدر الخارجي">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                ` : ''}
+            </div>
+            ${!(currentTeam?.courses_plan || []).includes(String(id)) ? `
+                <p class="text-[10px] text-yellow-500 mt-2 text-center"><i class="fas fa-lock mr-1"></i> الكورس غير مفعل من قِبل الليدر، لكن يمكنك مشاهدته.</p>
+            ` : ''}
+        `;
     }
-};
-
-window.toggleActivate = async (id, isChecked) => {
-    if(!currentTeam.courses_plan) currentTeam.courses_plan = [];
-    
-    if (isChecked) {
-        if (!currentTeam.courses_plan.includes(id)) currentTeam.courses_plan.push(id);
-    } else {
-        currentTeam.courses_plan = currentTeam.courses_plan.filter(x => x !== id);
-    }
-
-    renderRoadmapTree();
-    renderOverview();
-    renderAssignments();
-    
-    const detailBtn = document.getElementById('course-toggle-btn');
-    if(detailBtn) detailBtn.checked = isChecked;
-
-    try {
-        const { error } = await supabase
-            .from('teams')
-            .update({ courses_plan: currentTeam.courses_plan })
-            .eq('id', currentTeam.team_id);
-
-        if (error) throw error;
-
-        if (isChecked) {
-            showToast("Activated", "success");
-        } else {
-            showToast("Deactivated", "info");
-        }
-    } catch (e) {
-        console.error("Sync Error:", e);
-        showToast("Sync Error: " + e.message, "error");
-    }
-};
-
+}
 
 // ==========================================
 // 7. TASK ASSIGNMENTS & PUBLISHING
