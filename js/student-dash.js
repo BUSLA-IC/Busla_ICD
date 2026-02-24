@@ -417,12 +417,12 @@ window.switchTab = function(id) {
 function renderAllTabs() {
     renderOverview();
     renderRoadmapTree();
-    renderAssignments();
-    renderSquad();
+    if (typeof renderSquadTab === 'function') {
+        renderSquadTab(currentTeam);
+    }
     renderGrading();
     renderCalendarTab();
 }
-
 // ==========================================
 // 5. DASHBOARD OVERVIEW
 // ==========================================
@@ -1029,306 +1029,40 @@ window.showDetails = (type, id, parentTitle = "") => {
         `;
     }
 };
-// ==========================================
-// 7. TASK ASSIGNMENTS & PUBLISHING
-// ==========================================
-function renderAssignments() {
-    const list = document.getElementById('assign-courses-list');
-    const activeIds = currentTeam.courses_plan || [];
-    
-    if (activeIds.length === 0) {
-        list.innerHTML = `<p class="text-center text-gray-500 text-xs py-10">Activate courses from roadmap first.</p>`;
-        return;
-    }
-
-    const activeItems = allData.courses.filter(c => activeIds.includes(String(c.id)));
-    
-    list.innerHTML = activeItems.map(item => {
-        const stats = [];
-        if(item.real_video_count) stats.push(`${item.real_video_count} Videos`);
-        const subInfo = stats.length > 0 ? stats.join(' • ') : (item.module_time || '');
-        const itemId = String(item.id);
-
-        return `
-        <div id="course-card-${itemId}" onclick="window.loadAssignContent('${itemId}')" 
-             class="course-card bg-white/5 p-3 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 hover:border-b-primary transition-all group mb-2 relative overflow-hidden">
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-b-primary opacity-0 transition-opacity active-indicator"></div>
-            <div class="min-w-0">
-                <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-sm text-white truncate max-w-[80%]">${item.title}</h4>
-                    <span class="text-[9px] text-gray-500 bg-black/20 px-2 rounded border border-white/5 uppercase">${item.type || 'Course'}</span>
-                </div>
-                ${subInfo ? `<p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1"><i class="far fa-clock"></i> ${subInfo}</p>` : ''}
-            </div>
-        </div>
-    `}).join('');
-}
-
-window.loadAssignContent = async (cid) => {
-    selectedAssignCourse = cid;
-    
-    document.querySelectorAll('.course-card').forEach(el => {
-        el.classList.remove('bg-white/10', 'border-b-primary');
-        el.querySelector('.active-indicator')?.classList.add('opacity-0');
-    });
-    const activeCard = document.getElementById(`course-card-${cid}`);
-    if(activeCard) {
-        activeCard.classList.add('bg-white/10', 'border-b-primary');
-        activeCard.querySelector('.active-indicator')?.classList.remove('opacity-0');
-    }
-
-    const cont = document.getElementById('assign-content-list');
-    cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
-    
-    const courseContents = (lookupData.contents || []).filter(c => String(c.course_id) === String(cid));
-    courseContents.sort((a,b) => (a.order_index || 0) - (b.order_index || 0));
-
-    const currentTasks = currentTeam.weekly_tasks || [];
-
-    if (courseContents.length > 0) {
-        let html = '';
-        courseContents.forEach(m => {
-            const contentId = String(m.id);
-            const isAssigned = currentTasks.some(t => String(t.content_id) === contentId && t.type === 'video');
-            const title = m.title || 'Untitled';
-            
-            html += `
-            <div class="mb-2 border-b border-white/5 pb-2">
-                <label class="flex items-start gap-3 p-3 hover:bg-white/5 cursor-pointer transition-colors group ${isAssigned ? 'bg-green-900/10 border-l-2 border-l-green-500' : ''}">
-                    <div class="pt-1">
-                        <input type="checkbox" value="${contentId}" data-type="video" data-title="${title}" data-course-id="${cid}" class="task-check w-4 h-4 accent-b-primary bg-gray-700 border-gray-600 rounded" ${isAssigned ? 'checked disabled' : ''}>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <span class="text-sm font-medium ${isAssigned ? 'text-green-300' : 'text-gray-300'} group-hover:text-white transition-colors truncate">${title}</span>
-                        ${isAssigned ? '<span class="text-[9px] text-green-400 bg-green-900/20 px-1.5 rounded mr-2">Published</span>' : ''}
-                    </div>
-                </label>
-                <div class="mr-6 space-y-1 border-r border-white/10 pr-2">
-                    ${renderRelatedItem(m, 'quiz', cid, currentTasks)}
-                    ${renderRelatedItem(m, 'project', cid, currentTasks)}
-                </div>
-            </div>`;
-        });
-        cont.innerHTML = html;
-        const btn = document.getElementById('publish-btn');
-        if(btn) btn.disabled = false;
-    } else {
-        cont.innerHTML = `<p class="text-center text-gray-500 py-10">No content.</p>`;
-    }
-};
-
-function renderRelatedItem(item, type, courseId, currentTasks) {
-    let relatedId = null;
-    let label = '';
-    let icon = '';
-    let realTitle = '';
-
-    if (type === 'quiz') {
-        relatedId = item.ref_quiz_id; 
-        label = 'Quiz';
-        icon = 'fa-clipboard-question';
-        const cached = lookupData.quizzes[String(relatedId)];
-        realTitle = cached ? cached.title : `Related Quiz`;
-    } else if (type === 'project') {
-        relatedId = item.ref_project_id;
-        label = 'Project';
-        icon = 'fa-laptop-code';
-        const cached = lookupData.projects[String(relatedId)];
-        realTitle = cached ? cached.title : `Practical Project`;
-    }
-
-    const relatedIdString = String(relatedId).trim();
-    if (!relatedIdString || relatedIdString === "null" || relatedIdString === "undefined" || relatedIdString === "") return '';
-
-    const isAssigned = currentTasks.some(t => 
-        String(t.content_id) === relatedIdString && 
-        String(t.course_id) === String(courseId) &&
-        t.type === type
-    );
-
-    return `
-        <label class="flex items-center gap-3 p-2 mt-1 hover:bg-white/5 cursor-pointer transition-colors rounded-lg ${isAssigned ? 'opacity-50' : ''} border-r-2 border-r-gray-700 pr-3 mr-4">
-            <div class="pt-1">
-                <input type="checkbox" 
-                       value="${relatedIdString}" 
-                       data-type="${type}" 
-                       data-title="${realTitle}" 
-                       data-parent-title="${item.title}" 
-                       data-course-id="${courseId}"
-                       class="task-check w-3 h-3 accent-yellow-500 bg-gray-700 border-gray-600 rounded"
-                       ${isAssigned ? 'checked disabled' : ''}>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-gray-400 group-hover:text-white">
-                <i class="fas ${icon} ${type === 'quiz' ? 'text-yellow-500' : 'text-purple-500'}"></i>
-                <span>${label}:</span>
-                <span class="text-gray-300 font-bold truncate max-w-[200px]">${realTitle}</span>
-                ${isAssigned ? '<span class="text-[9px] text-green-500 font-bold ml-1">(Added)</span>' : ''}
-            </div>
-        </label>
-    `;
-}
-
-window.publishSelectedTasks = async function() {
-    const checkedBoxes = document.querySelectorAll('.task-check:checked:not(:disabled)');
-    if (checkedBoxes.length === 0) return showToast("Select content first", "warning");
-
-    const btn = document.getElementById('publish-btn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
-    btn.disabled = true;
-
-    try {
-        const teamId = currentTeam.team_id;
-        const weekCycle = getCurrentWeekCycle();
-        const due = weekCycle.end.toISOString();
-        const newTasksToInsert = [];
-
-        checkedBoxes.forEach(box => {
-            newTasksToInsert.push({
-                team_id: teamId,
-                content_id: box.value,
-                course_id: box.getAttribute('data-course-id'),
-                title: box.getAttribute('data-title'),
-                description: box.getAttribute('data-desc'),
-                duration: box.getAttribute('data-duration'),
-                type: box.getAttribute('data-type') || 'video',
-                week_id: weekCycle.id,
-                due_date: due,
-                assigned_by: currentUser.id
-            });
-        });
-
-        const { data: insertedTasks, error } = await supabase
-            .from('team_tasks')
-            .insert(newTasksToInsert)
-            .select();
-
-        if (error) throw error;
-
-        const mappedTasks = insertedTasks.map(t => ({...t, task_id: t.id}));
-        currentTeam.weekly_tasks = [...(currentTeam.weekly_tasks || []), ...mappedTasks];
-
-        showToast(`${insertedTasks.length} tasks published`, "success");
-        if(selectedAssignCourse) loadAssignContent(selectedAssignCourse); 
-        renderOverview();
-
-    } catch (error) {
-        console.error(error);
-        showToast("Error publishing: " + error.message, "error");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-};
-
-window.deleteTask = function(taskId, taskWeekId) {
-    openConfirmModal("Are you sure? This task will be removed from team records.", async () => {
-        const currentWeek = getCurrentWeekCycle();
-        if (taskWeekId !== currentWeek.id) {
-            showToast("Cannot delete past tasks (Archived).", "error");
-            return;
-        }
-
-        try {
-            const taskToDelete = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
-            if (taskToDelete && taskToDelete.stats && taskToDelete.stats.started_count > 0) {
-                 showToast("Cannot delete: Students already started.", "error");
-                 return;
-            }
-
-            const { error } = await supabase
-                .from('team_tasks')
-                .delete()
-                .eq('id', taskId);
-
-            if (error) throw error;
-
-            currentTeam.weekly_tasks = currentTeam.weekly_tasks.filter(t => t.task_id !== taskId);
-            showToast("Task deleted", "success");
-            renderOverview(); 
-
-        } catch (error) {
-            console.error("Error deleting task:", error);
-            showToast("Delete failed: " + error.message, "error");
-        }
-    });
-};
-
-window.submitCustomTask = async () => {
-    const t = document.getElementById('ct-title').value;
-    const d = document.getElementById('ct-desc').value;
-    if(!t) return showToast("Title required", "error");
-
-    const weekCycle = getCurrentWeekCycle();
-    const taskData = {
-        team_id: currentTeam.team_id,
-        title: t,
-        description: d,
-        type: 'custom',
-        week_id: weekCycle.id,
-        due_date: weekCycle.end.toISOString(),
-        assigned_by: currentUser.id
-    };
-
-    try {
-        const { data: insertedTask, error } = await supabase
-            .from('team_tasks')
-            .insert([taskData])
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        currentTeam.weekly_tasks.push({...insertedTask, task_id: insertedTask.id});
-        
-        showToast("Task Published", "success");
-        closeModal('custom-task-modal');
-        renderOverview();
-    } catch (e) { 
-        console.error(e);
-        showToast("Failed to publish task", "error"); 
-    }
-};
-
 
 // ==========================================
-// 8. TEAM & SQUAD MANAGEMENT
+// 8. TEAM & SQUAD MANAGEMENT (STUDENT VIEW)
 // ==========================================
+
 async function renderSquadTab(teamData) {
-    if (!teamData) return;
-    await renderSquad(); 
-    
-    const requestsCount = (teamData.requests || []).length;
-    const badge = document.getElementById('requests-badge');
-    if (badge) {
-        badge.innerText = requestsCount;
-        badge.classList.toggle('hidden', requestsCount === 0);
+    const hasTeamView = document.getElementById('has-team-view');
+    const noTeamView = document.getElementById('no-team-view');
+
+    if (teamData && teamData.id) {
+        // حالة: الطالب في فريق
+        if(hasTeamView) hasTeamView.classList.remove('hidden');
+        if(noTeamView) noTeamView.classList.add('hidden');
+        await renderSquad(); 
+    } else {
+        // حالة: الطالب ليس في فريق
+        if(hasTeamView) hasTeamView.classList.add('hidden');
+        if(noTeamView) noTeamView.classList.remove('hidden');
+        checkPendingInvitesBadge();
     }
-    
-    renderJoinRequests(teamData);
-    renderSentInvites(teamData);
 }
 
+// 1. عرض أعضاء الفريق الحالي للطالب
 async function renderSquad() {
-    const list = document.getElementById('squad-list');
     const container = document.getElementById('squad-list-container');
-    const countDisplay = document.getElementById('squad-count-display');
-    const select = document.getElementById('new-leader-select');
-    
-    if(list) list.innerHTML = '';
-    if(container) container.innerHTML = '';
-    if(select) {
-        select.innerHTML = '<option value="" disabled selected>Searching members...</option>';
-        select.disabled = true;
-    }
+    if (!container) return;
 
-    if(!currentTeam || !currentTeam.members || currentTeam.members.length === 0) {
-        if(select) select.innerHTML = '<option value="" disabled>No members</option>';
-        if(container) container.innerHTML = `<div class="p-8 text-center text-gray-500 border border-white/5 border-dashed rounded-2xl">No members currently</div>`;
+    // 💡 شرط الحماية لمنع إرسال "null" إلى قاعدة البيانات
+    if (!currentTeam || !currentTeam.team_id) {
+        container.innerHTML = '';
         return;
     }
 
-    if(countDisplay) countDisplay.innerText = currentTeam.members.length;
+    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
 
     try {
         const { data: membersData, error } = await supabase
@@ -1337,490 +1071,431 @@ async function renderSquad() {
             .eq('team_id', currentTeam.team_id);
 
         if (error) throw error;
-
+        
+        // ... (باقي الكود كما هو بالأسفل) ...
         membersData.sort((a, b) => (b.total_xp || 0) - (a.total_xp || 0));
 
-        if(select) {
-            select.innerHTML = '<option value="" disabled selected>-- Select New Leader --</option>';
-            select.disabled = false;
-        }
-
-        let candidatesFound = 0;
         let containerHtml = '';
-
         membersData.forEach((member, index) => {
-            const university = member.university || "University Unspecified";
-            const college = member.faculty || "";
-            const name = member.full_name || "Unknown Member";
+            const university = member.university || "غير محدد";
+            const name = member.full_name || "عضو مجهول";
             const photo = resolveImageUrl(member.avatar_url, 'user');
             const points = member.total_xp || 0;
             const rankData = getRankDataForMember(points);
-
             const isLeader = member.id === currentTeam.leader_id;
             const isMe = member.id === currentUser.id;
-            const canKick = (currentUser.id === currentTeam.leader_id) && !isMe;
 
-            if(list) {
-                const memberRow = document.createElement('div');
-                memberRow.className = "p-4 flex justify-between items-center hover:bg-white/5 transition-colors border-b border-white/5 last:border-0";
-                memberRow.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
-                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/icon.jpg'">
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm text-white flex items-center gap-2">
-                                ${name} 
-                                ${isMe ? '<span class="text-[10px] bg-white/10 px-1.5 rounded text-gray-400">You</span>' : ''}
-                                ${isLeader ? '<i class="fas fa-crown text-yellow-500 text-xs" title="Leader"></i>' : ''}
-                            </h4>
-                            <p class="text-[10px] text-gray-500 font-mono">${points} XP</p>
-                        </div>
+            containerHtml += `
+            <div class="group flex flex-col md:flex-row items-center bg-white/5 border border-white/5 rounded-3xl p-5 relative overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+                <div class="absolute right-0 top-0 bottom-0 w-1.5 transition-all duration-500 bg-gradient-to-b from-${index < 3 ? 'yellow-500' : 'transparent'} to-transparent group-hover:h-full"></div>
+                <div class="hidden md:flex items-center justify-center w-14 text-3xl font-black text-white/5 font-mono">#${index + 1}</div>
+                <div class="relative mb-4 md:mb-0 md:ml-8 flex-shrink-0">
+                    <div class="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[${rankData.stage_color}] to-transparent relative">
+                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.src='../assets/icons/icon.jpg'">
                     </div>
-                    ${canKick ? `
-                        <button onclick="confirmKickMember('${currentTeam.team_id}', '${member.id}', '${name}')" 
-                                class="text-red-400 hover:text-red-500 text-xs px-3 py-1.5 border border-red-500/20 hover:bg-red-500/10 rounded transition-all">
-                            Kick
-                        </button>` : ''
-                    }
-                `;
-                list.appendChild(memberRow);
-            }
-
-            if (container) {
-                containerHtml += `
-                <div class="group flex flex-col md:flex-row items-center bg-white/5 border border-white/5 rounded-3xl p-5 relative overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-2xl hover:shadow-black/50">
-                    <div class="absolute right-0 top-0 bottom-0 w-1.5 transition-all duration-500 bg-gradient-to-b from-${index < 3 ? 'yellow-500' : 'transparent'} to-transparent group-hover:h-full"></div>
-                    <div class="hidden md:flex items-center justify-center w-14 text-3xl font-black text-white/5 font-mono group-hover:text-white/20 transition-colors">
-                        #${index + 1}
+                    <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-[${rankData.stage_color}] shadow-lg z-10">
+                        <img src="../assets/user-badge/lv${rankData.level}.png" class="w-10 h-10 object-contain">
                     </div>
-                    <div class="relative mb-4 md:mb-0 md:ml-8 flex-shrink-0">
-                        <div class="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[${rankData.stage_color}] to-transparent relative">
-                            <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" alt="Avatar">
-                        </div>
-                        <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-[${rankData.stage_color}] shadow-[0_0_15px_${rankData.stage_color}40] z-10">
-                            <img src="../assets/user-badge/lv${rankData.level}.png" class="w-12  h-12 rounded-[34%] object-contain">
-                        </div>
+                </div>
+                <div class="flex-1 text-center md:text-right space-y-1.5 min-w-0">
+                    <div class="flex items-center justify-center md:justify-start gap-3">
+                        <h4 class="text-white font-bold text-xl truncate tracking-tight">${name}</h4>
+                        ${isMe ? `<span class="px-2 py-0.5 bg-white/10 text-gray-300 text-[10px] rounded-full">أنت</span>` : ''}
+                        ${isLeader ? `<span class="px-2.5 py-0.5 bg-yellow-500/20 text-yellow-500 text-[10px] rounded-full border border-yellow-500/30 font-bold uppercase"><i class="fas fa-crown mr-1"></i> الليدر</span>` : ''}
                     </div>
-                    <div class="flex-1 text-center md:text-right space-y-1.5 min-w-0">
-                        <div class="flex items-center justify-center md:justify-start gap-3">
-                            <h4 class="text-white font-bold text-xl truncate tracking-tight">${name}</h4>
-                            ${isLeader ? `<span class="px-2.5 py-0.5 bg-yellow-500/20 text-yellow-500 text-[10px] rounded-full border border-yellow-500/30 font-bold uppercase"><i class="fas fa-crown mr-1"></i> LEADER</span>` : ''}
-                        </div>
-                        <div class="text-xs font-bold tracking-widest uppercase opacity-90" style="color: ${rankData.stage_color}">
-                            ${rankData.title}
-                        </div>
-                        <div class="flex items-center justify-center md:justify-start gap-2 text-xs text-gray-400 mt-1">
-                            <i class="fas fa-university text-gray-500"></i>
-                            <span>${university} ${college ? `• ${college}` : ''}</span>
-                        </div>
+                    <div class="text-xs font-bold tracking-widest uppercase opacity-90" style="color: ${rankData.stage_color}">${rankData.title}</div>
+                    <div class="flex items-center justify-center md:justify-start gap-2 text-xs text-gray-400 mt-1">
+                        <i class="fas fa-university"></i> <span>${university}</span>
                     </div>
-                    <div class="flex items-center gap-6 mt-6 md:mt-0 pl-4 border-l border-white/5 ml-4">
-                        <div class="text-center px-2">
-                            <span class="block text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">XP</span>
-                            <span class="font-mono font-black text-2xl text-white tracking-wider">${points.toLocaleString()} <span class="text-[10px] text-b-primary">XP</span></span>
-                        </div>
-                        ${canKick ? `
-                        <button onclick="confirmKickMember('${currentTeam.team_id}', '${member.id}', '${name}')" 
-                                class="w-10 h-10 rounded-xl bg-red-500/5 text-red-500 border border-red-500/10 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="Kick">
-                            <i class="fas fa-user-times"></i>
-                        </button>` : '<div class="w-10"></div>'}
+                </div>
+                <div class="flex items-center gap-6 mt-6 md:mt-0 pl-4 border-l border-white/5 ml-4">
+                    <div class="text-center px-2">
+                        <span class="block text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">النقاط</span>
+                        <span class="font-mono font-black text-2xl text-white">${points.toLocaleString()} <span class="text-[10px] text-b-primary">XP</span></span>
                     </div>
-                </div>`;
-            }
-
-            if (!isMe && select) {
-                const option = document.createElement('option');
-                option.value = member.id;
-                option.text = `${name} (${points} XP)`;
-                select.appendChild(option);
-                candidatesFound++;
-            }
+                </div>
+            </div>`;
         });
-
-        if (container) container.innerHTML = containerHtml;
-        
-        if (select && candidatesFound === 0) {
-            select.innerHTML = '<option value="" disabled selected>No other members</option>';
-            select.disabled = true;
-        }
-
+        container.innerHTML = containerHtml;
     } catch (e) {
         console.error("Squad Render Error:", e);
-        if(select) select.innerHTML = '<option>Error loading</option>';
+        container.innerHTML = '<p class="text-red-500 text-center py-4">فشل في تحميل أعضاء الفريق.</p>';
     }
 }
 
-// ==========================================
-// 9. INVITATIONS & JOIN REQUESTS
-// ==========================================
-window.openInviteModal = () => {
-    document.getElementById('invite-member-modal').classList.remove('hidden');
-    document.getElementById('invite-email-input').value = ''; 
-};
+// 2. مغادرة الفريق (احتفاظ بالطالب بنقاطه، وخصمها من الفريق)
+window.leaveCurrentTeam = () => {
+    openConfirmModal("هل أنت متأكد من مغادرة الفريق؟ ستحتفظ بنقاطك وإنجازاتك الشخصية، ولكن سيتم حذف مساهماتك من نقاط الفريق.", async () => {
+        try {
+            const teamId = currentTeam.team_id;
+            const myId = currentUser.id;
 
-window.openSentInvitesModal = () => {
-    document.getElementById('sent-invites-modal').classList.remove('hidden');
-    renderSentInvitesList(); 
-};
+            // 1. حساب النقاط التي ساهم بها الطالب في هذا الفريق
+            const { data: logs } = await supabase.from('team_score_logs')
+                .select('amount, id')
+                .eq('team_id', teamId)
+                .eq('contributor_id', myId);
 
-window.sendTeamInvitation = async () => {
-    const emailInput = document.getElementById('invite-email-input');
-    const btn = document.getElementById('btn-send-invite');
-    const email = emailInput.value.trim();
-
-    if (!email) return showToast("Enter email address", "error");
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
-
-    try {
-        const { data: user, error: userError } = await supabase
-            .from('profiles')
-            .select('id, full_name, team_id')
-            .eq('email', email)
-            .single();
-
-        if (userError || !user) throw new Error("Email not registered.");
-        if (user.team_id) throw new Error("User already in a team.");
-
-        const { data: existing, error: existError } = await supabase
-            .from('team_invitations')
-            .select('id')
-            .eq('to_uid', user.id)
-            .eq('from_team_id', currentTeam.team_id)
-            .eq('status', 'pending');
-
-        if (existing && existing.length > 0) throw new Error("Invitation already sent.");
-
-        const inviteData = {
-            to_uid: user.id,
-            to_email: email,
-            to_name: user.full_name || "Student",
-            from_team_id: currentTeam.team_id,
-            from_leader_id: currentUser.id,
-            status: 'pending',
-            team_snapshot: {
-                name: currentTeam.name,
-                leader_name: currentUserData.full_name
+            let totalContributed = 0;
+            let logIds = [];
+            if (logs) {
+                logs.forEach(l => { totalContributed += l.amount; logIds.push(l.id); });
             }
-        };
 
-        const { error: insertError } = await supabase.from('team_invitations').insert([inviteData]);
-        if (insertError) throw insertError;
+            // 2. خصم النقاط من رصيد الفريق الكلي
+            if (totalContributed > 0) {
+                const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
+                const newTeamScore = Math.max(0, (teamInfo?.total_score || 0) - totalContributed);
+                await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', teamId);
+                
+                // 3. حذف سجلات المساهمة
+                await supabase.from('team_score_logs').delete().in('id', logIds);
+            }
 
-        showToast("Invitation sent!", "success");
-        closeModal('invite-member-modal');
+            // 4. إزالة الطالب من الفريق في البروفايل (دون المساس بـ total_xp الخاص به)
+            const { error: profileError } = await supabase.from('profiles').update({ team_id: null }).eq('id', myId);
+            if (profileError) throw profileError;
 
-    } catch (error) {
-        console.error(error);
-        showToast(error.message, "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Send Invitation';
-    }
+            showToast("تم مغادرة الفريق بنجاح. بياناتك الشخصية محفوظة.", "success");
+            setTimeout(() => window.location.reload(), 1500);
+
+        } catch (error) {
+            console.error("Leave Team Error:", error);
+            showToast("حدث خطأ أثناء المغادرة.", "error");
+        }
+    });
 };
 
-async function renderSentInvitesList() {
-    const container = document.getElementById('sent-invites-list');
-    container.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+// ==========================================
+// 9. NO-TEAM: INVITATIONS & BROWSER
+// ==========================================
 
+let allSystemTeams = []; // Cache for browser
+
+// التشييك على الدعوات لوضع تنبيه (Badge)
+async function checkPendingInvitesBadge() {
+    const badge = document.getElementById('invites-badge');
+    if(!badge || !currentUser) return;
     try {
-        const { data: invites, error } = await supabase
-            .from('team_invitations')
-            .select('*')
-            .eq('from_team_id', currentTeam.team_id);
+        const { count } = await supabase.from('team_invitations')
+            .select('*', { count: 'exact', head: true })
+            .eq('to_uid', currentUser.id)
+            .eq('status', 'pending');
+        
+        if (count > 0) {
+            badge.innerText = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    } catch(e){}
+}
+
+window.openStudentInvites = async () => {
+    document.getElementById('student-invites-modal').classList.remove('hidden');
+    const container = document.getElementById('student-invites-list');
+    container.innerHTML = '<div class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+    
+    try {
+        const { data: invites, error } = await supabase.from('team_invitations')
+            .select('id, from_team_id, created_at, team_snapshot')
+            .eq('to_uid', currentUser.id)
+            .eq('status', 'pending');
 
         if (error) throw error;
 
         if (!invites || invites.length === 0) {
-            container.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">No sent invites.</td></tr>';
+            container.innerHTML = '<div class="text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed">لا توجد دعوات معلقة.</div>';
             return;
         }
 
-        let html = '';
-        invites.forEach(invite => {
-            if (invite.status === 'accepted') return; 
-
-            const date = new Date(invite.created_at).toLocaleDateString('ar-EG');
-            let statusBadge = '';
-            if (invite.status === 'pending') statusBadge = '<span class="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/20">Pending</span>';
-            if (invite.status === 'rejected') statusBadge = '<span class="bg-red-500/20 text-red-500 text-xs px-2 py-1 rounded border border-red-500/20">Rejected</span>';
-
-            html += `
-            <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0">
-                <td class="p-4 font-bold text-white">${invite.to_name} <br><span class="text-[10px] text-gray-500 font-mono">${invite.to_email}</span></td>
-                <td class="p-4">${statusBadge}</td>
-                <td class="p-4 text-xs text-gray-400 font-mono">${date}</td>
-                <td class="p-4">
-                    <button onclick="cancelInvitation('${invite.id}')" class="text-red-400 hover:text-red-300 text-xs font-bold bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded transition-all">
-                        <i class="fas fa-trash-alt"></i> Cancel
-                    </button>
-                </td>
-            </tr>
-            `;
-        });
-        container.innerHTML = html || '<tr><td colspan="4" class="p-6 text-center text-gray-500">Clean list.</td></tr>';
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-500">Failed to load.</td></tr>';
-    }
-}
-
-function renderSentInvites(teamData) {
-    const container = document.getElementById('invites-container');
-    const section = document.getElementById('invites-section');
-    
-    supabase
-        .from('team_invitations')
-        .select('*')
-        .eq('from_team_id', teamData.id)
-        .eq('status', 'pending')
-        .then(({ data: invites }) => {
-            if (!invites || invites.length === 0) {
-                container.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">No active invites.</td></tr>`;
-                return;
-            }
-
-            section.classList.remove('hidden');
-            container.innerHTML = invites.map(inv => `
-                <tr class="hover:bg-white/5 transition border-b border-white/5 last:border-0 group">
-                    <td class="p-4">
-                        <div class="font-bold text-white flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs text-gray-400"><i class="fas fa-user"></i></div>
-                            ${inv.to_name || 'Unknown User'}
-                        </div>
-                    </td>
-                    <td class="p-4">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20 uppercase tracking-wide">
-                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Waiting
-                        </span>
-                    </td>
-                    <td class="p-4 text-xs font-mono text-gray-500 dir-ltr text-right">
-                        ${new Date(inv.created_at).toLocaleDateString('en-GB')}
-                    </td>
-                    <td class="p-4 text-left">
-                        <button onclick="cancelInvitation('${inv.id}')" 
-                                class="text-gray-500 hover:text-red-400 text-xs font-bold py-1 px-3 rounded-lg hover:bg-red-500/10 transition-all flex items-center gap-1 ml-auto">
-                            <i class="fas fa-trash-alt"></i> Cancel
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        });
-}
-
-window.cancelInvitation = (inviteId) => {
-    openConfirmModal(
-        "Are you sure you want to cancel this invitation?",
-        async () => {
-            try {
-                await supabase.from('team_invitations').delete().eq('id', inviteId);
-                showToast("Invitation cancelled", "success");
-                closeConfirmModal();
-                renderSentInvitesList(); 
-                renderSentInvites(currentTeam);
-            } catch (e) {
-                console.error("Cancel Error:", e);
-                showToast("Error cancelling", "error");
-            }
-        }
-    );
-};
-
-window.openRequestsModal = () => {
-    document.getElementById('requests-modal').classList.remove('hidden');
-    renderRequestsList(); 
-};
-
-function renderRequestsList() {
-    const container = document.getElementById('requests-list-container');
-    const requests = currentTeam.requests || [];
-
-    if (requests.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">No new requests.</div>`;
-        return;
-    }
-
-    container.innerHTML = requests.map(req => `
-        <div class="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500">
-                    <i class="fas fa-user"></i>
+        container.innerHTML = invites.map(inv => `
+            <div class="bg-black/40 border border-white/5 rounded-xl p-4 flex justify-between items-center hover:bg-white/5 transition-all">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-500/20 text-purple-500 rounded-lg flex items-center justify-center"><i class="fas fa-flag"></i></div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${inv.team_snapshot?.name || 'فريق'}</h4>
+                        <p class="text-[10px] text-gray-400 mt-1">بواسطة القائد: ${inv.team_snapshot?.leader_name || 'غير معروف'}</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-bold text-white text-sm">${req.name || 'User'}</h4>
-                    <p class="text-[10px] text-gray-400">Wants to join</p>
+                <div class="flex gap-2">
+                    <button onclick="window.viewTeamDetails('${inv.from_team_id}', '${inv.id}', 'invite')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-bold transition-all border border-white/10">التفاصيل والرد</button>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="handleRequestAction('${currentTeam.team_id}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all">Accept</button>
-                <button onclick="handleRequestAction('${currentTeam.team_id}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-red-500/20 text-white hover:text-red-400 rounded-lg text-xs font-bold transition-all border border-white/5">Reject</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderJoinRequests(teamData) {
-    const section = document.getElementById('requests-section');
-    const container = document.getElementById('requests-container');
-    const countBadge = document.getElementById('requests-count');
-    
-    const requests = teamData.requests || [];
-
-    if (requests.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 border border-white/5 border-dashed rounded-xl">No new requests</div>`;
-        return;
-    }
-
-    section.classList.remove('hidden');
-    if(countBadge) countBadge.innerText = requests.length;
-    
-    container.innerHTML = requests.map(req => `
-        <div class="bg-b-surface border border-yellow-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-slide-in relative overflow-hidden group">
-            <div class="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <div class="flex items-center gap-4 z-10">
-                <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-xl border border-yellow-500/20 shadow-inner">
-                    <i class="fas fa-user-clock"></i>
-                </div>
-                <div>
-                    <h4 class="font-bold text-white text-base">${req.name || 'User'}</h4>
-                    <p class="text-xs text-gray-400 mt-0.5">Wants to join your team</p>
-                </div>
-            </div>
-            <div class="flex gap-2 w-full sm:w-auto z-10">
-                <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-600 hover:text-white transition-all font-bold text-sm">
-                    <i class="fas fa-check mr-1"></i> Accept
-                </button>
-                <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all font-bold text-sm">
-                    <i class="fas fa-times mr-1"></i> Reject
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-window.handleRequestAction = async (teamId, userId, userName, action) => {
-    try {
-        if (action === 'accept') {
-            const { error: profileErr } = await supabase
-                .from('profiles')
-                .update({ team_id: teamId, joined_team_at: new Date() })
-                .eq('id', userId);
-            
-            if (profileErr) throw profileErr;
-
-            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
-            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
-
-            showToast(`${userName} accepted!`, 'success');
-        } else {
-            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
-            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
-            showToast(`${userName} rejected`, 'neutral');
-        }
-        location.reload(); 
-
-    } catch (e) {
-        console.error("Request Action Error:", e);
-        showToast("Action failed", "error");
-    }
-};
-
-window.confirmKickMember = (teamId, memberUid, memberName) => {
-    openConfirmModal(
-        `Are you sure you want to remove "${memberName}"? They will keep their points, and team score will not be affected.`,
-        async () => {
-            try {
-                await supabase
-                    .from('profiles')
-                    .update({ team_id: null })
-                    .eq('id', memberUid);
-
-                showToast(`Removed ${memberName} successfully`, 'success');
-                setTimeout(() => location.reload(), 1000);
-            } catch (error) {
-                console.error("Kick Error:", error);
-                showToast("Failed to remove member", 'error');
-            }
-        }
-    );
-};
-
-window.confirmLeaveTeam = async () => {
-    const newLeaderId = document.getElementById('new-leader-select').value;
-    const isSolo = (!currentTeam.members || currentTeam.members.length <= 1);
-    
-    if (!isSolo && !newLeaderId) return showToast("You must select a new leader first", "error");
-
-    try {
-        if (newLeaderId) {
-            await supabase.from('teams').update({ leader_id: newLeaderId }).eq('id', currentTeam.team_id);
-            await supabase.from('profiles').update({ role: 'leader' }).eq('id', newLeaderId);
-        }
-
-        await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', currentUser.id);
-
-        showToast("Left team successfully", "success");
-        setTimeout(() => window.location.href = "student-dash.html", 1500);
+        `).join('');
 
     } catch (e) {
         console.error(e);
-        showToast("Error leaving team", "error");
+        container.innerHTML = '<p class="text-red-500 text-center py-4">خطأ في جلب الدعوات.</p>';
     }
 };
 
-window.openLeaveTeamModal = async () => {
-    const modal = document.getElementById('leave-team-modal');
-    const select = document.getElementById('new-leader-select');
+window.openTeamBrowser = async () => {
+    document.getElementById('team-browser-modal').classList.remove('hidden');
+    const tbody = document.getElementById('teams-browser-list');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin"></i> جاري جلب الفرق...</td></tr>';
     
-    if (modal) modal.classList.remove('hidden');
-    if (!select) return;
-
-    select.innerHTML = '<option value="" disabled selected>Loading candidates...</option>';
-    select.disabled = true;
-
-    if (!currentTeam || !currentTeam.members) {
-        select.innerHTML = '<option value="" disabled>No team data</option>';
-        return;
-    }
-
     try {
-        const otherMembersIds = currentTeam.members.filter(uid => uid !== currentUser.id);
-
-        if (otherMembersIds.length === 0) {
-            select.innerHTML = '<option value="" disabled selected>You are the only member</option>';
-            return;
-        }
-
-        const { data: members } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', otherMembersIds);
-
-        select.innerHTML = '<option value="" disabled selected>-- Select New Leader --</option>';
+        const { data: teams, error } = await supabase.from('teams').select('*, profiles!teams_leader_id_fkey(full_name, university)');
+        if (error) throw error;
         
-        members.forEach(member => {
-            const name = member.full_name || "Unknown";
-            const points = member.total_xp || 0;
-            
-            const option = document.createElement('option');
-            option.value = member.id;
-            option.text = `${name} (${points} XP)`;
-            select.appendChild(option);
-        });
-        select.disabled = false;
-
-    } catch (error) {
-        console.error("Error loading candidates:", error);
-        select.innerHTML = '<option value="" disabled>Error loading</option>';
+        allSystemTeams = teams;
+        window.filterTeams(); // يقوم بالرسم بناءً على الفلتر
+    } catch(e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-10">فشل تحميل قائمة الفرق</td></tr>';
     }
 };
 
+window.filterTeams = () => {
+    const q = document.getElementById('team-search-input')?.value.toLowerCase() || '';
+    const u = document.getElementById('team-uni-filter')?.value || '';
+    const tbody = document.getElementById('teams-browser-list');
+    
+    let filtered = allSystemTeams.filter(t => {
+        const tName = (t.name || '').toLowerCase();
+        const lName = (t.profiles?.full_name || '').toLowerCase();
+        const lUni = t.profiles?.university || '';
+        
+        const matchSearch = tName.includes(q) || lName.includes(q);
+        const matchUni = u === '' || lUni === u;
+        return matchSearch && matchUni;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-10">لا توجد فرق تطابق بحثك.</td></tr>';
+        return;
+    }
+
+    // Sort by score
+    filtered.sort((a,b) => (b.total_score || 0) - (a.total_score || 0));
+
+    tbody.innerHTML = filtered.map(t => {
+        const teamRank = getRankObject(t.total_score || 0, TEAM_RANKS_DATA);
+        const memCount = (t.members || []).length;
+        
+        return `
+        <tr class="hover:bg-white/5 transition-colors group">
+            <td class="p-4">
+                <div class="flex items-center gap-3">
+                    <img src="${resolveImageUrl(t.logo_url, 'team')}" class="w-10 h-10 rounded-lg object-cover bg-black border border-white/10">
+                    <div>
+                        <p class="font-bold text-white text-sm">${t.name}</p>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded border mt-1 inline-block" style="color:${teamRank.stage_color}; border-color:${teamRank.stage_color}40">${teamRank.title}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="p-4 text-sm text-gray-300">
+                ${t.profiles?.full_name || 'غير معروف'}
+                <br><span class="text-[10px] text-gray-500"><i class="fas fa-university"></i> ${t.profiles?.university || 'غير محدد'}</span>
+            </td>
+            <td class="p-4 text-center text-sm font-mono ${memCount >= 5 ? 'text-red-400' : 'text-gray-300'}">${memCount}/5</td>
+            <td class="p-4 text-center font-bold font-mono text-b-primary">${(t.total_score || 0).toLocaleString()}</td>
+            <td class="p-4 text-center">
+                <button onclick="window.viewTeamDetails('${t.id}', null, 'browse')" class="px-3 py-1.5 bg-b-primary/10 hover:bg-b-primary text-b-primary hover:text-white rounded-lg text-xs font-bold transition-all">
+                    تفاصيل
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+};
+
+// 3. عرض بطاقة الفريق الكبيرة (النافذة العملاقة)
+window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => {
+    const modal = document.getElementById('team-details-modal');
+    modal.classList.remove('hidden');
+    
+    document.getElementById('tdm-members-list').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
+    document.getElementById('tdm-courses-list').innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-gray-500"></i></div>';
+    
+    try {
+        // جلب تفاصيل الفريق ومعلومات الليدر
+        const { data: teamData, error } = await supabase.from('teams')
+            .select('*, profiles!teams_leader_id_fkey(full_name, university)').eq('id', teamId).single();
+        if(error) throw error;
+
+        // جلب الأعضاء
+        const { data: mems } = await supabase.from('profiles').select('id, full_name, avatar_url, total_xp').eq('team_id', teamId).order('total_xp', {ascending: false});
+
+        // 1. تعبئة بيانات الهيدر العلوية
+        document.getElementById('tdm-name').innerText = teamData.name;
+        document.getElementById('tdm-logo').src = resolveImageUrl(teamData.logo_url, 'team');
+        const tRank = getRankObject(teamData.total_score || 0, TEAM_RANKS_DATA);
+        const rankEl = document.getElementById('tdm-rank');
+        const rankImgEl = document.getElementById('tdm-rank-img');
+        rankEl.innerText = tRank.title;
+        rankEl.style.color = tRank.stage_color; 
+        rankEl.style.borderColor = tRank.stage_color + '40';
+        rankEl.style.backgroundColor = tRank.stage_color + '1A';
+        if (rankImgEl) {
+            rankImgEl.src = `../assets/team-badge/lv${tRank.level || 1}.png`;
+            rankImgEl.onerror = function() {
+                this.src = `../assets/user-badge/lv${tRank.level || 1}.png`;
+            };
+            // تغيير لون التوهج ليطابق لون المرحلة
+            rankImgEl.style.filter = `drop-shadow(0 0 8px ${tRank.stage_color}60)`;
+        }
+        // 2. تعبئة الإحصائيات والمعلومات
+        document.getElementById('tdm-points').innerText = (teamData.total_score || 0).toLocaleString();
+        document.getElementById('tdm-courses-count').innerText = (teamData.courses_plan || []).length;
+        document.getElementById('tdm-members-count').innerText = `${mems?.length || 0}/5`;
+        document.getElementById('tdm-members-badge').innerText = mems?.length || 0;
+        
+        document.getElementById('tdm-leader-name').innerText = teamData.profiles?.full_name || 'غير معروف';
+        document.getElementById('tdm-leader-uni').innerText = teamData.profiles?.university || 'غير محدد';
+
+        // 3. 💡 رسم الكورسات المفعلة بالصور والأسماء
+        const coursesPlan = teamData.courses_plan || [];
+        const coursesCont = document.getElementById('tdm-courses-list');
+        
+        if (coursesPlan.length === 0) {
+            coursesCont.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-dashed border-white/10">لم يقم الليدر بتفعيل أي كورسات بعد.</div>';
+        } else {
+            coursesCont.innerHTML = coursesPlan.map(cid => {
+                const cInfo = (allData?.courses || []).find(c => String(c.id) === String(cid));
+                if(!cInfo) return '';
+                const img = resolveImageUrl(cInfo.image_url, 'course');
+                return `
+                    <div class="flex items-center gap-3 bg-white/5 border border-white/5 p-3 rounded-xl hover:bg-white/10 transition-colors">
+                        <img src="${img}" class="w-14 h-14 rounded-lg object-cover bg-black shadow-md border border-white/10 shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <h5 class="text-sm font-bold text-white truncate" title="${cInfo.title}">${cInfo.title}</h5>
+                            <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1.5">
+                                <span class="bg-black/50 px-1.5 rounded"><i class="fas fa-video text-blue-400"></i> ${cInfo.real_video_count || 0} درس</span>
+                                <span class="bg-black/50 px-1.5 rounded font-mono text-gray-500">${cInfo.module_time || ''}</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 4. رسم قائمة الأعضاء (السايدبار)
+        if(mems && mems.length > 0){
+            document.getElementById('tdm-members-list').innerHTML = mems.map((m) => {
+                const isLeader = m.id === teamData.leader_id;
+                const mRank = getRankDataForMember(m.total_xp || 0);
+                const avatar = resolveImageUrl(m.avatar_url, 'user');
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-transparent hover:border-white/10 transition-colors group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="relative shrink-0">
+                                <img src="${avatar}" class="w-12 h-12 rounded-full bg-black border-2 object-cover" style="border-color: ${mRank.stage_color}80">
+                                ${isLeader ? '<div class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 shadow-md"><i class="fas fa-crown text-yellow-500 text-[10px]"></i></div>' : ''}
+                            </div>
+                            <div class="truncate">
+                                <p class="text-sm font-bold text-white truncate">${m.full_name}</p>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded border mt-0.5 inline-block" style="color:${mRank.stage_color}; border-color:${mRank.stage_color}40; background-color:${mRank.stage_color}10">${mRank.title}</span>
+                            </div>
+                        </div>
+                        <div class="text-left shrink-0 pl-2">
+                            <span class="block text-sm font-black font-mono text-white group-hover:text-b-primary transition-colors">${(m.total_xp || 0).toLocaleString()}</span>
+                            <span class="text-[9px] text-gray-500 uppercase tracking-widest">XP</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            document.getElementById('tdm-members-list').innerHTML = '<p class="text-xs text-gray-500 text-center py-10">لا يوجد أعضاء.</p>';
+        }
+
+        // 5. إعداد أزرار التفاعل السفلية
+        const actionCont = document.getElementById('tdm-action-container');
+        if (context === 'invite') {
+            actionCont.innerHTML = `
+                <div class="flex flex-col sm:flex-row gap-3 w-full">
+                    <button onclick="window.acceptTeamInvite('${inviteId}', '${teamId}')" class="px-8 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all flex items-center justify-center gap-2"><i class="fas fa-check"></i> قبول الدعوة</button>
+                    <button onclick="window.rejectTeamInvite('${inviteId}')" class="px-8 py-3.5 bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 font-bold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-2"><i class="fas fa-times"></i> رفض</button>
+                </div>
+            `;
+        } else {
+            const reqs = teamData.requests || [];
+            const hasApplied = reqs.some(r => r.uid === currentUser.id);
+            const isFull = (mems?.length || 0) >= 5;
+
+            if (hasApplied) {
+                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-clock"></i> طلبك قيد المراجعة لدى الليدر</div>`;
+            } else if (isFull) {
+                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-ban"></i> عذراً، الفريق مكتمل</div>`;
+            } else {
+                actionCont.innerHTML = `
+                    <button onclick="window.applyForTeam('${teamId}', '${teamData.name}')" class="w-full sm:w-auto px-10 py-4 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,106,103,0.4)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
+                        <i class="fas fa-paper-plane"></i> تقديم طلب انضمام
+                    </button>
+                `;
+            }
+        }
+    } catch(e) {
+        console.error(e);
+        showToast("فشل جلب تفاصيل الفريق", "error");
+    }
+};
+
+window.applyForTeam = async (teamId, teamName) => {
+    try {
+        const { data: teamInfo } = await supabase.from('teams').select('requests').eq('id', teamId).single();
+        const currentReqs = teamInfo?.requests || [];
+        
+        if (currentReqs.some(r => r.uid === currentUser.id)) {
+            return showToast("لقد قمت بالتقديم مسبقاً على هذا الفريق.", "warning");
+        }
+
+        currentReqs.push({
+            uid: currentUser.id,
+            name: currentUserData.full_name || 'طالب',
+            status: 'pending' // يمكن لليدر حذفه في حالة الرفض
+        });
+
+        await supabase.from('teams').update({ requests: currentReqs }).eq('id', teamId);
+        
+        showToast(`تم إرسال طلب الانضمام لفريق ${teamName} بنجاح!`, "success");
+        window.closeModal('team-details-modal');
+        // تحديث الواجهة 
+        window.viewTeamDetails(teamId, null, 'browse');
+
+    } catch (e) {
+        console.error(e);
+        showToast("فشل في إرسال الطلب", "error");
+    }
+};
+
+window.acceptTeamInvite = async (inviteId, teamId) => {
+    try {
+        // تحديث البروفايل الخاص بالطالب
+        await supabase.from('profiles').update({ team_id: teamId, joined_team_at: new Date() }).eq('id', currentUser.id);
+        // حذف الدعوة (أو تغيير حالتها)
+        await supabase.from('team_invitations').delete().eq('id', inviteId);
+        
+        showToast("تهانينا! لقد انضممت للفريق.", "success");
+        setTimeout(() => window.location.reload(), 1500);
+    } catch(e) {
+        console.error(e);
+        showToast("حدث خطأ أثناء الانضمام", "error");
+    }
+};
+
+window.rejectTeamInvite = async (inviteId) => {
+    try {
+        await supabase.from('team_invitations').delete().eq('id', inviteId);
+        showToast("تم رفض الدعوة.", "info");
+        window.closeModal('team-details-modal');
+        window.openStudentInvites(); // تحديث قائمة الدعوات
+    } catch(e) {
+        console.error(e);
+    }
+};
+
+// دالة مساعدة لعمل رتب الفريق (مفقودة في كود الطالب)
+function getRankObject(points, dataSet) {
+    if(!dataSet || dataSet.length === 0) return { title: 'مبتدئ', stage_color: '#888', level: 1 };
+    let rankObj = dataSet[0];
+    for (let i = 0; i < dataSet.length; i++) {
+        if (points >= dataSet[i].points_required) rankObj = dataSet[i];
+        else break;
+    }
+    return rankObj;
+}
 
 // ==========================================
 // 10. CALENDAR SYSTEM
@@ -2606,7 +2281,6 @@ function updateModalContent(task, details, type) {
 }
 
 window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-window.openCustomTaskModal = () => document.getElementById('custom-task-modal').classList.remove('hidden');
 window.openBroadcastModal = () => document.getElementById('broadcast-modal').classList.remove('hidden');
 window.openAddMemberModal = () => showToast("Invite system coming soon", "info");
 

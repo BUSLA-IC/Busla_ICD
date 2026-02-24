@@ -71,11 +71,9 @@
             <button onclick="switchTab('roadmap')" id="btn-roadmap" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
                 <i class="fas fa-sitemap"></i> <span>خريطة التعلم</span>
             </button>
-            <button onclick="switchTab('assignments')" id="btn-assignments" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-tasks"></i> <span>تعيين المهام</span>
-            </button>
+
             <button onclick="switchTab('squad')" id="btn-squad" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-users-cog"></i> <span>إدارة الفريق</span>
+                <i class="fas fa-users-cog"></i> <span> الفريق</span>
             </button>
             <button onclick="switchTab('announcements')" id="btn-announcements" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
                 <i class="fas fa-bullhorn"></i> <span>إشعارات الفريق</span>
@@ -315,107 +313,193 @@
                 </div>
             </div>
         </section>
+<section id="squad" class="tab-content hidden space-y-8">
+    
+    <div id="has-team-view" class="hidden space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface p-6 rounded-2xl border border-white/10 shadow-lg gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-white">أعضاء الفريق</h2>
+                <p class="text-gray-400 text-sm mt-1">ترتيب الأعضاء بناءً على النقاط المكتسبة</p>
+            </div>
+            <button onclick="window.leaveCurrentTeam()" class="px-6 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg">
+                <i class="fas fa-sign-out-alt"></i> مغادرة الفريق
+            </button>
+        </div>
+        <div id="squad-list-container" class="space-y-3">
+            </div>
+    </div>
 
-        <section id="assignments" class="tab-content space-y-6">
-            <div class="flex justify-between items-center bg-b-surface p-4 rounded-xl border border-white/10">
-                <h3 class="font-bold text-green-400"><i class="fas fa-tasks ml-2"></i> تعيين المهام الأسبوعية</h3>
-                <button onclick="openCustomTaskModal()" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition-all">+ مهمة خاصة (Text)</button>
+    <div id="no-team-view" class="hidden">
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-b-surface border-2 border-white/10 rounded-full flex items-center justify-center text-4xl mb-4 mx-auto shadow-xl">
+                <i class="fas fa-users-slash text-gray-500"></i>
+            </div>
+            <h2 class="text-3xl font-black text-white mb-2">أنت لست ضمن أي فريق!</h2>
+            <p class="text-gray-400">انضم إلى فريق لتتمكن من الوصول للكورسات، المهام، وجمع النقاط.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div onclick="window.showToast('قريباً: ميزة إنشاء فريق ستتوفر لاحقاً', 'info')" class="bg-b-surface border border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-b-primary hover:bg-white/5 transition-all group shadow-lg">
+                <div class="w-16 h-16 bg-b-primary/20 text-b-primary rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1">إنشاء فريق جديد</h3>
+                <p class="text-xs text-gray-500">كن أنت القائد وابدأ رحلتك</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-220px)]">
-                <div class="bg-b-surface rounded-2xl border border-white/10 flex flex-col overflow-hidden">
-                    <div class="p-4 bg-black/20 border-b border-white/10 font-bold text-sm">1. اختر كورس مفعل</div>
-                    <div id="assign-courses-list" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll"></div>
+            <div onclick="window.openStudentInvites()" class="bg-b-surface border border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-yellow-500 hover:bg-white/5 transition-all group shadow-lg relative">
+                <span id="invites-badge" class="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-black w-6 h-6 flex items-center justify-center rounded-full hidden shadow-lg animate-bounce">0</span>
+                <div class="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-envelope-open-text"></i>
                 </div>
+                <h3 class="text-lg font-bold text-white mb-1">الدعوات الواردة</h3>
+                <p class="text-xs text-gray-500">تحقق من الفرق التي دعتك</p>
+            </div>
 
-                <div class="bg-b-surface rounded-2xl border border-white/10 flex flex-col overflow-hidden">
-                    <div class="p-4 bg-black/20 border-b border-white/10 flex justify-between items-center">
-                        <span class="font-bold text-sm">2. حدد المحتوى للنشر</span>
-                        <button id="publish-btn" onclick="publishSelectedTasks()" disabled class="text-xs bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">نشر المحدد</button>
-                    </div>
-                    <div id="assign-content-list" class="flex-1 overflow-y-auto p-4 custom-scroll relative">
-                        <p class="text-center text-gray-500 mt-20">اختر كورس من القائمة اليمنى أولاً.</p>
+            <div onclick="window.openTeamBrowser()" class="bg-b-surface border border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-purple-500 hover:bg-white/5 transition-all group shadow-lg">
+                <div class="w-16 h-16 bg-purple-500/20 text-purple-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1">تصفح الفرق</h3>
+                <p class="text-xs text-gray-500">ابحث وانضم للفريق المناسب لك</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="student-invites-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="p-5 border-b border-white/10 flex justify-between items-center bg-white/5">
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-envelope text-yellow-500 mr-2"></i> الدعوات الواردة إليك</h3>
+            <button onclick="window.closeModal('student-invites-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-5 overflow-y-auto custom-scroll space-y-3" id="student-invites-list">
+            </div>
+    </div>
+</div>
+
+<div id="team-browser-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-globe text-purple-500 mr-2"></i> تصفح الفرق المتاحة</h3>
+            
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="team-search-input" placeholder="بحث باسم الفريق أو الليدر..." class="bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500 outline-none w-full sm:w-64" oninput="window.filterTeams()">
+                <select id="team-uni-filter" class="bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500 outline-none" onchange="window.filterTeams()">
+                    <option value="">كل الجامعات</option>
+                    <option value="Zagazig">جامعة الزقازيق</option>
+                    <option value="Mansoura">جامعة المنصورة</option>
+                    <option value="Cairo">جامعة القاهرة</option>
+                </select>
+                <button onclick="window.closeModal('team-browser-modal')" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="p-0 overflow-y-auto custom-scroll flex-1">
+            <table class="w-full text-right text-sm">
+                <thead class="bg-black/40 text-gray-400 border-b border-white/5 sticky top-0 z-10">
+                    <tr>
+                        <th class="p-4 font-bold">الفريق</th>
+                        <th class="p-4 font-bold">الليدر</th>
+                        <th class="p-4 font-bold text-center">الأعضاء</th>
+                        <th class="p-4 font-bold text-center">النقاط</th>
+                        <th class="p-4 font-bold text-center">إجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="teams-browser-list" class="divide-y divide-white/5">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div id="team-details-modal" class="fixed inset-0 z-[250] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl shadow-[0_0_50px_rgba(0,106,103,0.15)] flex flex-col max-h-[95vh] overflow-hidden transform scale-100 transition-all">
+        
+        <div class="p-6 md:p-8 border-b border-white/5 bg-gradient-to-l from-b-primary/10 via-transparent to-transparent relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0">
+            
+            <button onclick="window.closeModal('team-details-modal')" class="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-all flex items-center justify-center group">
+                <i class="fas fa-times text-lg group-hover:scale-110 transition-transform"></i>
+            </button>
+
+            <div class="flex items-center gap-5 pr-8 md:pr-0">
+                <div class="relative shrink-0">
+                    <img id="tdm-logo" src="../assets/icons/icon.jpg" class="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-2 border-b-primary/50 object-cover shadow-[0_0_20px_rgba(0,106,103,0.3)] bg-black">
+                </div>
+<div>
+                    <h2 id="tdm-name" class="text-2xl md:text-3xl font-black text-white drop-shadow-md">اسم الفريق</h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <img id="tdm-rank-img" src="" class="w-16 h-16 rounded-2xl object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" alt="Team Rank">
+                        <span id="tdm-rank" class="text-xs font-bold px-3 py-1 rounded-lg bg-b-primary/10 border border-b-primary/30 inline-block text-b-primary font-mono tracking-wide">رتبة الفريق</span>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section id="squad" class="tab-content hidden">
-            <div class="p-6 max-w-6xl mx-auto space-y-8">
-                <div class="bg-gradient-to-r from-b-primary/20 to-black/40 p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h2 class="text-3xl font-black text-white mb-1">قيادة الفريق</h2>
-                        <p class="text-gray-400 text-sm">أدر أعضاء فريقك، وتحكم في الدعوات والطلبات من هنا.</p>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="openInviteModal()" class="bg-b-primary hover:bg-teal-600 text-white px-5 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all">
-                            <i class="fas fa-paper-plane"></i> دعوة عضو
-                        </button>
-                        <button onclick="openSentInvitesModal()" class="bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-xl font-bold border border-white/10 flex items-center gap-2 transition-all relative">
-                            <i class="fas fa-envelope-open-text text-blue-400"></i> الدعوات المرسلة
-                        </button>
-                        <button onclick="openRequestsModal()" class="bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-xl font-bold border border-white/10 flex items-center gap-2 transition-all relative">
-                            <i class="fas fa-user-clock text-yellow-500"></i> طلبات الانضمام
-                            <span id="requests-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full text-[14px] flex items-center justify-center animate-bounce">0</span>
-                        </button>
-                    </div>
+            <div id="tdm-action-container" class="w-full md:w-auto md:ml-16">
                 </div>
-
-                <div>
-                    <div class="flex justify-between items-end mb-6 border-b border-white/10 pb-4">
-                        <div>
-                            <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                                <i class="fas fa-users text-purple-500"></i> القائمة الرسمية
-                            </h3>
-                        </div>
-                        <div class="text-left bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                            <span class="text-xs text-gray-500 uppercase tracking-widest block">إجمالي الأعضاء</span>
-                            <span id="squad-count-display" class="text-xl font-mono font-bold text-white">0 / 5</span>
-                        </div>
-                    </div>
+        </div>
+        
+        <div class="p-6 sm:p-8 relative flex-1 overflow-y-auto custom-scroll">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2 space-y-6">
                     
-                    <div id="requests-section" class="hidden mb-8">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-white font-bold text-lg flex items-center gap-2">
-                                <span class="w-2 h-8 bg-yellow-500 rounded-full"></span>
-                                طلبات الانضمام المعلقة
-                                <span id="requests-count" class="bg-yellow-500 text-black text-xs px-2 py-0.5 rounded-full font-bold">0</span>
-                            </h3>
+                    <div class="grid grid-cols-3 gap-3 md:gap-4">
+                        <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-b-primary/30 transition-all">
+                            <div class="w-10 h-10 mx-auto bg-b-primary/20 text-b-primary rounded-full flex items-center justify-center mb-2"><i class="fas fa-star text-lg"></i></div>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">إجمالي النقاط</p>
+                            <p id="tdm-points" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0</p>
                         </div>
-                        <div id="requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                    </div>
-
-                    <div id="squad-list-container" class="space-y-4 min-h-[200px]">
-                        <div class="text-center py-12">
-                            <i class="fas fa-circle-notch fa-spin text-b-primary text-3xl mb-4"></i>
-                            <p class="text-gray-500">جاري تحميل الأبطال...</p>
+                        <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-yellow-500/30 transition-all">
+                            <div class="w-10 h-10 mx-auto bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-2"><i class="fas fa-users text-lg"></i></div>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">الأعضاء</p>
+                            <p id="tdm-members-count" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0/5</p>
                         </div>
-                    </div>
-
-                    <div id="invites-section" class="hidden mt-8 border-t border-white/10 pt-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-white font-bold text-lg flex items-center gap-2">
-                                <i class="fas fa-paper-plane text-blue-400"></i>
-                                الدعوات المرسلة (المعلقة)
-                            </h3>
-                            <button onclick="openSentInvitesModal()" class="text-xs text-gray-400 hover:text-white underline">عرض الكل</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <tbody id="invites-container"></tbody>
-                            </table>
+                        <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-purple-500/30 transition-all">
+                            <div class="w-10 h-10 mx-auto bg-purple-500/20 text-purple-500 rounded-full flex items-center justify-center mb-2"><i class="fas fa-book-open text-lg"></i></div>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">كورسات مفعلة</p>
+                            <p id="tdm-courses-count" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0</p>
                         </div>
                     </div>
 
-                    <div class="mt-8 pt-6 border-t border-white/5 text-center">
-                        <button onclick="window.openLeaveTeamModal()" class="text-red-500/60 hover:text-red-500 text-sm font-bold flex items-center justify-center gap-2 mx-auto transition-colors">
-                            <i class="fas fa-sign-out-alt"></i> مغادرة الفريق وتسليم القيادة
-                        </button>
+                    <div class="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-6">
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 mb-1">الجامعة أو المؤسسة</p>
+                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                                <i class="fas fa-university text-gray-400"></i>
+                                <span id="tdm-leader-uni">الجامعة</span>
+                            </div>
+                        </div>
+                        <div class="w-px bg-white/5 hidden sm:block"></div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 mb-1">قائد الفريق (الليدر)</p>
+                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                                <i class="fas fa-crown text-yellow-500"></i>
+                                <span id="tdm-leader-name">الاسم</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-black/20 border border-white/5 rounded-2xl p-5">
+                        <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
+                            <i class="fas fa-layer-group text-b-primary"></i> مسار التعلم (الكورسات المفعّلة)
+                        </h4>
+                        <div id="tdm-courses-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto custom-scroll pr-2">
+                            </div>
                     </div>
                 </div>
-            </div>
-        </section>
 
+                <div class="bg-black/30 border border-white/5 rounded-2xl p-5 flex flex-col h-[500px] lg:h-full max-h-[600px] shadow-inner">
+                    <h4 class="text-base font-bold text-white mb-4 flex items-center justify-between border-b border-white/5 pb-3">
+                        <span class="flex items-center gap-2"><i class="fas fa-users text-gray-400"></i> أعضاء الفريق</span>
+                        <span id="tdm-members-badge" class="bg-white/10 text-xs px-2 py-0.5 rounded font-mono">0</span>
+                    </h4>
+                    <div id="tdm-members-list" class="space-y-3 overflow-y-auto custom-scroll pr-2 flex-1">
+                        </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
         <section id="announcements" class="tab-content hidden animate-fade-in relative min-h-screen">
             <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface p-6 rounded-2xl border border-white/10 shadow-lg mb-8 gap-4">
                 <div>
@@ -904,17 +988,6 @@
         </div>
     </div>
 
-    <div id="custom-task-modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
-        <div class="bg-b-surface w-full max-w-md p-6 rounded-2xl border border-white/10">
-            <h3 class="font-bold mb-4">إضافة مهمة نصية</h3>
-            <input id="ct-title" class="w-full bg-black/50 border border-white/20 rounded p-3 mb-3 text-white" placeholder="عنوان المهمة">
-            <textarea id="ct-desc" class="w-full bg-black/50 border border-white/20 rounded p-3 mb-4 text-white" rows="3" placeholder="تفاصيل المهمة..."></textarea>
-            <div class="flex gap-2">
-                <button onclick="submitCustomTask()" class="bg-green-600 text-white px-4 py-2 rounded flex-1 hover:bg-green-700">نشر</button>
-                <button onclick="closeModal('custom-task-modal')" class="bg-white/10 text-white px-4 py-2 rounded hover:bg-white/20">إلغاء</button>
-            </div>
-        </div>
-    </div>
 
     <div id="day-details-modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-b-surface w-full max-w-sm p-6 rounded-2xl border border-white/10 shadow-2xl">
