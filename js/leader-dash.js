@@ -293,8 +293,9 @@ function loadFromCache() {
 }
 
 // ==========================================
-// 4. UI CORE & NAVIGATION
+// 4. UI RENDERING & NAVIGATION
 // ==========================================
+
 function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => {
         const el = document.getElementById(id);
@@ -304,11 +305,15 @@ function updateHeaderInfo(user, team) {
     const userPoints = user.total_xp || user.xp_points || 0;
     const teamPoints = team.total_score || 0;
 
+    // Get the full rank object to extract title, level, and color
     const getRankObject = (points, dataSet) => {
         let rankObj = dataSet[0];
         for (let i = 0; i < dataSet.length; i++) {
-            if (points >= dataSet[i].points_required) rankObj = dataSet[i];
-            else break;
+            if (points >= dataSet[i].points_required) {
+                rankObj = dataSet[i];
+            } else {
+                break;
+            }
         }
         return rankObj;
     };
@@ -319,6 +324,7 @@ function updateHeaderInfo(user, team) {
     safeText('header-user-badge', userRank.title);
     safeText('sidebar-team-badge', teamRank.title);
 
+    // Update Header Badges Images
     const badgeImgEl = document.getElementById('header-user-badge-img');
     const badgeImgClearEl = document.getElementById('header-user-badge-img-clear');
     const badgeUrl = `../assets/user-badge/lv${userRank.level}.png`;
@@ -326,16 +332,20 @@ function updateHeaderInfo(user, team) {
     if (badgeImgEl) badgeImgEl.src = badgeUrl;
     if (badgeImgClearEl) badgeImgClearEl.src = badgeUrl;
 
+    // Update Badge styling dynamically based on Stage Color
     const badgeTextEl = document.getElementById('header-user-badge');
     if (badgeTextEl && userRank.stage_color) {
         badgeTextEl.style.color = userRank.stage_color;
-        badgeTextEl.style.borderColor = userRank.stage_color + '80';
-        badgeTextEl.style.backgroundColor = userRank.stage_color + '1A';
+        badgeTextEl.style.borderColor = userRank.stage_color + '80'; // 50% opacity
+        badgeTextEl.style.backgroundColor = userRank.stage_color + '1A'; // 10% opacity
     }
 
+    // Set User and Team Names
     const userName = user.full_name || "Busla User";
     const teamName = team.name || "My Team";
-    const leaderName = "Team Leader"; 
+    
+    // Assign the real user's name to the leader's spot (since current user IS the leader)
+    const leaderName = user.full_name || "Team Leader"; 
 
     safeText('sidebar-team-name', teamName);
     safeText('sidebar-leader-name', leaderName);
@@ -343,19 +353,20 @@ function updateHeaderInfo(user, team) {
     safeText('my-points', userPoints);
     safeText('stat-team-score', teamPoints);
 
+    // Update Team Logo
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
         let rawTeamLogo = team.logo_url;
         sidebarLogoEl.src = resolveImageUrl(rawTeamLogo, 'team');
     }
 
+    // Update User Avatar
     const headerAvatarEl = document.getElementById('header-user-avatar');
     if(headerAvatarEl) {
         const rawUserAvatar = user.avatar_url;
         headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/icon.jpg";
     }
 }
-
 window.switchTab = function(id) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => {

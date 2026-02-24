@@ -34,6 +34,7 @@ let currentQuizState = {
 };
 let quizzesLookup = {};
 let projectsLookup = {};
+
 // ==========================================
 // 2. INITIALIZATION & SETUP
 // ==========================================
@@ -127,7 +128,7 @@ function closeAllMenus() {
 }
 
 // ==========================================
-// 3. DATA FETCHING
+// 3. DATA FETCHING & SYNCING
 // ==========================================
 async function initPlayer() {
     try {
@@ -159,7 +160,6 @@ async function initPlayer() {
         if (matErr) throw matErr;
         courseContents = materials || [];
 
-        // 🚀 جلب البيانات الحقيقية للكويزات والمشاريع المرتبطة بهذا الكورس
         const quizIds = courseContents.map(c => c.ref_quiz_id).filter(Boolean);
         const projectIds = courseContents.map(c => c.ref_project_id).filter(Boolean);
 
@@ -188,9 +188,51 @@ async function initPlayer() {
             }
         }
 
+        // SMART RESOLVER: Identify target content type
         if (targetContentId) {
-            currentContent = courseContents.find(c => String(c.content_id) === String(targetContentId));
+            let foundDirect = courseContents.find(c => String(c.content_id) === String(targetContentId));
+            
+            if (foundDirect) {
+                currentContent = foundDirect;
+            } else {
+                let parentWithQuiz = courseContents.find(c => String(c.ref_quiz_id) === String(targetContentId));
+                if (parentWithQuiz) {
+                    const qData = quizzesLookup[parentWithQuiz.ref_quiz_id] || {};
+                    currentContent = {
+                        content_id: parentWithQuiz.content_id + '_quiz',
+                        ref_quiz_id: parentWithQuiz.ref_quiz_id,
+                        title: 'اختبار: ' + (qData.title || 'تقييم الدرس'),
+                        type: 'quiz',
+                        base_xp: qData.max_xp || 0,
+                        Author: parentWithQuiz.Author
+                    };
+                } else {
+                    let parentWithProject = courseContents.find(c => String(c.ref_project_id) === String(targetContentId));
+                    if (parentWithProject) {
+                        const pData = projectsLookup[parentWithProject.ref_project_id] || {};
+                        currentContent = {
+                            content_id: parentWithProject.content_id + '_project',
+                            ref_project_id: parentWithProject.ref_project_id,
+                            title: 'مشروع: ' + (pData.title || 'تطبيق عملي'),
+                            type: 'project',
+                            base_xp: pData.max_points || 0,
+                            Author: parentWithProject.Author
+                        };
+                    } else {
+                        courseContents.forEach(item => {
+                            if (targetContentId === item.content_id + '_quiz') {
+                                const qData = quizzesLookup[item.ref_quiz_id] || {};
+                                currentContent = { content_id: item.content_id + '_quiz', ref_quiz_id: item.ref_quiz_id, type: 'quiz', title: 'اختبار: ' + (qData.title || 'تقييم الدرس'), base_xp: qData.max_xp || 0 };
+                            } else if (targetContentId === item.content_id + '_project') {
+                                const pData = projectsLookup[item.ref_project_id] || {};
+                                currentContent = { content_id: item.content_id + '_project', ref_project_id: item.ref_project_id, type: 'project', title: 'مشروع: ' + (pData.title || 'تطبيق عملي'), base_xp: pData.max_points || 0 };
+                            }
+                        });
+                    }
+                }
+            }
         }
+
         if (!currentContent && courseContents.length > 0) {
             currentContent = courseContents[0];
         }
@@ -271,32 +313,32 @@ async function updateHeaderUserInfo() {
 }
 
 // ==========================================
-// 4. SIDEBAR RENDERING
+// 4. SIDEBAR RENDERING & NAVIGATION
 // ==========================================
 async function renderSidebar() {
     const container = document.getElementById('playlist-container') || document.getElementById('playlist-items');
     if (!container) return;
 
-    // 1. جلب الفيديوهات المكتملة
+    // Fetch completed videos
     const { data: completedVideos } = await supabase
         .from('completed_materials')
         .select('material_id')
         .eq('user_id', currentUserData.id)
         .eq('course_id', courseId);
         
-    // 2. جلب الكويزات الناجحة
+    // Fetch passed quizzes
     const { data: passedQuizzes } = await supabase
         .from('quiz_attempts')
         .select('quiz_id')
         .eq('user_id', currentUserData.id)
         .eq('passed', true);
 
-    // 3. جلب المشاريع المسلمة والمقيمة
+    // Fetch submitted and graded projects (only graded count as completed)
     const { data: submittedProjects } = await supabase
         .from('project_submissions')
         .select('project_id')
         .eq('user_id', currentUserData.id)
-        .in('status', ['graded', 'remarked']); // فقط المشاريع المقيمة تعتبر مكتملة كإنجاز
+        .in('status', ['graded', 'remarked']); 
 
     const completedVideoIds = (completedVideos || []).map(row => row.material_id);
     const completedQuizIds = (passedQuizzes || []).map(row => row.quiz_id);
@@ -308,14 +350,14 @@ async function renderSidebar() {
     let mainIndex = 1;
 
     courseContents.forEach((item) => {
-        // 🚀 رسم الفيديو الأساسي وحالته المنفصلة
+        // Render main video item
         const isVideoCompleted = completedVideoIds.includes(item.content_id);
         renderSidebarItem(container, item, mainIndex, isVideoCompleted, false);
         totalItemsCount++;
         if (isVideoCompleted) completedCount++;
         mainIndex++;
 
-        // 🚀 رسم الكويز (إن وجد) بنقاطه الحقيقية وحالته المنفصلة
+        // Render associated quiz item
         if (item.ref_quiz_id) {
             const qData = quizzesLookup[item.ref_quiz_id] || {};
             const quizItem = {
@@ -331,7 +373,7 @@ async function renderSidebar() {
             if (isQuizCompleted) completedCount++;
         }
 
-        // 🚀 رسم المشروع (إن وجد) بنقاطه الحقيقية وحالته المنفصلة
+        // Render associated project item
         if (item.ref_project_id) {
             const pData = projectsLookup[item.ref_project_id] || {};
             const projectItem = {
@@ -702,7 +744,7 @@ window.changeQuality = (quality) => {
 };
 
 // ==========================================
-// 7. QUIZ MODULE (ENHANCED LOGIC & UI)
+// 7. QUIZ MODULE
 // ==========================================
 async function loadQuizViewer(quizId) {
     const container = document.getElementById('quiz-questions-container');
@@ -711,11 +753,9 @@ async function loadQuizViewer(quizId) {
     container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Loading Quiz...</p></div>';
 
     try {
-        // Fetch Quiz Info
         const { data: quiz } = await supabase.from('quizzes').select('*').eq('quiz_id', quizId).single();
         if (!quiz) throw new Error("Quiz not found");
 
-        // Fetch History Attempts
         const { data: attempts } = await supabase.from('quiz_attempts')
             .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id)
             .order('submitted_at', { ascending: false });
@@ -734,12 +774,10 @@ async function loadQuizViewer(quizId) {
 
         updateQuizHeaderStats(quiz, currentQuizState.savedState);
 
-        // Check if there is an ongoing (active) attempt
         const { data: activeState } = await supabase.from('active_quiz_states')
             .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id).maybeSingle();
 
         if (activeState && activeState.questions && activeState.questions.length > 0) {
-            // Resume the active attempt
             currentQuizState.questions = activeState.questions;
             currentQuizState.userAnswers = activeState.user_answers || {};
             currentQuizState.currentIndex = 0;
@@ -748,13 +786,11 @@ async function loadQuizViewer(quizId) {
             return;
         }
 
-        // If no active state, but user has past attempts -> Show Review page
         if (attemptsCount > 0) {
-            window.showQuizReview(0); // 0 means latest attempt
+            window.showQuizReview(0); 
             return;
         }
 
-        // If 0 attempts and no active state -> Start the very first attempt automatically
         window.retryQuiz();
 
     } catch (e) {
@@ -918,7 +954,6 @@ window.submitQuiz = async () => {
                 showToast(`Failed. Score: ${scorePercent}%`, "error");
             }
 
-            // Reload to show review page
             loadQuizViewer(currentQuizState.metaData.quiz_id);
 
         } catch (e) {
@@ -944,7 +979,6 @@ window.showQuizReview = async (attemptIndex = 0) => {
     const currentAttempt = attempts[attemptIndex];
     const userAnswers = currentAttempt.answers || {};
     
-    // Fetch all questions to match the answers in this specific attempt
     const { data: allQuestions } = await supabase.from('quiz_questions')
         .select('*').eq('quiz_id', currentQuizState.metaData.quiz_id);
         
@@ -990,7 +1024,6 @@ window.showQuizReview = async (attemptIndex = 0) => {
         </div>
     `;
 
-    // Dropdown to switch between past attempts
     if (attempts.length > 1) {
         html += `
         <div class="mb-6 flex items-center justify-between bg-b-surface p-4 rounded-xl border border-white/10 shadow-md">
@@ -1119,13 +1152,14 @@ window.retryQuiz = async () => {
         showToast("Error generating attempt", "error");
     }
 };
+
 // ==========================================
-// 8. PROJECT MODULE (RESTORED OLD UI)
+// 8. PROJECT MODULE
 // ==========================================
 async function loadProjectViewer(projectId) {
     const container = document.getElementById('project-container');
     const viewProj = document.getElementById('view-project');
-    if(!viewProj) return; // Note: You might need to adjust based on HTML container ids
+    if(!viewProj) return; 
     
     try {
         const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).single();
@@ -1259,10 +1293,6 @@ function renderSubmissionCard(projectData, submissionData) {
                 </div>
             </div>
         `;
-        
-        if (!isCurrentContentCompleted) {
-             markContentComplete(currentContent.content_id, grade, 'project');
-        }
         return;
     }
 
@@ -1351,7 +1381,7 @@ window.submitProjectAction = async (projectId, projectTitle) => {
             status: "pending"
         }, { onConflict: 'user_id,project_id' });
 
-        if (error) throw error; // إيقاف الكود فوراً إذا رفضت قاعدة البيانات التسليم
+        if (error) throw error; // Stop execution if DB rejects submission
 
         await updateTaskStatus('completed'); 
 
@@ -1375,7 +1405,7 @@ window.resubmitProject = (projectId) => {
             document.getElementById('confirm-modal').classList.add('hidden');
 
             try {
-                // حذف التسليم القديم من الداتابيز
+                // Delete old submission
                 const { error } = await supabase
                     .from('project_submissions')
                     .delete()
@@ -1386,7 +1416,7 @@ window.resubmitProject = (projectId) => {
 
                 showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن.", "success");
                 
-                // إعادة تحميل الواجهة من الداتابيز مباشرة لضمان أن الـ ID سليم
+                // Reload UI from DB directly
                 loadProjectViewer(projectId);
 
             } catch (error) {
@@ -1397,15 +1427,15 @@ window.resubmitProject = (projectId) => {
         }
     );
 };
+
 // ==========================================
 // 9. COMPLETION & PROGRESS SYNC
 // ==========================================
-
 async function markContentComplete(contentId, pointsEarned = 0, type = 'video') {
     if (!contentId) return;
 
     try {
-        // إدخال البيانات في جدول completed_materials فقط إذا كان المحتوى "فيديو"
+        // Only insert video materials to completed table
         if (type === 'video') {
             const { data: existing } = await supabase
                 .from('completed_materials')
@@ -1435,12 +1465,12 @@ async function markContentComplete(contentId, pointsEarned = 0, type = 'video') 
             isCurrentContentCompleted = true; 
         }
 
-        // إعطاء النقاط للطالب والفريق (سواء كان فيديو أو كويز أو مشروع)
+        // Award points (Video, Quiz, Project)
         if (pointsEarned > 0) {
             await awardPoints(pointsEarned, `Completed: ${currentContent?.title || type}`);
         }
         
-        // تحديث الواجهة لتظهر علامة (صح)
+        // Update UI completion checkmark
         renderSidebar(); 
 
         if (currentTaskId) {
@@ -1567,7 +1597,6 @@ window.showToast = (message, type = 'info') => {
     }, 3000);
 };
 
-// --- Confirm Modal logic ---
 window.openConfirmModal = (message, callback) => {
     const modal = document.getElementById('confirm-modal');
     if (!modal) {
