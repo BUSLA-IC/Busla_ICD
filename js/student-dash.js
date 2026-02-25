@@ -179,7 +179,9 @@ async function initDashboard(uid) {
         await fetchDataFromServer();
         console.log("Re-rendering with fresh data...");
         renderAllTabs();
-
+        setTimeout(() => {
+            if(window.loadStudentNotifications) window.loadStudentNotifications();
+        }, 1000); 
     } catch (e) {
         console.error("Init Error:", e);
         showToast("خطأ في تحميل البيانات", "error");
@@ -1456,7 +1458,8 @@ window.applyForTeam = async (teamId, teamName) => {
 
         if(!reasonText) return showToast("يرجى كتابة سبب الانضمام.", "warning");
 
-        const { data: teamInfo } = await supabase.from('teams').select('requests').eq('id', teamId).single();
+        // 💡 التعديل 1: جلب leader_id مع قائمة الطلبات لكي نعرف لمن سنرسل الإشعار
+        const { data: teamInfo } = await supabase.from('teams').select('requests, leader_id').eq('id', teamId).single();
         const currentReqs = teamInfo?.requests || [];
         
         if (currentReqs.some(r => r.uid === currentUser.id)) {
@@ -1466,13 +1469,34 @@ window.applyForTeam = async (teamId, teamName) => {
         currentReqs.push({
             uid: currentUser.id,
             name: currentUserData.full_name || 'طالب',
-            reason: reasonText, // 💡 حفظ السبب
+            reason: reasonText, 
             status: 'pending',
             date: new Date().toISOString()
         });
 
+        // حفظ الطلب في بيانات الفريق
         await supabase.from('teams').update({ requests: currentReqs }).eq('id', teamId);
         
+        // ==========================================
+        // 💡 التعديل 2: إرسال إشعار فوري لليدر بوجود طلب انضمام جديد
+        // ==========================================
+        try {
+            if (teamInfo && teamInfo.leader_id) {
+                const leaderNotif = {
+                    title: `🔔 طلب انضمام جديد لفريقك`,
+                    content: `قام الطالب (${currentUserData.full_name || 'طالب'}) بإرسال طلب للانضمام إلى فريقك.\n\nسبب الانضمام:\n"${reasonText}"\n\nيرجى التوجه إلى قسم (الطلبات) في لوحة القيادة لمراجعة الطلب وقبوله أو رفضه.`,
+                    type: 'info',
+                    target_leader_id: teamInfo.leader_id, // توجيه الإشعار لقائد هذا الفريق تحديداً
+                    target_team_id: teamId, 
+                    is_read: false
+                };
+                await supabase.from('system_notifications').insert([leaderNotif]);
+            }
+        } catch (notifErr) {
+            console.warn("لم يتم إرسال الإشعار لليدر:", notifErr);
+        }
+        // ==========================================
+
         showToast(`تم إرسال طلب الانضمام لفريق ${teamName} بنجاح!`, "success");
         window.closeModal('team-details-modal');
         window.viewTeamDetails(teamId, null, 'browse');
@@ -2005,126 +2029,143 @@ function showToast(msg, type='info') {
 
 let studentNotifsCache = [];
 
-// 1. جلب الإشعارات من المصدرين (الليدر والإدارة)
+// 1. جلب الإشعارات بذكاء حسب حالة الطالب
 window.loadStudentNotifications = async () => {
     const activeTbody = document.getElementById('student-active-tbody');
-    if (activeTbody) activeTbody.innerHTML = '<tr><td colspan="4" class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>';
+    // إظهار اللودينج فقط لو الجدول موجود ومفتوح
+    if (activeTbody && !studentNotifsCache.length) activeTbody.innerHTML = '<tr><td colspan="4" class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>';
 
     try {
         const teamId = currentTeam?.id || currentTeam?.team_id;
-        const myId = currentUserData.id;
-        if (!teamId) return;
-
-        // جلب إشعارات الفريق (الموجهة للكل أو المخصصة للطالب)
-        const { data: teamPosts } = await supabase
-            .from('team_posts')
-            .select('*')
-            .eq('team_id', teamId)
-            .order('created_at', { ascending: false });
-
-        // جلب رسائل الإدارة (الموجهة للفريق)
-        const { data: adminMsgs } = await supabase
-            .from('system_notifications')
-            .select('*')
-            .eq('target_team_id', teamId)
-            .order('created_at', { ascending: false });
+        const myId = currentUserData?.id;
+        if (!myId) return;
 
         let combined = [];
 
-        // تنظيف وتوحيد بيانات إشعارات الفريق
-        if (teamPosts) {
-            teamPosts.forEach(post => {
-                const isTargetAll = !post.target_members || post.target_members.includes('all');
-                const isTargetMe = post.target_members && post.target_members.includes(myId);
-                
-                if (isTargetAll || isTargetMe) {
-                    combined.push({
-                        ...post,
-                        _sourceType: 'leader',
-                        _targetLevel: isTargetAll ? 'team' : 'personal',
-                        _icon: 'fa-bullhorn',
-                        _color: isTargetAll ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-                        _badgeText: isTargetAll ? 'إشعار فريق' : 'مخصص لك'
-                    });
-                }
-            });
+        const filterSelect = document.getElementById('student-notif-filter');
+        if (!teamId && filterSelect) {
+            filterSelect.innerHTML = `<option value="admin">رسائل الإدارة (المنصة)</option>`;
+        } else if (filterSelect && filterSelect.options.length <= 1) {
+            filterSelect.innerHTML = `
+                <option value="all">عرض الكل</option>
+                <option value="team">إشعارات الفريق العامة</option>
+                <option value="personal">مخصصة لي فقط</option>
+                <option value="admin">رسائل الإدارة</option>
+            `;
         }
 
-        // تنظيف وتوحيد بيانات الإدارة
-        if (adminMsgs) {
-            adminMsgs.forEach(msg => {
-                combined.push({
-                    id: msg.id,
-                    title: msg.title,
-                    content: msg.content,
-                    created_at: msg.created_at,
-                    seen_by: msg.seen_by || [],
-                    creator_name: 'إدارة بوصلة',
-                    creator_avatar: '../assets/icons/icon.jpg', // لوجو الموقع
-                    _sourceType: 'admin',
-                    _targetLevel: 'admin',
-                    _icon: 'fa-server',
-                    _color: 'text-red-400 bg-red-500/10 border-red-500/20',
-                    _badgeText: 'رسالة إدارة'
+        // جلب البيانات
+        if (teamId) {
+            const { data: teamPosts } = await supabase.from('team_posts').select('*').eq('team_id', teamId).order('created_at', { ascending: false });
+            const { data: adminMsgs } = await supabase.from('system_notifications').select('*').eq('target_team_id', teamId).order('created_at', { ascending: false });
+
+            if (teamPosts) {
+                teamPosts.forEach(post => {
+                    const isTargetAll = !post.target_members || post.target_members.includes('all');
+                    const isTargetMe = post.target_members && post.target_members.includes(myId);
+                    if (isTargetAll || isTargetMe) {
+                        combined.push({
+                            ...post,
+                            _sourceType: 'leader', _targetLevel: isTargetAll ? 'team' : 'personal',
+                            _icon: 'fa-bullhorn', _color: isTargetAll ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+                            _badgeText: isTargetAll ? 'إشعار فريق' : 'مخصص لك'
+                        });
+                    }
                 });
-            });
+            }
+
+            if (adminMsgs) {
+                adminMsgs.forEach(msg => {
+                    combined.push({
+                        id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
+                        creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/icon.jpg',
+                        _sourceType: 'admin', _targetLevel: 'admin', _icon: 'fa-server', _color: 'text-red-400 bg-red-500/10 border-red-500/20', _badgeText: 'رسالة إدارة'
+                    });
+                });
+            }
+        } else {
+            const { data: globalAdminMsgs } = await supabase.from('system_notifications')
+                .select('*').is('target_team_id', null).is('target_leader_id', null).order('created_at', { ascending: false });
+
+            if (globalAdminMsgs) {
+                globalAdminMsgs.forEach(msg => {
+                    combined.push({
+                        id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
+                        creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/icon.jpg',
+                        _sourceType: 'admin', _targetLevel: 'admin', _icon: 'fa-server', _color: 'text-red-400 bg-red-500/10 border-red-500/20', _badgeText: 'إعلان عام منصة'
+                    });
+                });
+            }
         }
 
-        // ترتيب الجميع بالتاريخ
         combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         studentNotifsCache = combined;
 
-        window.filterStudentNotifications(); // رسم الجداول بعد الجلب
+        window.filterStudentNotifications(); 
 
     } catch (e) {
         console.error("Error loading student notifs:", e);
     }
 };
 
-// 2. الفلترة والتصنيف بين (النشط والأرشيف)
 window.filterStudentNotifications = () => {
-    const isArchiveView = !document.getElementById('student-archive-section').classList.contains('hidden');
-    const filterType = document.getElementById('student-notif-filter').value;
+    const isArchiveView = document.getElementById('student-archive-section') && !document.getElementById('student-archive-section').classList.contains('hidden');
+    const filterEl = document.getElementById('student-notif-filter');
+    const filterType = filterEl ? filterEl.value : 'all';
     
-    const activeSearch = document.getElementById('search-active-notifs').value.toLowerCase();
-    const archiveSearch = document.getElementById('search-archive-notifs').value.toLowerCase();
+    const activeSearch = document.getElementById('search-active-notifs')?.value.toLowerCase() || '';
+    const archiveSearch = document.getElementById('search-archive-notifs')?.value.toLowerCase() || '';
     const query = isArchiveView ? archiveSearch : activeSearch;
     
     const now = new Date();
-    const myId = currentUserData.id;
+    const myId = currentUserData?.id;
 
     let activePosts = [];
     let archivedPosts = [];
+    let unreadCount = 0; // 💡 حساب عدد الإشعارات غير المقروءة
 
     studentNotifsCache.forEach(post => {
-        // فلترة النوع والبحث
-        if (filterType !== 'all' && post._targetLevel !== filterType) return;
-        if (query && !post.title.toLowerCase().includes(query) && !post.content.toLowerCase().includes(query)) return;
-
-        // التحقق من حالة القراءة
+        // 💡 1. حساب القراءة والجرس أولاً (لكي نحسب الإشعارات المخبأة في الفلتر أيضاً)
         let seenData = null;
         if (post.seen_by && Array.isArray(post.seen_by)) {
             seenData = post.seen_by.find(item => typeof item === 'object' ? item.uid === myId : item === myId);
         }
         const hasSeen = !!seenData;
+        
+        if (!hasSeen) unreadCount++;
 
-        // منطق الأرشيف الذكي
+        // 💡 2. تطبيق الفلترة والبحث للواجهة
+        if (filterType !== 'all' && post._targetLevel !== filterType) return;
+        if (query && !post.title.toLowerCase().includes(query) && !post.content.toLowerCase().includes(query)) return;
+
         let isArchived = false;
         if (post.expiry_date) {
             const expiry = new Date(post.expiry_date);
             expiry.setHours(23, 59, 59, 999);
-            if (now > expiry) isArchived = true; // انتهى الميعاد -> أرشيف
+            if (now > expiry) isArchived = true; 
         } else if (hasSeen) {
-            isArchived = true; // تمت قراءته ولا يوجد ميعاد -> أرشيف
+            isArchived = true; 
         }
 
-        // تخزين بيانات المشاهدة للرسم
         post._hasSeen = hasSeen;
         post._seenAt = (hasSeen && typeof seenData === 'object' && seenData.seen_at) ? new Date(seenData.seen_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
         if (isArchived) archivedPosts.push(post);
         else activePosts.push(post);
     });
+
+    // 💡 3. تحديث جرس التنبيهات في الهيدر
+    const bellBadge = document.getElementById('global-notif-badge');
+    if (bellBadge) {
+        if (unreadCount > 0) {
+            bellBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
+            bellBadge.classList.remove('hidden');
+            bellBadge.classList.add('flex'); // التأكد من ظهوره كفليكس
+        } else {
+            bellBadge.classList.add('hidden');
+            bellBadge.classList.remove('flex');
+        }
+    }
 
     renderStudentNotifsTable(activePosts, 'student-active-tbody', false);
     renderStudentNotifsTable(archivedPosts, 'student-archive-tbody', true);
@@ -2183,7 +2224,7 @@ window.toggleStudentArchive = (showArchive) => {
     window.filterStudentNotifications(); // إعادة التصفية
 };
 
-// 5. فتح تفاصيل الإشعار (وتسجيل القراءة في قاعدة البيانات بالوقت والتاريخ)
+
 window.openStudentPostDetail = async (postId) => {
     const post = studentNotifsCache.find(p => p.id === postId);
     if (!post) return;
@@ -2198,6 +2239,31 @@ window.openStudentPostDetail = async (postId) => {
 
     let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/icon.jpg';
 
+    // 💡 الذكاء هنا: اكتشاف ما إذا كان الإشعار "دعوة انضمام"
+    let inviteActionsHtml = '';
+    let displayContent = post.content;
+    
+    // البحث عن الرقم السري في النص باستخدام Regex
+    const inviteMatch = displayContent.match(/رقم الدعوة السري:\s*([a-f0-9\-]+)/);
+    if (inviteMatch && inviteMatch[1]) {
+        const inviteId = inviteMatch[1];
+        // إزالة الرقم السري من النص لكي لا يظهر للطالب بشكل مزعج
+        displayContent = displayContent.replace(/رقم الدعوة السري:\s*[a-f0-9\-]+/, '').trim();
+        
+        // رسم أزرار القبول والرفض
+        inviteActionsHtml = `
+            <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-white/10">
+                <button onclick="window.handleTeamInvite('${inviteId}', '${post.id}', 'accept')" class="flex-1 py-3 bg-green-500/20 hover:bg-green-600 text-green-400 hover:text-white font-bold rounded-xl transition-all border border-green-500/30 flex items-center justify-center gap-2 shadow-lg">
+                    <i class="fas fa-check-circle"></i> قبول الدعوة والانضمام
+                </button>
+                <button onclick="window.handleTeamInvite('${inviteId}', '${post.id}', 'reject')" class="flex-1 py-3 bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white font-bold rounded-xl transition-all border border-red-500/30 flex items-center justify-center gap-2 shadow-lg">
+                    <i class="fas fa-times-circle"></i> رفض الدعوة
+                </button>
+            </div>
+        `;
+    }
+
+    // بناء الواجهة
     contentBox.innerHTML = `
         <div class="flex justify-between items-start mb-6 border-b border-white/5 pb-5">
             <div class="flex items-center gap-4">
@@ -2214,7 +2280,8 @@ window.openStudentPostDetail = async (postId) => {
         
         <div class="mb-8">
             <h2 class="text-3xl font-black text-white mb-4 leading-tight">${post.title}</h2>
-            <div class="text-gray-200 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner">${post.content}</div>
+            <div class="text-gray-200 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner">${displayContent}</div>
+            ${inviteActionsHtml}
         </div>
 
         ${(linkHtml || expiryHtml) ? `<div class="flex flex-col sm:flex-row gap-3">${linkHtml}${expiryHtml}</div>` : ''}
@@ -2222,19 +2289,17 @@ window.openStudentPostDetail = async (postId) => {
     
     modal.classList.remove('hidden');
 
-// 💡 تسجيل المشاهدة بالوقت والتاريخ بشكل آمن
+    // 💡 تسجيل المشاهدة بالوقت والتاريخ بشكل آمن
     if (!post._hasSeen) {
         try {
             const myId = currentUserData.id;
             const newSeenEntry = { uid: myId, seen_at: new Date().toISOString() };
             
-            // حماية المصفوفة في حال كانت فارغة في قاعدة البيانات
             let currentSeenArray = Array.isArray(post.seen_by) ? post.seen_by : [];
             const updatedSeenBy = [...currentSeenArray, newSeenEntry];
 
             const tableName = post._sourceType === 'leader' ? 'team_posts' : 'system_notifications';
             
-            // نطلب إرجاع البيانات للتأكد من نجاح التحديث
             const { data, error } = await supabase
                 .from(tableName)
                 .update({ seen_by: updatedSeenBy })
@@ -2243,18 +2308,73 @@ window.openStudentPostDetail = async (postId) => {
             
             if (error) throw error;
 
-            if (!data || data.length === 0) {
-                console.warn("لم يتم تسجيل المشاهدة! تأكد من تشغيل كود الـ SQL الخاص بصلاحيات التحديث.");
-            } else {
-                // تحديث محلي لكي لا يرسل الطلب مرة أخرى إذا أغلق وفتح الإشعار
+            if (data && data.length > 0) {
                 post.seen_by = updatedSeenBy;
                 post._hasSeen = true;
-                window.filterStudentNotifications(); // تحديث علامة "جديد" في الجدول
+                window.filterStudentNotifications(); 
             }
 
         } catch (e) {
             console.error("فشل في تسجيل القراءة:", e);
         }
+    }
+};
+
+
+window.handleTeamInvite = async (inviteId, notifId, action) => {
+    try {
+        const { data: invite } = await supabase.from('team_invitations').select('*, teams(name)').eq('id', inviteId).single();
+        if (!invite || invite.status !== 'pending') {
+            return window.showToast("هذه الدعوة لم تعد صالحة أو تم الرد عليها مسبقاً", "error");
+        }
+
+        if (action === 'accept') {
+            // 1. تحديث بروفايل الطالب ليدخل الفريق
+            await supabase.from('profiles').update({ team_id: invite.team_id }).eq('id', currentUserData.id);
+            // 2. تحديث حالة الدعوة
+            await supabase.from('team_invitations').update({ status: 'accepted' }).eq('id', inviteId);
+            
+            // 3. إرسال إشعار لليدر بأن الطالب قبل الدعوة
+            const leaderNotif = {
+                title: `🎉 ${currentUserData.full_name} قبل دعوتك!`,
+                content: `لقد وافق الطالب (${currentUserData.full_name}) على دعوتك وانضم رسمياً إلى فريقك! راجع قائمة أعضاء الفريق للترحيب به.`,
+                type: 'achievement',
+                target_leader_id: invite.leader_id,
+                is_read: false
+            };
+            await supabase.from('system_notifications').insert([leaderNotif]);
+            
+            window.showToast("تهانينا! لقد انضممت للفريق بنجاح", "success");
+            
+            // إغلاق النافذة وتحديث الصفحة ليدخل الطالب للوحة فريقه الجديد
+            window.closeStudentPostDetail();
+            setTimeout(() => location.reload(), 1500); 
+
+        } else if (action === 'reject') {
+            // 1. تحديث حالة الدعوة
+            await supabase.from('team_invitations').update({ status: 'rejected' }).eq('id', inviteId);
+            
+            // 2. إرسال إشعار لليدر بأن الطالب رفض الدعوة
+            const leaderNotif = {
+                title: `⚠️ ${currentUserData.full_name} اعتذر عن الدعوة`,
+                content: `للأسف، قام الطالب (${currentUserData.full_name}) برفض دعوتك للانضمام إلى الفريق في الوقت الحالي.`,
+                type: 'warning',
+                target_leader_id: invite.leader_id,
+                is_read: false
+            };
+            await supabase.from('system_notifications').insert([leaderNotif]);
+            
+            window.showToast("تم رفض الدعوة.", "info");
+            
+            // أرشفة الإشعار لدى الطالب
+            await supabase.from('system_notifications').update({ is_read: true }).eq('id', notifId);
+            window.closeStudentPostDetail();
+            window.loadStudentNotifications();
+        }
+
+    } catch (e) {
+        console.error("Invite Error:", e);
+        window.showToast("حدث خطأ أثناء معالجة الدعوة", "error");
     }
 };
 

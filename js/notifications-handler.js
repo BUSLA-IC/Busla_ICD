@@ -41,6 +41,7 @@ export async function initNotificationsSystem(teamId) {
     if (currentTeamId) {
         await fetchAndRenderPosts();
     }
+    await window.loadAdminNotifications(true);
 }
 
 function renderPostTypes() {
@@ -200,6 +201,9 @@ window.filterTeamPosts = (isArchive) => {
     if (tbody) renderTable(filtered, tbody, isArchive);
 };
 
+// ==========================================
+// 💡 رسم رسائل الإدارة (كروت مختصرة قابلة للضغط)
+// ==========================================
 window.filterAdminMessages = (isArchive) => {
     const inputId = isArchive ? 'archive-admin-search' : 'active-admin-search';
     const queryEl = document.getElementById(inputId);
@@ -219,27 +223,79 @@ window.filterAdminMessages = (isArchive) => {
         return;
     }
 
-    container.innerHTML = filtered.map(msg => `
-        <div class="bg-black/40 border ${isArchive ? 'border-gray-500/20' : 'border-red-500/20'} rounded-xl p-5 hover:bg-white/5 transition-colors relative overflow-hidden group">
+    container.innerHTML = filtered.map(msg => {
+        // اختصار النص الطويل في الكارت الخارجي
+        const shortContent = msg.content.length > 100 ? msg.content.substring(0, 100) + '...' : msg.content;
+
+        return `
+        <div onclick="window.openAdminMessageDetail('${msg.id}')" class="bg-black/40 border ${isArchive ? 'border-gray-500/20' : 'border-red-500/20'} rounded-xl p-5 hover:bg-white/5 transition-colors relative overflow-hidden group cursor-pointer shadow-lg hover:shadow-red-500/10">
             <div class="absolute top-0 right-0 w-1 h-full ${isArchive ? 'bg-gray-500' : 'bg-red-500'}"></div>
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-8 h-8 rounded-full ${isArchive ? 'bg-gray-500/20 text-gray-400' : 'bg-red-500/20 text-red-500'} flex items-center justify-center"><i class="fas fa-envelope-open-text"></i></div>
                 <h4 class="font-bold ${isArchive ? 'text-gray-300' : 'text-white'} text-lg">${msg.title}</h4>
                 <span class="text-[10px] text-gray-500 mr-auto">${new Date(msg.created_at).toLocaleDateString('ar-EG')}</span>
             </div>
-            <p class="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap pr-11 mb-3">${msg.content}</p>
-            ${!isArchive ? `
-            <div class="pr-11">
-                <button onclick="window.markAdminMessageAsRead('${msg.id}')" class="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-lg transition-all flex items-center gap-2">
-                    <i class="fas fa-check-double"></i> تحديد كمقروء (نقل للأرشيف)
+            <p class="text-gray-400 text-sm leading-relaxed pr-11 mb-3">${shortContent}</p>
+            
+            <div class="pr-11 flex justify-between items-center mt-2 border-t border-white/5 pt-3">
+                <span class="text-xs font-bold text-red-400 hover:text-red-300 transition-colors"><i class="fas fa-expand-arrows-alt mr-1"></i> عرض التفاصيل كاملة</span>
+                ${!isArchive ? `
+                <button onclick="event.stopPropagation(); window.markAdminMessageAsRead('${msg.id}')" class="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-lg transition-all flex items-center gap-2">
+                    <i class="fas fa-check-double"></i> تحديد كمقروء (أرشفة)
                 </button>
+                ` : ''}
             </div>
-            ` : ''}
         </div>
-    `).join('');
+        `;
+    }).join('');
 };
 
+// ==========================================
+// 💡 عرض تفاصيل رسالة الإدارة في النافذة المنبثقة (Modal)
+// ==========================================
+window.openAdminMessageDetail = (msgId) => {
+    const msg = adminMessagesCache.find(m => m.id === msgId);
+    if (!msg) return;
 
+    const modal = document.getElementById('post-detail-modal');
+    const contentBox = document.getElementById('post-detail-content');
+    const dateStr = new Date(msg.created_at).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    contentBox.innerHTML = `
+        <div class="flex flex-col h-full max-h-[80vh]">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b border-white/5 shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center text-xl border border-red-500/20 shadow-inner">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold text-lg">إدارة منصة بوصلة</h4>
+                        <span class="text-xs text-gray-500"><i class="far fa-clock"></i> ${dateStr}</span>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/20">
+                        <i class="fas fa-envelope-open-text"></i> رسالة إدارية
+                    </span>
+                    ${!msg.is_read ? `
+                        <button onclick="window.markAdminMessageAsRead('${msg.id}'); window.closePostDetailModal();" class="px-4 py-2 bg-green-500/10 hover:bg-green-600 text-green-400 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2">
+                            <i class="fas fa-check-double"></i> نقل للأرشيف
+                        </button>
+                    ` : `<span class="px-3 py-1.5 bg-gray-500/20 text-gray-400 text-xs rounded-lg border border-gray-500/30 font-bold"><i class="fas fa-archive"></i> رسالة مؤرشفة</span>`}
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scroll pr-2 py-6 space-y-4">
+                <h2 class="text-xl md:text-2xl font-black text-white leading-tight">${msg.title}</h2>
+                <div class="text-gray-300 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner min-h-[150px]">${msg.content}</div>
+            </div>
+
+        </div>
+    `;
+    
+    if (modal) modal.classList.remove('hidden');
+};
 window.openCreatePostPanel = () => window.openCreatePostModal();
 
 
@@ -327,7 +383,6 @@ window.openPostDetail = (postId) => {
     const config = POST_TYPES[post.type] || POST_TYPES['announcement'];
     const dateStr = new Date(post.created_at).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     
-    // 💡 التحقق هل الإشعار مؤرشف أم نشط
     const now = new Date();
     let isArchived = false;
     if (post.expiry_date) {
@@ -336,19 +391,16 @@ window.openPostDetail = (postId) => {
         if (expiry < now) isArchived = true;
     }
 
-    // 💡 تحديد قائمة الطلاب المستهدفين
     let targetList = [];
     let isTargetAll = post.target_members && post.target_members.includes('all');
     
     if (isTargetAll) {
-        targetList = teamMembersCache; // جميع أفراد الفريق
+        targetList = teamMembersCache; 
     } else if (post.target_members) {
-        targetList = teamMembersCache.filter(m => post.target_members.includes(m.id)); // أفراد محددين
+        targetList = teamMembersCache.filter(m => post.target_members.includes(m.id)); 
     }
 
-    // 💡 بناء قائمة الطلاب بحالة المشاهدة والتاريخ
     const membersHtml = targetList.length > 0 ? targetList.map(member => {
-        // البحث عن الطالب في سجل المشاهدات (يدعم الـ IDs النصية أو الـ Objects ذات التواريخ)
         let seenData = null;
         if (post.seen_by && Array.isArray(post.seen_by)) {
             seenData = post.seen_by.find(item => typeof item === 'object' ? item.uid === member.id : item === member.id);
@@ -359,93 +411,94 @@ window.openPostDetail = (postId) => {
         const seenIcon = hasSeen ? '<i class="fas fa-check-double text-green-400"></i>' : '<i class="fas fa-clock text-gray-600"></i>';
         const seenText = hasSeen ? '<span class="text-green-400 font-bold">قرأ الإشعار</span>' : '<span class="text-gray-500">لم يقرأه بعد</span>';
         
-        // استخراج وقت المشاهدة إن وجد
         let timeText = '';
         if (hasSeen && typeof seenData === 'object' && seenData.seen_at) {
             timeText = new Date(seenData.seen_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         } else if (hasSeen) {
-            timeText = 'تمت المشاهدة'; // للبيانات القديمة التي لا تحتوي على تاريخ
+            timeText = 'تمت المشاهدة'; 
         }
 
         return `
-            <div class="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-xl hover:bg-white/5 transition-colors">
+            <div class="flex items-center justify-between p-2.5 bg-black/40 border border-white/5 rounded-xl hover:bg-white/5 transition-colors">
                 <div class="flex items-center gap-3">
-                    <img src="${avatar}" class="w-10 h-10 rounded-full object-cover border border-white/10">
+                    <img src="${avatar}" class="w-8 h-8 rounded-full object-cover border border-white/10">
                     <span class="text-sm font-bold text-white">${member.full_name}</span>
                 </div>
                 <div class="text-left flex flex-col items-end">
-                    <div class="text-xs flex items-center gap-1.5">${seenText} ${seenIcon}</div>
-                    ${timeText ? `<span class="text-[10px] text-gray-400 mt-1 font-mono">${timeText}</span>` : ''}
+                    <div class="text-[11px] flex items-center gap-1.5">${seenText} ${seenIcon}</div>
+                    ${timeText ? `<span class="text-[9px] text-gray-400 mt-0.5 font-mono">${timeText}</span>` : ''}
                 </div>
             </div>
         `;
-    }).join('') : '<p class="text-center text-gray-500 text-sm py-4">لا يوجد أعضاء مستهدفين أو الفريق فارغ.</p>';
+    }).join('') : '<p class="text-center text-gray-500 text-sm py-4">لا يوجد أعضاء مستهدفين.</p>';
 
-    // إحصائيات عامة
     const seenCount = post.seen_by ? post.seen_by.length : 0;
     const totalCount = targetList.length;
 
     let avatar = post.creator_avatar || '../assets/icons/icon.jpg';
     if(avatar.includes('null') || avatar.includes('undefined')) avatar = '../assets/icons/icon.jpg';
 
-    // 💡 أزرار التحكم (تعديل / حذف) تختلف حسب الأرشيف
     const actionButtons = `
         <div class="flex items-center gap-2">
             ${!isArchived ? `
-                <button onclick="window.editFromDetail('${post.id}')" class="px-4 py-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2">
+                <button onclick="window.editFromDetail('${post.id}')" class="px-4 py-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2">
                     <i class="fas fa-edit"></i> تعديل
                 </button>
-            ` : `<span class="px-3 py-1.5 bg-gray-500/20 text-gray-400 text-xs rounded-lg border border-gray-500/30 font-bold"><i class="fas fa-archive"></i> إشعار مؤرشف</span>`}
+            ` : `<span class="px-3 py-1.5 bg-gray-500/20 text-gray-400 text-xs rounded-lg border border-gray-500/30 font-bold"><i class="fas fa-archive"></i> مؤرشف</span>`}
             
-            <button onclick="window.deleteFromDetail('${post.id}')" class="px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white text-sm font-bold rounded-xl transition-all flex items-center gap-2">
+            <button onclick="window.deleteFromDetail('${post.id}')" class="px-4 py-2 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2">
                 <i class="fas fa-trash"></i> حذف
             </button>
         </div>
     `;
 
-    // 💡 بناء الواجهة الشاملة للكارت
+    // 💡 التعديل الأهم: الكارت أصبح مقسماً (flex-col) وبداخله سكرول داخلي للنصوص الطويلة
     contentBox.innerHTML = `
-        <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 border-b border-white/5 pb-5">
-            <div class="flex items-center gap-4">
-                <img src="${avatar}" class="w-14 h-14 rounded-xl object-cover border-2 border-white/10 bg-black">
-                <div>
-                    <h4 class="text-white font-bold text-lg">${post.creator_name || 'قائد الفريق'}</h4>
-                    <span class="text-xs text-gray-500"><i class="far fa-clock"></i> ${dateStr}</span>
+        <div class="flex flex-col h-full max-h-[80vh]">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b border-white/5 shrink-0">
+                <div class="flex items-center gap-4">
+                    <img src="${avatar}" class="w-12 h-12 rounded-xl object-cover border-2 border-white/10 bg-black">
+                    <div>
+                        <h4 class="text-white font-bold text-lg">${post.creator_name || 'قائد الفريق'}</h4>
+                        <span class="text-xs text-gray-500"><i class="far fa-clock"></i> ${dateStr}</span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-                <span class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${config.bg} ${config.color} border border-white/5"><i class="fas ${config.icon}"></i> ${config.label}</span>
-                ${actionButtons}
-            </div>
-        </div>
-        
-        <div class="mb-8">
-            <h2 class="text-2xl font-black text-white mb-4">${post.title}</h2>
-            <div class="text-gray-300 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner">${post.content}</div>
-        </div>
-
-        ${(post.link_url || post.expiry_date) ? `
-            <div class="flex flex-col sm:flex-row gap-3 mb-8">
-                ${post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> فتح الرابط المرفق</a>` : ''}
-                ${post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> ينتهي: ${new Date(post.expiry_date).toLocaleDateString('ar-EG')}</div>` : ''}
-            </div>
-        ` : ''}
-
-        <div class="border-t border-white/10 pt-6">
-            <div class="flex justify-between items-end mb-4">
-                <div>
-                    <h4 class="text-lg font-bold text-white flex items-center gap-2"><i class="fas fa-users text-b-primary"></i> الموجه إليهم الإشعار</h4>
-                    <p class="text-xs text-gray-400 mt-1">${isTargetAll ? 'هذا الإشعار موجه لجميع أفراد الفريق' : 'هذا الإشعار مخصص لأفراد محددين'}</p>
-                </div>
-                <div class="text-left bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
-                    <span class="text-xs text-gray-500">تمت المشاهدة</span>
-                    <p class="text-white font-mono font-bold text-sm">${seenCount} / ${totalCount}</p>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${config.bg} ${config.color} border border-white/5"><i class="fas ${config.icon}"></i> ${config.label}</span>
+                    ${actionButtons}
                 </div>
             </div>
             
-            <div class="space-y-2 max-h-60 overflow-y-auto custom-scroll pr-2">
-                ${membersHtml}
+            <div class="flex-1 overflow-y-auto custom-scroll pr-2 py-4 space-y-4">
+                <h2 class="text-xl md:text-2xl font-black text-white leading-tight">${post.title}</h2>
+                <div class="text-gray-300 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner min-h-[100px]">${post.content}</div>
+                
+                ${(post.link_url || post.expiry_date) ? `
+                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                        ${post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> فتح الرابط المرفق</a>` : ''}
+                        ${post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> ينتهي: ${new Date(post.expiry_date).toLocaleDateString('ar-EG')}</div>` : ''}
+                    </div>
+                ` : ''}
             </div>
+
+            <div class="border-t border-white/10 pt-4 shrink-0">
+                <div class="flex justify-between items-end mb-3">
+                    <div>
+                        <h4 class="text-sm font-bold text-white flex items-center gap-2"><i class="fas fa-users text-b-primary"></i> حالة القراءة</h4>
+                        <p class="text-[10px] text-gray-400 mt-0.5">${isTargetAll ? 'موجه لجميع أفراد الفريق' : 'مخصص لأفراد محددين'}</p>
+                    </div>
+                    <div class="text-left bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                        <span class="text-[10px] text-gray-500">المشاهدات</span>
+                        <p class="text-white font-mono font-bold text-sm">${seenCount} / ${totalCount}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-1.5 max-h-[150px] overflow-y-auto custom-scroll pr-2">
+                    ${membersHtml}
+                </div>
+            </div>
+
         </div>
     `;
     if (modal) modal.classList.remove('hidden');
@@ -457,16 +510,17 @@ window.editFromDetail = (postId) => {
     setTimeout(() => window.openCreatePostModal(postId), 300); // نفتح نافذة التعديل بعد إغلاق التفاصيل
 };
 
-window.deleteFromDetail = async (postId) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الإشعار؟")) return;
-    try {
-        await supabase.from('team_posts').delete().eq('id', postId);
-        showToast("تم الحذف بنجاح", "success");
-        window.closePostDetailModal(); // إغلاق النافذة
-        await fetchAndRenderPosts(); // تحديث الجداول
-    } catch (e) {
-        showToast("فشل الحذف", "error");
-    }
+window.deletePost = (id) => {
+    openConfirmModal("هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.", async () => {
+        closeModal('confirm-modal');
+        try {
+            await supabase.from('team_posts').delete().eq('id', id);
+            showToast("تم الحذف بنجاح", "success");
+            await fetchAndRenderPosts();
+        } catch (e) {
+            showToast("فشل الحذف", "error");
+        }
+    });
 };
 window.closePostDetailModal = () => document.getElementById('post-detail-modal')?.classList.add('hidden');
 
@@ -550,15 +604,17 @@ window.savePost = async () => {
         btn.disabled = false;
     }
 };
-window.deletePost = async (id) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الإشعار؟")) return;
-    try {
-        await supabase.from('team_posts').delete().eq('id', id);
-        showToast("تم الحذف بنجاح", "success");
-        await fetchAndRenderPosts();
-    } catch (e) {
-        showToast("فشل الحذف", "error");
-    }
+window.deletePost = (id) => {
+    openConfirmModal("هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.", async () => {
+        closeModal('confirm-modal');
+        try {
+            await supabase.from('team_posts').delete().eq('id', id);
+            showToast("تم الحذف بنجاح", "success");
+            await fetchAndRenderPosts();
+        } catch (e) {
+            showToast("فشل الحذف", "error");
+        }
+    });
 };
 
 window.togglePinPost = async (id, isPinned) => {
@@ -595,28 +651,19 @@ window.toggleTargetMembers = () => {
     }
 };
 
-// 💡 حماية الاستعلام من الأخطاء إذا كانت المتغيرات فارغة
-window.loadAdminNotifications = async () => {
+window.loadAdminNotifications = async (isBackgroundLoad = false) => {
     const container = document.getElementById('admin-messages-list');
-    if(!container) return;
-
+    
     let myId = currentUserData?.id;
     let tId = currentTeamId || window.currentTeam?.team_id || window.currentTeam?.id;
 
-    if (!myId) {
-        const { data: u } = await supabase.auth.getUser();
-        myId = u?.user?.id;
-    }
+    if (!myId && !tId) return;
 
-    if (!myId && !tId) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">لا يمكن تحميل الرسائل حالياً.</div>';
-        return;
+    if (!isBackgroundLoad && container) {
+        container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i></div>';
     }
-
-    container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i></div>';
 
     try {
-        // بناء الاستعلام بشكل آمن لتجنب "undefined"
         let orQueries = [];
         if (myId) orQueries.push(`target_leader_id.eq.${myId}`);
         if (tId) orQueries.push(`target_team_id.eq.${tId}`);
@@ -629,12 +676,26 @@ window.loadAdminNotifications = async () => {
         if (error) throw error;
         adminMessagesCache = data || [];
         
-        window.filterAdminMessages(false);
-        window.filterAdminMessages(true);
+        // 💡 تشغيل الجرس لليدر بناءً على الرسائل غير المقروءة
+        const unreadCount = adminMessagesCache.filter(msg => !msg.is_read).length;
+        const bellBadge = document.getElementById('global-notif-badge');
+        const tabBadge = document.getElementById('admin-notif-badge');
+        
+        if (unreadCount > 0) {
+            if(bellBadge) { bellBadge.innerText = unreadCount; bellBadge.classList.remove('hidden'); }
+            if(tabBadge) { tabBadge.innerText = unreadCount; tabBadge.classList.remove('hidden'); }
+        } else {
+            if(bellBadge) bellBadge.classList.add('hidden');
+            if(tabBadge) tabBadge.classList.add('hidden');
+        }
+
+        if (!isBackgroundLoad) {
+            window.filterAdminMessages(false);
+            window.filterAdminMessages(true);
+        }
 
     } catch (e) {
         console.error("Fetch Admin Notifs Error:", e);
-        container.innerHTML = '<div class="text-center py-10 text-red-500">فشل في تحميل رسائل الإدارة.</div>';
     }
 };
 

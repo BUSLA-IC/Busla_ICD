@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
 function setupEventListeners() {
     const settingsBtn = document.getElementById('open-settings-btn'); 
     if(settingsBtn) {
@@ -97,6 +98,7 @@ function setupEventListeners() {
         });
     }
 }
+
 
 async function initDashboard(uid) {
     try {
@@ -163,12 +165,15 @@ async function initDashboard(uid) {
         console.log("Re-rendering with fresh data...");
         renderAllTabs();
 
+        if (typeof initNotificationsSystem === 'function') {
+            initNotificationsSystem(teamId);
+        }
+
     } catch (e) {
         console.error("Init Error:", e);
         showToast("Error loading dashboard", "error");
     }
 }
-
 // ==========================================
 // 3. DATA FETCHING & CACHING
 // ==========================================
@@ -517,7 +522,7 @@ function renderWeekInfo() {
     `;
 }
 
-// Render overview tasks with smart status (Active, Completed, Overdue)
+
 async function renderTeamOverview(tasks) {
     const container = document.getElementById('overview-container');
     if (!container) return;
@@ -666,6 +671,8 @@ async function renderTeamOverview(tasks) {
         container.innerHTML = `<p class="text-red-500 text-center py-4">Failed to load tasks.</p>`;
     }
 }
+
+
 
 window.openUnifiedTaskModal = (taskId) => {
     const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
@@ -1498,7 +1505,7 @@ window.sendTeamInvitation = async () => {
             to_email: email,
             to_name: user.full_name || "Student",
             from_team_id: currentTeam.team_id,
-            from_leader_id: currentUser.id,
+            from_leader_id: currentUserData.id,
             status: 'pending',
             team_snapshot: {
                 name: currentTeam.name,
@@ -1506,11 +1513,38 @@ window.sendTeamInvitation = async () => {
             }
         };
 
-        const { error: insertError } = await supabase.from('team_invitations').insert([inviteData]);
+        // 💡 التعديل 1: إضافة select() و single() لكي يعود لنا الـ ID الخاص بالدعوة
+        const { data: insertedInvite, error: insertError } = await supabase
+            .from('team_invitations')
+            .insert([inviteData])
+            .select()
+            .single();
+            
         if (insertError) throw insertError;
 
-        showToast("Invitation sent!", "success");
+        // ==========================================
+        // 💡 التعديل 2: إرسال الإشعار للطالب مع الرقم السري
+        // ==========================================
+        try {
+            const inviteNotif = {
+                title: `📩 دعوة انضمام لفريق ${currentTeam.name}`,
+                content: `لقد قام القائد (${currentUserData.full_name}) بدعوتك للانضمام إلى فريقه!\n\nيمكنك قبول أو رفض هذه الدعوة من خلال الضغط على الأزرار أدناه.\n\nرقم الدعوة السري: ${insertedInvite.id}`,
+                type: 'info',
+                target_leader_id: user.id, // نستخدم هذا الحقل لأن الطالب ليس لديه فريق بعد
+                is_read: false
+            };
+            await supabase.from('system_notifications').insert([inviteNotif]);
+        } catch (notifErr) {
+            console.warn("Failed to send notification:", notifErr);
+        }
+        // ==========================================
+
+        showToast("Invitation sent successfully!", "success");
         closeModal('invite-member-modal');
+        
+        // تحديث القوائم فوراً بعد الإرسال
+        if (typeof renderSentInvitesList === 'function') renderSentInvitesList();
+        if (typeof renderSentInvites === 'function') renderSentInvites(currentTeam);
 
     } catch (error) {
         console.error(error);
@@ -1520,7 +1554,6 @@ window.sendTeamInvitation = async () => {
         btn.innerHTML = 'Send Invitation';
     }
 };
-
 async function renderSentInvitesList() {
     const container = document.getElementById('sent-invites-list');
     container.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
@@ -1794,7 +1827,6 @@ window.viewStudentDetails = async (uid, encodedReq) => {
     }
 };
 
-// دالة تنفيذ القبول/الرفض المحمية من الرفض الصامت
 window.handleRequestAction = async (teamId, userId, userName, action) => {
     try {
         if (action === 'accept') {
@@ -1802,22 +1834,22 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
             const { data: prof } = await supabase.from('profiles').select('total_xp').eq('id', userId).single();
             const studentXp = prof?.total_xp || 0;
 
-            // 2. إدخال الطالب في الفريق (💡 التعديل الأهم هنا: إضافة .select() للتحقق)
+            // 2. إدخال الطالب في الفريق
             const { data: updatedProfile, error: profileErr } = await supabase
                 .from('profiles')
                 .update({ team_id: teamId })
                 .eq('id', userId)
-                .select(); // نطلب إرجاع البيانات بعد التعديل
+                .select(); 
 
             if (profileErr) throw profileErr;
 
             // 🛑 حماية قوية: إذا كانت القائمة فارغة، هذا يعني أن Supabase رفضت التعديل!
             if (!updatedProfile || updatedProfile.length === 0) {
                 showToast("تم رفض التعديل من قاعدة البيانات! يرجى تنفيذ كود الـ SQL.", "error");
-                return; // إيقاف العملية فوراً حتى لا تفسد النقاط
+                return; 
             }
 
-            // 3. إضافة النقاط للفريق (تتم فقط إذا تأكدنا أن الطالب دخل الفريق)
+            // 3. إضافة النقاط للفريق 
             if (studentXp > 0) {
                 const currentTeamScore = currentTeam.total_score || 0;
                 await supabase.from('teams').update({ total_score: currentTeamScore + studentXp }).eq('id', teamId);
@@ -1838,12 +1870,48 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
             const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
             await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
 
+            // ==========================================
+            // 🎉 إرسال إشعار الترحيب المشجع (في حالة القبول)
+            // ==========================================
+            try {
+                const welcomePost = {
+                    team_id: teamId,
+                    type: 'achievement', // نوع إنجاز ليظهر الكأس الأخضر المبهج
+                    title: `🎉 مرحباً بك يا بطل في فريق ${currentTeam.name}!`,
+                    content: `أهلاً بك في بيتك الجديد! نحن في غاية السعادة بانضمامك لأسرتنا. لقد تم قبول طلبك بنجاح لأننا نؤمن بقدراتك. 🚀\n\nنرجو منك:\n1️⃣ تفقد خريطة التعلم والبدء فوراً.\n2️⃣ الالتزام بالمهام والمواعيد لضمان تفوقنا.\n3️⃣ متابعة الإشعارات باستمرار.\n\nانطلاقة موفقة، ودعنا نصنع النجاح معاً! 💪`,
+                    creator_id: currentUserData.id,
+                    creator_name: currentUserData.full_name || 'قائد الفريق',
+                    creator_avatar: currentUserData.avatar_url,
+                    target_members: [userId], // توجيه الإشعار للطالب المقبول فقط
+                    seen_by: [{ uid: currentUserData.id, seen_at: new Date().toISOString() }] 
+                };
+                await supabase.from('team_posts').insert([welcomePost]);
+            } catch (notifErr) { console.warn("فشل إرسال إشعار الترحيب", notifErr); }
+            // ==========================================
+
             showToast(`تم قبول ${userName} وإضافته للفريق بنجاح!`, 'success');
+
         } else {
             // حالة الرفض
             const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
             await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
-            showToast(`تم رفض طلب ${userName}`, 'neutral');
+            
+            // ==========================================
+            // 🌟 إرسال إشعار اعتذار لطيف ومُشجع (في حالة الرفض)
+            // ==========================================
+            try {
+                const rejectMsg = {
+                    title: `🌟 تحديث بخصوص طلب انضمامك لفريق ${currentTeam.name}`,
+                    content: `مرحباً بك يا بطل،\n\nنشكرك من القلب على حماسك ورغبتك في الانضمام إلى فريقنا. لقد قمنا بمراجعة طلبك بعناية، ولكن للأسف لن نتمكن من قبول انضمامك في الوقت الحالي نظراً لاكتمال العدد أو لأسباب تنظيمية خاصة بالفريق.\n\n🎯 تذكر دائماً أن هذه ليست سوى بداية! استمر في تطوير مهاراتك بشغف، فهناك العديد من الفرق الرائعة الأخرى بانتظار إبداعك في منصة بوصلة.\n\nنتمنى لك رحلة تعلم مليئة بالتفوق والنجاح! ✨`,
+                    type: 'info',
+                    target_leader_id: userId, // 💡 إرسال الرسالة لـ (صندوق الطالب) مباشرة لأنه بدون فريق حالياً
+                    is_read: false
+                };
+                await supabase.from('system_notifications').insert([rejectMsg]);
+            } catch (notifErr) { console.warn("فشل إرسال إشعار الرفض", notifErr); }
+            // ==========================================
+
+            showToast(`تم رفض طلب ${userName} وإرسال رسالة تشجيعية له.`, 'neutral');
             window.closeModal('student-details-modal');
         }
         
