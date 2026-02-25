@@ -1476,10 +1476,10 @@ window.sendTeamInvitation = async () => {
     const btn = document.getElementById('btn-send-invite');
     const email = emailInput.value.trim();
 
-    if (!email) return showToast("Enter email address", "error");
+    if (!email) return showToast("الرجاء إدخال البريد الإلكتروني", "error");
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
 
     try {
         const { data: user, error: userError } = await supabase
@@ -1488,8 +1488,12 @@ window.sendTeamInvitation = async () => {
             .eq('email', email)
             .single();
 
-        if (userError || !user) throw new Error("Email not registered.");
-        if (user.team_id) throw new Error("User already in a team.");
+        if (userError || !user) throw new Error("البريد الإلكتروني غير مسجل في المنصة.");
+        
+        // 💡 حماية صارمة لمنع إرسال دعوة لطالب موجود في فريق بالفعل
+        if (user.team_id && user.team_id !== 'null' && user.team_id !== '') {
+            throw new Error("هذا الطالب منضم لفريق بالفعل ولا يمكن دعوته.");
+        }
 
         const { data: existing, error: existError } = await supabase
             .from('team_invitations')
@@ -1498,7 +1502,7 @@ window.sendTeamInvitation = async () => {
             .eq('from_team_id', currentTeam.team_id)
             .eq('status', 'pending');
 
-        if (existing && existing.length > 0) throw new Error("Invitation already sent.");
+        if (existing && existing.length > 0) throw new Error("تم إرسال دعوة مسبقاً لهذا الطالب وهي قيد الانتظار.");
 
         const inviteData = {
             to_uid: user.id,
@@ -1513,24 +1517,18 @@ window.sendTeamInvitation = async () => {
             }
         };
 
-        // 💡 التعديل 1: إضافة select() و single() لكي يعود لنا الـ ID الخاص بالدعوة
-        const { data: insertedInvite, error: insertError } = await supabase
-            .from('team_invitations')
-            .insert([inviteData])
-            .select()
-            .single();
-            
+        const { error: insertError } = await supabase.from('team_invitations').insert([inviteData]);
         if (insertError) throw insertError;
 
         // ==========================================
-        // 💡 التعديل 2: إرسال الإشعار للطالب مع الرقم السري
+        // 💡 إرسال إشعار تنبيهي مبسط للطالب
         // ==========================================
         try {
             const inviteNotif = {
                 title: `📩 دعوة انضمام لفريق ${currentTeam.name}`,
-                content: `لقد قام القائد (${currentUserData.full_name}) بدعوتك للانضمام إلى فريقه!\n\nيمكنك قبول أو رفض هذه الدعوة من خلال الضغط على الأزرار أدناه.\n\nرقم الدعوة السري: ${insertedInvite.id}`,
+                content: `لقد قام القائد (${currentUserData.full_name}) بدعوتك للانضمام إلى فريقه!\n\nيرجى التوجه إلى قسم (الدعوات) في لوحة القيادة الخاصة بك لمراجعة الدعوة واتخاذ قرارك بالقبول أو الرفض.`,
                 type: 'info',
-                target_leader_id: user.id, // نستخدم هذا الحقل لأن الطالب ليس لديه فريق بعد
+                target_leader_id: user.id, // نوجه الإشعار لصندوق الطالب مباشرة
                 is_read: false
             };
             await supabase.from('system_notifications').insert([inviteNotif]);
@@ -1539,10 +1537,9 @@ window.sendTeamInvitation = async () => {
         }
         // ==========================================
 
-        showToast("Invitation sent successfully!", "success");
+        showToast("تم إرسال الدعوة بنجاح!", "success");
         closeModal('invite-member-modal');
         
-        // تحديث القوائم فوراً بعد الإرسال
         if (typeof renderSentInvitesList === 'function') renderSentInvitesList();
         if (typeof renderSentInvites === 'function') renderSentInvites(currentTeam);
 
@@ -1551,9 +1548,10 @@ window.sendTeamInvitation = async () => {
         showToast(error.message, "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Send Invitation';
+        btn.innerHTML = 'إرسال الدعوة';
     }
 };
+
 async function renderSentInvitesList() {
     const container = document.getElementById('sent-invites-list');
     container.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';

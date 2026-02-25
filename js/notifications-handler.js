@@ -21,17 +21,14 @@ const POST_TYPES = {
 // 1. INITIALIZATION & DATA FETCHING
 // ==========================================
 export async function initNotificationsSystem(teamId) {
-    // محاولة جلب الآي دي في حال تأخره
     currentTeamId = teamId || window.currentTeam?.team_id || window.currentTeam?.id;
     
-    // جلب المستخدم الحالي
     const { data: authData } = await supabase.auth.getUser();
     if (authData?.user) {
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', authData.user.id).single();
         currentUserData = profile;
     }
 
-    // جلب أعضاء الفريق إذا وجد فريق
     if (currentTeamId) {
         const { data: members } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('team_id', currentTeamId);
         if (members) teamMembersCache = members;
@@ -201,9 +198,9 @@ window.filterTeamPosts = (isArchive) => {
     if (tbody) renderTable(filtered, tbody, isArchive);
 };
 
-// ==========================================
-// 💡 رسم رسائل الإدارة (كروت مختصرة قابلة للضغط)
-// ==========================================
+
+
+
 window.filterAdminMessages = (isArchive) => {
     const inputId = isArchive ? 'archive-admin-search' : 'active-admin-search';
     const queryEl = document.getElementById(inputId);
@@ -250,9 +247,7 @@ window.filterAdminMessages = (isArchive) => {
     }).join('');
 };
 
-// ==========================================
-// 💡 عرض تفاصيل رسالة الإدارة في النافذة المنبثقة (Modal)
-// ==========================================
+
 window.openAdminMessageDetail = (msgId) => {
     const msg = adminMessagesCache.find(m => m.id === msgId);
     if (!msg) return;
@@ -676,8 +671,24 @@ window.loadAdminNotifications = async (isBackgroundLoad = false) => {
         if (error) throw error;
         adminMessagesCache = data || [];
         
-        // 💡 تشغيل الجرس لليدر بناءً على الرسائل غير المقروءة
-        const unreadCount = adminMessagesCache.filter(msg => !msg.is_read).length;
+        // ==========================================
+        // 💡 التعديل الجذري: حساب عدد الإشعارات غير المقروءة بذكاء 
+        // ==========================================
+        const unreadCount = adminMessagesCache.filter(msg => {
+            // استخراج قائمة من شاهدوا الإشعار
+            const seenArray = Array.isArray(msg.seen_by) ? msg.seen_by : [];
+            const hasSeen = seenArray.some(s => s.uid === myId);
+
+            // لو كانت رسالة موجهة للفريق، نعتمد على المشاهدات (seen_by) فقط
+            if (msg.target_team_id) {
+                return !hasSeen;
+            } 
+            // لو كانت رسالة شخصية، نعتمد على (is_read) والمشاهدات معاً
+            else {
+                return !msg.is_read && !hasSeen;
+            }
+        }).length;
+        
         const bellBadge = document.getElementById('global-notif-badge');
         const tabBadge = document.getElementById('admin-notif-badge');
         
@@ -690,8 +701,10 @@ window.loadAdminNotifications = async (isBackgroundLoad = false) => {
         }
 
         if (!isBackgroundLoad) {
-            window.filterAdminMessages(false);
-            window.filterAdminMessages(true);
+            if (typeof window.filterAdminMessages === 'function') {
+                window.filterAdminMessages(false);
+                window.filterAdminMessages(true);
+            }
         }
 
     } catch (e) {
