@@ -1614,35 +1614,10 @@ window.openRequestsModal = () => {
     renderRequestsList(); 
 };
 
-function renderRequestsList() {
-    const container = document.getElementById('requests-list-container');
-    const requests = currentTeam.requests || [];
 
-    if (requests.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">No new requests.</div>`;
-        return;
-    }
-
-    container.innerHTML = requests.map(req => `
-        <div class="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div>
-                    <h4 class="font-bold text-white text-sm">${req.name || 'User'}</h4>
-                    <p class="text-[10px] text-gray-400">Wants to join</p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="handleRequestAction('${currentTeam.team_id}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all">Accept</button>
-                <button onclick="handleRequestAction('${currentTeam.team_id}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="px-4 py-2 bg-white/10 hover:bg-red-500/20 text-white hover:text-red-400 rounded-lg text-xs font-bold transition-all border border-white/5">Reject</button>
-            </div>
-        </div>
-    `).join('');
-}
+// ==========================================
+// JOIN REQUESTS MANAGEMENT
+// ==========================================
 
 function renderJoinRequests(teamData) {
     const section = document.getElementById('requests-section');
@@ -1652,66 +1627,215 @@ function renderJoinRequests(teamData) {
     const requests = teamData.requests || [];
 
     if (requests.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 border border-white/5 border-dashed rounded-xl">No new requests</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 border border-white/5 border-dashed rounded-xl">لا توجد طلبات انضمام جديدة</div>`;
         return;
     }
 
     section.classList.remove('hidden');
     if(countBadge) countBadge.innerText = requests.length;
     
-    container.innerHTML = requests.map(req => `
-        <div class="bg-b-surface border border-yellow-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-slide-in relative overflow-hidden group">
+    container.innerHTML = requests.map(req => {
+        // تشفير البيانات لتمريرها في الزر
+        const safeReqData = encodeURIComponent(JSON.stringify(req));
+        
+        return `
+        <div class="bg-b-surface border border-yellow-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden group">
             <div class="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <div class="flex items-center gap-4 z-10">
-                <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-xl border border-yellow-500/20 shadow-inner">
+            
+            <div class="flex items-center gap-4 z-10 w-full sm:w-auto flex-1">
+                <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 text-xl border border-yellow-500/20 shadow-inner shrink-0">
                     <i class="fas fa-user-clock"></i>
                 </div>
-                <div>
-                    <h4 class="font-bold text-white text-base">${req.name || 'User'}</h4>
-                    <p class="text-xs text-gray-400 mt-0.5">Wants to join your team</p>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-white text-base truncate">${req.name || 'مستخدم'}</h4>
+                    <p class="text-xs text-gray-400 mt-0.5">يريد الانضمام إلى فريقك</p>
                 </div>
             </div>
-            <div class="flex gap-2 w-full sm:w-auto z-10">
+            
+            <div class="flex gap-2 w-full sm:w-auto z-10 shrink-0">
+                <button onclick="window.viewStudentDetails('${req.uid}', '${safeReqData}')" 
+                        class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all font-bold text-sm">
+                    <i class="fas fa-eye mr-1"></i> التفاصيل
+                </button>
                 <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-600 hover:text-white transition-all font-bold text-sm">
-                    <i class="fas fa-check mr-1"></i> Accept
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-600 hover:text-white transition-all">
+                    <i class="fas fa-check"></i>
                 </button>
                 <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all font-bold text-sm">
-                    <i class="fas fa-times mr-1"></i> Reject
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
-window.handleRequestAction = async (teamId, userId, userName, action) => {
+function renderRequestsList() {
+    const container = document.getElementById('requests-list-container');
+    const requests = currentTeam.requests || [];
+    // 💡 استخدام المعرف الصحيح للفريق
+    const tId = currentTeam.id || currentTeam.team_id;
+
+    if (requests.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">لا توجد طلبات جديدة.</div>`;
+        return;
+    }
+
+    container.innerHTML = requests.map(req => {
+        const safeReqData = encodeURIComponent(JSON.stringify(req));
+        
+        return `
+        <div class="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 hover:bg-white/5 transition-colors">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="truncate">
+                    <h4 class="font-bold text-white text-sm truncate">${req.name || 'مستخدم'}</h4>
+                    <p class="text-[10px] text-gray-400 truncate">يريد الانضمام للفريق</p>
+                </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <button onclick="window.viewStudentDetails('${req.uid}', '${safeReqData}')" 
+                        class="px-3 py-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-blue-500/20" title="التفاصيل">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button onclick="handleRequestAction('${tId}', '${req.uid}', '${req.name}', 'accept')" 
+                        class="px-3 py-2 bg-green-500/10 hover:bg-green-600 text-green-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-green-500/20" title="قبول">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="handleRequestAction('${tId}', '${req.uid}', '${req.name}', 'reject')" 
+                        class="px-3 py-2 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg text-xs font-bold transition-all border border-white/5" title="رفض">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `}).join('');
+}
+
+window.viewStudentDetails = async (uid, encodedReq) => {
+    const modal = document.getElementById('student-details-modal');
+    if (!modal) return;
+    
+    modal.classList.remove('hidden');
+    document.getElementById('sdm-name').innerText = "جاري التحميل...";
+    document.getElementById('sdm-reason').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
     try {
-        if (action === 'accept') {
-            const { error: profileErr } = await supabase
-                .from('profiles')
-                .update({ team_id: teamId, joined_team_at: new Date() })
-                .eq('id', userId);
-            
-            if (profileErr) throw profileErr;
+        const reqData = JSON.parse(decodeURIComponent(encodedReq));
+        const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
+        if (error) throw error;
 
-            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
-            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
+        document.getElementById('sdm-name').innerText = profile.full_name || reqData.name || 'طالب مجهول';
+        document.getElementById('sdm-email').innerHTML = `<i class="fas fa-envelope mr-1"></i> ${profile.email || 'غير متوفر'}`;
+        document.getElementById('sdm-avatar').src = resolveImageUrl(profile.avatar_url, 'user');
+        document.getElementById('sdm-xp').innerText = (profile.total_xp || 0).toLocaleString();
+        
+        document.getElementById('sdm-uni').innerText = profile.university || 'لم يُحدد';
+        document.getElementById('sdm-faculty').innerText = profile.faculty || 'لم يُحدد';
+        document.getElementById('sdm-dept').innerText = profile.department || 'لم يُحدد';
+        document.getElementById('sdm-year').innerText = profile.academic_year || 'لم يُحدد';
+        document.getElementById('sdm-gov').innerText = profile.governorate || 'لم يُحدد';
 
-            showToast(`${userName} accepted!`, 'success');
+        const sRank = getRankDataForMember(profile.total_xp || 0);
+        const rankEl = document.getElementById('sdm-rank');
+        rankEl.innerHTML = `<i class="fas fa-star mr-1"></i> ${sRank.title}`;
+        rankEl.style.color = sRank.stage_color;
+        rankEl.style.borderColor = sRank.stage_color + '40';
+        rankEl.style.backgroundColor = sRank.stage_color + '1A';
+
+        const reasonEl = document.getElementById('sdm-reason');
+        if (reqData.reason && reqData.reason.trim() !== '') {
+            reasonEl.innerText = reqData.reason;
+            reasonEl.classList.remove('text-gray-500', 'italic', 'text-center');
+            reasonEl.classList.add('text-white');
         } else {
-            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
-            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
-            showToast(`${userName} rejected`, 'neutral');
+            reasonEl.innerHTML = `<div class="text-center mt-6"><i class="fas fa-comment-slash text-3xl mb-2 opacity-50"></i><br>لم يقم الطالب بكتابة رسالة تقديم.</div>`;
+            reasonEl.classList.add('text-gray-500', 'italic');
+            reasonEl.classList.remove('text-white');
         }
-        location.reload(); 
 
-    } catch (e) {
-        console.error("Request Action Error:", e);
-        showToast("Action failed", "error");
+        // 💡 استخدام المعرف الصحيح للفريق هنا
+        const tId = currentTeam.id || currentTeam.team_id;
+        const actionsCont = document.getElementById('sdm-actions');
+        actionsCont.innerHTML = `
+            <button onclick="window.closeModal('student-details-modal'); handleRequestAction('${tId}', '${uid}', '${profile.full_name || reqData.name}', 'accept')" 
+                    class="flex-1 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
+                <i class="fas fa-check"></i> قبول الطالب في الفريق
+            </button>
+            <button onclick="window.closeModal('student-details-modal'); handleRequestAction('${tId}', '${uid}', '${profile.full_name || reqData.name}', 'reject')" 
+                    class="px-8 py-4 bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 font-bold rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-times"></i> رفض الطلب
+            </button>
+        `;
+
+    } catch(e) {
+        console.error(e);
+        showToast("فشل في جلب بيانات الطالب", "error");
     }
 };
 
+// دالة تنفيذ القبول/الرفض المحمية من الرفض الصامت
+window.handleRequestAction = async (teamId, userId, userName, action) => {
+    try {
+        if (action === 'accept') {
+            // 1. جلب نقاط الطالب الحالية
+            const { data: prof } = await supabase.from('profiles').select('total_xp').eq('id', userId).single();
+            const studentXp = prof?.total_xp || 0;
+
+            // 2. إدخال الطالب في الفريق (💡 التعديل الأهم هنا: إضافة .select() للتحقق)
+            const { data: updatedProfile, error: profileErr } = await supabase
+                .from('profiles')
+                .update({ team_id: teamId })
+                .eq('id', userId)
+                .select(); // نطلب إرجاع البيانات بعد التعديل
+
+            if (profileErr) throw profileErr;
+
+            // 🛑 حماية قوية: إذا كانت القائمة فارغة، هذا يعني أن Supabase رفضت التعديل!
+            if (!updatedProfile || updatedProfile.length === 0) {
+                showToast("تم رفض التعديل من قاعدة البيانات! يرجى تنفيذ كود الـ SQL.", "error");
+                return; // إيقاف العملية فوراً حتى لا تفسد النقاط
+            }
+
+            // 3. إضافة النقاط للفريق (تتم فقط إذا تأكدنا أن الطالب دخل الفريق)
+            if (studentXp > 0) {
+                const currentTeamScore = currentTeam.total_score || 0;
+                await supabase.from('teams').update({ total_score: currentTeamScore + studentXp }).eq('id', teamId);
+                
+                try {
+                    await supabase.from('team_score_logs').insert({
+                        team_id: teamId,
+                        contributor_id: userId,
+                        amount: studentXp,
+                        reason: 'نقاط الانضمام المبدئية'
+                    });
+                } catch(logErr) {
+                    console.warn("تم تجاهل خطأ اللوج");
+                }
+            }
+
+            // 4. إزالة الطلب من قائمة الطلبات
+            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
+            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
+
+            showToast(`تم قبول ${userName} وإضافته للفريق بنجاح!`, 'success');
+        } else {
+            // حالة الرفض
+            const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
+            await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
+            showToast(`تم رفض طلب ${userName}`, 'neutral');
+            window.closeModal('student-details-modal');
+        }
+        
+        // إعادة تحميل الواجهة لتحديث القوائم والنقاط
+        setTimeout(() => location.reload(), 1500);
+
+    } catch (e) {
+        console.error("Request Action Error:", e);
+        showToast("فشل في تنفيذ الإجراء", "error");
+    }
+};
 window.confirmKickMember = (teamId, memberUid, memberName) => {
     openConfirmModal(
         `Are you sure you want to remove "${memberName}"? They will keep their points, and team score will not be affected.`,

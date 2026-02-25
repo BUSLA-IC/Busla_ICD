@@ -1399,9 +1399,7 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
         } else {
             document.getElementById('tdm-members-list').innerHTML = '<p class="text-xs text-gray-500 text-center py-10">لا يوجد أعضاء.</p>';
         }
-
-        // 5. إعداد أزرار التفاعل السفلية
-        const actionCont = document.getElementById('tdm-action-container');
+const actionCont = document.getElementById('tdm-action-container');
         if (context === 'invite') {
             actionCont.innerHTML = `
                 <div class="flex flex-col sm:flex-row gap-3 w-full">
@@ -1419,10 +1417,14 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
             } else if (isFull) {
                 actionCont.innerHTML = `<div class="px-8 py-3.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-ban"></i> عذراً، الفريق مكتمل</div>`;
             } else {
+                // 💡 التعديل هنا: إضافة حقل كتابة السبب
                 actionCont.innerHTML = `
-                    <button onclick="window.applyForTeam('${teamId}', '${teamData.name}')" class="w-full sm:w-auto px-10 py-4 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(0,106,103,0.4)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
-                        <i class="fas fa-paper-plane"></i> تقديم طلب انضمام
-                    </button>
+                    <div class="flex flex-col gap-2 w-full md:w-80">
+                        <textarea id="join-reason-input" placeholder="لماذا تريد الانضمام وماذا ستقدم للفريق؟" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:border-b-primary outline-none resize-none h-16 transition-colors"></textarea>
+                        <button onclick="window.applyForTeam('${teamId}', '${teamData.name}')" class="w-full px-6 py-3 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(0,106,103,0.4)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
+                            <i class="fas fa-paper-plane"></i> إرسال الطلب
+                        </button>
+                    </div>
                 `;
             }
         }
@@ -1434,6 +1436,11 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
 
 window.applyForTeam = async (teamId, teamName) => {
     try {
+        const reasonInput = document.getElementById('join-reason-input');
+        const reasonText = reasonInput ? reasonInput.value.trim() : '';
+
+        if(!reasonText) return showToast("يرجى كتابة سبب الانضمام.", "warning");
+
         const { data: teamInfo } = await supabase.from('teams').select('requests').eq('id', teamId).single();
         const currentReqs = teamInfo?.requests || [];
         
@@ -1444,14 +1451,15 @@ window.applyForTeam = async (teamId, teamName) => {
         currentReqs.push({
             uid: currentUser.id,
             name: currentUserData.full_name || 'طالب',
-            status: 'pending' // يمكن لليدر حذفه في حالة الرفض
+            reason: reasonText, // 💡 حفظ السبب
+            status: 'pending',
+            date: new Date().toISOString()
         });
 
         await supabase.from('teams').update({ requests: currentReqs }).eq('id', teamId);
         
         showToast(`تم إرسال طلب الانضمام لفريق ${teamName} بنجاح!`, "success");
         window.closeModal('team-details-modal');
-        // تحديث الواجهة 
         window.viewTeamDetails(teamId, null, 'browse');
 
     } catch (e) {
@@ -1459,30 +1467,63 @@ window.applyForTeam = async (teamId, teamName) => {
         showToast("فشل في إرسال الطلب", "error");
     }
 };
-
 window.acceptTeamInvite = async (inviteId, teamId) => {
     try {
-        // تحديث البروفايل الخاص بالطالب
-        await supabase.from('profiles').update({ team_id: teamId, joined_team_at: new Date() }).eq('id', currentUser.id);
-        // حذف الدعوة (أو تغيير حالتها)
+        // 1. جلب نقاط الطالب الحالية
+        const { data: prof } = await supabase.from('profiles').select('total_xp').eq('id', currentUser.id).single();
+        const studentXp = prof?.total_xp || 0;
+
+        // 2. تحديث البروفايل الخاص بالطالب ليصبح ضمن الفريق
+        const { error: profileError } = await supabase.from('profiles').update({ team_id: teamId }).eq('id', currentUser.id);
+        if (profileError) throw profileError;
+
+        // 3. إذا كان الطالب يمتلك نقاط، قم بإضافتها للفريق
+        if (studentXp > 0) {
+            const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
+            const currentTeamScore = teamInfo?.total_score || 0;
+            
+            await supabase.from('teams').update({ total_score: currentTeamScore + studentXp }).eq('id', teamId);
+            
+            // تسجيل مساهمة الطالب في السجل
+            await supabase.from('team_score_logs').insert({
+                team_id: teamId,
+                contributor_id: currentUser.id,
+                amount: studentXp,
+                reason: 'نقاط الانضمام المبدئية'
+            });
+        }
+
+        // 4. حذف الدعوة
         await supabase.from('team_invitations').delete().eq('id', inviteId);
         
-        showToast("تهانينا! لقد انضممت للفريق.", "success");
+        showToast("تهانينا! لقد انضممت للفريق وتمت إضافة نقاطك لصالحه.", "success");
         setTimeout(() => window.location.reload(), 1500);
     } catch(e) {
-        console.error(e);
+        console.error("Accept Invite Error:", e);
         showToast("حدث خطأ أثناء الانضمام", "error");
     }
 };
 
 window.rejectTeamInvite = async (inviteId) => {
     try {
-        await supabase.from('team_invitations').delete().eq('id', inviteId);
+        // 1. حذف الدعوة
+        const { error } = await supabase.from('team_invitations').delete().eq('id', inviteId);
+        if (error) throw error;
+
         showToast("تم رفض الدعوة.", "info");
         window.closeModal('team-details-modal');
-        window.openStudentInvites(); // تحديث قائمة الدعوات
+        
+        // 2. تحديث قائمة الدعوات المفتوحة
+        window.openStudentInvites(); 
+        
+        // 3. تحديث رقم الإشعار (البادج) الخارجي لكي يختفي الرقم
+        if (typeof checkPendingInvitesBadge === 'function') {
+            await checkPendingInvitesBadge();
+        }
+
     } catch(e) {
-        console.error(e);
+        console.error("Reject Invite Error:", e);
+        showToast("حدث خطأ أثناء الرفض", "error");
     }
 };
 
