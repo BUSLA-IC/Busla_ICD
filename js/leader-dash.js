@@ -303,7 +303,7 @@ function updateHeaderInfo(user, team) {
     };
 
     const userPoints = user.total_xp || user.xp_points || 0;
-    const teamPoints = team.total_score || 0;
+    const teamPoints = (team && team.total_score) ? team.total_score : 0;
 
     // Get the full rank object to extract title, level, and color
     const getRankObject = (points, dataSet) => {
@@ -341,23 +341,40 @@ function updateHeaderInfo(user, team) {
     }
 
     // Set User and Team Names
-    const userName = user.full_name || "Busla User";
-    const teamName = team.name || "My Team";
+    const userName = user.full_name || "طالب بوصلة";
+    const teamName = (team && team.name) ? team.name : "بدون فريق";
     
-    // Assign the real user's name to the leader's spot (since current user IS the leader)
-    const leaderName = user.full_name || "Team Leader"; 
-
     safeText('sidebar-team-name', teamName);
-    safeText('sidebar-leader-name', leaderName);
     safeText('header-user-name', userName);
     safeText('my-points', userPoints);
     safeText('stat-team-score', teamPoints);
 
+    // 💡 التعديل الأهم: جلب اسم الليدر الحقيقي بدلاً من اسم الطالب
+    const leaderNameEl = document.getElementById('sidebar-leader-name');
+    if (leaderNameEl) {
+        if (!team || !team.leader_id) {
+            leaderNameEl.innerText = "لا يوجد";
+        } else {
+            // وضع علامة تحميل مؤقتة حتى يأتي الاسم من قاعدة البيانات
+            leaderNameEl.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-500 text-[10px]"></i>';
+            
+            // جلب الاسم في الخلفية
+            supabase.from('profiles').select('full_name').eq('id', team.leader_id).single()
+                .then(({ data, error }) => {
+                    if (!error && data) {
+                        leaderNameEl.innerHTML = `${data.full_name}`;
+                    } else {
+                        leaderNameEl.innerText = "غير معروف";
+                    }
+                });
+        }
+    }
+
     // Update Team Logo
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
-        let rawTeamLogo = team.logo_url;
-        sidebarLogoEl.src = resolveImageUrl(rawTeamLogo, 'team');
+        let rawTeamLogo = team ? team.logo_url : null;
+        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/icon.jpg";
     }
 
     // Update User Avatar
@@ -367,6 +384,8 @@ function updateHeaderInfo(user, team) {
         headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/icon.jpg";
     }
 }
+
+
 window.switchTab = function(id) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => {
@@ -1836,49 +1855,79 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
         showToast("فشل في تنفيذ الإجراء", "error");
     }
 };
+// دالة طرد طالب من الفريق (شاملة الخصم المحاسبي والحماية)
 window.confirmKickMember = (teamId, memberUid, memberName) => {
     openConfirmModal(
-        `Are you sure you want to remove "${memberName}"? They will keep their points, and team score will not be affected.`,
+        `هل أنت متأكد من طرد "${memberName}"؟\nسيحتفظ الطالب بجميع نقاطه الشخصية، ولكن سيتم سحب النقاط التي ساهم بها من رصيد الفريق.`,
         async () => {
+            closeModal('confirm-modal');
+            showToast("جاري تنفيذ عملية الطرد، يرجى الانتظار...", "info");
+
             try {
-                await supabase
+                // 1. حساب النقاط التي ساهم بها الطالب في هذا الفريق
+                const { data: logs } = await supabase.from('team_score_logs')
+                    .select('amount, id')
+                    .eq('team_id', teamId)
+                    .eq('contributor_id', memberUid);
+
+                let totalContributed = 0;
+                let logIds = [];
+                if (logs && logs.length > 0) {
+                    logs.forEach(l => { 
+                        totalContributed += l.amount; 
+                        logIds.push(l.id); 
+                    });
+                }
+
+                // 2. إزالة الطالب من الفريق (مع الحماية من الرفض الصامت باستخدام .select)
+                const { data: updatedProfile, error: kickError } = await supabase
                     .from('profiles')
                     .update({ team_id: null })
-                    .eq('id', memberUid);
+                    .eq('id', memberUid)
+                    .select();
 
-                showToast(`Removed ${memberName} successfully`, 'success');
-                setTimeout(() => location.reload(), 1000);
+                if (kickError) throw kickError;
+
+                // إذا رجعت القائمة فارغة، معناه أن قاعدة البيانات رفضت التعديل بسبب الصلاحيات
+                if (!updatedProfile || updatedProfile.length === 0) {
+                    throw new Error("لم يتم طرد الطالب. يرجى التأكد من صلاحيات قاعدة البيانات (RLS).");
+                }
+
+                // 3. خصم مساهمات الطالب من نقاط الفريق وحذف سجلات المساهمة
+                if (totalContributed > 0) {
+                    // أ) جلب نقاط الفريق الحالية
+                    const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
+                    const currentTeamScore = teamInfo?.total_score || 0;
+                    
+                    // ب) حساب النقاط الجديدة (مع التأكد أنها لا تقل عن الصفر)
+                    const newTeamScore = Math.max(0, currentTeamScore - totalContributed);
+                    
+                    // ج) تحديث نقاط الفريق
+                    await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', teamId);
+                    
+                    // د) مسح السجلات الخاصة بهذا الطالب في هذا الفريق
+                    if (logIds.length > 0) {
+                        await supabase.from('team_score_logs').delete().in('id', logIds);
+                    }
+                }
+
+                showToast(`تم طرد ${memberName} وسحب مساهماته بنجاح.`, 'success');
+                
+                // إعادة تحميل الصفحة لتحديث الواجهة والترتيب
+                setTimeout(() => location.reload(), 1500);
+
             } catch (error) {
                 console.error("Kick Error:", error);
-                showToast("Failed to remove member", 'error');
+                showToast(error.message || "فشل في إزالة العضو من الفريق.", 'error');
             }
         }
     );
 };
+// ==========================================
+// LEAVE TEAM & LEADERSHIP HANDOVER
+// ==========================================
 
-window.confirmLeaveTeam = async () => {
-    const newLeaderId = document.getElementById('new-leader-select').value;
-    const isSolo = (!currentTeam.members || currentTeam.members.length <= 1);
-    
-    if (!isSolo && !newLeaderId) return showToast("You must select a new leader first", "error");
-
-    try {
-        if (newLeaderId) {
-            await supabase.from('teams').update({ leader_id: newLeaderId }).eq('id', currentTeam.team_id);
-            await supabase.from('profiles').update({ role: 'leader' }).eq('id', newLeaderId);
-        }
-
-        await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', currentUser.id);
-
-        showToast("Left team successfully", "success");
-        setTimeout(() => window.location.href = "student-dash.html", 1500);
-
-    } catch (e) {
-        console.error(e);
-        showToast("Error leaving team", "error");
-    }
-};
-
+// 1. دالة فتح نافذة المغادرة (تُجهز القائمة بناءً على عدد الأعضاء)
 window.openLeaveTeamModal = async () => {
     const modal = document.getElementById('leave-team-modal');
     const select = document.getElementById('new-leader-select');
@@ -1886,46 +1935,143 @@ window.openLeaveTeamModal = async () => {
     if (modal) modal.classList.remove('hidden');
     if (!select) return;
 
-    select.innerHTML = '<option value="" disabled selected>Loading candidates...</option>';
+    select.innerHTML = '<option value="" disabled selected>جاري فحص بيانات الفريق...</option>';
     select.disabled = true;
 
     if (!currentTeam || !currentTeam.members) {
-        select.innerHTML = '<option value="" disabled>No team data</option>';
+        select.innerHTML = '<option value="" disabled>خطأ في تحميل البيانات</option>';
         return;
     }
 
     try {
+        // فلترة الأعضاء لاستبعاد الليدر الحالي
         const otherMembersIds = currentTeam.members.filter(uid => uid !== currentUser.id);
 
         if (otherMembersIds.length === 0) {
-            select.innerHTML = '<option value="" disabled selected>You are the only member</option>';
+            // حالة 1: الليدر بمفرده
+            select.innerHTML = '<option value="" disabled selected>أنت العضو الوحيد (سيتم حذف الفريق بالكامل)</option>';
             return;
         }
 
+        // حالة 2: يوجد أعضاء آخرين
         const { data: members } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, full_name, total_xp')
             .in('id', otherMembersIds);
 
-        select.innerHTML = '<option value="" disabled selected>-- Select New Leader --</option>';
+        select.innerHTML = '<option value="" disabled selected>-- اختر القائد الجديد أولاً --</option>';
         
-        members.forEach(member => {
-            const name = member.full_name || "Unknown";
-            const points = member.total_xp || 0;
-            
-            const option = document.createElement('option');
-            option.value = member.id;
-            option.text = `${name} (${points} XP)`;
-            select.appendChild(option);
-        });
-        select.disabled = false;
+        if (members) {
+            members.forEach(member => {
+                const name = member.full_name || "مجهول";
+                const points = member.total_xp || 0;
+                
+                const option = document.createElement('option');
+                option.value = member.id;
+                option.text = `${name} (النقاط: ${points} XP)`;
+                select.appendChild(option);
+            });
+            select.disabled = false;
+        }
 
     } catch (error) {
         console.error("Error loading candidates:", error);
-        select.innerHTML = '<option value="" disabled>Error loading</option>';
+        select.innerHTML = '<option value="" disabled>خطأ في جلب الأعضاء</option>';
     }
 };
 
+// 2. دالة تنفيذ المغادرة وتسليم القيادة (المحمية)
+window.confirmLeaveTeam = async () => {
+    const selectEl = document.getElementById('new-leader-select');
+    const newLeaderId = selectEl ? selectEl.value : null;
+    const isSolo = (!currentTeam.members || currentTeam.members.length <= 1);
+    
+    if (!isSolo && !newLeaderId) {
+        return showToast("يجب عليك اختيار أحد أفراد الفريق ليتولى القيادة من بعدك!", "error");
+    }
+
+    const confirmMessage = isSolo 
+        ? "أنت العضو الوحيد. مغادرتك تعني [حذف الفريق نهائياً] بكل بياناته، هل أنت متأكد؟ ستحتفظ بنقاطك الشخصية." 
+        : "هل أنت متأكد من تسليم القيادة ومغادرة الفريق؟ سيتم سحب نقاط مساهماتك من رصيد الفريق، ولكنك ستحتفظ بها في حسابك الشخصي.";
+
+    openConfirmModal(confirmMessage, async () => {
+        closeModal('leave-team-modal');
+        showToast("جاري معالجة البيانات، يرجى الانتظار...", "info");
+
+        try {
+            const teamId = currentTeam.team_id;
+            const myId = currentUser.id;
+
+            if (isSolo) {
+                // 🔴 سيناريو 1: الليدر بمفرده
+                await supabase.from('team_tasks').delete().eq('team_id', teamId);
+                await supabase.from('team_score_logs').delete().eq('team_id', teamId);
+                await supabase.from('team_invitations').delete().eq('from_team_id', teamId);
+                
+                const { error: delTeamErr } = await supabase.from('teams').delete().eq('id', teamId);
+                if (delTeamErr) throw delTeamErr;
+
+                await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', myId);
+
+            } else {
+                // 🟢 سيناريو 2: تسليم القيادة لزميل
+                
+                // 💡 التعديل الأهم: ترقية العضو الجديد مع التأكد من نجاح العملية (.select())
+                const { data: updatedProfile, error: roleErr } = await supabase
+                    .from('profiles')
+                    .update({ role: 'leader' })
+                    .eq('id', newLeaderId)
+                    .select();
+
+                if (roleErr) throw roleErr;
+                
+                // لو الترقية اترفضت من الداتا بيز، نوقف الكود فوراً!
+                if (!updatedProfile || updatedProfile.length === 0) {
+                    throw new Error("فشل في ترقية الطالب إلى ليدر. يرجى تشغيل كود SQL لتحديث صلاحيات RLS.");
+                }
+
+                // تحديث الليدر الجديد في جدول الفريق
+                await supabase.from('teams').update({ leader_id: newLeaderId }).eq('id', teamId);
+
+                // حساب مساهمات الليدر المغادر وخصمها
+                const { data: logs } = await supabase.from('team_score_logs')
+                    .select('amount, id')
+                    .eq('team_id', teamId)
+                    .eq('contributor_id', myId);
+
+                let totalContributed = 0;
+                let logIds = [];
+                if (logs) {
+                    logs.forEach(l => { totalContributed += l.amount; logIds.push(l.id); });
+                }
+
+                if (totalContributed > 0) {
+                    const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
+                    const newTeamScore = Math.max(0, (teamInfo?.total_score || 0) - totalContributed);
+                    
+                    await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', teamId);
+                    
+                    if (logIds.length > 0) {
+                        await supabase.from('team_score_logs').delete().in('id', logIds);
+                    }
+                }
+
+                // تجريد الليدر القديم من صلاحياته
+                await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', myId);
+            }
+
+            showToast("تمت العملية بنجاح! سيتم توجيهك لصفحة الطالب...", "success");
+            
+            setTimeout(() => {
+                window.location.replace('student-dash.html');
+            }, 2000);
+
+        } catch (e) {
+            console.error("Leave/Handover Team Error:", e);
+            showToast(e.message || "حدث خطأ أثناء تنفيذ العملية، راجع الكونسول.", "error");
+        }
+    });
+};
 
 // ==========================================
 // 10. CALENDAR SYSTEM
