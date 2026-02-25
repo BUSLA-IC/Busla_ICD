@@ -1997,3 +1997,276 @@ function showToast(msg, type='info') {
     container.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3500);
 }
+
+
+// ==========================================
+// 🔔 نظام الإشعارات المتقدم للطالب
+// ==========================================
+
+let studentNotifsCache = [];
+
+// 1. جلب الإشعارات من المصدرين (الليدر والإدارة)
+window.loadStudentNotifications = async () => {
+    const activeTbody = document.getElementById('student-active-tbody');
+    if (activeTbody) activeTbody.innerHTML = '<tr><td colspan="4" class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>';
+
+    try {
+        const teamId = currentTeam?.id || currentTeam?.team_id;
+        const myId = currentUserData.id;
+        if (!teamId) return;
+
+        // جلب إشعارات الفريق (الموجهة للكل أو المخصصة للطالب)
+        const { data: teamPosts } = await supabase
+            .from('team_posts')
+            .select('*')
+            .eq('team_id', teamId)
+            .order('created_at', { ascending: false });
+
+        // جلب رسائل الإدارة (الموجهة للفريق)
+        const { data: adminMsgs } = await supabase
+            .from('system_notifications')
+            .select('*')
+            .eq('target_team_id', teamId)
+            .order('created_at', { ascending: false });
+
+        let combined = [];
+
+        // تنظيف وتوحيد بيانات إشعارات الفريق
+        if (teamPosts) {
+            teamPosts.forEach(post => {
+                const isTargetAll = !post.target_members || post.target_members.includes('all');
+                const isTargetMe = post.target_members && post.target_members.includes(myId);
+                
+                if (isTargetAll || isTargetMe) {
+                    combined.push({
+                        ...post,
+                        _sourceType: 'leader',
+                        _targetLevel: isTargetAll ? 'team' : 'personal',
+                        _icon: 'fa-bullhorn',
+                        _color: isTargetAll ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+                        _badgeText: isTargetAll ? 'إشعار فريق' : 'مخصص لك'
+                    });
+                }
+            });
+        }
+
+        // تنظيف وتوحيد بيانات الإدارة
+        if (adminMsgs) {
+            adminMsgs.forEach(msg => {
+                combined.push({
+                    id: msg.id,
+                    title: msg.title,
+                    content: msg.content,
+                    created_at: msg.created_at,
+                    seen_by: msg.seen_by || [],
+                    creator_name: 'إدارة بوصلة',
+                    creator_avatar: '../assets/icons/icon.jpg', // لوجو الموقع
+                    _sourceType: 'admin',
+                    _targetLevel: 'admin',
+                    _icon: 'fa-server',
+                    _color: 'text-red-400 bg-red-500/10 border-red-500/20',
+                    _badgeText: 'رسالة إدارة'
+                });
+            });
+        }
+
+        // ترتيب الجميع بالتاريخ
+        combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        studentNotifsCache = combined;
+
+        window.filterStudentNotifications(); // رسم الجداول بعد الجلب
+
+    } catch (e) {
+        console.error("Error loading student notifs:", e);
+    }
+};
+
+// 2. الفلترة والتصنيف بين (النشط والأرشيف)
+window.filterStudentNotifications = () => {
+    const isArchiveView = !document.getElementById('student-archive-section').classList.contains('hidden');
+    const filterType = document.getElementById('student-notif-filter').value;
+    
+    const activeSearch = document.getElementById('search-active-notifs').value.toLowerCase();
+    const archiveSearch = document.getElementById('search-archive-notifs').value.toLowerCase();
+    const query = isArchiveView ? archiveSearch : activeSearch;
+    
+    const now = new Date();
+    const myId = currentUserData.id;
+
+    let activePosts = [];
+    let archivedPosts = [];
+
+    studentNotifsCache.forEach(post => {
+        // فلترة النوع والبحث
+        if (filterType !== 'all' && post._targetLevel !== filterType) return;
+        if (query && !post.title.toLowerCase().includes(query) && !post.content.toLowerCase().includes(query)) return;
+
+        // التحقق من حالة القراءة
+        let seenData = null;
+        if (post.seen_by && Array.isArray(post.seen_by)) {
+            seenData = post.seen_by.find(item => typeof item === 'object' ? item.uid === myId : item === myId);
+        }
+        const hasSeen = !!seenData;
+
+        // منطق الأرشيف الذكي
+        let isArchived = false;
+        if (post.expiry_date) {
+            const expiry = new Date(post.expiry_date);
+            expiry.setHours(23, 59, 59, 999);
+            if (now > expiry) isArchived = true; // انتهى الميعاد -> أرشيف
+        } else if (hasSeen) {
+            isArchived = true; // تمت قراءته ولا يوجد ميعاد -> أرشيف
+        }
+
+        // تخزين بيانات المشاهدة للرسم
+        post._hasSeen = hasSeen;
+        post._seenAt = (hasSeen && typeof seenData === 'object' && seenData.seen_at) ? new Date(seenData.seen_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+        if (isArchived) archivedPosts.push(post);
+        else activePosts.push(post);
+    });
+
+    renderStudentNotifsTable(activePosts, 'student-active-tbody', false);
+    renderStudentNotifsTable(archivedPosts, 'student-archive-tbody', true);
+};
+
+// 3. رسم الجداول
+function renderStudentNotifsTable(posts, tbodyId, isArchive) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    if (posts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500 italic">لا توجد إشعارات هنا.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = posts.map(post => {
+        const dateStr = new Date(post.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+        
+        // تصميم حالة القراءة
+        const seenBadge = post._hasSeen 
+            ? `<span class="text-green-400 text-xs font-bold"><i class="fas fa-check-double"></i> ${isArchive && post._seenAt ? post._seenAt : 'مقروء'}</span>`
+            : `<span class="bg-b-primary/20 text-b-primary border border-b-primary/30 px-3 py-1 rounded-full text-[10px] font-bold animate-pulse">جديد</span>`;
+
+        return `
+        <tr class="hover:bg-white/5 transition-colors cursor-pointer group" onclick="window.openStudentPostDetail('${post.id}')">
+            <td class="p-4 pr-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${post._color}">
+                        <i class="fas ${post._icon}"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-sm group-hover:text-b-primary transition-colors">${post.title}</h4>
+                            <span class="text-[9px] px-2 py-0.5 rounded border ${post._color}">${post._badgeText}</span>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-4 text-center text-xs text-gray-400 font-mono">${dateStr}</td>
+            <td class="p-4 text-center text-xs text-gray-300">
+                <div class="flex items-center justify-center gap-2">
+                    <img src="${post.creator_avatar && post.creator_avatar !== 'null' ? post.creator_avatar : '../assets/icons/icon.jpg'}" class="w-6 h-6 rounded-full object-cover bg-black">
+                    ${post.creator_name}
+                </div>
+            </td>
+            <td class="p-4 text-center">${seenBadge}</td>
+        </tr>
+        `;
+    }).join('');
+}
+
+// 4. التبديل بين النشط والأرشيف
+window.toggleStudentArchive = (showArchive) => {
+    document.getElementById('student-active-section').classList.toggle('hidden', showArchive);
+    document.getElementById('student-archive-section').classList.toggle('hidden', !showArchive);
+    window.filterStudentNotifications(); // إعادة التصفية
+};
+
+// 5. فتح تفاصيل الإشعار (وتسجيل القراءة في قاعدة البيانات بالوقت والتاريخ)
+window.openStudentPostDetail = async (postId) => {
+    const post = studentNotifsCache.find(p => p.id === postId);
+    if (!post) return;
+
+    const modal = document.getElementById('student-post-detail-modal');
+    const contentBox = document.getElementById('student-modal-content');
+    const dateStr = new Date(post.created_at).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    
+    // بناء عناصر المرفقات
+    const linkHtml = post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> فتح الرابط المرفق</a>` : '';
+    const expiryHtml = post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> الموعد النهائي: ${new Date(post.expiry_date).toLocaleDateString('ar-EG')}</div>` : '';
+
+    let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/icon.jpg';
+
+    contentBox.innerHTML = `
+        <div class="flex justify-between items-start mb-6 border-b border-white/5 pb-5">
+            <div class="flex items-center gap-4">
+                <img src="${avatar}" class="w-16 h-16 rounded-xl object-cover border-2 border-white/10 bg-black shadow-lg">
+                <div>
+                    <h4 class="text-white font-bold text-xl">${post.creator_name}</h4>
+                    <span class="text-xs text-gray-500"><i class="far fa-clock"></i> ${dateStr}</span>
+                </div>
+            </div>
+            <span class="px-3 py-1.5 rounded-lg text-xs font-bold uppercase border ${post._color}">
+                <i class="fas ${post._icon} mr-1"></i> ${post._badgeText}
+            </span>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-white mb-4 leading-tight">${post.title}</h2>
+            <div class="text-gray-200 text-sm leading-loose whitespace-pre-wrap bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner">${post.content}</div>
+        </div>
+
+        ${(linkHtml || expiryHtml) ? `<div class="flex flex-col sm:flex-row gap-3">${linkHtml}${expiryHtml}</div>` : ''}
+    `;
+    
+    modal.classList.remove('hidden');
+
+// 💡 تسجيل المشاهدة بالوقت والتاريخ بشكل آمن
+    if (!post._hasSeen) {
+        try {
+            const myId = currentUserData.id;
+            const newSeenEntry = { uid: myId, seen_at: new Date().toISOString() };
+            
+            // حماية المصفوفة في حال كانت فارغة في قاعدة البيانات
+            let currentSeenArray = Array.isArray(post.seen_by) ? post.seen_by : [];
+            const updatedSeenBy = [...currentSeenArray, newSeenEntry];
+
+            const tableName = post._sourceType === 'leader' ? 'team_posts' : 'system_notifications';
+            
+            // نطلب إرجاع البيانات للتأكد من نجاح التحديث
+            const { data, error } = await supabase
+                .from(tableName)
+                .update({ seen_by: updatedSeenBy })
+                .eq('id', post.id)
+                .select();
+            
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                console.warn("لم يتم تسجيل المشاهدة! تأكد من تشغيل كود الـ SQL الخاص بصلاحيات التحديث.");
+            } else {
+                // تحديث محلي لكي لا يرسل الطلب مرة أخرى إذا أغلق وفتح الإشعار
+                post.seen_by = updatedSeenBy;
+                post._hasSeen = true;
+                window.filterStudentNotifications(); // تحديث علامة "جديد" في الجدول
+            }
+
+        } catch (e) {
+            console.error("فشل في تسجيل القراءة:", e);
+        }
+    }
+};
+
+window.closeStudentPostDetail = () => {
+    document.getElementById('student-post-detail-modal').classList.add('hidden');
+    window.filterStudentNotifications(); // إعادة الرسم للتأكد من نقل الإشعار للأرشيف لو لزم الأمر
+};
+
+const originalSwitchTab = window.switchTab;
+window.switchTab = (id) => {
+    if (typeof originalSwitchTab === 'function') originalSwitchTab(id);
+    if (id === 'announcements') {
+        window.loadStudentNotifications();
+    }
+};
