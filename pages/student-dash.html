@@ -22,6 +22,24 @@
     </script>
 
     <style>
+        /* منع التمرير الأفقي بشكل قطعي في كل الصفحة */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* التأكد من أن المشغل الرئيسي لا يتجاوز عرض الشاشة */
+main {
+    max-width: 100vw;
+    overflow-x: hidden !important;
+}
+
+/* تحسين استجابة الـ Grid في الشاشات الصغيرة جداً */
+@media (max-width: 400px) {
+    .grid-cols-2 {
+        grid-template-columns: 1fr; /* تحويل الشبكة لعمود واحد في الشاشات الصغيرة جداً */
+    }
+}
         body { font-family: 'Cairo', sans-serif; background-color: #000; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
@@ -30,7 +48,7 @@
         /* Tree Styles */
         .tree-line { position: absolute; right: 23px; top: 35px; bottom: -20px; width: 2px; background: #333; z-index: 0; }
         .last-item .tree-line { display: none; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar { width: 9px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     </style>
 </head>
@@ -616,10 +634,6 @@
                 <div>
                     <h2 class="text-3xl font-black text-white mb-2">رحلة البطل</h2>
                     <p class="text-gray-400">تتبع تقدمك، ارتقِ في الرتب، واصنع مجدك الخاص.</p>
-                </div>
-                <div class="hidden md:block text-left">
-                    <span class="block text-xs text-gray-500 uppercase tracking-widest">نظام الرتب</span>
-                    <span class="block text-b-primary font-bold">V 1.0</span>
                 </div>
             </header>
 
