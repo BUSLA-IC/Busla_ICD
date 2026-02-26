@@ -1,158 +1,279 @@
-import { auth, onAuthStateChanged } from './firebase-config.js';
-import { submitTeamRequest, getUserTeamStatus } from './team-system.js';
+import { supabase } from './supabase-config.js';
 
-// --- Global Variables ---
 let currentUser = null;
+let currentRequestId = null;
+let isEditMode = false;
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Check Auth State
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUser = user;
-            await checkUserStatus(user.uid);
-        } else {
-            window.location.href = "auth.html";
-        }
-    });
-
-    // Handle Form Submission
-    document.getElementById('create-team-form').addEventListener('submit', handleFormSubmit);
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuthAndLoadState();
+    setupCheckboxes();
+    
+    document.getElementById('team-request-form').addEventListener('submit', handleFormSubmit);
 });
 
-// --- Logic Functions ---
+async function checkAuthAndLoadState() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+    currentUser = user;
 
-/**
- * Check if user is eligible to create a team
- * @param {string} uid 
- */
-async function checkUserStatus(uid) {
-    const status = await getUserTeamStatus(uid);
-    
-    if (status) {
-        if (status.inTeam) {
-            showToast("أنت بالفعل عضو في فريق! سيتم توجيهك...", "error");
-            setTimeout(() => window.location.href = "student-dash.html", 2000);
-        } else if (status.hasPendingRequest) {
-            renderSuccessState("لديك طلب قيد المراجعة حالياً. يرجى انتظار موافقة الإدارة.");
-            document.getElementById('create-team-form').remove(); 
+const { data: request, error } = await supabase
+        .from('team_requests')
+        .select('*')
+        .eq('requester_id', currentUser.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    document.getElementById('loading-state').classList.add('hidden');
+
+    if (!request) {
+        showFormView();
+    } else {
+        const submittedDate = new Date(request.submitted_at);
+        const now = new Date();
+        const diffTime = Math.abs(now - submittedDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const daysLeft = 30 - diffDays;
+
+        if (daysLeft <= 0) {
+            showFormView();
+        } else {
+            if (request.status === 'approved') {
+                window.location.href = 'leader-dash.html';
+            } else {
+                currentRequestId = request.id;
+                showStatusView(request, daysLeft);
+            }
         }
     }
 }
 
-/**
- * Handle form submission logic
- * @param {Event} e 
- */
-async function handleFormSubmit(e) {
-    e.preventDefault();
+function showFormView(requestData = null) {
+    document.getElementById('status-view').classList.add('hidden');
+    document.getElementById('form-view').classList.remove('hidden');
     
-    // UI Loading State
-    const btn = document.getElementById('submit-btn');
-    const originalContent = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin animate-spin"></i> جاري المعالجة...';
-    btn.disabled = true;
-    btn.classList.add('opacity-75', 'cursor-not-allowed');
+    if (requestData) {
+        isEditMode = true;
+        document.getElementById('req-name').value = requestData.team_name || '';
+        document.getElementById('req-specialization').value = requestData.specialization || '';
+        document.getElementById('req-logo').value = requestData.logo_url || '';
+        document.getElementById('req-uni').value = requestData.university || '';
+        document.getElementById('req-gov').value = requestData.governorate || '';
+        document.getElementById('req-size').value = requestData.expected_size || '';
+        
+        // 💡 إزالة الـ % من الرقم عند وضعها في الـ Input من نوع Number
+        let gpaRaw = requestData.leader_gpa || '';
+        document.getElementById('req-gpa').value = gpaRaw.replace('%', '').trim();
+        
+        document.getElementById('req-reason').value = requestData.reason || '';
+        document.getElementById('btn-submit-req').innerText = "تحديث بيانات الطلب";
+    } else {
+        isEditMode = false;
+    }
+}
 
-    // Collect Data
-    const teamData = {
-        name: document.getElementById('team-name').value.trim(),
-        logo: document.getElementById('team-logo').value.trim() || 'https://placehold.co/200?text=Team+Logo',
-        university: document.getElementById('uni-name').value.trim(),
-        governorate: document.getElementById('gov-name').value,
-        members_count: document.getElementById('members-count').value,
-        reason: document.getElementById('reason').value.trim()
+function showStatusView(request, daysLeft) {
+    document.getElementById('form-view').classList.add('hidden');
+    document.getElementById('status-view').classList.remove('hidden');
+
+    document.getElementById('status-team-name').innerText = request.team_name;
+    document.getElementById('status-logo').src = request.logo_url || '../assets/icons/icon.jpg';
+    document.getElementById('sv-uni').innerText = request.university;
+    document.getElementById('sv-gov').innerText = request.governorate;
+    document.getElementById('sv-spec').innerText = request.specialization;
+    document.getElementById('sv-size').innerText = `${request.expected_size} أفراد`;
+    document.getElementById('sv-gpa').innerText = request.leader_gpa; // 💡 إضافة التقدير في الـ Status View
+
+    document.getElementById('status-countdown').innerText = `${daysLeft} يوم`;
+
+    const badgeContainer = document.getElementById('status-badge-container');
+    const headerBg = document.getElementById('status-header-bg');
+    const rejectionAlert = document.getElementById('rejection-alert');
+    const actionBtns = document.getElementById('action-buttons-container');
+
+    if (request.status === 'pending') {
+        badgeContainer.innerHTML = '<span class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-hourglass-half mr-1"></i> قيد المراجعة من الإدارة</span>';
+        headerBg.style.background = 'linear-gradient(to right, #eab308, transparent)';
+        rejectionAlert.classList.add('hidden');
+        actionBtns.classList.remove('hidden');
+    } 
+    else if (request.status === 'rejected') {
+        badgeContainer.innerHTML = '<span class="bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-times-circle mr-1"></i> تم رفض الطلب</span>';
+        headerBg.style.background = 'linear-gradient(to right, #ef4444, transparent)';
+        
+        rejectionAlert.classList.remove('hidden');
+        document.getElementById('rejection-reason-text').innerText = request.rejection_reason || 'لم يتم كتابة سبب محدد.';
+        actionBtns.classList.add('hidden');
+    }
+    else if (request.status === 'cancelled') {
+        badgeContainer.innerHTML = '<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-ban mr-1"></i> قمت بإلغاء الطلب</span>';
+        headerBg.style.background = 'linear-gradient(to right, #6b7280, transparent)';
+        rejectionAlert.classList.add('hidden');
+        actionBtns.classList.add('hidden'); 
+    }
+}
+
+function setupCheckboxes() {
+    const chk1 = document.getElementById('chk-privacy');
+    const chk2 = document.getElementById('chk-terms');
+    const chk3 = document.getElementById('chk-declare');
+    const btnSubmit = document.getElementById('btn-submit-req');
+
+    const checkState = () => {
+        btnSubmit.disabled = !(chk1.checked && chk2.checked && chk3.checked);
     };
 
-    // Submit to Backend
-    const result = await submitTeamRequest(currentUser.uid, teamData);
+    chk1.addEventListener('change', checkState);
+    chk2.addEventListener('change', checkState);
+    chk3.addEventListener('change', checkState);
+    checkState();
+}
 
-    if (result.success) {
-        showToast("تم إرسال طلبك بنجاح! 🚀", "success");
-        renderSuccessState("تم استلام طلبك بنجاح! سيقوم فريق الإدارة بمراجعته وتفعيله قريباً.");
-        document.getElementById('create-team-form').remove();
-    } else {
-        showToast(result.message || "حدث خطأ غير متوقع", "error");
-        // Reset Button
-        btn.innerHTML = originalContent;
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('btn-submit-req');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.disabled = true;
+
+    // 💡 دمج الرقم مع علامة الـ % ليتم حفظها كنص في الـ DB
+    const gpaVal = document.getElementById('req-gpa').value.trim();
+    const formattedGpa = gpaVal + '%';
+
+    const requestData = {
+        requester_id: currentUser.id,
+        team_name: document.getElementById('req-name').value.trim(),
+        specialization: document.getElementById('req-specialization').value,
+        logo_url: document.getElementById('req-logo').value.trim(),
+        university: document.getElementById('req-uni').value,
+        governorate: document.getElementById('req-gov').value,
+        expected_size: parseInt(document.getElementById('req-size').value),
+        leader_gpa: formattedGpa,
+        reason: document.getElementById('req-reason').value.trim(),
+        status: 'pending'
+    };
+
+    try {
+        if (isEditMode && currentRequestId) {
+            const { error } = await supabase.from('team_requests').update(requestData).eq('id', currentRequestId);
+            if (error) throw error;
+            showToast("تم تحديث الطلب بنجاح", "success");
+        } else {
+            const { error } = await supabase.from('team_requests').insert([requestData]);
+            if (error) throw error;
+            showToast("تم إرسال الطلب للإدارة بنجاح", "success");
+        }
+
+        setTimeout(() => location.reload(), 1500);
+
+    } catch (error) {
+        console.error(error);
+        showToast("حدث خطأ أثناء الإرسال", "error");
+        btn.innerHTML = originalText;
         btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
     }
 }
 
-// --- UI Helper Functions ---
-
-/**
- * Replace the form with a success message card
- * @param {string} message 
- */
-function renderSuccessState(message) {
-    const container = document.querySelector('.max-w-2xl');
-    container.innerHTML = `
-        <div class="text-center py-12 animate-slide-in">
-            <div class="relative w-24 h-24 mx-auto mb-6">
-                <div class="absolute inset-0 bg-green-500/20 rounded-full animate-ping"></div>
-                <div class="relative w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/30">
-                    <i class="fas fa-check text-4xl text-green-400"></i>
-                </div>
-            </div>
-            
-            <h2 class="text-2xl font-bold mb-4 text-white">الطلب قيد المراجعة</h2>
-            <p class="text-gray-400 mb-8 leading-relaxed max-w-md mx-auto">${message}</p>
-            
-            <a href="student-dash.html" class="inline-flex items-center gap-2 px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-bold transition-all hover:scale-105">
-                <i class="fas fa-home"></i>
-                العودة للرئيسية
-            </a>
-        </div>
-    `;
-}
-
-/**
- * Display a custom toast notification
- * @param {string} message - Text to display
- * @param {string} type - 'success' | 'error' | 'info'
- */
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    
-    // Create Toast Element
-    const toast = document.createElement('div');
-    
-    // Style config based on type
-    let bgClass, iconClass, iconColor;
-    if (type === 'success') {
-        bgClass = 'bg-gray-900/90 border-green-500/50';
-        iconClass = 'fa-check-circle';
-        iconColor = 'text-green-400';
-    } else if (type === 'error') {
-        bgClass = 'bg-gray-900/90 border-red-500/50';
-        iconClass = 'fa-exclamation-circle';
-        iconColor = 'text-red-400';
-    } else {
-        bgClass = 'bg-gray-900/90 border-blue-500/50';
-        iconClass = 'fa-info-circle';
-        iconColor = 'text-blue-400';
+window.editRequest = async () => {
+    const { data: request } = await supabase.from('team_requests').select('*').eq('id', currentRequestId).single();
+    if (request) {
+        showFormView(request);
+        document.getElementById('chk-privacy').checked = true;
+        document.getElementById('chk-terms').checked = true;
+        document.getElementById('chk-declare').checked = true;
+        document.getElementById('btn-submit-req').disabled = false;
     }
+};
 
-    toast.className = `
-        pointer-events-auto flex items-center gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md 
-        transform transition-all duration-300 animate-slide-in ${bgClass}
-    `;
-
-    toast.innerHTML = `
-        <i class="fas ${iconClass} ${iconColor} text-xl"></i>
-        <p class="text-sm font-medium text-white">${message}</p>
-    `;
-
-    // Append to container
-    container.appendChild(toast);
-
-    // Remove after 3 seconds
+// ==========================================
+// 💡 نظام نافذة التأكيد المخصصة (Custom Confirm)
+// ==========================================
+window.showCustomConfirm = (title, message, onConfirmCallback) => {
+    const modal = document.getElementById('custom-confirm-modal');
+    const card = document.getElementById('custom-confirm-card');
+    
+    // تعيين النصوص
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-message').innerText = message;
+    
+    // إظهار النافذة مع أنيميشن الدخول
+    modal.classList.remove('hidden');
     setTimeout(() => {
-        toast.classList.add('animate-fade-out'); // Add fade out animation
-        toast.addEventListener('animationend', () => {
-            toast.remove();
-        });
-    }, 4000);
-}
+        modal.classList.remove('opacity-0');
+        card.classList.remove('scale-95');
+        card.classList.add('scale-100');
+    }, 10);
+
+    // دالة إغلاق النافذة
+    const closeModal = () => {
+        modal.classList.add('opacity-0');
+        card.classList.remove('scale-100');
+        card.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+
+    // ربط الأزرار
+    document.getElementById('btn-confirm-no').onclick = closeModal;
+    
+    document.getElementById('btn-confirm-yes').onclick = () => {
+        closeModal();
+        if (onConfirmCallback) onConfirmCallback();
+    };
+};
+
+// ==========================================
+// ACTIONS (EDIT & CANCEL)
+// ==========================================
+window.editRequest = async () => {
+    const { data: request } = await supabase.from('team_requests').select('*').eq('id', currentRequestId).single();
+    if (request) {
+        showFormView(request);
+        document.getElementById('chk-privacy').checked = true;
+        document.getElementById('chk-terms').checked = true;
+        document.getElementById('chk-declare').checked = true;
+        document.getElementById('btn-submit-req').disabled = false;
+    }
+};
+
+window.cancelRequest = () => {
+    // 💡 استخدام النافذة المخصصة بدلاً من confirm() الخاصة بالمتصفح
+    window.showCustomConfirm(
+        "إلغاء الطلب الحالي",
+        "هل أنت متأكد من إلغاء الطلب؟ لن تتمكن من التقديم لفريق جديد حتى مرور 30 يوم من تاريخ هذا الطلب.",
+        async () => {
+            try {
+                const { error } = await supabase.from('team_requests').update({ status: 'cancelled' }).eq('id', currentRequestId);
+                if (error) throw error;
+                
+                window.showToast("تم إلغاء الطلب بنجاح", "info");
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                console.error(error);
+                window.showToast("حدث خطأ أثناء الإلغاء", "error");
+            }
+        }
+    );
+};
+window.showToast = (msg, type = 'info') => {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const colorClass = type === 'success' ? 'border-green-500 text-green-400' : type === 'error' ? 'border-red-500 text-red-400' : 'border-blue-500 text-blue-400';
+    const iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    toast.className = `bg-black/80 px-6 py-4 rounded-xl border-l-4 ${colorClass} shadow-2xl backdrop-blur-md flex items-center gap-3 animate-[slideIn_0.3s_ease-out] transition-opacity duration-300`;
+    toast.innerHTML = `<i class="fas ${iconClass} text-lg"></i><span class="text-white text-sm font-bold">${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};

@@ -3,134 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنشاء فريق | بوصلة</title>
+    <title>تأسيس فريق | Busla</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { 'b-bg': '#000000', 'b-surface': '#111111', 'b-primary': '#006A67' },
-                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
-                    animation: {
-                        'slide-in': 'slideIn 0.3s ease-out',
-                        'fade-out': 'fadeOut 0.3s ease-in forwards'
-                    },
-                    keyframes: {
-                        slideIn: {
-                            '0%': { transform: 'translateY(-20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        },
-                        fadeOut: {
-                            '0%': { opacity: '1' },
-                            '100%': { opacity: '0' },
-                        }
-                    }
+                    colors: { 'b-bg': '#000000', 'b-surface': '#0a0a0a', 'b-primary': '#006A67' },
+                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #000; }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #006A67; }
+        body { font-family: 'Cairo', sans-serif; background-color: #000; color: #fff; overflow-x: hidden; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #006A67; border-radius: 4px; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* تأثيرات الإضاءة والخلفية */
+        .split-card { background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .brand-panel { background: radial-gradient(circle at top right, rgba(0, 106, 103, 0.2), transparent 70%), url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'none\\' fill-rule=\\'evenodd\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.02\\'%3E%3Cpath d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); }
     </style>
 </head>
-<body class="bg-b-bg text-white min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 relative">
 
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div class="absolute top-[-10%] right-[-5%] w-96 h-96 bg-b-primary/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
-    </div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-b-primary/10 blur-[150px] pointer-events-none rounded-full"></div>
 
-    <div class="w-full max-w-2xl bg-b-surface p-8 rounded-2xl border border-white/10 shadow-2xl relative backdrop-blur-sm animate-slide-in">
+    <div class="w-full max-w-7xl relative z-10">
         
-        <a href="student-dash.html" class="absolute top-6 left-6 text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
-            <i class="fas fa-arrow-left text-xl"></i>
-        </a>
+        <button onclick="window.location.href='student-dash.html'" class="absolute -top-12 right-0 text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl">
+            <i class="fas fa-arrow-right"></i> العودة للوحة التحكم
+        </button>
 
-        <div class="text-center mb-10">
-            <div class="w-20 h-20 bg-gradient-to-br from-b-primary to-teal-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-b-primary/20 rotate-3 hover:rotate-0 transition-transform duration-300">
-                <i class="fas fa-users-cog text-3xl text-white"></i>
-            </div>
-            <h1 class="text-3xl font-bold mb-2">تأسيس فريق أكاديمي</h1>
-            <p class="text-gray-400">ابدأ رحلتك كقائد، واجمع زملاءك للتعلم والمنافسة معاً.</p>
+        <div id="loading-state" class="flex flex-col items-center justify-center py-32 split-card rounded-[2.5rem] shadow-2xl min-h-[70vh]">
+            <i class="fas fa-compass fa-spin text-6xl text-b-primary mb-6 filter drop-shadow-[0_0_15px_#006A67]"></i>
+            <p class="text-gray-400 animate-pulse tracking-widest text-lg">جاري فحص حالة حسابك...</p>
         </div>
 
-        <form id="create-team-form" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="group">
-                    <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-b-primary transition-colors">
-                        <i class="fas fa-signature ml-1"></i> اسم الفريق
-                    </label>
-                    <input type="text" id="team-name" required placeholder="مثال: Digital Minds" 
-                           class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all placeholder-gray-600">
+        <div id="form-view" class="hidden animate-[fadeIn_0.5s_ease-out]">
+            <div class="split-card rounded-[2rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden min-h-[80vh]">
+                
+                <div class="lg:w-2/5 brand-panel p-10 lg:p-16 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-l border-white/5">
+                    <div class="relative z-10">
+                        <img src="../assets/icons/icon.jpg" class="w-16 h-16 rounded-2xl mb-8 shadow-2xl border border-white/10" alt="Busla Logo">
+                        <h1 class="text-4xl lg:text-5xl font-black text-white mb-4 leading-[1.3]">ابدأ رحلة القيادة<br><span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-teal-400">وأسس إمبراطوريتك</span></h1>
+                        <p class="text-gray-400 leading-relaxed mb-10 text-sm lg:text-base">
+                            في منصة <strong class="text-white">بوصلة</strong>، القائد هو حجر الأساس. نحن نبحث عن العقول المدبرة القادرة على توجيه فرقهم نحو الابتكار، وتجاوز التحديات التقنية، وحصد النقاط لتصدر التصنيف.
+                        </p>
+                        
+                        <ul class="space-y-6">
+                            <li class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-b-primary shadow-lg"><i class="fas fa-users text-xl"></i></div>
+                                <div><h3 class="font-bold text-white text-lg">كوّن فريقك المثالي</h3><p class="text-xs text-gray-500 mt-1 leading-relaxed">اختر من 2 إلى 5 أعضاء يكملون مهاراتك لبناء قوة تقنية لا تقهر.</p></div>
+                            </li>
+                            <li class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-b-primary shadow-lg"><i class="fas fa-tasks text-xl"></i></div>
+                                <div><h3 class="font-bold text-white text-lg">إدارة المهام وتوزيعها</h3><p class="text-xs text-gray-500 mt-1 leading-relaxed">ستكون المسؤول الأول عن متابعة التكليفات الأسبوعية وإرسالها للإدارة.</p></div>
+                            </li>
+                            <li class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center shrink-0 text-b-primary shadow-lg"><i class="fas fa-crown text-xl"></i></div>
+                                <div><h3 class="font-bold text-white text-lg">تصدر لوحة الشرف</h3><p class="text-xs text-gray-500 mt-1 leading-relaxed">اجمع نقاط الـ XP من خلال الإنجازات واصعد بفريقك لقمة الترتيب العام.</p></div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="group">
-                    <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-purple-400 transition-colors">
-                        <i class="fas fa-image ml-1"></i> رابط الشعار (اختياري)
-                    </label>
-                    <input type="url" id="team-logo" placeholder="https://imgur.com/..." 
-                           class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all placeholder-gray-600">
+
+                <div class="lg:w-3/5 p-8 lg:p-14 bg-black/40 flex flex-col justify-center">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-3"><i class="fas fa-clipboard-list text-b-primary"></i> بيانات الفريق</h2>
+                        <p class="text-sm text-gray-500 mt-1">يرجى تعبئة البيانات بدقة، ستتم مراجعة طلبك من قبل الإدارة.</p>
+                    </div>
+
+                    <form id="team-request-form" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">اسم الفريق <span class="text-red-500">*</span></label>
+                                <input type="text" id="req-name" required class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">التخصص التقني <span class="text-red-500">*</span></label>
+                                <select id="req-specialization" required class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="" disabled selected>اختر المسار...</option>
+                                    <option value="Digital IC Design">Digital IC Design</option>
+                                    <option value="Analog IC Design">Analog IC Design</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">الجامعة <span class="text-red-500">*</span></label>
+                                <select id="req-uni" required class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="" disabled selected>اختر الجامعة</option>
+                                    <optgroup label="الجامعات الحكومية">
+                                        <option value="Zagazig">جامعة الزقازيق</option>
+                                        <option value="Cairo">جامعة القاهرة</option>
+                                        <option value="Alexandria">جامعة الإسكندرية</option>
+                                        <option value="Ain Shams">جامعة عين شمس</option>
+                                        <option value="Mansoura">جامعة المنصورة</option>
+                                        <option value="Assiut">جامعة أسيوط</option>
+                                        <option value="Tanta">جامعة طنطا</option>
+                                        <option value="Helwan">جامعة حلوان</option>
+                                        <option value="Minya">جامعة المنيا</option>
+                                        <option value="Monufia">جامعة المنوفية</option>
+                                        <option value="Suez Canal">جامعة قناة السويس</option>
+                                        <option value="South Valley">جامعة جنوب الوادي</option>
+                                        <option value="Beni Suef">جامعة بني سويف</option>
+                                        <option value="Fayoum">جامعة الفيوم</option>
+                                        <option value="Benha">جامعة بنها</option>
+                                        <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
+                                        <option value="Sohag">جامعة سوهاج</option>
+                                        <option value="Port Said">جامعة بورسعيد</option>
+                                        <option value="Damanhour">جامعة دمنهور</option>
+                                        <option value="Aswan">جامعة أسوان</option>
+                                        <option value="Damietta">جامعة دمياط</option>
+                                        <option value="Suez">جامعة السويس</option>
+                                        <option value="Sadat City">جامعة مدينة السادات</option>
+                                        <option value="Arish">جامعة العريش</option>
+                                        <option value="Luxor">جامعة الأقصر</option>
+                                    </optgroup>
+                                    <optgroup label="جامعات أخرى وخاصة">
+                                        <option value="Al-Azhar">جامعة الأزهر</option>
+                                        <option value="Zewail City">مدينة زويل للعلوم والتكنولوجيا</option>
+                                        <option value="E-JUST">الجامعة المصرية اليابانية (E-JUST)</option>
+                                        <option value="AUC">الجامعة الأمريكية بالقاهرة</option>
+                                        <option value="GUC">الجامعة الألمانية بالقاهرة</option>
+                                        <option value="BUE">الجامعة البريطانية في مصر</option>
+                                        <option value="MUST">جامعة مصر للعلوم والتكنولوجيا</option>
+                                        <option value="MIU">جامعة مصر الدولية</option>
+                                        <option value="Other">جامعة أخرى / معهد</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">المحافظة <span class="text-red-500">*</span></label>
+                                <select id="req-gov" required class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all appearance-none cursor-pointer">
+                                        <option value="" disabled selected>اختر المحافظة</option>
+                                        <option value="Sharqia">الشرقية</option>
+                                        <option value="Cairo">القاهرة</option>
+                                        <option value="Giza">الجيزة</option>
+                                        <option value="Alexandria">الإسكندرية</option>
+                                        <option value="Dakahlia">الدقهلية</option>
+                                        <option value="Red Sea">البحر الأحمر</option>
+                                        <option value="Beheira">البحيرة</option>
+                                        <option value="Fayoum">الفيوم</option>
+                                        <option value="Gharbia">الغربية</option>
+                                        <option value="Ismailia">الإسماعيلية</option>
+                                        <option value="Monufia">المنوفية</option>
+                                        <option value="Minya">المنيا</option>
+                                        <option value="Qalyubia">القليوبية</option>
+                                        <option value="New Valley">الوادي الجديد</option>
+                                        <option value="Suez">السويس</option>
+                                        <option value="Aswan">أسوان</option>
+                                        <option value="Assiut">أسيوط</option>
+                                        <option value="Beni Suef">بني سويف</option>
+                                        <option value="Port Said">بورسعيد</option>
+                                        <option value="Damietta">دمياط</option>
+                                        <option value="South Sinai">جنوب سيناء</option>
+                                        <option value="Kafr El Sheikh">كفر الشيخ</option>
+                                        <option value="Matrouh">مطروح</option>
+                                        <option value="Luxor">الأقصر</option>
+                                        <option value="Qena">قنا</option>
+                                        <option value="North Sinai">شمال سيناء</option>
+                                        <option value="Sohag">سوهاج</option>
+                                        <option value="Other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">عدد الأفراد المتوقع <span class="text-red-500">*</span></label>
+                                <input type="number" id="req-size" required min="2" max="5" class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all" placeholder="الحد الأقصى 5">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-2">تقديرك الحالي او ال GPA <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <input type="number" id="req-gpa" required min="0" max="100" step="0.1" class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 pl-10 text-white focus:border-b-primary focus:bg-black outline-none transition-all dir-ltr text-right" placeholder="مثال : 3.2 | 85% ">
+                                    <span class="absolute left-4 top-3 text-gray-500 font-bold">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2 flex justify-between">
+                                <span>رابط شعار الفريق (Google Drive) <span class="text-red-500">*</span></span>
+                                <span class="text-[10px] text-b-primary font-normal"><i class="fas fa-unlock"></i> اجعل الرابط عاماً</span>
+                            </label>
+                            <div class="relative">
+                                <input type="url" id="req-logo" required class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 pr-12 text-white focus:border-b-primary focus:bg-black outline-none transition-all" placeholder="https://drive.google.com/...">
+                                <i class="fab fa-google-drive absolute right-4 top-3.5 text-gray-500 text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">لماذا ترغب في تأسيس وقيادة هذا الفريق؟ <span class="text-red-500">*</span></label>
+                            <textarea id="req-reason" required rows="3" class="w-full bg-b-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary focus:bg-black outline-none transition-all custom-scroll resize-none" placeholder="حدثنا عن رؤيتك، أهدافك، وما سيميز فريقك عن البقية..."></textarea>
+                        </div>
+
+                        <div class="bg-black/40 border border-white/5 rounded-xl p-5 space-y-3">
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" id="chk-privacy" class="mt-1 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0">
+                                <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors">أوافق على <a href="#" class="text-b-primary hover:underline">سياسة الخصوصية</a>.</span>
+                            </label>
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" id="chk-terms" class="mt-1 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0">
+                                <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors">أوافق على <a href="#" class="text-b-primary hover:underline">شروط الاستخدام</a>.</span>
+                            </label>
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" id="chk-declare" class="mt-1 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0">
+                                <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors">أُقر بصحة البيانات ومسؤوليتي التامة عن قيادة الفريق.</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" id="btn-submit-req" class="w-full bg-gradient-to-r from-b-primary to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white font-black text-lg py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none mt-2">
+                            إرسال الطلب للمراجعة <i class="fas fa-paper-plane ml-2"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="group">
-                    <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-b-primary transition-colors">
-                        <i class="fas fa-university ml-1"></i> الجامعة
-                    </label>
-                    <input type="text" id="uni-name" required placeholder="مثال: جامعة الزقازيق" 
-                           class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all placeholder-gray-600">
+        <div id="status-view" class="hidden animate-[fadeIn_0.5s_ease-out]">
+            <div class="split-card rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden min-h-[70vh] flex flex-col justify-center max-w-4xl mx-auto">
+                <div id="status-header-bg" class="absolute top-0 left-0 w-full h-40 opacity-10 pointer-events-none"></div>
+
+                <div class="text-center mb-10 relative z-10">
+                    <img id="status-logo" src="../assets/icons/icon.jpg" class="w-28 h-28 mx-auto rounded-[2rem] object-cover border-4 border-white/10 bg-black shadow-2xl mb-6">
+                    <h2 id="status-team-name" class="text-4xl font-black text-white mb-4">اسم الفريق</h2>
+                    <div id="status-badge-container" class="inline-block scale-110"></div>
                 </div>
-                <div class="group">
-                    <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-b-primary transition-colors">
-                        <i class="fas fa-map-marker-alt ml-1"></i> المحافظة
-                    </label>
-                    <select id="gov-name" required class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all cursor-pointer appearance-none">
-                        <option value="" disabled selected>اختر المحافظة</option>
-                        <option value="Cairo">القاهرة</option>
-                        <option value="Giza">الجيزة</option>
-                        <option value="Alexandria">الإسكندرية</option>
-                        <option value="Sharqia">الشرقية</option>
-                        <option value="Dakahlia">الدقهلية</option>
-                        <option value="Other">أخرى</option>
-                    </select>
+
+                <div class="flex flex-wrap justify-center gap-4 mb-10 relative z-10">
+                    <div class="bg-black/60 p-4 rounded-2xl border border-white/5 text-center flex-1 min-w-[120px]"><span class="text-[10px] text-gray-500 block mb-2 uppercase tracking-widest">الجامعة</span><span id="sv-uni" class="font-bold text-sm">--</span></div>
+                    <div class="bg-black/60 p-4 rounded-2xl border border-white/5 text-center flex-1 min-w-[120px]"><span class="text-[10px] text-gray-500 block mb-2 uppercase tracking-widest">المحافظة</span><span id="sv-gov" class="font-bold text-sm">--</span></div>
+                    <div class="bg-black/60 p-4 rounded-2xl border border-white/5 text-center flex-1 min-w-[120px]"><span class="text-[10px] text-gray-500 block mb-2 uppercase tracking-widest">التخصص</span><span id="sv-spec" class="font-bold text-sm text-b-primary">--</span></div>
+                    <div class="bg-black/60 p-4 rounded-2xl border border-white/5 text-center flex-1 min-w-[100px]"><span class="text-[10px] text-gray-500 block mb-2 uppercase tracking-widest">عدد الأفراد</span><span id="sv-size" class="font-bold text-sm text-white">--</span></div>
+                    <div class="bg-black/60 p-4 rounded-2xl border border-white/5 text-center flex-1 min-w-[100px]"><span class="text-[10px] text-gray-500 block mb-2 uppercase tracking-widest">المعدل</span><span id="sv-gpa" class="font-bold text-lg font-mono text-yellow-500">--</span></div>
+                </div>
+
+                <div id="rejection-alert" class="hidden bg-red-500/10 border border-red-500/30 p-6 rounded-2xl mb-8 relative z-10">
+                    <h4 class="text-red-400 font-bold mb-3 flex items-center gap-2 text-lg"><i class="fas fa-exclamation-circle"></i> سبب الرفض</h4>
+                    <p id="rejection-reason-text" class="text-gray-300 leading-relaxed"></p>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/10 pt-8 relative z-10">
+                    <div class="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 w-full md:w-auto justify-center">
+                        <i class="fas fa-clock text-gray-400 text-2xl"></i>
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">تقديم طلب جديد بعد</p>
+                            <p id="status-countdown" class="text-xl font-mono font-black text-white leading-none">30 يوم</p>
+                        </div>
+                    </div>
+
+                    <div id="action-buttons-container" class="flex gap-4 w-full md:w-auto">
+                        <button onclick="editRequest()" class="flex-1 md:flex-none bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-xl transition-colors border border-white/10"><i class="fas fa-edit mr-2"></i> تعديل</button>
+                        <button onclick="cancelRequest()" class="flex-1 md:flex-none bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-3 px-8 rounded-xl transition-colors border border-red-500/20"><i class="fas fa-trash mr-2"></i> إلغاء الطلب</button>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="group">
-                <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-b-primary transition-colors">
-                    <i class="fas fa-users ml-1"></i> عدد الأعضاء المتوقع (شاملاً القائد)
-                </label>
-                <input type="number" id="members-count" max="5" min="2" required placeholder="الحد الأقصى 5" 
-                       class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all placeholder-gray-600">
-            </div>
-
-            <div class="group">
-                <label class="block text-sm text-gray-400 mb-2 group-focus-within:text-b-primary transition-colors">
-                    <i class="fas fa-comment-alt ml-1"></i> لماذا تريد إنشاء الفريق؟
-                </label>
-                <textarea id="reason" rows="3" required placeholder="اكتب نبذة مختصرة عن هدفك لتسريع الموافقة..." 
-                          class="w-full bg-black/50 border border-white/10 rounded-xl p-3.5 text-white outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all placeholder-gray-600 resize-none"></textarea>
-            </div>
-
-            <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-b-primary to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-b-primary/20 transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3">
-                <span>إرسال الطلب للمراجعة</span>
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </form>
     </div>
 
-    <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-3 w-full max-w-md pointer-events-none">
-        </div>
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+<div id="custom-confirm-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-[#0a0a0a] border border-white/10 rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden" id="custom-confirm-card">
+            
+            <div class="absolute top-0 right-0 w-full h-32 bg-red-500/10 blur-[50px] pointer-events-none"></div>
 
+            <div class="flex items-center gap-5 mb-4 relative z-10">
+                <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 id="confirm-title" class="text-2xl font-black text-white">تأكيد الإجراء</h3>
+            </div>
+            
+            <p id="confirm-message" class="text-gray-400 text-sm leading-relaxed mb-8 relative z-10">هل أنت متأكد؟</p>
+            
+            <div class="flex gap-4 relative z-10">
+                <button id="btn-confirm-yes" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-1">
+                    نعم، قم بالإلغاء
+                </button>
+                <button id="btn-confirm-no" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 rounded-xl transition-all border border-white/5 hover:border-white/10">
+                    تراجع
+                </button>
+            </div>
+        </div>
+    </div>
     <script type="module" src="../js/create-team.js"></script>
 </body>
 </html>

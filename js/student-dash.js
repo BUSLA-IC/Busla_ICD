@@ -2466,3 +2466,56 @@ window.closeStudentPostDetail = () => {
     window.filterStudentNotifications(); // إعادة الرسم للتأكد من نقل الإشعار للأرشيف لو لزم الأمر
 };
 
+
+
+// ==========================================
+// 💡 نظام الإشعارات المنبثقة (Global Toast)
+// ==========================================
+window.showToast = (msg, type = 'info') => {
+    // 1. البحث عن حاوية الإشعارات أو إنشائها إذا لم تكن موجودة
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        // تثبيت الحاوية في أسفل اليسار
+        container.className = 'fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none';
+        document.body.appendChild(container);
+    }
+
+    // 2. إنشاء الإشعار وتحديد ألوانه بناءً على النوع
+    const toast = document.createElement('div');
+    const colorClass = type === 'success' ? 'border-green-500 text-green-400' 
+                     : type === 'error'   ? 'border-red-500 text-red-400' 
+                     : 'border-blue-500 text-blue-400';
+    
+    const iconClass = type === 'success' ? 'fa-check-circle' 
+                    : type === 'error'   ? 'fa-exclamation-circle' 
+                    : 'fa-info-circle';
+
+    // تصميم زجاجي أنيق متوافق مع هوية بوصلة
+    toast.className = `bg-black/80 px-6 py-4 rounded-xl border-l-4 ${colorClass} shadow-2xl backdrop-blur-md flex items-center gap-3 animate-[slideIn_0.3s_ease-out] transition-opacity duration-300`;
+    
+    toast.innerHTML = `
+        <i class="fas ${iconClass} text-lg"></i>
+        <span class="text-white text-sm font-bold">${msg}</span>
+    `;
+
+    // 3. إضافة الإشعار للشاشة
+    container.appendChild(toast);
+
+    // 4. إخفاء الإشعار تلقائياً بعد 3 ثوانٍ
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};
+
+// أنيميشن الدخول (لو مش موجود في الـ Tailwind Config)
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
