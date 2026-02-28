@@ -45,7 +45,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+// ==========================================
+// 💡 قاموس ترجمة أسماء الجامعات المطور (مضاد للأخطاء)
+// ==========================================
+window.translateUni = (val) => {
+    if (!val || val === 'null' || val === 'undefined') return 'غير محدد';
+    
+    // تنظيف النص من المسافات الزائدة
+    const cleanVal = String(val).trim();
+    
+    const uniTranslations = {
+        "Zagazig": "جامعة الزقازيق", "Cairo": "جامعة القاهرة", "Alexandria": "جامعة الإسكندرية",
+        "Ain Shams": "جامعة عين شمس", "Mansoura": "جامعة المنصورة", "Assiut": "جامعة أسيوط",
+        "Tanta": "جامعة طنطا", "Helwan": "جامعة حلوان", "Minya": "جامعة المنيا",
+        "Monufia": "جامعة المنوفية", "Suez Canal": "جامعة قناة السويس", "South Valley": "جامعة جنوب الوادي",
+        "Beni Suef": "جامعة بني سويف", "Fayoum": "جامعة الفيوم", "Benha": "جامعة بنها",
+        "Kafrelsheikh": "جامعة كفر الشيخ", "Sohag": "جامعة سوهاج", "Port Said": "جامعة بورسعيد",
+        "Damanhour": "جامعة دمنهور", "Aswan": "جامعة أسوان", "Damietta": "جامعة دمياط",
+        "Suez": "جامعة السويس", "Sadat City": "جامعة مدينة السادات", "Arish": "جامعة العريش",
+        "Luxor": "جامعة الأقصر", "Al-Azhar": "جامعة الأزهر", "Zewail City": "مدينة زويل للعلوم والتكنولوجيا",
+        "E-JUST": "الجامعة المصرية اليابانية (E-JUST)", "AUC": "الجامعة الأمريكية", "GUC": "الجامعة الألمانية",
+        "BUE": "الجامعة البريطانية", "MUST": "جامعة مصر للعلوم", "MIU": "جامعة مصر الدولية",
+        "Other": "جامعة أخرى / معهد"
+    };
 
+    // 1. بحث متطابق تماماً
+    if (uniTranslations[cleanVal]) return uniTranslations[cleanVal];
+    
+    // 2. بحث يتجاهل حالة الأحرف (لو الداتابيز فيها zagazig أو ZAGAZIG)
+    const key = Object.keys(uniTranslations).find(k => k.toLowerCase() === cleanVal.toLowerCase());
+    if (key) return uniTranslations[key];
+
+    // 3. لو القيمة مجهولة أو مسجلة أصلاً بالعربي في الداتابيز، رجعها زي ما هي
+    return cleanVal;
+};
 function setupEventListeners() {
     const settingsBtn = document.getElementById('open-settings-btn'); 
     if(settingsBtn) {
@@ -1189,6 +1222,10 @@ window.leaveCurrentTeam = () => {
 // 9. NO-TEAM: INVITATIONS & BROWSER
 // ==========================================
 
+// ==========================================
+// 9. NO-TEAM: INVITATIONS & BROWSER
+// ==========================================
+
 let allSystemTeams = []; // Cache for browser
 
 // التشييك على الدعوات لوضع تنبيه (Badge)
@@ -1248,76 +1285,135 @@ window.openStudentInvites = async () => {
         container.innerHTML = '<p class="text-red-500 text-center py-4">خطأ في جلب الدعوات.</p>';
     }
 };
-
 window.openTeamBrowser = async () => {
     document.getElementById('team-browser-modal').classList.remove('hidden');
     const tbody = document.getElementById('teams-browser-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin"></i> جاري جلب الفرق...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl text-purple-500 mb-2 block"></i> جاري جلب الفرق...</td></tr>';
     
+    const trackFilterDropdown = document.getElementById('team-track-filter');
+    if (trackFilterDropdown) {
+        if (currentUserData && currentUserData.track) {
+            trackFilterDropdown.value = currentUserData.track;
+        } else {
+            trackFilterDropdown.value = "all";
+        }
+    }
+    
+    const searchInput = document.getElementById('team-search-input');
+    const uniFilter = document.getElementById('team-uni-filter');
+    if(searchInput) searchInput.value = "";
+    if(uniFilter) uniFilter.value = "all";
+
     try {
-        const { data: teams, error } = await supabase.from('teams').select('*, profiles!teams_leader_id_fkey(full_name, university)');
+        const { data: teams, error } = await supabase
+            .from('teams')
+            .select(`
+                *,
+                members:profiles!fk_team(id),
+                leader:profiles!teams_leader_id_fkey(full_name, avatar_url, track, university)
+            `);
+            
         if (error) throw error;
         
-        allSystemTeams = teams;
-        window.filterTeams(); // يقوم بالرسم بناءً على الفلتر
+        // 💡 الحل الجذري لمشكلة undefined
+        allSystemTeams = teams.map(t => {
+            // التعامل مع الـ leader كـ Array أو Object لتفادي الـ undefined
+            const leaderData = Array.isArray(t.leader) ? t.leader : t.leader;
+            // التعامل مع الأعضاء كـ Array
+            const membersData = Array.isArray(t.members) ? t.members : [];
+
+            return {
+                ...t,
+                memberCount: membersData.length, // العدد الحقيقي
+                leaderName: leaderData?.full_name || 'غير معروف',
+                leaderAvatar: leaderData?.avatar_url || null,
+                leaderTrack: leaderData?.track || 'Digital IC Design',
+                university: leaderData?.university || (t.university || 'غير محدد')
+            };
+        });
+
+        window.filterTeams(); 
     } catch(e) {
-        console.error(e);
+        console.error("Team Browser Error:", e);
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-10">فشل تحميل قائمة الفرق</td></tr>';
     }
 };
 
 window.filterTeams = () => {
-    const q = document.getElementById('team-search-input')?.value.toLowerCase() || '';
-    const u = document.getElementById('team-uni-filter')?.value || '';
+    const searchInput = document.getElementById('team-search-input');
+    const uniFilter = document.getElementById('team-uni-filter');
+    const trackFilter = document.getElementById('team-track-filter');
+
+    const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const uniVal = uniFilter ? uniFilter.value : 'all';
+    const trackVal = trackFilter ? trackFilter.value : 'all';
+
     const tbody = document.getElementById('teams-browser-list');
-    
-    let filtered = allSystemTeams.filter(t => {
-        const tName = (t.name || '').toLowerCase();
-        const lName = (t.profiles?.full_name || '').toLowerCase();
-        const lUni = t.profiles?.university || '';
+    if(!tbody) return;
+    tbody.innerHTML = '';
+
+    // 💡 الفلترة الشاملة
+    const filtered = allSystemTeams.filter(t => {
+        const matchSearch = (t.name || '').toLowerCase().includes(searchVal) || 
+                            (t.leaderName || '').toLowerCase().includes(searchVal);
         
-        const matchSearch = tName.includes(q) || lName.includes(q);
-        const matchUni = u === '' || lUni === u;
-        return matchSearch && matchUni;
+        const matchUni = (uniVal === 'all' || !uniVal) ? true : (t.university === uniVal);
+        
+        const matchTrack = (trackVal === 'all' || !trackVal) ? true : (t.leaderTrack === trackVal);
+
+        return matchSearch && matchUni && matchTrack;
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-10">لا توجد فرق تطابق بحثك.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">لا توجد فرق مطابقة للبحث</td></tr>`;
         return;
     }
 
-    // Sort by score
-    filtered.sort((a,b) => (b.total_score || 0) - (a.total_score || 0));
-
-    tbody.innerHTML = filtered.map(t => {
-        const teamRank = getRankObject(t.total_score || 0, TEAM_RANKS_DATA);
-        const memCount = (t.members || []).length;
+    // 💡 رسم الجدول
+    filtered.forEach(t => {
+        const logo = (t.logo_url && t.logo_url !== 'null' && t.logo_url !== '') 
+                     ? t.logo_url : '../assets/icons/icon.jpg';
+        const displayUni = window.translateUni(t.university);
+        const leaderAvatar = (t.leaderAvatar && t.leaderAvatar !== 'null' && t.leaderAvatar !== '') 
+                             ? t.leaderAvatar : '../assets/icons/icon.jpg';
         
-        return `
-        <tr class="hover:bg-white/5 transition-colors group">
-            <td class="p-4">
-                <div class="flex items-center gap-3">
-                    <img src="${resolveImageUrl(t.logo_url, 'team')}" class="w-10 h-10 rounded-lg object-cover bg-black border border-white/10">
-                    <div>
-                        <p class="font-bold text-white text-sm">${t.name}</p>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded border mt-1 inline-block" style="color:${teamRank.stage_color}; border-color:${teamRank.stage_color}40">${teamRank.title}</span>
+        const maxMembers = t.max_members || 5;
+        const membersColor = t.memberCount >= maxMembers ? 'text-red-400' : 'text-green-400'; // 💡 تلوين العدد
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+                <td class="p-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${logo}" class="w-10 h-10 rounded-xl border border-white/10 object-cover">
+                        <div>
+                            <p class="font-bold text-white text-sm">${t.name}</p>
+                            <span class="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">${displayUni}</span>
+                        </div>
                     </div>
-                </div>
-            </td>
-            <td class="p-4 text-sm text-gray-300">
-                ${t.profiles?.full_name || 'غير معروف'}
-                <br><span class="text-[10px] text-gray-500"><i class="fas fa-university"></i> ${t.profiles?.university || 'غير محدد'}</span>
-            </td>
-            <td class="p-4 text-center text-sm font-mono ${memCount >= 5 ? 'text-red-400' : 'text-gray-300'}">${memCount}/5</td>
-            <td class="p-4 text-center font-bold font-mono text-b-primary">${(t.total_score || 0).toLocaleString()}</td>
-            <td class="p-4 text-center">
-                <button onclick="window.viewTeamDetails('${t.id}', null, 'browse')" class="px-3 py-1.5 bg-b-primary/10 hover:bg-b-primary text-b-primary hover:text-white rounded-lg text-xs font-bold transition-all">
-                    تفاصيل
-                </button>
-            </td>
-        </tr>`;
-    }).join('');
+                </td>
+                <td class="p-4 text-gray-400 text-sm">
+                    <div class="flex items-center gap-2">
+                        <img src="${leaderAvatar}" class="w-6 h-6 rounded-full border border-white/10 object-cover">
+                        ${t.leaderName}
+                    </div>
+                </td>
+                <td class="p-4 text-center text-sm font-bold font-mono ${membersColor}">
+                    ${t.memberCount} / ${maxMembers}
+                </td>
+                <td class="p-4 text-center text-yellow-500 text-sm font-bold font-mono">
+                    ${t.total_score || 0} XP
+                </td>
+<td class="p-4 text-center">
+    <button onclick="window.viewTeamDetails('${t.id}', null, 'browser')" class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 font-bold px-4 py-2 rounded-lg text-xs transition-colors border border-blue-500/30">
+        <i class="fas fa-info-circle ml-1"></i> التفاصيل
+    </button>
+</td>
+            </tr>
+        `;
+    });
 };
+
+
 
 // 3. عرض بطاقة الفريق الكبيرة (النافذة العملاقة)
 window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => {
@@ -1361,8 +1457,10 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
         document.getElementById('tdm-members-badge').innerText = mems?.length || 0;
         
         document.getElementById('tdm-leader-name').innerText = teamData.profiles?.full_name || 'غير معروف';
-        document.getElementById('tdm-leader-uni').innerText = teamData.profiles?.university || 'غير محدد';
-
+        const tdmLeaderUni = document.getElementById('tdm-leader-uni');
+        if (tdmLeaderUni) {
+            tdmLeaderUni.innerText = window.translateUni(teamData.profiles?.university);
+        }
         // 3. 💡 رسم الكورسات المفعلة بالصور والأسماء
         const coursesPlan = teamData.courses_plan || [];
         const coursesCont = document.getElementById('tdm-courses-list');

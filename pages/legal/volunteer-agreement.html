@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>اتفاقية المتطوعين | Busla Volunteer Agreement</title>
+    <meta name="description" content="اتفاقية الانضمام لفريق إدارة ومتطوعي منصة بوصلة (Busla). الشروط، الصلاحيات، السرية، وحقوق الملكية.">
+    <meta name="keywords" content="Busla, Volunteer Agreement, اتفاقية المتطوعين, فريق بوصلة, إدارة المنصة, Digital IC Design">
+    <meta name="author" content="Ahmed Mohamed Attia">
+    <meta property="og:title" content="اتفاقية المتطوعين | Busla">
+    <meta property="og:description" content="القواعد المنظمة لعمل المتطوعين وإدارة الصلاحيات داخل منصة بوصلة.">
+    
+    <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        'b-bg': '#000000', 
+                        'b-surface': '#0a0a0a', 
+                        'b-primary': '#006A67',
+                        'b-neon': '#a855f7' // لون بنفسجي إداري مميز لهذه الصفحة
+                    },
+                    fontFamily: { 
+                        'cairo': ['Cairo', 'sans-serif'],
+                        'outfit': ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #000; color: #fff; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        /* Typography for Langs */
+        html[lang="ar"] body { font-family: 'Cairo', sans-serif; }
+        html[lang="en"] body { font-family: 'Outfit', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 10px; }
+        
+        /* Glass & Neon Effects */
+        .glass-card { background: rgba(10, 10, 10, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
+        .neon-text { text-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
+        .neon-border { box-shadow: 0 0 20px rgba(168, 85, 247, 0.15); }
+        
+        /* Progress Bar */
+        #reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: #a855f7; z-index: 9999; transition: width 0.1s ease; box-shadow: 0 0 10px #a855f7; }
+        
+        /* Scroll Spy Navigation */
+        .spy-link { position: relative; transition: all 0.3s ease; border-inline-start-width: 2px; border-inline-start-color: transparent; }
+        .spy-link.active { color: #a855f7; font-weight: 700; border-inline-start-color: #a855f7; background: linear-gradient(to right, rgba(168,85,247,0.1), transparent); }
+        html[dir="rtl"] .spy-link.active { background: linear-gradient(to left, rgba(168,85,247,0.1), transparent); }
+        
+        /* Section Reveal Animations */
+        .policy-section { scroll-margin-top: 120px; opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .policy-section.is-visible { opacity: 1; transform: translateY(0); }
+        
+        /* Floating Particles */
+        #particles-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .particle { position: absolute; background: #a855f7; border-radius: 50%; opacity: 0; box-shadow: 0 0 15px #a855f7; animation: floatUp linear infinite; }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-b-neon selection:text-white">
+
+    <div id="reading-progress" style="width: 0%;"></div>
+
+    <div id="particles-bg"></div>
+    <div class="fixed top-1/3 left-1/4 w-[50vw] h-[50vh] bg-b-neon/10 blur-[150px] pointer-events-none rounded-full z-0"></div>
+
+    <header class="fixed top-0 w-full z-50 bg-black/70 backdrop-blur-xl border-b border-white/5 transition-all duration-300" id="main-header">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="relative">
+                    <img src="../../assets/icons/icon.jpg" class="w-10 h-10 rounded-xl border border-white/10 relative z-10">
+                    <div class="absolute inset-0 bg-b-neon blur-md opacity-40"></div>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-wider text-white">بوصلة <span class="text-b-neon">Busla</span></h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest ar-text">الإدارة والمتطوعين</p>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest en-text hidden">Admin & Volunteers</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button id="lang-toggle" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-xl text-sm font-bold text-gray-300 transition-all">
+                    <i class="fas fa-globe"></i> <span id="lang-label">English</span>
+                </button>
+                <button onclick="goBackOrClose()" class="flex items-center gap-2 bg-b-neon/20 hover:bg-b-neon/40 border border-b-neon/30 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                    <span class="ar-text"><i class="fas fa-arrow-right ml-2"></i> عودة</span>
+                    <span class="en-text hidden"><i class="fas fa-arrow-left mr-2"></i> Back</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-10 items-start">
+        
+        <aside class="hidden lg:block w-1/4 sticky top-32 glass-card rounded-2xl p-6 shadow-2xl neon-border">
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/10 ar-text">محتويات الوثيقة</h3>
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/10 en-text hidden">Table of Contents</h3>
+            
+            <nav class="flex flex-col space-y-2 text-sm text-gray-400" id="spy-nav">
+                <div class="ar-text flex flex-col space-y-2">
+                    <a href="#intro" class="spy-link px-4 py-2 hover:text-white rounded-md">1. مقدمة وطبيعة العلاقة</a>
+                    <a href="#responsibilities" class="spy-link px-4 py-2 hover:text-white rounded-md">2. المسؤوليات والالتزام</a>
+                    <a href="#privileges" class="spy-link px-4 py-2 hover:text-white rounded-md">3. إدارة الصلاحيات</a>
+                    <a href="#confidentiality" class="spy-link px-4 py-2 hover:text-white rounded-md">4. السرية التامة</a>
+                    <a href="#intellectual-property" class="spy-link px-4 py-2 hover:text-white rounded-md">5. الملكية الفكرية</a>
+                    <a href="#violations" class="spy-link px-4 py-2 hover:text-white rounded-md">6. المخالفات والإنهاء</a>
+                    <a href="#acknowledgment" class="spy-link px-4 py-2 hover:text-white rounded-md">7. الإقرار والتواصل</a>
+                </div>
+                <div class="en-text hidden flex flex-col space-y-2">
+                    <a href="#intro" class="spy-link px-4 py-2 hover:text-white rounded-md">1. Intro & Relationship</a>
+                    <a href="#responsibilities" class="spy-link px-4 py-2 hover:text-white rounded-md">2. Responsibilities</a>
+                    <a href="#privileges" class="spy-link px-4 py-2 hover:text-white rounded-md">3. Privileges Management</a>
+                    <a href="#confidentiality" class="spy-link px-4 py-2 hover:text-white rounded-md">4. Strict Confidentiality</a>
+                    <a href="#intellectual-property" class="spy-link px-4 py-2 hover:text-white rounded-md">5. Intellectual Property</a>
+                    <a href="#violations" class="spy-link px-4 py-2 hover:text-white rounded-md">6. Violations & Termination</a>
+                    <a href="#acknowledgment" class="spy-link px-4 py-2 hover:text-white rounded-md">7. Acknowledgment</a>
+                </div>
+            </nav>
+        </aside>
+
+        <article class="w-full lg:w-3/4 glass-card rounded-[2rem] p-8 md:p-14 shadow-2xl">
+            
+            <div class="mb-16 border-b border-white/10 pb-10 text-center lg:text-start">
+                <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-b-neon/10 border border-b-neon/30 text-xs font-bold text-b-neon mb-6">
+                    <i class="fas fa-id-badge"></i> 
+                    <span class="ar-text">وثيقة إدارية داخلية</span>
+                    <span class="en-text hidden">Internal Administrative Document</span>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight neon-text ar-text">اتفاقية المتطوعين</h1>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight neon-text en-text hidden">Volunteer Agreement</h1>
+                
+                <p class="text-gray-400 text-sm">
+                    <span class="ar-text">آخر تحديث: <span class="text-white font-mono ml-1">1 فبراير 2026</span></span>
+                    <span class="en-text hidden">Last Updated: <span class="text-white font-mono mr-1">Feb 1, 2026</span></span>
+                </p>
+            </div>
+
+            <div class="space-y-16 text-gray-300 leading-relaxed text-base md:text-lg">
+
+                <section id="intro" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-users-cog text-b-neon"></i> 
+                        <span class="ar-text">1. مقدمة وطبيعة العلاقة</span>
+                        <span class="en-text hidden">1. Introduction & Nature of Relationship</span>
+                    </h2>
+                    <div class="bg-white/5 p-6 rounded-2xl border-s-4 border-b-neon mb-6">
+                        <p class="ar-text">تهدف هذه الاتفاقية إلى تنظيم العلاقة بين منصة <strong class="text-white">بوصلة (Busla)</strong> وأي شخص يتم قبوله للانضمام إلى فريقها الداخلي كمساهم أو متطوع. بموافقتك على هذه الوثيقة، أنت تقر صراحة بأن انضمامك هو <strong>عمل تطوعي بالكامل</strong>.</p>
+                        <p class="en-text hidden">This agreement regulates the relationship between the <strong class="text-white">Busla</strong> platform and anyone accepted into its internal team as a contributor or volunteer. By agreeing, you explicitly acknowledge that your participation is <strong>entirely voluntary</strong>.</p>
+                    </div>
+                    <ul class="space-y-3 pl-4 md:pl-0 border-s-2 border-white/10 ps-6 text-gray-400">
+                        <li class="ar-text">لا يترتب على الانضمام أي التزام مالي من المنصة تجاه المتطوع.</li>
+                        <li class="en-text hidden">Joining does not entail any financial obligation from the platform towards the volunteer.</li>
+                        <li class="ar-text">لا تنشأ عن هذه الاتفاقية أي علاقة توظيف، شراكة قانونية، أو عقد عمل ملزم.</li>
+                        <li class="en-text hidden">This agreement does not create any employment relationship, legal partnership, or binding labor contract.</li>
+                    </ul>
+                </section>
+
+                <section id="responsibilities" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-tasks text-b-neon"></i>
+                        <span class="ar-text">2. نطاق المسؤوليات والالتزام المهني</span>
+                        <span class="en-text hidden">2. Scope of Responsibilities & Professionalism</span>
+                    </h2>
+                    <p class="mb-4 ar-text">يتم تحديد مهامك بناءً على المسار الذي قُبلت فيه (إدخال محتوى، مراجعة طلبات، إدارة أدوات النظام). بصفتك فرداً من فريق بوصلة، يُتوقع منك:</p>
+                    <p class="mb-4 en-text hidden">Your tasks are assigned based on your accepted role (content entry, reviewing requests, managing system tools). As a Busla team member, you are expected to:</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-black/50 p-5 rounded-2xl border border-white/5 flex items-start gap-3">
+                            <i class="fas fa-check-circle text-b-neon mt-1"></i>
+                            <span class="text-sm ar-text">أداء المهام المتفق عليها بجدية وإتقان، والالتزام بالمواعيد قدر الإمكان.</span>
+                            <span class="text-sm en-text hidden">Perform assigned tasks with diligence, and meet deadlines whenever possible.</span>
+                        </div>
+                        <div class="bg-black/50 p-5 rounded-2xl border border-white/5 flex items-start gap-3">
+                            <i class="fas fa-handshake text-b-neon mt-1"></i>
+                            <span class="text-sm ar-text">احترام باقي أعضاء الفريق والطلاب، والحفاظ على السمعة الإيجابية للمنصة.</span>
+                            <span class="text-sm en-text hidden">Respect team members and students, and uphold the platform's positive reputation.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="privileges" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-key text-b-neon"></i>
+                        <span class="ar-text">3. إدارة الصلاحيات داخل النظام</span>
+                        <span class="en-text hidden">3. System Privileges Management</span>
+                    </h2>
+                    <div class="glass-card p-6 md:p-8 rounded-[2rem] border-l-4 border-l-b-neon relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-b-neon/10 blur-[30px] rounded-full pointer-events-none"></div>
+                        <p class="mb-4 ar-text relative z-10">قد يتم منحك صلاحيات إدارية (Admin/Moderator) للقيام بمهامك. <strong>يُشترط التزامك التام بما يلي:</strong></p>
+                        <p class="mb-4 en-text hidden relative z-10">You may be granted administrative privileges (Admin/Moderator). <strong>You must strictly adhere to the following:</strong></p>
+                        
+                        <ul class="space-y-4 text-sm text-gray-300 relative z-10">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-shield-alt text-b-neon mt-1"></i>
+                                <span class="ar-text">استخدام الصلاحيات حصرياً لأغراض العمل المكلف بها، وعدم استغلالها لأي منفعة شخصية.</span>
+                                <span class="en-text hidden">Use privileges exclusively for assigned work purposes; never exploit them for personal gain.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-eye-slash text-b-neon mt-1"></i>
+                                <span class="ar-text">عدم الوصول، تصفح، أو تعديل أي بيانات لا تتعلق بمهامك المباشرة (مثل بيانات الطلاب الخاصة).</span>
+                                <span class="en-text hidden">Do not access, browse, or modify any data unrelated to your direct tasks (e.g., private student data).</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="confidentiality" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-user-secret text-b-neon"></i>
+                        <span class="ar-text">4. السرية التامة</span>
+                        <span class="en-text hidden">4. Strict Confidentiality</span>
+                    </h2>
+                    <p class="mb-4 ar-text">الثقة هي أساس انضمامك للفريق. يُمنع منعاً باتاً:</p>
+                    <p class="mb-4 en-text hidden">Trust is the foundation of your inclusion. It is strictly prohibited to:</p>
+                    
+                    <ul class="space-y-3 pl-4 md:pl-0 border-s-2 border-red-500/30 ps-6 text-gray-300">
+                        <li class="ar-text">مشاركة أو تسريب أي من بيانات المستخدمين أو إحصائيات المنصة لأي طرف خارجي.</li>
+                        <li class="en-text hidden">Share or leak any user data or platform statistics to any external party.</li>
+                        <li class="ar-text">نشر أو تصوير آليات النظام، بنيته الداخلية، أو كود البرمجة الخاص ببوصلة.</li>
+                        <li class="en-text hidden">Publish or screenshot system mechanics, internal architecture, or source code.</li>
+                        <li class="ar-text text-red-400 font-bold">يستمر هذا الالتزام بالسرية التامة حتى بعد انتهاء فترة تطوعك ومغادرتك للفريق.</li>
+                        <li class="en-text hidden text-red-400 font-bold">This confidentiality obligation persists even after your volunteer period ends.</li>
+                    </ul>
+                </section>
+
+                <section id="intellectual-property" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-copyright text-b-neon"></i>
+                        <span class="ar-text">5. الملكية الفكرية</span>
+                        <span class="en-text hidden">5. Intellectual Property</span>
+                    </h2>
+                    <p class="ar-text">أي محتوى، تصميم، أكواد، أو أفكار يتم إنتاجها لصالح "بوصلة" أثناء فترة تطوعك، تُعتبر جزءاً لا يتجزأ من المنصة ومِلكية خالصة لها. يحق للمنصة استخدامها، تعديلها، أو الاحتفاظ بها مستقبلاً، ولا يحق للمتطوع المطالبة بأي حقوق ملكية أو تعويضات مالية مقابلها.</p>
+                    <p class="en-text hidden">Any content, design, code, or idea produced for Busla during your volunteer period is an integral part of the platform and its sole property. Busla retains the right to use, modify, or keep it indefinitely. Volunteers cannot claim ownership or financial compensation for these contributions.</p>
+                </section>
+
+                <section id="violations" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-ban text-red-500"></i>
+                        <span class="ar-text">6. السلوك غير المقبول وإنهاء العضوية</span>
+                        <span class="en-text hidden">6. Unacceptable Behavior & Termination</span>
+                    </h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 mt-6">
+                        <div>
+                            <h4 class="text-white font-bold mb-3 border-b border-white/10 pb-2 ar-text">مخالفات جسيمة</h4>
+                            <h4 class="text-white font-bold mb-3 border-b border-white/10 pb-2 en-text hidden">Severe Violations</h4>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li>• <span class="ar-text">إساءة استخدام صلاحيات الأدمن.</span><span class="en-text hidden">Abuse of admin privileges.</span></li>
+                                <li>• <span class="ar-text">التلاعب ببيانات المنصة أو المستخدمين.</span><span class="en-text hidden">Tampering with platform/user data.</span></li>
+                                <li>• <span class="ar-text">إساءة التعامل أو التنمر على أعضاء الفريق.</span><span class="en-text hidden">Mistreatment or bullying of team members.</span></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold mb-3 border-b border-white/10 pb-2 ar-text">الإنهاء والانسحاب</h4>
+                            <h4 class="text-white font-bold mb-3 border-b border-white/10 pb-2 en-text hidden">Termination & Resignation</h4>
+                            <p class="text-sm text-gray-400 mb-2 ar-text">يحق للمنصة إنهاء عضوية أي متطوع وسحب صلاحياته فوراً دون إشعار مسبق في حال ثبوت المخالفة أو الإهمال المتكرر.</p>
+                            <p class="text-sm text-gray-400 mb-2 en-text hidden">Busla reserves the right to terminate any volunteer's membership and revoke privileges immediately without prior notice upon proven violation or chronic negligence.</p>
+                            <p class="text-sm text-gray-400 ar-text">كما يحق للمتطوع الانسحاب في أي وقت بكل احترام، بشرط إبلاغ الإدارة لتسليم مهامه.</p>
+                            <p class="text-sm text-gray-400 en-text hidden">Volunteers may respectfully resign at any time, provided they notify administration to hand over tasks.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="acknowledgment" class="policy-section pt-10 border-t border-white/10">
+                    <div class="bg-gradient-to-r from-b-neon/20 to-transparent p-8 md:p-12 rounded-[2rem] text-center border border-b-neon/30 relative overflow-hidden">
+                        <i class="fas fa-file-signature text-5xl text-b-neon mb-6 opacity-80"></i>
+                        <h2 class="text-2xl font-bold text-white mb-4 ar-text">7. الإقرار والتواصل</h2>
+                        <h2 class="text-2xl font-bold text-white mb-4 en-text hidden">7. Acknowledgment & Contact</h2>
+                        
+                        <p class="text-sm text-gray-300 mb-8 max-w-2xl mx-auto ar-text leading-relaxed">بموافقتك على الانضمام وامتلاكك لحساب بصلاحيات إدارية، فإنك تقر بأنك قد قرأت هذه البنود كاملة، وتفهم طبيعة العمل التطوعي، وتوافق صراحة على الالتزام بكل ما ورد فيها. لأي استفسارات أو طلب انسحاب، يتم التواصل المباشر مع مؤسس المنصة:</p>
+                        
+                        <p class="text-sm text-gray-300 mb-8 max-w-2xl mx-auto en-text hidden leading-relaxed">By agreeing to join and holding an account with administrative privileges, you acknowledge that you have read these terms in full, understand the nature of volunteer work, and explicitly agree to comply with them. For inquiries or to submit a resignation, contact the founder directly:</p>
+                        
+                        <a href="mailto:ahm3d.m.attia@gmail.com" class="inline-block bg-black/50 border border-white/20 hover:border-b-neon hover:text-b-neon text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transform hover:-translate-y-1">
+                            ahm3d.m.attia@gmail.com
+                        </a>
+                    </div>
+                </section>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="py-8 border-t border-white/5 relative z-10 bg-black/80 backdrop-blur text-center">
+        <p class="text-gray-600 text-xs font-bold tracking-[0.2em] font-mono">© 2026 BUSLA LMS. VOLUNTEER AGREEMENT.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Language Toggle Logic
+            const langBtn = document.getElementById('lang-toggle');
+            const langLabel = document.getElementById('lang-label');
+            const htmlTag = document.documentElement;
+            
+            langBtn.addEventListener('click', () => {
+                const currentLang = htmlTag.getAttribute('lang');
+                if (currentLang === 'ar') {
+                    htmlTag.setAttribute('lang', 'en');
+                    htmlTag.setAttribute('dir', 'ltr');
+                    langLabel.innerText = 'عربي';
+                    document.querySelectorAll('.ar-text').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.en-text').forEach(el => el.classList.remove('hidden'));
+                } else {
+                    htmlTag.setAttribute('lang', 'ar');
+                    htmlTag.setAttribute('dir', 'rtl');
+                    langLabel.innerText = 'English';
+                    document.querySelectorAll('.en-text').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.ar-text').forEach(el => el.classList.remove('hidden'));
+                }
+                window.scrollBy(0, 1); window.scrollBy(0, -1);
+            });
+
+            // 2. Reading Progress Bar
+            const progressBar = document.getElementById('reading-progress');
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                progressBar.style.width = scrollPercent + '%';
+            });
+
+            // 3. Scroll Spy & Animated Section Reveal
+            const sections = document.querySelectorAll('.policy-section');
+            const navLinks = document.querySelectorAll('.spy-link');
+
+const observerOptions = {
+                root: null,
+                rootMargin: '-10% 0px -20% 0px', // ✅ التعديل هنا
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(sec => observer.observe(sec));
+
+            // Initial reveal
+            setTimeout(() => {
+                sections.forEach(sec => {
+                    const rect = sec.getBoundingClientRect();
+                    if(rect.top < window.innerHeight) sec.classList.add('is-visible');
+                });
+            }, 100);
+
+            // 4. Floating Particles Generator (Purple Neon for Admins)
+            const particlesContainer = document.getElementById('particles-bg');
+            const particleCount = window.innerWidth < 768 ? 10 : 20;
+            
+            for(let i=0; i<particleCount; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.width = Math.random() * 4 + 2 + 'px';
+                p.style.height = p.style.width;
+                p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                particlesContainer.appendChild(p);
+            }
+        });
+// 💡 دالة الرجوع الذكية
+    window.goBackOrClose = () => {
+        // إذا كان هناك صفحة سابقة في نفس التاب
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // إذا كان التاب جديداً (فتح من فورم التسجيل)
+            try {
+                window.close(); // محاولة إغلاق التاب
+            } catch (e) {
+                console.log("Browser blocked auto-close");
+            }
+            // إذا رفض المتصفح الإغلاق، نعيده لصفحة التسجيل إجبارياً
+            window.location.href = '../auth.html';
+        }
+    };
+    </script>
+</body>
+</html>

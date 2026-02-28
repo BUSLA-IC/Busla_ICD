@@ -1,6 +1,4 @@
-import { AuthService } from './supabase-config.js';
-
-
+import { AuthService, supabase } from './supabase-config.js'; // ✅ أضفنا supabase هنا
 function translateAuthError(error) {
     // استخراج نص الرسالة سواء كان كائناً أو نصاً
     const msg = (error.message || error.error_description || error).toString();
@@ -30,24 +28,28 @@ function translateAuthError(error) {
 }
 
 
-// =========================================================
-// 1. تسجيل حساب جديد
-// =========================================================
 export async function registerUser(email, password, personalInfo, academicInfo) {
     try {
-        const result = await AuthService.signUp(email, password, {
-            full_name: personalInfo.fullName,
-            avatar_url: personalInfo.photoURL,
-            university: academicInfo.university,
-            faculty: academicInfo.faculty,
-            governorate: academicInfo.governorate,
-            department: academicInfo.department,
-            academic_year: academicInfo.year
-        });
+        // تجميع كل البيانات في كائن واحد (metaData) ليتوافق مع Supabase
+        const metaData = {
+            full_name: personalInfo.fullName || '',
+            avatar_url: personalInfo.photoURL || '',
+            university: academicInfo.university || '',
+            faculty: academicInfo.faculty || '',
+            department: academicInfo.department || '',
+            academic_year: academicInfo.year || '',
+            governorate: academicInfo.governorate || '',
+            track: academicInfo.track || 'Digital IC Design'
+        };
 
+        // إرسال كائن واحد فقط للخدمة
+        const result = await AuthService.signUp(email, password, metaData);
         if (!result.success) throw new Error(result.error);
-        return { user: result.data, verificationRequired: true };
-
+        
+        return {
+            user: result.data.user,
+            verificationRequired: true
+        };
     } catch (error) {
         throw new Error(translateAuthError(error));
     }
@@ -87,14 +89,22 @@ export async function resendVerification(email) {
 // =========================================================
 // 4. وظائف أخرى (Logout, Reset)
 // =========================================================
+
 export async function logoutUser() {
     await AuthService.signOut();
     window.location.href = "auth.html";
 }
 
-export async function resetPassword(email) {
-    const { error } = await AuthService.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password.html',
-    });
-    if (error) throw new Error(translateAuthError(error));
+// 💡 دالة طلب إعادة تعيين كلمة المرور
+export async function requestPasswordReset(email) {
+    try {
+        // ✅ نستخدم supabase مباشرة بدلاً من AuthService.supabase
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + '/reset-password.html',
+        });
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        throw new Error(translateAuthError(error));
+    }
 }

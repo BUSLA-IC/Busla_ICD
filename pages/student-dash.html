@@ -401,24 +401,73 @@ main {
     </div>
 </div>
 
-<div id="team-browser-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[90vh]">
-        <div class="p-5 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h3 class="text-xl font-bold text-white"><i class="fas fa-globe text-purple-500 mr-2"></i> تصفح الفرق المتاحة</h3>
+<div id="team-browser-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        
+        <div class="p-4 md:p-5 border-b border-white/10 bg-white/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shrink-0 w-full">
             
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="team-search-input" placeholder="بحث باسم الفريق أو الليدر..." class="bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500 outline-none w-full sm:w-64" oninput="window.filterTeams()">
-                <select id="team-uni-filter" class="bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500 outline-none" onchange="window.filterTeams()">
-                    <option value="">كل الجامعات</option>
-                    <option value="Zagazig">جامعة الزقازيق</option>
-                    <option value="Mansoura">جامعة المنصورة</option>
-                    <option value="Cairo">جامعة القاهرة</option>
+            <div class="flex justify-between w-full lg:w-auto items-center">
+                <h3 class="text-xl font-bold text-white shrink-0"><i class="fas fa-globe text-purple-500 mr-2"></i> تصفح الفرق المتاحة</h3>
+                <button onclick="window.closeModal('team-browser-modal')" class="lg:hidden w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1 lg:justify-end">
+                <input type="text" id="team-search-input" placeholder="بحث باسم الفريق..." class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-full sm:flex-1 lg:w-56 shrink-0" oninput="window.filterTeams()">
+                
+                <select id="team-track-filter" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" onchange="window.filterTeams()">
+                    <option value="all">كل المسارات</option>
+                    <option value="Digital IC Design">Digital IC Design</option>
+                    <option value="Analog IC Design">Analog IC Design</option>
                 </select>
-                <button onclick="window.closeModal('team-browser-modal')" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
+
+                <select id="team-uni-filter" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" onchange="window.filterTeams()">
+                    <option value="all" selected>كل الجامعات </option>
+                    <optgroup label="الجامعات الحكومية">
+                        <option value="Zagazig">جامعة الزقازيق</option>
+                        <option value="Cairo">جامعة القاهرة</option>
+                        <option value="Alexandria">جامعة الإسكندرية</option>
+                        <option value="Ain Shams">جامعة عين شمس</option>
+                        <option value="Mansoura">جامعة المنصورة</option>
+                        <option value="Assiut">جامعة أسيوط</option>
+                        <option value="Tanta">جامعة طنطا</option>
+                        <option value="Helwan">جامعة حلوان</option>
+                        <option value="Minya">جامعة المنيا</option>
+                        <option value="Monufia">جامعة المنوفية</option>
+                        <option value="Suez Canal">جامعة قناة السويس</option>
+                        <option value="South Valley">جامعة جنوب الوادي</option>
+                        <option value="Beni Suef">جامعة بني سويف</option>
+                        <option value="Fayoum">جامعة الفيوم</option>
+                        <option value="Benha">جامعة بنها</option>
+                        <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
+                        <option value="Sohag">جامعة سوهاج</option>
+                        <option value="Port Said">جامعة بورسعيد</option>
+                        <option value="Damanhour">جامعة دمنهور</option>
+                        <option value="Aswan">جامعة أسوان</option>
+                        <option value="Damietta">جامعة دمياط</option>
+                        <option value="Suez">جامعة السويس</option>
+                        <option value="Sadat City">جامعة مدينة السادات</option>
+                        <option value="Arish">جامعة العريش</option>
+                        <option value="Luxor">جامعة الأقصر</option>
+                    </optgroup>
+                    <optgroup label="جامعات أخرى وخاصة">
+                        <option value="Al-Azhar">جامعة الأزهر</option>
+                        <option value="Zewail City">مدينة زويل للعلوم</option>
+                        <option value="E-JUST">الجامعة اليابانية E-JUST</option>
+                        <option value="AUC">الجامعة الأمريكية</option>
+                        <option value="GUC">الجامعة الألمانية</option>
+                        <option value="BUE">الجامعة البريطانية</option>
+                        <option value="MUST">جامعة مصر للعلوم</option>
+                        <option value="MIU">جامعة مصر الدولية</option>
+                        <option value="Other">جامعة أخرى / معهد</option>
+                    </optgroup>
+                </select>
+                
+                <button onclick="window.closeModal('team-browser-modal')" class="hidden lg:flex w-10 h-10 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-400 items-center justify-center shrink-0 transition-colors"><i class="fas fa-times"></i></button>
             </div>
         </div>
-        <div class="p-0 overflow-y-auto custom-scroll flex-1">
-            <table class="w-full text-right text-sm">
+        
+        <div class="p-0 overflow-y-auto overflow-x-auto custom-scroll flex-1 w-full">
+            <table class="w-full text-right text-sm min-w-[600px]">
                 <thead class="bg-black/40 text-gray-400 border-b border-white/5 sticky top-0 z-10">
                     <tr>
                         <th class="p-4 font-bold">الفريق</th>
@@ -429,7 +478,7 @@ main {
                     </tr>
                 </thead>
                 <tbody id="teams-browser-list" class="divide-y divide-white/5">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>ميثاق المجتمع | Busla Community Guidelines</title>
+    <meta name="description" content="ميثاق مجتمع بوصلة (Busla). المبادئ التوجيهية للتعامل، الاحترام المتبادل، النزاهة الأكاديمية، والعمل الجماعي.">
+    <meta name="keywords" content="Busla, Community Guidelines, ميثاق المجتمع, بيئة تعليمية, النزاهة الأكاديمية, Digital IC Design">
+    <meta name="author" content="Ahmed Mohamed Attia">
+    <meta property="og:title" content="ميثاق المجتمع | Busla">
+    <meta property="og:description" content="اكتشف القيم والمبادئ التي تبني بيئة تعليمية وتنافسية صحية في منصة بوصلة.">
+    
+    <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        'b-bg': '#000000', 
+                        'b-surface': '#0a0a0a', 
+                        'b-primary': '#006A67',
+                        'b-neon': '#f59e0b' // لون ذهبي/عنبري ليعبر عن المجتمع والحماس
+                    },
+                    fontFamily: { 
+                        'cairo': ['Cairo', 'sans-serif'],
+                        'outfit': ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #000; color: #fff; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        /* Typography for Langs */
+        html[lang="ar"] body { font-family: 'Cairo', sans-serif; }
+        html[lang="en"] body { font-family: 'Outfit', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
+        
+        /* Glass & Neon Effects */
+        .glass-card { background: rgba(10, 10, 10, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
+        .neon-text { text-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+        .neon-border { box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+        
+        /* Progress Bar */
+        #reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: #f59e0b; z-index: 9999; transition: width 0.1s ease; box-shadow: 0 0 10px #f59e0b; }
+        
+        /* Scroll Spy Navigation */
+        .spy-link { position: relative; transition: all 0.3s ease; border-inline-start-width: 2px; border-inline-start-color: transparent; }
+        .spy-link.active { color: #f59e0b; font-weight: 700; border-inline-start-color: #f59e0b; background: linear-gradient(to right, rgba(245,158,11,0.1), transparent); }
+        html[dir="rtl"] .spy-link.active { background: linear-gradient(to left, rgba(245,158,11,0.1), transparent); }
+        
+        /* Section Reveal Animations */
+        .policy-section { scroll-margin-top: 120px; opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .policy-section.is-visible { opacity: 1; transform: translateY(0); }
+        
+        /* Floating Particles */
+        #particles-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .particle { position: absolute; background: #f59e0b; border-radius: 50%; opacity: 0; box-shadow: 0 0 15px #f59e0b; animation: floatUp linear infinite; }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-b-neon selection:text-white">
+
+    <div id="reading-progress" style="width: 0%;"></div>
+
+    <div id="particles-bg"></div>
+    <div class="fixed top-1/4 left-1/2 -translate-x-1/2 w-[60vw] h-[60vh] bg-b-neon/10 blur-[150px] pointer-events-none rounded-full z-0"></div>
+
+    <header class="fixed top-0 w-full z-50 bg-black/70 backdrop-blur-xl border-b border-white/5 transition-all duration-300" id="main-header">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="relative">
+                    <img src="../../assets/icons/icon.jpg" class="w-10 h-10 rounded-xl border border-white/10 relative z-10">
+                    <div class="absolute inset-0 bg-b-neon blur-md opacity-40"></div>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-wider text-white">بوصلة <span class="text-b-neon">Busla</span></h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest ar-text">وثيقة تنظيمية</p>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest en-text hidden">Regulatory Document</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button id="lang-toggle" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-xl text-sm font-bold text-gray-300 transition-all">
+                    <i class="fas fa-globe"></i> <span id="lang-label">English</span>
+                </button>
+                <button onclick="goBackOrClose()" class="flex items-center gap-2 bg-b-neon/20 hover:bg-b-neon/40 border border-b-neon/30 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                    <span class="ar-text"><i class="fas fa-arrow-right ml-2"></i> عودة</span>
+                    <span class="en-text hidden"><i class="fas fa-arrow-left mr-2"></i> Back</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-10 items-start">
+        
+        <aside class="hidden lg:block w-1/4 sticky top-32 glass-card rounded-2xl p-6 shadow-2xl neon-border">
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/10 ar-text">محتويات الوثيقة</h3>
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/10 en-text hidden">Table of Contents</h3>
+            
+            <nav class="flex flex-col space-y-2 text-sm text-gray-400" id="spy-nav">
+                <div class="ar-text flex flex-col space-y-2">
+                    <a href="#intro" class="spy-link px-4 py-2 hover:text-white rounded-md">1. جوهر بوصلة</a>
+                    <a href="#respect" class="spy-link px-4 py-2 hover:text-white rounded-md">2. الاحترام المتبادل</a>
+                    <a href="#teamwork" class="spy-link px-4 py-2 hover:text-white rounded-md">3. روح الفريق والقيادة</a>
+                    <a href="#academic-integrity" class="spy-link px-4 py-2 hover:text-white rounded-md">4. النزاهة الأكاديمية</a>
+                    <a href="#communication" class="spy-link px-4 py-2 hover:text-white rounded-md">5. قنوات التواصل</a>
+                    <a href="#reporting" class="spy-link px-4 py-2 hover:text-white rounded-md">6. الإبلاغ والعواقب</a>
+                </div>
+                <div class="en-text hidden flex flex-col space-y-2">
+                    <a href="#intro" class="spy-link px-4 py-2 hover:text-white rounded-md">1. The Core of Busla</a>
+                    <a href="#respect" class="spy-link px-4 py-2 hover:text-white rounded-md">2. Mutual Respect</a>
+                    <a href="#teamwork" class="spy-link px-4 py-2 hover:text-white rounded-md">3. Teamwork & Leadership</a>
+                    <a href="#academic-integrity" class="spy-link px-4 py-2 hover:text-white rounded-md">4. Academic Integrity</a>
+                    <a href="#communication" class="spy-link px-4 py-2 hover:text-white rounded-md">5. Communication</a>
+                    <a href="#reporting" class="spy-link px-4 py-2 hover:text-white rounded-md">6. Reporting & Consequences</a>
+                </div>
+            </nav>
+        </aside>
+
+        <article class="w-full lg:w-3/4 glass-card rounded-[2rem] p-8 md:p-14 shadow-2xl">
+            
+            <div class="mb-16 border-b border-white/10 pb-10 text-center lg:text-start">
+                <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-b-neon/10 border border-b-neon/30 text-xs font-bold text-b-neon mb-6">
+                    <i class="fas fa-users"></i> 
+                    <span class="ar-text">دستور المجتمع</span>
+                    <span class="en-text hidden">Community Constitution</span>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight neon-text ar-text">ميثاق المجتمع</h1>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight neon-text en-text hidden">Community Guidelines</h1>
+                
+                <p class="text-gray-400 text-sm">
+                    <span class="ar-text">آخر تحديث: <span class="text-white font-mono ml-1">1 فبراير 2026</span></span>
+                    <span class="en-text hidden">Last Updated: <span class="text-white font-mono mr-1">Feb 1, 2026</span></span>
+                </p>
+            </div>
+
+            <div class="space-y-16 text-gray-300 leading-relaxed text-base md:text-lg">
+
+                <section id="intro" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-compass text-b-neon"></i> 
+                        <span class="ar-text">1. جوهر بوصلة</span>
+                        <span class="en-text hidden">1. The Core of Busla</span>
+                    </h2>
+                    <div class="bg-white/5 p-6 rounded-2xl border-s-4 border-b-neon mb-6">
+                        <p class="ar-text"><strong class="text-white">بوصلة (Busla)</strong> ليست مجرد منصة لمشاهدة الكورسات؛ إنها مجتمع حي ينبض بروح التعاون، التنافس البنّاء، والسعي نحو التميز في مجال هندسة الإلكترونيات. هذا الميثاق هو العقد الأخلاقي الذي يجمعنا لضمان بيئة آمنة وملهمة للجميع.</p>
+                        <p class="en-text hidden"><strong class="text-white">Busla</strong> is not just a platform for watching courses; it is a vibrant community driven by collaboration, constructive competition, and the pursuit of excellence in electronics engineering. These guidelines are the moral contract that unites us to ensure a safe and inspiring environment for everyone.</p>
+                    </div>
+                </section>
+
+                <section id="respect" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-hands-helping text-b-neon"></i>
+                        <span class="ar-text">2. الاحترام والشمولية</span>
+                        <span class="en-text hidden">2. Respect & Inclusion</span>
+                    </h2>
+                    <p class="mb-4 ar-text">الاحترام المتبادل هو القاعدة الذهبية هنا. مجتمعنا يضم طلاباً من مختلف الجامعات والمستويات. نتوقع من جميع الأعضاء:</p>
+                    <p class="mb-4 en-text hidden">Mutual respect is the golden rule here. Our community includes students from various universities and levels. We expect all members to:</p>
+                    
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li class="flex items-start gap-3 bg-black/50 p-4 rounded-xl border border-white/5">
+                            <i class="fas fa-check text-green-500 mt-1"></i>
+                            <span class="ar-text">دعم بعضهم البعض تقنياً ونفسياً، والرد على استفسارات الزملاء بلطف واحترافية.</span>
+                            <span class="en-text hidden">Support each other technically and psychologically, and answer peers' questions with kindness and professionalism.</span>
+                        </li>
+                        <li class="flex items-start gap-3 bg-red-900/10 p-4 rounded-xl border border-red-500/20">
+                            <i class="fas fa-times text-red-500 mt-1"></i>
+                            <span class="ar-text"><strong>يُمنع منعاً باتاً:</strong> التنمر، الإساءة اللفظية، السخرية من أسئلة المبتدئين، أو أي شكل من أشكال التمييز والتفرقة.</span>
+                            <span class="en-text hidden"><strong>Strictly Prohibited:</strong> Bullying, verbal abuse, mocking beginners' questions, or any form of discrimination.</span>
+                        </li>
+                    </ul>
+                </section>
+
+                <section id="teamwork" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-users-cog text-b-neon"></i>
+                        <span class="ar-text">3. روح الفريق والقيادة</span>
+                        <span class="en-text hidden">3. Teamwork & Leadership</span>
+                    </h2>
+                    <div class="glass-card p-6 md:p-8 rounded-[2rem] border-l-4 border-l-b-neon relative overflow-hidden">
+                        <p class="mb-4 ar-text relative z-10">العمل الجماعي هو عصب المنصة. <strong>قادة الفرق (Leaders)</strong> يحملون مسؤولية كبرى في توجيه وتحفيز أعضاء فريقهم.</p>
+                        <p class="mb-4 en-text hidden relative z-10">Teamwork is the backbone of the platform. <strong>Team Leaders</strong> bear a major responsibility in guiding and motivating their team members.</p>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mt-6 relative z-10">
+                            <div>
+                                <h4 class="text-b-neon font-bold mb-2 ar-text"><i class="fas fa-crown"></i> للقادة</h4>
+                                <h4 class="text-b-neon font-bold mb-2 en-text hidden"><i class="fas fa-crown"></i> For Leaders</h4>
+                                <p class="text-sm ar-text">كن عادلاً في تقييم المهام، استمع لأعضاء فريقك، ولا تستخدم الصلاحيات كأداة للضغط. القيادة خدمة وليست سلطة.</p>
+                                <p class="text-sm en-text hidden">Be fair in evaluating tasks, listen to your team, and do not use privileges as a tool for pressure. Leadership is a service, not a power trip.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-b-neon font-bold mb-2 ar-text"><i class="fas fa-user-friends"></i> للأعضاء</h4>
+                                <h4 class="text-b-neon font-bold mb-2 en-text hidden"><i class="fas fa-user-friends"></i> For Members</h4>
+                                <p class="text-sm ar-text">احترم قرارات قائد الفريق والمواعيد النهائية المحددة. تواصل بوضوح في حال وجود ظروف تمنعك من تسليم المهام.</p>
+                                <p class="text-sm en-text hidden">Respect the leader's decisions and deadlines. Communicate clearly if circumstances prevent you from delivering tasks.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="academic-integrity" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-balance-scale text-b-neon"></i>
+                        <span class="ar-text">4. النزاهة الأكاديمية (Fair Play)</span>
+                        <span class="en-text hidden">4. Academic Integrity (Fair Play)</span>
+                    </h2>
+                    <p class="mb-4 ar-text">الرتب والبادجات ولوحة الشرف فقدت قيمتها إذا لم تكن مبنية على جهد حقيقي. نحن نأخذ النزاهة على محمل الجد:</p>
+                    <p class="mb-4 en-text hidden">Ranks, badges, and leaderboards lose their value if they are not based on real effort. We take integrity very seriously:</p>
+                    
+                    <ul class="space-y-3 pl-4 md:pl-0 border-s-2 border-white/10 ps-6 text-gray-300">
+                        <li class="ar-text"><strong>التعاون مسموح، الغش ممنوع:</strong> تناقش مع فريقك في المفاهيم والأفكار، لكن لا تقم بمشاركة الكود النهائي للمشاريع أو إجابات الكويزات المطابقة.</li>
+                        <li class="en-text hidden"><strong>Collaboration is allowed, Cheating is not:</strong> Discuss concepts and ideas with your team, but do not share final project codes or exact quiz answers.</li>
+                        <li class="ar-text"><strong>التلاعب بالنقاط:</strong> أي محاولة لاستغلال النظام لزيادة النقاط (Farm XP) بشكل غير شرعي ستؤدي لتصفير نقاط اللاعب وإيقاف فريقه من الترتيب العام.</li>
+                        <li class="en-text hidden"><strong>Points Manipulation:</strong> Any attempt to exploit the system to farm XP illegally will result in resetting the player's points and suspending their team from the leaderboard.</li>
+                    </ul>
+                </section>
+
+                <section id="communication" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-comments text-b-neon"></i>
+                        <span class="ar-text">5. قنوات التواصل والإشعارات</span>
+                        <span class="en-text hidden">5. Communication & Notifications</span>
+                    </h2>
+                    <p class="ar-text">استخدم قنوات الاتصال والإشعارات داخل المنصة بمسؤولية. يُمنع إرسال دعوات عشوائية للفرق (Spam) أو إرسال بلاغات كاذبة للإدارة لإزعاج المنافسين. حافظ على مهنية التواصل.</p>
+                    <p class="en-text hidden">Use the platform's communication channels and notifications responsibly. Spamming team invitations or sending false reports to the administration to annoy competitors is prohibited. Maintain professional communication.</p>
+                </section>
+
+                <section id="reporting" class="policy-section">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-flag text-red-500"></i>
+                        <span class="ar-text">6. الإبلاغ والعواقب</span>
+                        <span class="en-text hidden">6. Reporting & Consequences</span>
+                    </h2>
+                    
+                    <div class="bg-[#1A1A1A] p-6 md:p-8 rounded-2xl border border-white/5">
+                        <p class="text-sm text-gray-400 mb-6 ar-text">إذا واجهت أي سلوك يخالف هذا الميثاق، نرجو منك إبلاغ الإدارة فوراً. سيتم التعامل مع جميع البلاغات بسرية تامة.</p>
+                        <p class="text-sm text-gray-400 mb-6 en-text hidden">If you encounter any behavior violating these guidelines, please report it to the administration immediately. All reports will be handled with strict confidentiality.</p>
+                        
+                        <h4 class="text-white font-bold mb-4 border-b border-white/10 pb-2 ar-text">كيف تتعامل الإدارة مع المخالفات؟</h4>
+                        <h4 class="text-white font-bold mb-4 border-b border-white/10 pb-2 en-text hidden">How Does Admin Handle Violations?</h4>
+                        <ul class="space-y-4 text-sm text-gray-300">
+                            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold">1</span> <span class="ar-text">توجيه إنذار رسمي وتصحيح الخطأ.</span><span class="en-text hidden">Issuing a formal warning and correcting the mistake.</span></li>
+                            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center font-bold">2</span> <span class="ar-text">تصفير النقاط أو سحب البادجات والرتب.</span><span class="en-text hidden">Resetting points or revoking badges and ranks.</span></li>
+                            <li class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center font-bold">3</span> <span class="ar-text">التعليق المؤقت أو الحظر النهائي من المنصة.</span><span class="en-text hidden">Temporary suspension or permanent ban from the platform.</span></li>
+                        </ul>
+                    </div>
+                </section>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="py-8 border-t border-white/5 relative z-10 bg-black/80 backdrop-blur text-center">
+        <p class="text-gray-600 text-xs font-bold tracking-[0.2em] font-mono">© 2026 BUSLA LMS. COMMUNITY GUIDELINES.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Language Toggle Logic
+            const langBtn = document.getElementById('lang-toggle');
+            const langLabel = document.getElementById('lang-label');
+            const htmlTag = document.documentElement;
+            
+            langBtn.addEventListener('click', () => {
+                const currentLang = htmlTag.getAttribute('lang');
+                if (currentLang === 'ar') {
+                    htmlTag.setAttribute('lang', 'en');
+                    htmlTag.setAttribute('dir', 'ltr');
+                    langLabel.innerText = 'عربي';
+                    document.querySelectorAll('.ar-text').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.en-text').forEach(el => el.classList.remove('hidden'));
+                } else {
+                    htmlTag.setAttribute('lang', 'ar');
+                    htmlTag.setAttribute('dir', 'rtl');
+                    langLabel.innerText = 'English';
+                    document.querySelectorAll('.en-text').forEach(el => el.classList.add('hidden'));
+                    document.querySelectorAll('.ar-text').forEach(el => el.classList.remove('hidden'));
+                }
+                window.scrollBy(0, 1); window.scrollBy(0, -1);
+            });
+
+            // 2. Reading Progress Bar
+            const progressBar = document.getElementById('reading-progress');
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                progressBar.style.width = scrollPercent + '%';
+            });
+
+            // 3. Scroll Spy & Animated Section Reveal
+            const sections = document.querySelectorAll('.policy-section');
+            const navLinks = document.querySelectorAll('.spy-link');
+
+const observerOptions = {
+                root: null,
+                rootMargin: '-10% 0px -20% 0px', // ✅ التعديل هنا
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(sec => observer.observe(sec));
+
+            // Initial reveal
+            setTimeout(() => {
+                sections.forEach(sec => {
+                    const rect = sec.getBoundingClientRect();
+                    if(rect.top < window.innerHeight) sec.classList.add('is-visible');
+                });
+            }, 100);
+
+            // 4. Floating Particles Generator (Amber Neon for Community)
+            const particlesContainer = document.getElementById('particles-bg');
+            const particleCount = window.innerWidth < 768 ? 10 : 20;
+            
+            for(let i=0; i<particleCount; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.width = Math.random() * 4 + 2 + 'px';
+                p.style.height = p.style.width;
+                p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                particlesContainer.appendChild(p);
+            }
+        });
+// 💡 دالة الرجوع الذكية
+    window.goBackOrClose = () => {
+        // إذا كان هناك صفحة سابقة في نفس التاب
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // إذا كان التاب جديداً (فتح من فورم التسجيل)
+            try {
+                window.close(); // محاولة إغلاق التاب
+            } catch (e) {
+                console.log("Browser blocked auto-close");
+            }
+            // إذا رفض المتصفح الإغلاق، نعيده لصفحة التسجيل إجبارياً
+            window.location.href = '../auth.html';
+        }
+    };
+    </script>
+</body>
+</html>

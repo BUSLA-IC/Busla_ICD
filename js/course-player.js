@@ -451,6 +451,16 @@ window.switchContentObj = async (encodedItemStr) => {
 // 5. CONTENT LOADING & ROUTING
 // ==========================================
 async function loadContent(item) {
+    // 💡 1. الإغلاق التلقائي للقائمة في الموبايل عند اختيار أي درس
+    if (window.innerWidth < 1024) {
+        const sidebar = document.getElementById('right-sidebar');
+        if (sidebar && sidebar.classList.contains('translate-x-0')) {
+            if (typeof window.toggleSidebar === 'function') {
+                window.toggleSidebar();
+            }
+        }
+    }
+
     if (!item) return;
 
     if (currentContent && currentContent.type === 'video' && player && typeof player.getCurrentTime === 'function') {
@@ -1648,3 +1658,52 @@ function toggleFullscreen() {
         if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
     }
 }
+
+// ==========================================
+// 💡 وظائف الرجوع والتجاوب مع الموبايل (محدثة ومضادة للأخطاء)
+// ==========================================
+
+window.toggleSidebar = () => {
+    console.log("✅ زر القائمة يعمل!"); // للتأكد في الـ Console
+    const sidebar = document.getElementById('right-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    if (!sidebar || !overlay) {
+        console.error("❌ لم يتم العثور على القائمة أو الطبقة السوداء في HTML");
+        return;
+    }
+
+    if (sidebar.classList.contains('translate-x-full')) {
+        // فتح القائمة (إجبار)
+        sidebar.classList.remove('translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+    } else {
+        // إغلاق القائمة (إجبار)
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
+    }
+};
+
+window.goBackToDashboard = async () => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'auth.html';
+            return;
+        }
+        
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        const role = profile ? profile.role : 'student';
+        
+        if (role === 'leader' || role === 'Leader') {
+            window.location.href = 'leader-dash.html';
+        } else {
+            window.location.href = 'student-dash.html';
+        }
+    } catch (error) {
+        console.error("Navigation error:", error);
+        window.location.href = 'student-dash.html';
+    }
+};

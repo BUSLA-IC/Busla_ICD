@@ -177,6 +177,9 @@
                             <span>دخول</span>
                             <i class="fas fa-arrow-left"></i>
                         </button>
+                        <div class="flex justify-center mt-2">
+                         <a href="#" onclick="openForgotPasswordModal(event)" class="text-xs text-b-primary hover:text-b-neon transition-colors">نسيت كلمة المرور؟</a>
+                        </div>
                         <p id="login-error" class="text-red-400 text-center text-sm hidden bg-red-900/20 py-2 rounded border border-red-500/20"></p>
                     </form>
 
@@ -327,7 +330,23 @@
                                 <input type="password" id="signup-password" autocomplete="off" required placeholder="******" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
                             </div>
                         </div>
+                        <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">المسار التقني (Track)</label>
+                                <select id="signup-track" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-b-primary outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="" disabled selected>اختر المسار...</option>
+                                    <option  value="Digital IC Design">Digital IC Design</option>
+                                    <option disabled value="Analog IC Design">Analog IC Design</option>
+                                </select>
+                            </div>
 
+                            <div class="bg-black/40 border border-white/5 p-4 rounded-xl mt-4">
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" id="terms-checkbox" class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0" onchange="toggleSubmitBtn()">
+                                    <span class="text-[11px] text-gray-400 leading-tight">
+                                        بإنشائك حساباً، أنت توافق على <a href="legal/terms.html" target="_blank" class="text-b-primary hover:underline">شروط الاستخدام</a> و <a href="legal/privacy.html" target="_blank" class="text-b-primary hover:underline">سياسة الخصوصية</a>، وتتعهد بالالتزام بـ <a href="legal/guidelines.html" target="_blank" class="text-b-primary hover:underline">ميثاق المجتمع</a>.
+                                    </span>
+                                </label>
+                            </div>
                         <button type="submit" id="btn-signup" class="w-full py-3 bg-gradient-to-r from-b-hl-light to-b-primary text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-[1.02] mt-2">
                             إنشاء الحساب وبدء الرحلة
                         </button>
@@ -338,6 +357,30 @@
             </div>
         </div>
     </div>
+    <div id="forgot-password-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-b-surface border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-full h-1 bg-b-primary"></div>
+        <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <h3 class="text-2xl font-black text-white mb-2">نسيت كلمة المرور؟</h3>
+        <p class="text-gray-400 text-sm mb-6">أدخل بريدك الإلكتروني المسجل لدينا، وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.</p>
+        
+        <form id="forgot-password-form" class="space-y-4">
+            <div>
+                <input type="email" id="reset-email-input" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none transition-all" placeholder="البريد الإلكتروني">
+            </div>
+            <div id="reset-error" class="hidden text-red-500 text-xs font-bold bg-red-500/10 p-2 rounded text-center"></div>
+            <div id="reset-success" class="hidden text-green-400 text-xs font-bold bg-green-500/10 p-3 rounded-xl text-center border border-green-500/20">
+                <i class="fas fa-check-circle text-lg block mb-1"></i> تم إرسال رابط الاستعادة إلى بريدك! تحقق من صندوق الوارد.
+            </div>
+            <button type="submit" id="btn-send-reset" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all">
+                إرسال رابط الاستعادة
+            </button>
+        </form>
+    </div>
+</div>
 <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-3 pointer-events-none">
     </div>
     <div id="success-modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
@@ -367,10 +410,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
 <script type="module">
-    import { registerUser, loginUser, resendVerification } from '../js/auth-handler.js';
+    // 💡 تأكد من استيراد requestPasswordReset
+    import { registerUser, loginUser, resendVerification, requestPasswordReset } from '../js/auth-handler.js';
     import { supabase } from '../js/supabase-config.js';
 
-    // --- تبديل التبويبات (UI) ---
+    // ==========================================
+    // 1. تبديل التبويبات والخطوات (UI)
+    // ==========================================
     const loginTab = document.getElementById('login-tab');
     const signupTab = document.getElementById('signup-tab');
     const loginForm = document.getElementById('login-form');
@@ -387,7 +433,64 @@
     loginTab.addEventListener('click', () => switchAuthMode('login'));
     signupTab.addEventListener('click', () => switchAuthMode('signup'));
 
-    // --- منطق تسجيل الدخول (تم الإصلاح والتحسين) ---
+    // التنقل بين خطوات إنشاء الحساب
+    window.showStep = (step) => {
+        document.getElementById('personal-step').classList.add('hidden');
+        document.getElementById('academic-step').classList.add('hidden');
+        document.getElementById(step + '-step').classList.remove('hidden');
+    };
+
+    // ==========================================
+    // 2. نوافذ الموافقة واستعادة الباسورد
+    // ==========================================
+    
+    // تفعيل زر الإنشاء فقط عند الموافقة على الشروط
+    window.toggleSubmitBtn = () => {
+        const isChecked = document.getElementById('terms-checkbox').checked;
+        document.getElementById('btn-signup').disabled = !isChecked;
+    };
+
+    // نوافذ استعادة الباسورد
+    window.openForgotPasswordModal = (e) => {
+        e.preventDefault();
+        document.getElementById('forgot-password-modal').classList.remove('hidden');
+    };
+    window.closeForgotPasswordModal = () => {
+        document.getElementById('forgot-password-modal').classList.add('hidden');
+        document.getElementById('reset-error').classList.add('hidden');
+        document.getElementById('reset-success').classList.add('hidden');
+        document.getElementById('reset-email-input').value = '';
+    };
+
+    // معالجة طلب استعادة الباسورد
+    document.getElementById('forgot-password-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-send-reset');
+        const email = document.getElementById('reset-email-input').value;
+        const errDiv = document.getElementById('reset-error');
+        const successDiv = document.getElementById('reset-success');
+
+        errDiv.classList.add('hidden');
+        successDiv.classList.add('hidden');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+        btn.disabled = true;
+
+        try {
+            await requestPasswordReset(email);
+            successDiv.classList.remove('hidden');
+        } catch (error) {
+            errDiv.textContent = error.message;
+            errDiv.classList.remove('hidden');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // ==========================================
+    // 3. منطق تسجيل الدخول
+    // ==========================================
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btn-login');
@@ -400,19 +503,20 @@
         err.classList.add('hidden');
 
         try {
-            // 1. محاولة الدخول
             const user = await loginUser(
                 emailVal,
                 document.getElementById('login-password').value
             );
 
-            const { data: profile, error } = await supabase
+            const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', user.id)
                 .maybeSingle(); 
+                
             const role = profile ? profile.role : "student";
-            window.location.href = role == 'leader'|| role == 'Leader' ? "leader-dash.html" : "student-dash.html";
+            window.location.href = role === 'leader' || role === 'Leader' ? "leader-dash.html" : "student-dash.html";
+            
         } catch (error) {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -428,7 +532,6 @@
                 `;
                 err.classList.remove('hidden');
 
-                // تفعيل زر إعادة الإرسال
                 document.getElementById('btn-resend').addEventListener('click', async function() {
                     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
                     this.disabled = true;
@@ -443,25 +546,37 @@
                     }
                 });
             } else {
-                // عرض رسالة الخطأ العادية (كلمة مرور خطأ، إلخ)
                 err.textContent = error.message;
                 err.classList.remove('hidden');
             }
         }
     });
 
-    // --- منطق إنشاء الحساب ---
+
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btn-signup');
+        
         const err = document.getElementById('signup-error');
+        const isChecked = document.getElementById('terms-checkbox').checked;
+        const trackValue = document.getElementById('signup-track').value;
+                if (!trackValue) {
+            err.textContent = "⚠️ الرجاء اختيار المسار التقني (Track) قبل المتابعة.";
+            err.classList.remove('hidden');
+            return;
+        }
+        if (!isChecked) {
+            err.textContent = "⚠️ يجب الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً.";
+            err.classList.remove('hidden');
+            return; 
+        }
+
+        const btn = document.getElementById('btn-signup'); 
         const originalText = btn.innerHTML;
         
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
         btn.disabled = true;
         err.classList.add('hidden');
 
-        // تجميع البيانات...
         const personalInfo = {
             fullName: document.getElementById('signup-name').value,
             photoURL: document.getElementById('signup-photo')?.value
@@ -471,7 +586,8 @@
             university: document.getElementById('signup-uni')?.value || "Not Specified",
             faculty: document.getElementById('signup-faculty')?.value || "Engineering",
             department: document.getElementById('signup-dept')?.value || "Electronics",
-            year: document.getElementById('signup-year')?.value || "Prep"
+            year: document.getElementById('signup-year')?.value || "Prep",
+            track: trackValue 
         };
 
         try {
@@ -490,11 +606,12 @@
 
         } catch (error) {
             btn.innerHTML = originalText;
-            btn.disabled = false;
-            err.textContent = error.message; // الرسالة المترجمة
+            btn.disabled = false; // إعادة تفعيل الزر في حالة حدوث خطأ
+            err.textContent = error.message;
             err.classList.remove('hidden');
         }
     });
+
 </script>
 </body>
 </html>

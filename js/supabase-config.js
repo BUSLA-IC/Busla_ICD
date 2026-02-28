@@ -73,35 +73,17 @@ export const AuthService = {
 /**
      * Sign up a new user
      */
-    async signUp(email, password, metadata) {
-        try {
-            // 1. Create Auth User
-            // الـ Trigger في قاعدة البيانات سيقوم بقراءة هذه البيانات وإنشاء البروفايل
-            const { data: authData, error: authError } = await supabase.auth.signUp({
+async signUp(email, password, metaData = {}) {
+        return handleRequest(
+            supabase.auth.signUp({
                 email,
                 password,
-                options: { 
-                    data: { 
-                        full_name: metadata.full_name,
-                        avatar_url: metadata.avatar_url,       
-                        university: metadata.university,
-                        faculty: metadata.faculty,
-                        governorate: metadata.governorate,
-                        department: metadata.department,       
-                        academic_year: metadata.academic_year  
-                    } 
+                options: {
+                    data: metaData // إرسال الداتا المجمعة مباشرة
                 }
-            });
-
-            if (authError) throw authError;
-            
-            return { success: true, data: authData.user, error: null };
-
-        } catch (err) {
-            return { success: false, data: null, error: err.message };
-        }
+            })
+        );
     },
-
     /**
      * Sign in existing user.
      * @param {string} email 
