@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busla Course Player</title>
+    <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,7 +34,7 @@
 
     <aside id="right-sidebar" class="fixed inset-y-0 right-0 z-50 w-80 bg-b-surface border-l border-white/10 flex flex-col h-full transform translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none">
 
-        
+
         <div class="p-4 border-b border-white/10 bg-black/40 flex items-center justify-between shrink-0">
             <button onclick="window.goBackToDashboard()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-bold group">
                 <i class="fas fa-arrow-right group-hover:-translate-x-1 transition-transform"></i>
@@ -60,17 +62,21 @@
         <div id="playlist-container" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll">
             </div>
     </aside>
-
-    <main class="flex-1 relative flex flex-col bg-black h-full min-w-0 overflow-hidden">
+<main class="flex-1 relative flex flex-col bg-black h-full min-w-0 overflow-hidden">
         
         <div id="view-video" class="content-view hidden h-full flex flex-col group/video-container relative">
             
             <div id="video-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
                 
                 <div class="flex items-start gap-3 w-full lg:w-auto flex-1">
-                    <button onclick="window.toggleSidebar()" class="lg:hidden w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shrink-0 mt-1 shadow-lg">
-                        <i class="fas fa-list-ul"></i>
-                    </button>
+                    <div class="flex lg:hidden items-center gap-2 shrink-0 mt-1">
+                        <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
                     
                     <div class="flex-1 space-y-2 md:space-y-3">
                         <div class="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm font-medium">
@@ -152,13 +158,25 @@
 
         <div id="view-quiz" class="content-view hidden h-full overflow-y-auto p-4 md:p-8 max-w-4xl mx-auto w-full custom-scroll">
             <div class="bg-b-surface border border-white/10 rounded-2xl p-6 md:p-8">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 id="quiz-title" class="text-xl md:text-2xl font-bold text-white mb-2"></h2>
-                        <p id="quiz-desc" class="text-gray-400 text-xs md:text-sm"></p>
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="flex lg:hidden items-center gap-2 shrink-0">
+                            <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
+                            <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <h2 id="quiz-title" class="text-xl md:text-2xl font-bold text-white mb-2"></h2>
+                            <p id="quiz-desc" class="text-gray-400 text-xs md:text-sm"></p>
+                        </div>
                     </div>
                     <span class="bg-yellow-500/20 text-yellow-500 text-[10px] md:text-xs px-3 py-1 rounded-full border border-yellow-500/30 shrink-0">اختبار</span>
                 </div>
+                
                 <div id="quiz-questions-container" class="space-y-8"></div>
                 <div id="quiz-result-area" class="hidden mt-8 p-6 bg-black/40 rounded-xl border border-white/10 text-center"></div>
                 <button id="btn-submit-quiz" class="mt-8 w-full bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-all">تسليم الإجابات</button>
@@ -169,6 +187,16 @@
             <div class="bg-b-surface border border-white/10 rounded-2xl p-6 md:p-8 mb-6 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-laptop-code text-9xl text-purple-500"></i></div>
                 <div class="relative z-10">
+                    
+                    <div class="flex lg:hidden items-center gap-2 mb-4">
+                        <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
                     <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
                         <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] md:text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider"><i class="fas fa-code-branch mr-1"></i> مشروع عملي</span>
                         <span id="project-lesson-tag" class="text-gray-400 text-[10px] md:text-xs bg-black/30 px-3 py-1 rounded-full border border-white/5"></span>
