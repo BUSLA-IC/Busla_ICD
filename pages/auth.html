@@ -508,15 +508,21 @@
                 document.getElementById('login-password').value
             );
 
-            const { data: profile } = await supabase
+const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', user.id)
                 .maybeSingle(); 
                 
-            const role = profile ? profile.role : "student";
-            window.location.href = role === 'leader' || role === 'Leader' ? "leader-dash.html" : "student-dash.html";
+            const role = profile ? (profile.role).toLowerCase() : "student";
             
+            if (role === 'owner' || role === 'admin') {
+                window.location.href = "../admin/html/admin-dash.html"; 
+            } else if (role === 'leader') {
+                window.location.href = "leader-dash.html";
+            } else {
+                window.location.href = "student-dash.html";
+            }
         } catch (error) {
             btn.innerHTML = originalText;
             btn.disabled = false;
