@@ -25,6 +25,9 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        /* Add to style tag in admin-dash.html */
+.dir-ltr { direction: ltr; text-align: left; }
+.cm-tree-node { border-left: 2px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-top: 0.5rem; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -84,43 +87,179 @@
             </div>
         </section>
 
-        <section id="content-mgmt" class="tab-content space-y-6">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-white"><i class="fas fa-photo-video text-b-primary ml-2"></i> إدارة المحتوى</h1>
-                <button id="btn-import-yt" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg">
-                    <i class="fab fa-youtube"></i> استيراد من يوتيوب
-                </button>
+<div id="content-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
+    
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+        <div>
+            <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                إدارة المناهج والمحتوى
+            </h2>
+            <p class="text-gray-400 text-sm mt-1 ml-14">التحكم المركزي في المسارات، الكورسات، والمشاريع</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <button class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold px-5 py-2.5 rounded-xl border border-blue-500/20 transition-all flex items-center gap-2">
+                <i class="fas fa-magic"></i> أدوات الذكاء الاصطناعي
+            </button>
+            <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 hover:-translate-y-1">
+                <i class="fas fa-plus"></i> إنشاء جديد
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
+        <button class="cm-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-level="tracks">Tracks</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="phases">Phases</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="courses">Courses</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="course_materials">Course Contents</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="quizzes">Quizzes</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="quiz_questions">Quiz Questions</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="projects">Projects</button>
+        <div class="w-px bg-white/10 mx-2"></div>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-purple-400 hover:bg-white/5 transition-colors whitespace-nowrap" data-level="media"><i class="fas fa-photo-video mr-1"></i> Media Library</button>
+        <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-orange-400 hover:bg-white/5 transition-colors whitespace-nowrap" data-level="bulk"><i class="fas fa-layer-group mr-1"></i> Bulk Operations</button>
+    </div>
+
+<div class="p-4 border-b border-white/5 bg-black/40 flex flex-col gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input type="text" id="filter-search" placeholder="بحث بالاسم أو العنوان..." class="w-full bg-black border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner">
             </div>
             
-            <div class="flex gap-2 border-b border-white/10 pb-4 mb-6 overflow-x-auto custom-scroll">
-                <button class="content-tab-btn active px-4 py-2 bg-white/10 text-white rounded-lg text-sm font-bold" data-target="phases-table">المراحل (Phases)</button>
-                <button class="content-tab-btn px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-bold" data-target="courses-table">الكورسات</button>
-                <button class="content-tab-btn px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-bold" data-target="videos-table">الفيديوهات</button>
-                <button class="content-tab-btn px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-bold" data-target="quizzes-table">الكويزات</button>
-                <button class="content-tab-btn px-4 py-2 text-gray-400 hover:text-white rounded-lg text-sm font-bold" data-target="projects-table">المشاريع</button>
+            <select id="filter-status" class="bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-gray-300 outline-none focus:border-b-primary cursor-pointer shadow-inner">
+                <option value="all">كل الحالات (مفعل/معطل)</option>
+                <option value="true">🟢 مفعل (Active)</option>
+                <option value="false">🔴 معطل (Inactive)</option>
+            </select>
+
+            <select id="filter-parent" class="hidden bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-gray-300 outline-none focus:border-purple-500 cursor-pointer shadow-inner max-w-xs truncate">
+                <option value="all">كل الارتباطات</option>
+            </select>
+        </div>
+        
+        <div class="flex flex-wrap justify-between items-center gap-3 border-t border-white/5 pt-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-gray-500"><i class="fas fa-calendar-alt mr-1"></i> من:</span>
+                <input type="date" id="filter-date-from" class="bg-black border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
+                <span class="text-xs font-bold text-gray-500 ml-2">إلى:</span>
+                <input type="date" id="filter-date-to" class="bg-black border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
+                <button onclick="window.cmResetFilters()" class="text-xs text-red-400 hover:text-red-300 font-bold bg-red-500/10 px-2 py-1 rounded ml-2 transition-colors">إلغاء الفلاتر</button>
             </div>
 
-            <div class="mb-6 relative w-full max-w-md">
-                <input type="text" id="content-search" placeholder="ابحث بالاسم أو المعرف..." class="w-full bg-b-surface border border-white/10 rounded-xl py-3 px-4 pr-10 text-white focus:border-b-primary outline-none text-sm">
-                <i class="fas fa-search absolute left-4 top-3.5 text-gray-500"></i>
+            <div class="flex bg-black rounded-lg p-1 border border-white/10 shrink-0">
+                <button onclick="window.cmSwitchView('grid')" id="btn-view-grid" class="px-4 py-1.5 rounded text-xs font-bold bg-white/10 text-white"><i class="fas fa-table mr-1"></i> Grid</button>
+                <button onclick="window.cmSwitchView('tree')" id="btn-view-tree" class="px-4 py-1.5 rounded text-xs font-bold text-gray-500 hover:text-white"><i class="fas fa-sitemap mr-1"></i> Tree Structure</button>
             </div>
+        </div>
+    </div>
 
-            <div class="bg-b-surface rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                <table class="w-full text-right">
-                    <thead class="bg-black/40 text-gray-400 text-xs uppercase tracking-wider border-b border-white/10">
-                        <tr>
-                            <th class="p-4">المعرف (ID)</th>
-                            <th class="p-4">العنوان</th>
-                            <th class="p-4">التابع لـ</th>
-                            <th class="p-4 text-center">إجراءات</th>
-                        </tr>
+    <div class="flex-1 overflow-y-auto custom-scroll p-6 relative">
+        <div id="cm-view-grid" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
+            <table class="w-full text-right text-sm">
+                <thead id="cm-table-head" class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider">
                     </thead>
-                    <tbody id="content-table-body" class="divide-y divide-white/5 text-sm">
-                        <tr><td colspan="4" class="p-8 text-center text-gray-500">جاري التحميل...</td></tr>
-                    </tbody>
-                </table>
+                <tbody id="cm-table-body" class="divide-y divide-white/5">
+                    <tr><td colspan="10" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="cm-view-tree" class="hidden text-center py-20 text-gray-500 border border-white/10 border-dashed rounded-2xl">
+            <i class="fas fa-sitemap text-6xl mb-4 text-purple-500/20"></i>
+            <h3 class="text-xl font-bold text-white">الهيكل الشجري (Curriculum Tree)</h3>
+            <p>سيتم عرض الهيكل بالكامل هنا قريباً...</p>
+        </div>
+    </div>
+</div>
+
+<div id="cm-crud-modal" class="fixed inset-0 z-[300] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden transform scale-100 transition-transform">
+        <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-center">
+            <h3 id="cm-modal-title" class="text-xl font-bold text-white">إضافة عنصر جديد</h3>
+            <button onclick="window.cmCloseModal()" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="cm-crud-form" class="p-6 space-y-4">
+            <div id="cm-form-fields" class="space-y-4"></div>
+            
+            <div class="pt-4 border-t border-white/10 flex gap-3">
+                <button type="button" onclick="window.cmCloseModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold">إلغاء</button>
+                <button type="submit" id="cm-btn-save" class="flex-1 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold flex justify-center items-center gap-2 shadow-lg"><i class="fas fa-save"></i> حفظ البيانات</button>
             </div>
-        </section>
+        </form>
+    </div>
+</div>
+<div id="cm-details-modal" class="fixed inset-0 z-[300] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden transform scale-100 transition-transform max-h-[90vh]">
+        <div class="p-5 border-b border-white/10 bg-gradient-to-r from-blue-900/40 to-b-surface flex justify-between items-center shrink-0">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-info-circle text-blue-400"></i> تفاصيل السجل (Record Details)
+            </h3>
+            <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div id="cm-details-content" class="p-6 overflow-y-auto custom-scroll flex-1 bg-black/20">
+            </div>
+        
+        <div class="p-4 border-t border-white/10 flex justify-end shrink-0 bg-b-surface">
+            <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">إغلاق النافذة</button>
+        </div>
+    </div>
+</div>
+        <div id="youtube-import-modal" class="fixed inset-0 bg-black/90 hidden z-[998] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-b-surface border border-white/10 rounded-3xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 border border-red-500/20"><i class="fab fa-youtube text-xl"></i></div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">استيراد قائمة تشغيل (Playlist)</h3>
+                            <p class="text-xs text-gray-400 mt-1">سحب الفيديوهات، العناوين، والمدة الزمنية تلقائياً</p>
+                        </div>
+                    </div>
+                    <button onclick="window.closeYoutubeModal()" class="text-gray-500 hover:text-white transition-colors"><i class="fas fa-times text-2xl"></i></button>
+                </div>
+
+                <div class="space-y-4 mb-6 shrink-0">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-2">رابط الـ Playlist من يوتيوب</label>
+                        <input type="url" id="yt-playlist-url" placeholder="https://www.youtube.com/playlist?list=..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none text-sm dir-ltr text-left">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">ربط بالكورس (Course)</label>
+                            <select id="yt-course-select" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-sm">
+                                <option value="" disabled selected>جاري تحميل الكورسات...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">تفعيل الفيديوهات فوراً؟</label>
+                            <select id="yt-status-select" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-sm">
+                                <option value="true">نعم (Active)</option>
+                                <option value="false">لا (Draft)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btn-fetch-yt" onclick="window.fetchYoutubeData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2">
+                        <i class="fas fa-sync-alt"></i> جلب البيانات من يوتيوب
+                    </button>
+                </div>
+
+                <div id="yt-preview-area" class="hidden flex-1 overflow-y-auto custom-scroll border border-white/10 rounded-xl bg-black/30 p-2">
+                    <div class="p-2 flex justify-between items-center border-b border-white/5 mb-2">
+                        <span class="text-sm font-bold text-gray-300">الفيديوهات المستخرجة: <span id="yt-vid-count" class="text-b-primary">0</span></span>
+                        <span class="text-sm font-bold text-gray-300">المدة الكلية: <span id="yt-total-duration" class="text-yellow-500">00:00:00</span></span>
+                    </div>
+                    <ul id="yt-videos-list" class="space-y-2 text-sm">
+                        </ul>
+                </div>
+
+                <div id="yt-action-footer" class="hidden mt-4 pt-4 border-t border-white/10 flex gap-3 shrink-0">
+                    <button id="btn-save-yt" onclick="window.saveYoutubeVideosToDB()" class="flex-1 bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all">حفظ في قاعدة البيانات</button>
+                </div>
+            </div>
+        </div>
 
         </main>
 
@@ -129,5 +268,7 @@
         </div>
 
     <script type="module" src="../js/admin-dash.js"></script>
+    <script type="module" src="../js/content-mgmt.js"></script>
+
 </body>
 </html>
