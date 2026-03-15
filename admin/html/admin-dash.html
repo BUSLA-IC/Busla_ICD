@@ -6,6 +6,7 @@
     <title>Busla Admin Panel</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -100,7 +101,7 @@
             <p class="text-gray-400 text-sm mt-1 ml-14">التحكم المركزي في المسارات، الكورسات، والمشاريع</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <button class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold px-5 py-2.5 rounded-xl border border-blue-500/20 transition-all flex items-center gap-2">
+            <button onclick="ytImportEngine.openWizard()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold px-5 py-2.5 rounded-xl border border-blue-500/20 transition-all flex items-center gap-2">
                 <i class="fas fa-magic"></i> أدوات الذكاء الاصطناعي
             </button>
             <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 hover:-translate-y-1">
@@ -208,58 +209,97 @@
         </div>
     </div>
 </div>
-        <div id="youtube-import-modal" class="fixed inset-0 bg-black/90 hidden z-[998] flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-b-surface border border-white/10 rounded-3xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 border border-red-500/20"><i class="fab fa-youtube text-xl"></i></div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white">استيراد قائمة تشغيل (Playlist)</h3>
-                            <p class="text-xs text-gray-400 mt-1">سحب الفيديوهات، العناوين، والمدة الزمنية تلقائياً</p>
-                        </div>
-                    </div>
-                    <button onclick="window.closeYoutubeModal()" class="text-gray-500 hover:text-white transition-colors"><i class="fas fa-times text-2xl"></i></button>
-                </div>
+<div id="yt-import-wizard" class="fixed inset-0 z-[500] hidden bg-black/95 backdrop-blur-md flex flex-col transition-opacity">
+    
+    <div class="h-16 bg-b-surface border-b border-white/10 flex items-center justify-between px-6 shrink-0 shadow-lg">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center text-xl border border-red-500/20"><i class="fab fa-youtube"></i></div>
+            <div>
+                <h2 class="text-lg font-black text-white">Smart Course Importer</h2>
+                <p class="text-[10px] text-gray-400 font-mono tracking-widest uppercase" id="yt-wizard-step-text">Step 1: Fetch Source</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="ytImportEngine.closeWizard()" class="w-10 h-10 rounded-xl bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
 
-                <div class="space-y-4 mb-6 shrink-0">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 mb-2">رابط الـ Playlist من يوتيوب</label>
-                        <input type="url" id="yt-playlist-url" placeholder="https://www.youtube.com/playlist?list=..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none text-sm dir-ltr text-left">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-2">ربط بالكورس (Course)</label>
-                            <select id="yt-course-select" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-sm">
-                                <option value="" disabled selected>جاري تحميل الكورسات...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-2">تفعيل الفيديوهات فوراً؟</label>
-                            <select id="yt-status-select" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-sm">
-                                <option value="true">نعم (Active)</option>
-                                <option value="false">لا (Draft)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button id="btn-fetch-yt" onclick="window.fetchYoutubeData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2">
-                        <i class="fas fa-sync-alt"></i> جلب البيانات من يوتيوب
+    <div class="flex-1 overflow-hidden flex relative">
+        
+        <div id="yt-step-1" class="absolute inset-0 flex flex-col items-center justify-center p-6 transition-transform duration-500">
+            <div class="max-w-xl w-full text-center space-y-6">
+                <i class="fas fa-link text-6xl text-white/10 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white">أدخل رابط قائمة التشغيل (Playlist)</h3>
+                <p class="text-sm text-gray-400">يمكنك إدخال الرابط كاملاً أو المعرف (ID) فقط. سيقوم النظام بتحليل الفيديوهات واستخراج البيانات تلقائياً.</p>
+                <div class="relative">
+                    <input type="text" id="yt-input-url" placeholder="https://www.youtube.com/playlist?list=PL..." class="w-full bg-black/50 border-2 border-white/10 rounded-2xl px-6 py-4 text-left dir-ltr text-white focus:border-red-500 outline-none transition-colors text-lg shadow-inner">
+                    <button onclick="ytImportEngine.fetchPlaylist()" id="btn-yt-fetch" class="absolute right-2 top-2 bottom-2 bg-red-600 hover:bg-red-500 text-white font-bold px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+                        تحليل <i class="fas fa-magic ml-2"></i>
                     </button>
-                </div>
-
-                <div id="yt-preview-area" class="hidden flex-1 overflow-y-auto custom-scroll border border-white/10 rounded-xl bg-black/30 p-2">
-                    <div class="p-2 flex justify-between items-center border-b border-white/5 mb-2">
-                        <span class="text-sm font-bold text-gray-300">الفيديوهات المستخرجة: <span id="yt-vid-count" class="text-b-primary">0</span></span>
-                        <span class="text-sm font-bold text-gray-300">المدة الكلية: <span id="yt-total-duration" class="text-yellow-500">00:00:00</span></span>
-                    </div>
-                    <ul id="yt-videos-list" class="space-y-2 text-sm">
-                        </ul>
-                </div>
-
-                <div id="yt-action-footer" class="hidden mt-4 pt-4 border-t border-white/10 flex gap-3 shrink-0">
-                    <button id="btn-save-yt" onclick="window.saveYoutubeVideosToDB()" class="flex-1 bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all">حفظ في قاعدة البيانات</button>
                 </div>
             </div>
         </div>
+
+        <div id="yt-step-2" class="absolute inset-0 flex transition-transform duration-500 translate-x-full">
+            
+<div class="w-1/3 max-w-sm bg-b-surface border-l border-white/10 p-6 overflow-y-auto custom-scroll flex flex-col gap-6">
+    <h3 class="text-lg font-bold text-white border-b border-white/5 pb-3"><i class="fas fa-cogs text-b-primary mr-2"></i> إعدادات الكورس</h3>
+    
+    <div class="space-y-4">
+        <div><label class="text-xs text-gray-400 font-bold mb-1 block">عنوان الكورس/القسم</label><input type="text" id="yt-course-title" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-b-primary"></div>
+        
+        <div><label class="text-xs text-gray-400 font-bold mb-1 block">المسار (Track) *</label><select id="yt-course-track" onchange="ytImportEngine.loadPhases(this.value)" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-b-primary"></select></div>
+        
+        <div><label class="text-xs text-gray-400 font-bold mb-1 block">المرحلة المرتبطة (Phase) *</label><select id="yt-course-phase" disabled class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-gray-500 cursor-not-allowed focus:border-b-primary"></select></div>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-xs text-gray-400 font-bold mb-1 block">النوع (Type)</label>
+                <select id="yt-course-type" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500">
+                    <option value="course">كورس أساسي</option>
+                    <option value="section">قسم فرعي / مراجعة</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 font-bold mb-1 block text-truncate" title="ارتباط بكورس أساسي">مرتبط بـ (Related)</label>
+                <select id="yt-course-related" class="w-full bg-black border border-white/10 rounded-xl px-2 py-2 text-sm text-white focus:border-purple-500">
+                    <option value="">بدون ارتباط</option>
+                    </select>
+            </div>
+        </div>
+
+        <div><label class="text-xs text-gray-400 font-bold mb-1 block">وصف المحتوى</label><textarea id="yt-course-desc" rows="3" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-b-primary"></textarea></div>
+        
+        <div class="p-3 bg-black/40 border border-white/5 rounded-xl space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="yt-course-active" checked class="w-4 h-4 text-green-500"><span class="text-sm font-bold text-gray-300">مفعل للطلاب مباشرة</span></label>
+            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="yt-course-sync" checked class="w-4 h-4 text-blue-500"><span class="text-sm font-bold text-gray-300">مزامنة التحديثات مستقبلاً</span></label>
+        </div>
+        
+        <div id="yt-health-check-banner" class="p-3 rounded-xl text-sm font-bold hidden border"></div>
+    </div>
+
+    <button onclick="ytImportEngine.saveCourse()" id="btn-yt-save" class="mt-auto w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+        <i class="fas fa-cloud-upload-alt"></i> اعتماد وحفظ الكورس
+    </button>
+</div>
+
+            <div class="flex-1 bg-black/80 p-6 overflow-y-auto custom-scroll relative">
+                <div class="flex justify-between items-center mb-6 sticky top-0 bg-black/90 p-4 border border-white/10 rounded-2xl shadow-xl z-10 backdrop-blur-md">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">محتوى الكورس (Videos Builder)</h3>
+                        <p class="text-xs text-gray-400 mt-1"><span id="yt-videos-count" class="text-blue-400 font-mono">0</span> فيديوهات مستخرجة | <span id="yt-total-time" class="text-yellow-500 font-mono">00:00:00</span> المدة الإجمالية</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="ytImportEngine.autoSplitSections()" class="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-purple-400 text-xs font-bold rounded-lg transition-colors"><i class="fas fa-magic mr-1"></i> تقسيم ذكي لسكاشن</button>
+                    </div>
+                </div>
+
+                <div id="yt-builder-list" class="space-y-3 dir-ltr text-left pb-20">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
 
         </main>
 

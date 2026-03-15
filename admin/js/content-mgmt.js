@@ -350,42 +350,159 @@ function buildCurriculumTree(tracks, phases, courses, materials) {
     return tree;
 }
 
+// ==========================================
+// 🚀 ROADMAP & CURRICULUM TREE VIEW
+// ==========================================
 function renderTreeViewHTML() {
     const container = document.getElementById('cm-view-tree');
     if (curriculumTree.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-500 py-10">لا توجد بيانات منهجية متاحة.</div>';
+        container.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold border border-dashed border-white/10 rounded-xl bg-black/20">لا توجد بيانات منهجية متاحة. قم بإضافة مسار (Track) للبدء.</div>';
         return;
     }
 
-    let html = '<div class="space-y-4 text-left dir-ltr">';
+    let html = '<div class="space-y-12 p-2 dir-ltr text-left">';
+    
     curriculumTree.forEach(track => {
+        const trackStatus = track.is_active 
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest ml-3">Active</span>' 
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-widest ml-3">Draft</span>';
+
         html += `
-        <div class="bg-black/40 border border-white/10 rounded-xl p-4">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-3"><i class="fas fa-road text-b-primary"></i> ${track.name}</h3>
-            <div class="pl-6 border-l-2 border-white/5 space-y-3">
+        <div>
+            <div class="flex items-center mb-8 border-b border-white/5 pb-4">
+                <div class="w-12 h-12 rounded-xl bg-b-primary/20 text-b-primary flex items-center justify-center text-xl shadow-[0_0_15px_rgba(0,106,103,0.3)] mr-4 shrink-0">
+                    <i class="fas fa-road"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-white flex items-center">${track.name} ${trackStatus}</h2>
+                    <span class="text-xs text-gray-500 font-mono">Track ID: ${String(track.id).split('-')[0]} | ${track.phases.length} Phases</span>
+                </div>
+            </div>
+            
+            <div class="ml-4 md:ml-6">
         `;
+
+        if (track.phases.length === 0) {
+            html += `<div class="text-xs text-yellow-500/70 italic mb-8 p-3 border border-yellow-500/20 bg-yellow-500/5 rounded-lg">No phases added to this track yet.</div>`;
+        }
+
         track.phases.forEach(phase => {
+            const phaseStatus = phase.is_active 
+                ? '<span class="text-[9px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20 uppercase ml-2">Active</span>' 
+                : '<span class="text-[9px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 uppercase ml-2">Draft</span>';
+
             html += `
-                <div class="bg-black/60 border border-white/5 rounded-lg p-3">
-                    <h4 class="text-sm font-bold text-gray-200 flex items-center gap-2 mb-2"><i class="fas fa-layer-group text-purple-500"></i> ${phase.title}</h4>
-                    <div class="pl-6 border-l-2 border-white/5 space-y-2">
+                <div class="mb-8 border-l-4 border-white/10 pl-6 relative transition-all">
+                    
+                    <div class="absolute -left-[14px] top-0 w-5 h-5 bg-b-primary rounded-full border-4 border-black box-content shadow-[0_0_10px_rgba(0,106,103,0.5)]"></div>
+                    
+                    <div class="flex items-center justify-between mb-5 select-none group cursor-pointer" 
+                         onclick="this.nextElementSibling.classList.toggle('hidden'); const i = this.querySelector('.fa-chevron-down'); if(i) i.classList.toggle('rotate-180');">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-xl text-white group-hover:text-b-primary transition-colors flex items-center">
+                                ${phase.title} ${phaseStatus}
+                            </h3>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-xs text-gray-400 font-mono">ID: ${phase.phase_id}</span>
+                                <span class="text-xs text-blue-400"><i class="fas fa-book mr-1"></i> ${phase.courses.length} Courses</span>
+                            </div>
+                        </div>
+                        <div class="p-2 hover:bg-white/10 rounded-full transition-all">
+                            <i class="fas fa-chevron-down text-white transition-transform duration-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
             `;
+
+            if (phase.courses.length === 0) {
+                html += `<div class="text-sm text-gray-600 italic pl-2 border border-dashed border-white/5 rounded-lg p-3 bg-black/20">No courses in this phase.</div>`;
+            }
+
             phase.courses.forEach(course => {
+                const courseStatusIcon = course.is_active 
+                    ? '<i class="fas fa-check-circle text-green-400 text-xl" title="Active"></i>' 
+                    : '<i class="fas fa-times-circle text-gray-600 text-xl" title="Draft"></i>';
+
+                const hasMaterials = course.materials.length > 0;
+
                 html += `
-                    <div class="bg-white/5 border border-white/5 rounded p-2">
-                        <h5 class="text-xs font-bold text-blue-400 flex items-center gap-2 mb-2"><i class="fas fa-book"></i> ${course.title}</h5>
-                        <ul class="pl-6 space-y-1">
+                        <div class="rounded-xl overflow-hidden border-2 border-white/10 bg-black/40 hover:border-white/30 transition-all duration-300 shadow-sm">
+                            <div class="p-4 flex items-center justify-between cursor-pointer select-none" 
+                                 onclick="this.nextElementSibling.classList.toggle('hidden'); const i = this.querySelector('.fa-chevron-down'); if(i) i.classList.toggle('rotate-180');">
+                                
+                                <div class="flex items-center gap-4 overflow-hidden flex-1">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-black/40 border border-white/10 shrink-0 text-lg shadow-inner">
+                                        ${courseStatusIcon}
+                                    </div>
+                                    <div class="truncate flex-1">
+                                        <h4 class="font-bold text-base text-white truncate">${course.title}</h4>
+                                        <div class="flex items-center gap-3 mt-1">
+                                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono uppercase tracking-wider">${course.type || 'Course'}</span>
+                                            <span class="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20"><i class="fas fa-sitemap mr-1"></i>${course.materials.length} Materials</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 pl-2">
+                                    <div class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors text-gray-400">
+                                        <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hidden bg-black/60 border-t border-white/5 p-3 space-y-2">
                 `;
+
+                if (!hasMaterials) {
+                    html += `<div class="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">Empty course. Add materials to publish.</div>`;
+                }
+
                 course.materials.forEach(mat => {
-                    const icon = mat.type === 'video' ? 'fa-play-circle text-red-400' : mat.type === 'quiz' ? 'fa-clipboard-check text-yellow-400' : 'fa-laptop-code text-emerald-400';
-                    html += `<li class="text-[11px] text-gray-400 flex items-center gap-2 bg-black/50 p-1.5 rounded"><i class="fas ${icon}"></i> [${mat.order_index}] ${mat.title}</li>`;
+                    const icon = mat.type === 'video' ? 'fa-play' : mat.type === 'quiz' ? 'fa-clipboard-list' : mat.type === 'project' ? 'fa-laptop-code' : 'fa-link';
+                    const iconColor = mat.type === 'video' ? 'text-red-400' : mat.type === 'quiz' ? 'text-yellow-400' : mat.type === 'project' ? 'text-emerald-400' : 'text-blue-400';
+                    const matStatus = mat.status ? '<i class="fas fa-check text-green-400 text-sm"></i>' : '<i class="fas fa-eye-slash text-gray-600 text-sm" title="Draft"></i>';
+
+                    html += `
+                                <div class="flex items-center justify-between p-3 rounded-lg border border-white/5 hover:bg-white/5 transition-colors bg-b-surface md:mr-4 mr-0">
+                                    <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-black/40 border border-white/10 shrink-0">
+                                            <i class="fas ${icon} ${iconColor} text-sm"></i>
+                                        </div>
+                                        <div class="truncate flex-1 pr-2">
+                                            <h5 class="font-bold text-sm text-gray-200 truncate">${mat.title}</h5>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="text-[9px] text-gray-500 font-mono bg-black/50 px-1 rounded">Idx: ${mat.order_index}</span>
+                                                ${mat.base_xp > 0 ? `<span class="text-[9px] text-yellow-500 font-bold"><i class="fas fa-star text-[8px]"></i> ${mat.base_xp} XP</span>` : ''}
+                                                <span class="text-[8px] font-bold text-gray-500 uppercase tracking-widest">${mat.type}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pl-3 border-l border-white/10 flex justify-center items-center shrink-0 w-8">
+                                        ${matStatus}
+                                    </div>
+                                </div>
+                    `;
                 });
-                html += `</ul></div>`;
+
+                html += `
+                            </div>
+                        </div>
+                `;
             });
-            html += `</div></div>`;
+
+            html += `
+                    </div>
+                </div>
+            `;
         });
-        html += `</div></div>`;
+
+        html += `
+            </div>
+        </div>
+        `;
     });
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -738,5 +855,347 @@ window.cmDeleteItem = async (id) => {
         loadTableData();
     } catch (err) {
         window.showToast("فشل الحذف، قد يكون مرتبطاً ببيانات أخرى.", "error");
+    }
+};
+
+// AIzaSyCeiKc-MsUQs3TDOC7yvqD_Qx3mayLqY6Q
+
+
+
+// ==========================================
+// 🚀 YOUTUBE SMART IMPORT ENGINE
+// ==========================================
+const YOUTUBE_API_KEY = 'AIzaSyCeiKc-MsUQs3TDOC7yvqD_Qx3mayLqY6Q'; // ضعه هنا لاحقاً
+window.ytImportEngine = {
+    state: {
+        playlistId: '',
+        videos: [],
+        courseTitle: '',
+        courseDesc: '',
+        thumbnail: ''
+    },
+    sortableInst: null,
+
+openWizard: async () => {
+        document.getElementById('yt-input-url').value = '';
+        document.getElementById('yt-step-1').classList.remove('-translate-x-full', 'translate-x-full');
+        document.getElementById('yt-step-2').classList.add('translate-x-full');
+        document.getElementById('yt-import-wizard').classList.remove('hidden');
+        document.getElementById('yt-wizard-step-text').innerText = 'Step 1: Input Source';
+        
+        // 1. جلب المسارات (Tracks)
+        const { data: tracks } = await supabase.from('tracks').select('id, name');
+        const trackSelect = document.getElementById('yt-course-track');
+        trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار (Track) --</option>' + 
+            (tracks || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            
+        // 2. جلب الكورسات للارتباط (Related With)
+        const { data: courses } = await supabase.from('courses').select('course_id, title');
+        const relatedSelect = document.getElementById('yt-course-related');
+        if(relatedSelect) {
+            relatedSelect.innerHTML = '<option value="">بدون ارتباط (مستقل)</option>' + 
+                (courses || []).map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
+        }
+
+        // 3. إعادة تعيين حقل المراحل
+        const phaseSelect = document.getElementById('yt-course-phase');
+        phaseSelect.innerHTML = '<option value="" disabled selected>-- يرجى اختيار المسار أولاً --</option>';
+        phaseSelect.disabled = true;
+        phaseSelect.classList.replace('bg-black', 'bg-black/50');
+    },
+    // 2. تحميل المراحل بناءً على المسار المختار
+    loadPhases: async (trackId) => {
+        const { data: phases } = await supabase.from('phases').select('phase_id, title').eq('track_id', trackId);
+        const phaseSelect = document.getElementById('yt-course-phase');
+        phaseSelect.disabled = false;
+        phaseSelect.classList.replace('bg-black/50', 'bg-black');
+        phaseSelect.innerHTML = '<option value="" disabled selected>-- اختر المرحلة (Phase) --</option>' + 
+            (phases || []).map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
+    },
+
+    closeWizard: () => {
+        document.getElementById('yt-import-wizard').classList.add('hidden');
+    },
+
+    // 3. الاتصال بيوتيوب الفعلي وجلب البيانات
+    fetchPlaylist: async () => {
+        const input = document.getElementById('yt-input-url').value.trim();
+        const btn = document.getElementById('btn-yt-fetch');
+        if(!input) return window.showToast("يرجى إدخال الرابط أولاً", "error");
+
+        const match = input.match(/[?&]list=([^#\&\?]*)/) || input.match(/^([a-zA-Z0-9_-]+)$/);
+        const playlistId = match ? match[1] : input;
+
+        if(!YOUTUBE_API_KEY || YOUTUBE_API_KEY.includes('ضع_مفتاح')) {
+            return window.showToast("يرجى وضع YOUTUBE_API_KEY في الكود لكي تعمل الميزة.", "error");
+        }
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحليل...';
+        btn.disabled = true;
+
+        try {
+            // أ) جلب اسم ووصف الكورس
+            const plRes = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${YOUTUBE_API_KEY}`);
+            const plData = await plRes.json();
+            if(plData.error) throw new Error(plData.error.message);
+            if(!plData.items || plData.items.length === 0) throw new Error("Playlist not found or private");
+            
+            ytImportEngine.state.playlistId = playlistId;
+            ytImportEngine.state.courseTitle = plData.items[0].snippet.title;
+            ytImportEngine.state.courseDesc = plData.items[0].snippet.description;
+
+            // ب) جلب كل الفيديوهات (التعامل مع الصفحات لو أكثر من 50 فيديو)
+            let allItems = [];
+            let nextPageToken = '';
+            do {
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.items) allItems.push(...data.items);
+                nextPageToken = data.nextPageToken;
+            } while(nextPageToken);
+
+            // ج) جلب مدة الفيديوهات (Durations) في دفعات (50 فيديو بالدفعة)
+            const videoIds = allItems.map(item => item.contentDetails.videoId);
+            let durationsMap = {};
+            for (let i = 0; i < videoIds.length; i += 50) {
+                const chunk = videoIds.slice(i, i + 50).join(',');
+                const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${chunk}&key=${YOUTUBE_API_KEY}`);
+                const vData = await vRes.json();
+                if(vData.items) {
+                    vData.items.forEach(v => {
+                        durationsMap[v.id] = ytImportEngine.parseDuration(v.contentDetails.duration);
+                    });
+                }
+            }
+
+            // د) تعيين البيانات للحالة (State)
+            ytImportEngine.state.videos = allItems.map((item, i) => {
+                const vId = item.contentDetails.videoId;
+                const snippet = item.snippet;
+                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../assets/icons/icon.jpg';
+                const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
+                return {
+                    id: `vid_${Date.now()}_${i}`,
+                    videoId: vId,
+                    title: snippet.title,
+                    duration: durationsMap[vId] || 0,
+                    thumbnail: thumb,
+                    order_index: i + 1,
+                    type: 'video',
+                    is_excluded: isDeleted
+                };
+            });
+
+            ytImportEngine.renderBuilder();
+
+        } catch (err) {
+            window.showToast("خطأ: " + err.message, "error");
+        } finally {
+            btn.innerHTML = 'تحليل <i class="fas fa-magic ml-2"></i>';
+            btn.disabled = false;
+        }
+    },
+
+    parseDuration: (isoDuration) => {
+        const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+        if (!match) return 0;
+        const h = parseInt(match[1]) || 0;
+        const m = parseInt(match[2]) || 0;
+        const s = parseInt(match[3]) || 0;
+        return (h * 3600) + (m * 60) + s;
+    },
+
+    // 4. بناء الشاشة الثانية (السحب والإفلات والمراجعة)
+    renderBuilder: () => {
+        document.getElementById('yt-step-1').classList.add('-translate-x-full');
+        document.getElementById('yt-step-2').classList.remove('translate-x-full');
+        document.getElementById('yt-wizard-step-text').innerText = 'Step 2: Review & Build';
+        
+        document.getElementById('yt-course-title').value = ytImportEngine.state.courseTitle;
+        document.getElementById('yt-course-desc').value = ytImportEngine.state.courseDesc;
+
+        ytImportEngine.updateVideosUI();
+
+        // تفعيل السحب والإفلات (SortableJS)
+        const listContainer = document.getElementById('yt-builder-list');
+        if(ytImportEngine.sortableInst) ytImportEngine.sortableInst.destroy();
+        
+        ytImportEngine.sortableInst = new Sortable(listContainer, {
+            animation: 150,
+            handle: '.fa-grip-lines',
+            ghostClass: 'opacity-50',
+            onEnd: function (evt) {
+                // تحديث المصفوفة بعد السحب
+                const movedItem = ytImportEngine.state.videos.splice(evt.oldIndex, 1)[0];
+                ytImportEngine.state.videos.splice(evt.newIndex, 0, movedItem);
+                ytImportEngine.updateVideosUI(); // إعادة الترتيب البصري وتحديث الأرقام
+            }
+        });
+
+        ytImportEngine.runHealthCheck();
+    },
+
+    updateVideosUI: () => {
+        const container = document.getElementById('yt-builder-list');
+        const activeVideos = ytImportEngine.state.videos.filter(v => !v.is_excluded);
+        
+        document.getElementById('yt-videos-count').innerText = activeVideos.length;
+        const totalSecs = activeVideos.reduce((acc, curr) => acc + curr.duration, 0);
+        document.getElementById('yt-total-time').innerText = new Date(totalSecs * 1000).toISOString().substr(11, 8);
+
+        container.innerHTML = ytImportEngine.state.videos.map((vid, index) => {
+            // تحديث الترتيب الفعلي داخل المصفوفة ليتوافق مع الـ UI
+            vid.order_index = index + 1; 
+            
+            return `
+            <div class="flex items-center gap-3 p-3 rounded-xl border transition-all ${vid.is_excluded ? 'bg-red-900/10 border-red-500/20 opacity-50' : vid.type === 'section' ? 'bg-purple-900/20 border-purple-500/30 mt-6' : 'bg-white/5 border-white/10 hover:border-white/20'}">
+                <div class="flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white px-2 handle fa-grip-lines-container">
+                    <i class="fas fa-grip-lines text-lg"></i>
+                    <span class="text-[10px] font-mono">${index + 1}</span>
+                </div>
+                
+                <div class="w-24 h-14 bg-black rounded-lg bg-cover bg-center border border-white/10 shrink-0 relative overflow-hidden" style="background-image: url('${vid.thumbnail}')">
+                    ${vid.type === 'section' ? '<div class="absolute inset-0 bg-purple-500/50 flex items-center justify-center"><i class="fas fa-folder-open text-white"></i></div>' : ''}
+                </div>
+
+                <div class="flex-1 space-y-2">
+                    <input type="text" value="${vid.title}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" class="w-full bg-transparent border-b border-transparent hover:border-white/20 focus:border-b-primary outline-none text-sm font-bold text-white transition-colors px-1" ${vid.is_excluded ? 'disabled' : ''}>
+                    
+                    <div class="flex items-center gap-2">
+                        <select onchange="ytImportEngine.updateVidData(${index}, 'type', this.value)" class="bg-black/50 border border-white/10 rounded px-2 py-0.5 text-[10px] text-gray-300 outline-none" ${vid.is_excluded ? 'disabled' : ''}>
+                            <option value="video" ${vid.type === 'video' ? 'selected' : ''}>Video Lesson</option>
+                            <option value="demo" ${vid.type === 'demo' ? 'selected' : ''}>Demo/Practical</option>
+                            <option value="optional" ${vid.type === 'optional' ? 'selected' : ''}>Optional</option>
+                            <option value="section" ${vid.type === 'section' ? 'selected' : ''}>-- SECTION DIVIDER --</option>
+                        </select>
+                        <span class="text-[10px] text-gray-500 font-mono"><i class="far fa-clock mr-1"></i>${Math.floor(vid.duration/60)}m</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pl-3 border-l border-white/10">
+                    <button onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all ${vid.is_excluded ? 'bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-white/5 text-gray-400 hover:text-red-400'}" title="${vid.is_excluded ? 'Restore' : 'Exclude'}">
+                        <i class="fas ${vid.is_excluded ? 'fa-undo' : 'fa-ban'}"></i>
+                    </button>
+                </div>
+            </div>
+            `;
+        }).join('');
+    },
+
+    updateVidData: (index, key, val) => {
+        ytImportEngine.state.videos[index][key] = val;
+        ytImportEngine.runHealthCheck();
+    },
+
+    toggleExclude: (index) => {
+        ytImportEngine.state.videos[index].is_excluded = !ytImportEngine.state.videos[index].is_excluded;
+        ytImportEngine.updateVideosUI();
+        ytImportEngine.runHealthCheck();
+    },
+
+    autoSplitSections: () => {
+        ytImportEngine.state.videos.forEach(vid => {
+            const titleLower = vid.title.toLowerCase();
+            if (titleLower.includes('part') || titleLower.includes('chapter') || titleLower.includes('module') || titleLower.includes('مقدمة')) {
+                vid.type = 'section';
+            }
+        });
+        ytImportEngine.updateVideosUI();
+        window.showToast("تم تطبيق التقسيم الذكي بنجاح", "success");
+    },
+
+    runHealthCheck: () => {
+        const banner = document.getElementById('yt-health-check-banner');
+        const activeVids = ytImportEngine.state.videos.filter(v => !v.is_excluded);
+        let errors = [];
+
+        if(activeVids.length === 0) errors.push("الكورس لا يحتوي على أي فيديوهات مفعلة!");
+        if(activeVids.some(v => v.title.trim() === '')) errors.push("هناك فيديوهات بدون عنوان.");
+
+        if (errors.length > 0) {
+            banner.className = "p-3 rounded-xl text-xs font-bold border border-red-500/30 bg-red-500/10 text-red-400 block";
+            banner.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> ` + errors.join('<br>');
+            document.getElementById('btn-yt-save').disabled = true;
+            document.getElementById('btn-yt-save').classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            banner.className = "p-3 rounded-xl text-xs font-bold border border-green-500/30 bg-green-500/10 text-green-400 block";
+            banner.innerHTML = `<i class="fas fa-check-circle mr-1"></i> الكورس جاهز للحفظ الهيكلي تماماً.`;
+            document.getElementById('btn-yt-save').disabled = false;
+            document.getElementById('btn-yt-save').classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    },
+
+saveCourse: async () => {
+        const title = document.getElementById('yt-course-title').value.trim();
+        const phaseId = document.getElementById('yt-course-phase').value;
+        const desc = document.getElementById('yt-course-desc').value;
+        const isActive = document.getElementById('yt-course-active').checked;
+        const autoSync = document.getElementById('yt-course-sync').checked;
+        
+        // 💡 التقاط الحقول الجديدة (النوع والارتباط)
+        const courseType = document.getElementById('yt-course-type')?.value || 'course';
+        const relatedWith = document.getElementById('yt-course-related')?.value || null;
+
+        const btn = document.getElementById('btn-yt-save');
+
+        if (!title || !phaseId) return window.showToast("يجب إدخال عنوان الكورس واختيار المرحلة (Phase)", "error");
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ والمعالجة...';
+        btn.disabled = true;
+
+        try {
+            const courseId = 'cr_' + Date.now().toString(36);
+            const totalDur = ytImportEngine.state.videos.filter(v=>!v.is_excluded).reduce((a,b)=>a+b.duration, 0);
+
+            // 💡 تحديث الـ Payload لإرسال النوع والارتباط للداتابيز
+            const coursePayload = {
+                course_id: courseId,
+                phase_id: phaseId,
+                title: title,
+                description: desc,
+                type: courseType, 
+                related_with: relatedWith,
+                playlist_id: ytImportEngine.state.playlistId,
+                image_url: ytImportEngine.state.videos[0]?.thumbnail || '',
+                is_active: isActive,
+                auto_sync: autoSync,
+                "Module_Time": `${Math.round(totalDur/3600)} Hours`
+            };
+
+            const { error: crErr } = await supabase.from('courses').insert([coursePayload]);
+            if (crErr) throw crErr;
+
+            let actualOrderIndex = 1;
+            const materialsPayload = ytImportEngine.state.videos
+                .filter(v => !v.is_excluded)
+                .map(vid => ({
+                    content_id: 'cnt_' + Date.now().toString(36) + Math.random().toString(36).substr(2,4),
+                    course_id: courseId,
+                    title: vid.title,
+                    type: vid.type === 'section' ? 'section' : 'video',
+                    video_id: vid.videoId,
+                    duration: vid.duration,
+                    order_index: actualOrderIndex++,
+                    status: isActive,
+                    "Note": vid.type === 'section' ? "Section Divider" : ""
+                }));
+
+            const { error: matErr } = await supabase.from('course_materials').insert(materialsPayload);
+            if (matErr) throw matErr;
+
+            window.showToast("🎉 تم إنشاء الكورس واستيراد جميع الفيديوهات بنجاح!", "success");
+            ytImportEngine.closeWizard();
+            
+            if(typeof loadTableData === 'function') loadTableData();
+            if(typeof loadAndBuildTree === 'function') loadAndBuildTree();
+
+        } catch (err) {
+            console.error(err);
+            window.showToast("فشل الحفظ: " + err.message, "error");
+        } finally {
+            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> اعتماد وحفظ الكورس';
+            btn.disabled = false;
+        }
     }
 };

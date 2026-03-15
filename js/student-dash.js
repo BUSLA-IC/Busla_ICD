@@ -158,6 +158,15 @@ async function initDashboard(uid) {
                 requests: [],
                 leader_id: null
             };
+
+            // 🚀 التعديل الجديد: تشغيل فلتر التراكات للطالب الذي ليس لديه فريق
+            const noTeamView = document.getElementById('no-team-view');
+            if (noTeamView) noTeamView.classList.remove('hidden');
+            
+            if (typeof initExploreTrackFilter === 'function') {
+                initExploreTrackFilter(); // تجهيز التراكات وتحديد تراك الطالب التلقائي
+            }
+
         } else {
             const { data: teamData, error: teamError } = await supabase
                 .from('teams')
@@ -204,6 +213,7 @@ async function initDashboard(uid) {
         const hasCache = loadFromCache();
         if (hasCache) {
             console.log("Rendering from Cache immediately...");
+            if (typeof window.initRoadmapTrackFilter === 'function') await window.initRoadmapTrackFilter(); // 💡 تحديث الفلتر
             renderAllTabs(); 
         } else {
             console.log("No cache found, waiting for server...");
@@ -211,6 +221,12 @@ async function initDashboard(uid) {
         
         await fetchDataFromServer();
         console.log("Re-rendering with fresh data...");
+        
+        // 🚀 إضافة دالة تهيئة فلتر شجرة المنهج هنا بعد جلب البيانات
+        if (typeof window.initRoadmapTrackFilter === 'function') {
+            await window.initRoadmapTrackFilter();
+        }
+
         renderAllTabs();
         setTimeout(() => {
             if (typeof window.loadStudentNotifications === 'function') {
@@ -223,6 +239,47 @@ async function initDashboard(uid) {
     }
 }
 
+// =========================================
+// 💡 دالة لتهيئة فلتر التراكات الخاص بخريطة التعلم (للطالب)
+// =========================================
+window.initRoadmapTrackFilter = async () => {
+    const selector = document.getElementById('roadmap-track-selector');
+    if (!selector) return;
+
+    try {
+        // 1. جلب البيانات (Fetch): جلب المسارات المفعلة من قاعدة البيانات
+        const { data: tracks, error } = await supabase
+            .from('tracks')
+            .select('id, name')
+            .eq('is_active', true)
+            .order('created_at', { ascending: true });
+            
+        if (error) throw error;
+
+        // 2. تعبئة القائمة (Populate): بناء خيارات القائمة المنسدلة
+        let html = '<option value="all" class="font-bold text-b-primary">🌍 كل المسارات (All Tracks)</option>';
+        if (tracks && tracks.length > 0) {
+            tracks.forEach(t => {
+                html += `<option value="${t.id}">${t.name}</option>`;
+            });
+        }
+        selector.innerHTML = html;
+
+        // 3. الذكاء التلقائي (Auto-Select): اختيار مسار الطالب المسجل حالياً
+        const userTrack = currentUserData?.track || currentUserData?.track_id || currentUserData?.specialization;
+        
+        if (userTrack) {
+            // البحث عن المسار سواء كان مخزن كـ ID أو كاسم (مثل Digital IC Design)
+            const matchedTrack = tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
+            if (matchedTrack) {
+                selector.value = matchedTrack.id;
+            }
+        }
+    } catch (e) {
+        console.error("Error loading roadmap tracks:", e);
+        selector.innerHTML = '<option value="all">🌍 كل المسارات</option>';
+    }
+};
 // ==========================================
 // 3. DATA FETCHING & CACHING
 // ==========================================
@@ -266,15 +323,18 @@ async function fetchDataFromServer() {
         allData.quizzes = (quizzesRes.data || []).map(q => ({ ...q, id: q.quiz_id }));
         allData.rawContents = rawContents;
 
-        allData.courses = rawCourses.map(course => {
+allData.courses = rawCourses.map(course => {
             const courseContents = rawContents.filter(c => c.course_id === course.id);
-            const videoCount = courseContents.filter(c => c.type === 'video').length;
+            
+            // 💡 التعديل هنا: نعد العناصر اللي نوعها video أو section معاً
+            const videoCount = courseContents.filter(c => c.type === 'video' || c.type === 'section').length;
             
             let totalSeconds = 0;
             let instructor = course.created_by || ""; 
 
             courseContents.forEach(c => {
-                if(c.type === 'video') {
+                // 💡 التعديل هنا: نجمع وقت الـ video والـ section معاً
+                if(c.type === 'video' || c.type === 'section') {
                     let dur = typeof c.duration === 'number' ? c.duration : parseDurationToSeconds(c.duration);
                     totalSeconds += dur;
                     if (!instructor && c.author) instructor = c.author;
@@ -522,10 +582,10 @@ async function renderTeamOverview(tasks) {
                     نظام <strong>Busla</strong> مصمم للعمل الجماعي. لتتمكن من رؤية المهام، دراسة الكورسات، وجمع النقاط، يجب عليك الانضمام إلى فريق أو إنشاء فريقك الخاص وقيادته.
                 </p>
                 <div class="flex gap-4 justify-center">
-                    <button onclick="window.showToast('قريباً: الانضمام لفريق', 'info')" class="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/5">
+                    <button onclick="switchTab('squad')" class="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/5">
                         <i class="fas fa-search mr-2"></i> البحث عن فريق
                     </button>
-                    <button onclick="window.showToast('قريباً: إنشاء فريق', 'info')" class="px-8 py-3 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-b-primary/30 hover:-translate-y-1">
+                    <button onclick="window.location.href = './create-team.html'" class="px-8 py-3 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-b-primary/30 hover:-translate-y-1">
                         <i class="fas fa-flag mr-2"></i> إنشاء فريق جديد
                     </button>
                 </div>
@@ -846,6 +906,7 @@ window.formatExternalUrl = function(playlistId) {
 
 function renderRoadmapTree() {
     const container = document.getElementById('roadmap-tree-container');
+    const selector = document.getElementById('roadmap-track-selector'); // 💡 الفلتر
     if (!container) return;
     container.innerHTML = '';
 
@@ -854,7 +915,29 @@ function renderRoadmapTree() {
          return;
     }
 
-    allData.tree.forEach((phase) => {
+    // =========================================
+    // 💡 تطبيق الفلترة بناءً على التراك المختار
+    // =========================================
+    const selectedTrackId = selector ? selector.value : 'all';
+    let filteredTree = allData.tree;
+
+    if (selectedTrackId && selectedTrackId !== 'all') {
+        filteredTree = allData.tree.filter(phase => String(phase.track_id) === String(selectedTrackId));
+    }
+
+    if (filteredTree.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-16 text-gray-500 bg-white/5 border border-white/5 border-dashed rounded-2xl">
+                <i class="fas fa-folder-open text-4xl mb-4 opacity-50"></i>
+                <p class="font-bold">لا توجد مراحل (Phases) متاحة في هذا المسار حالياً.</p>
+                <p class="text-xs mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة.</p>
+            </div>`;
+        return;
+    }
+    // =========================================
+
+    // 💡 نستخدم filteredTree في الرسم
+    filteredTree.forEach((phase) => {
         const phaseId = String(phase.id).trim();
         const phaseEl = document.createElement('div');
         phaseEl.className = "mb-8 border-l-4 border-white/10 pl-6 relative"; 
@@ -874,7 +957,7 @@ function renderRoadmapTree() {
             <div id="content-phase-${phaseId}" class="space-y-4"></div>
         `;
 
-        const itemsContainer = phaseEl.querySelector(`#content-phase-${phaseId}`);
+        const itemsContainer = phaseEl.querySelector(`[id="content-phase-${phaseId}"]`);
 
         if (!phase.courses || phase.courses.length === 0) {
             itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">لا يوجد محتوى.</p>';
@@ -888,6 +971,7 @@ function renderRoadmapTree() {
                 const hasChildren = children.length > 0;
                 const isExpanded = expandedNodes.has(`course-children-${courseId}`);
 
+                // صلاحية الطالب (إذا الكورس مفعل أم مقفل)
                 const isActive = (currentTeam?.courses_plan || []).includes(courseId);
 
                 const itemHTML = document.createElement('div');
@@ -966,6 +1050,7 @@ function renderRoadmapTree() {
         container.appendChild(phaseEl);
     });
 }
+window.renderRoadmapTree = renderRoadmapTree; 
 
 window.handleItemClick = (type, id, hasChildren) => {
     window.showDetails(type, id);
@@ -1288,23 +1373,42 @@ window.openStudentInvites = async () => {
 window.openTeamBrowser = async () => {
     document.getElementById('team-browser-modal').classList.remove('hidden');
     const tbody = document.getElementById('teams-browser-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl text-purple-500 mb-2 block"></i> جاري جلب الفرق...</td></tr>';
+    
+    // 💡 تم تعديل colspan إلى 6 لتناسب عدد الأعمدة الجديد
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl text-purple-500 mb-2 block"></i> جاري جلب الفرق...</td></tr>';
     
     const trackFilterDropdown = document.getElementById('team-track-filter');
-    if (trackFilterDropdown) {
-        if (currentUserData && currentUserData.track) {
-            trackFilterDropdown.value = currentUserData.track;
-        } else {
-            trackFilterDropdown.value = "all";
-        }
-    }
     
-    const searchInput = document.getElementById('team-search-input');
-    const uniFilter = document.getElementById('team-uni-filter');
-    if(searchInput) searchInput.value = "";
-    if(uniFilter) uniFilter.value = "all";
-
     try {
+        // 1. جلب التراكات من الداتابيز لملء الفلتر بشكل ديناميكي
+        const { data: tracksData, error: tracksError } = await supabase.from('tracks').select('id, name').eq('is_active', true);
+        const tracks = tracksData || [];
+
+        // 2. بناء خيارات الفلتر وتحديد مسار الطالب التلقائي
+        if (trackFilterDropdown) {
+            let html = '<option value="all">🌍 كل المسارات</option>';
+            tracks.forEach(t => {
+                html += `<option value="${t.id}">${t.name}</option>`;
+            });
+            trackFilterDropdown.innerHTML = html;
+
+            const userTrack = currentUserData?.track || currentUserData?.track_id;
+            if (userTrack) {
+                const matchedTrack = tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
+                if (matchedTrack) {
+                    trackFilterDropdown.value = matchedTrack.id;
+                }
+            } else {
+                trackFilterDropdown.value = "all";
+            }
+        }
+        
+        const searchInput = document.getElementById('team-search-input');
+        const uniFilter = document.getElementById('team-uni-filter');
+        if(searchInput) searchInput.value = "";
+        if(uniFilter) uniFilter.value = "all";
+
+        // 3. جلب الفرق من الداتابيز
         const { data: teams, error } = await supabase
             .from('teams')
             .select(`
@@ -1315,19 +1419,24 @@ window.openTeamBrowser = async () => {
             
         if (error) throw error;
         
-        // 💡 الحل الجذري لمشكلة undefined
+        // 4. معالجة البيانات وتحويل الـ ID إلى اسم التراك الفعلي
         allSystemTeams = teams.map(t => {
-            // التعامل مع الـ leader كـ Array أو Object لتفادي الـ undefined
-            const leaderData = Array.isArray(t.leader) ? t.leader : t.leader;
-            // التعامل مع الأعضاء كـ Array
+            const leaderData = Array.isArray(t.leader) ? t.leader[0] : t.leader;
             const membersData = Array.isArray(t.members) ? t.members : [];
+
+            // البحث عن اسم التراك باستخدام الـ ID المخزن في جدول الفرق
+            const teamTrackObj = tracks.find(tr => String(tr.id) === String(t.specialization));
+
+            // إذا لم يجد مطابقة (بسبب أن specialization هو NULL في الداتابيز)، سيعرض 'غير محدد'
+            const actualTrackName = teamTrackObj ? teamTrackObj.name : 'غير محدد';
 
             return {
                 ...t,
-                memberCount: membersData.length, // العدد الحقيقي
+                memberCount: membersData.length,
                 leaderName: leaderData?.full_name || 'غير معروف',
                 leaderAvatar: leaderData?.avatar_url || null,
-                leaderTrack: leaderData?.track || 'Digital IC Design',
+                leaderTrack: actualTrackName,
+                trackId: t.specialization, // 💡 هذا السطر ضروري جداً لكي تعمل دالة الفلترة (filterTeams)
                 university: leaderData?.university || (t.university || 'غير محدد')
             };
         });
@@ -1335,10 +1444,9 @@ window.openTeamBrowser = async () => {
         window.filterTeams(); 
     } catch(e) {
         console.error("Team Browser Error:", e);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-10">فشل تحميل قائمة الفرق</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">فشل تحميل قائمة الفرق</td></tr>';
     }
 };
-
 window.filterTeams = () => {
     const searchInput = document.getElementById('team-search-input');
     const uniFilter = document.getElementById('team-uni-filter');
@@ -1346,7 +1454,7 @@ window.filterTeams = () => {
 
     const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
     const uniVal = uniFilter ? uniFilter.value : 'all';
-    const trackVal = trackFilter ? trackFilter.value : 'all';
+    const trackVal = trackFilter ? trackFilter.value : 'all'; // 💡 trackVal هو الـ ID
 
     const tbody = document.getElementById('teams-browser-list');
     if(!tbody) return;
@@ -1354,18 +1462,21 @@ window.filterTeams = () => {
 
     // 💡 الفلترة الشاملة
     const filtered = allSystemTeams.filter(t => {
-        const matchSearch = (t.name || '').toLowerCase().includes(searchVal) || 
-                            (t.leaderName || '').toLowerCase().includes(searchVal);
-        
+        // حماية من הـ undefined
+        const teamName = (t.name || '').toLowerCase();
+        const leaderName = (t.leaderName || '').toLowerCase();
+
+        const matchSearch = teamName.includes(searchVal) || leaderName.includes(searchVal);
         const matchUni = (uniVal === 'all' || !uniVal) ? true : (t.university === uniVal);
         
-        const matchTrack = (trackVal === 'all' || !trackVal) ? true : (t.leaderTrack === trackVal);
+        // 💡 الحل الجذري للفلترة: نقارن الـ ID بالـ ID (باستخدام trackId أو specialization)
+        const matchTrack = (trackVal === 'all' || !trackVal) ? true : (String(t.trackId) === trackVal || String(t.specialization) === trackVal);
 
         return matchSearch && matchUni && matchTrack;
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">لا توجد فرق مطابقة للبحث</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">لا توجد فرق مطابقة للبحث</td></tr>`;
         return;
     }
 
@@ -1373,23 +1484,28 @@ window.filterTeams = () => {
     filtered.forEach(t => {
         const logo = (t.logo_url && t.logo_url !== 'null' && t.logo_url !== '') 
                      ? t.logo_url : '../assets/icons/icon.jpg';
-        const displayUni = window.translateUni(t.university);
+        const displayUni = window.translateUni ? window.translateUni(t.university) : (t.university || 'غير محدد');
         const leaderAvatar = (t.leaderAvatar && t.leaderAvatar !== 'null' && t.leaderAvatar !== '') 
                              ? t.leaderAvatar : '../assets/icons/icon.jpg';
         
         const maxMembers = t.max_members || 5;
-        const membersColor = t.memberCount >= maxMembers ? 'text-red-400' : 'text-green-400'; // 💡 تلوين العدد
+        const membersColor = t.memberCount >= maxMembers ? 'text-red-400' : 'text-green-400'; 
 
         tbody.innerHTML += `
-            <tr class="hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+            <tr class="hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 group">
                 <td class="p-4">
                     <div class="flex items-center gap-3">
                         <img src="${logo}" class="w-10 h-10 rounded-xl border border-white/10 object-cover">
                         <div>
-                            <p class="font-bold text-white text-sm">${t.name}</p>
+                            <p class="font-bold text-white text-sm group-hover:text-b-primary transition-colors">${t.name}</p>
                             <span class="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">${displayUni}</span>
                         </div>
                     </div>
+                </td>
+                <td class="px-4 py-4">
+                    <span class="text-xs font-bold px-2 py-1 rounded-md bg-b-primary/10 text-b-primary border border-b-primary/20">
+                        ${t.leaderTrack}
+                    </span>
                 </td>
                 <td class="p-4 text-gray-400 text-sm">
                     <div class="flex items-center gap-2">
@@ -1403,16 +1519,15 @@ window.filterTeams = () => {
                 <td class="p-4 text-center text-yellow-500 text-sm font-bold font-mono">
                     ${t.total_score || 0} XP
                 </td>
-<td class="p-4 text-center">
-    <button onclick="window.viewTeamDetails('${t.id}', null, 'browser')" class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 font-bold px-4 py-2 rounded-lg text-xs transition-colors border border-blue-500/30">
-        <i class="fas fa-info-circle ml-1"></i> التفاصيل
-    </button>
-</td>
+                <td class="p-4 text-center">
+                    <button onclick="window.viewTeamDetails('${t.id}', null, 'browser')" class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 font-bold px-4 py-2 rounded-lg text-xs transition-colors border border-blue-500/30">
+                        <i class="fas fa-info-circle ml-1"></i> التفاصيل
+                    </button>
+                </td>
             </tr>
         `;
     });
 };
-
 
 
 // 3. عرض بطاقة الفريق الكبيرة (النافذة العملاقة)
@@ -1457,6 +1572,39 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
         document.getElementById('tdm-members-badge').innerText = mems?.length || 0;
         
         document.getElementById('tdm-leader-name').innerText = teamData.profiles?.full_name || 'غير معروف';
+        // 💡 تحديث وعرض اسم التخصص (Track) في نافذة التفاصيل
+        const trackNameEl = document.getElementById('tdm-track-name');
+        if (trackNameEl) {
+            trackNameEl.innerText = 'جاري التحميل...'; // رسالة مؤقتة لتأكيد عمل الكود
+            
+            let finalTrackName = 'غير محدد';
+
+            // 1. نحاول سحب الاسم الجاهز من المصفوفة الخاصة بالجدول (للسرعة)
+            const cachedTeam = (typeof allSystemTeams !== 'undefined' ? allSystemTeams : []).find(t => t.id === teamId);
+            
+            if (cachedTeam && cachedTeam.leaderTrack && cachedTeam.leaderTrack !== 'غير محدد') {
+                finalTrackName = cachedTeam.leaderTrack;
+            } 
+            // 2. لو لم نجده، نجلب الاسم مباشرة من قاعدة البيانات بناءً على ID التخصص المخزن في الفريق
+            else if (teamData.specialization) {
+                try {
+                    const { data: trackInfo } = await window.supabase
+                        .from('tracks')
+                        .select('name')
+                        .eq('id', teamData.specialization)
+                        .maybeSingle();
+                        
+                    if (trackInfo && trackInfo.name) {
+                        finalTrackName = trackInfo.name;
+                    }
+                } catch (err) {
+                    console.error("Error fetching track name:", err);
+                }
+            }
+            
+            // تعيين الاسم النهائي في واجهة الـ HTML
+            trackNameEl.innerText = finalTrackName;
+        }
         const tdmLeaderUni = document.getElementById('tdm-leader-uni');
         if (tdmLeaderUni) {
             tdmLeaderUni.innerText = window.translateUni(teamData.profiles?.university);
@@ -2089,7 +2237,8 @@ function resolveImageUrl(url, type = 'course') {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
             if (idMatch && idMatch[1]) {
-                return `https://lh3.googleusercontent.com/d/$${idMatch[1]}`;
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
         }
         if (url.includes('dropbox.com')) {
@@ -2098,7 +2247,6 @@ function resolveImageUrl(url, type = 'course') {
     } catch(e) {}
     return url;
 }
-
 function getRelatedLessonName(contentId, type) {
     if (!lookupData.contents) return null;
     const parentVideo = lookupData.contents.find(c => {
@@ -2617,3 +2765,54 @@ style.innerHTML = `
     }
 `;
 document.head.appendChild(style);
+
+// =========================================================
+// 💡 تهيئة فلتر المسارات لصفحة استكشاف الفرق
+// =========================================================
+async function initExploreTrackFilter() {
+    const filterSelect = document.getElementById('explore-track-filter');
+    if (!filterSelect) return;
+
+    try {
+        // 1. جلب المسارات المفعلة من الداتابيز
+        const { data: tracks, error } = await supabase
+            .from('tracks')
+            .select('id, name')
+            .eq('is_active', true)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        // 2. بناء الـ HTML الخاص بالقائمة
+        let html = '<option value="all" class="font-bold text-b-primary">🌍 كل المسارات (All Tracks)</option>';
+        if (tracks && tracks.length > 0) {
+            tracks.forEach(t => {
+                html += `<option value="${t.id}">${t.name}</option>`;
+            });
+        }
+        filterSelect.innerHTML = html;
+
+        // 3. الذكاء هنا: تحديد مسار الطالب التلقائي
+        // تأكد من اسم الحقل المحفوظ في بروفايل الطالب (track أو track_id)
+        const userTrack = currentUserData?.track || currentUserData?.track_id; 
+        
+        if (userTrack) {
+            // نبحث هل المسار موجود بالـ ID أو بالاسم
+            const matchedTrack = tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
+            if (matchedTrack) {
+                filterSelect.value = matchedTrack.id; // تحديد الخيار تلقائياً
+            }
+        }
+
+        // 4. استدعاء دالة رسم الفرق بناءً على الفلتر الجديد
+        if (typeof window.openTeamBrowser === 'function') {
+            window.openTeamBrowser();
+        }
+
+    } catch (err) {
+        console.error("Error loading track filter:", err);
+        filterSelect.innerHTML = '<option value="all">كل المسارات</option>';
+    }
+}
+
+

@@ -108,3 +108,22 @@ export async function requestPasswordReset(email) {
         throw new Error(translateAuthError(error));
     }
 }
+
+// =========================================================
+// 5. جلب المسارات (Tracks) المتاحة للتسجيل
+// =========================================================
+export async function getAvailableTracks() {
+    try {
+        const { data, error } = await supabase
+            .from('tracks')
+            .select('id, name')
+            .eq('is_active', true) // جلب المسارات المفعلة فقط
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error("Error fetching tracks:", error);
+        return [];
+    }
+}

@@ -333,9 +333,7 @@
                         <div>
                                 <label class="block text-xs font-bold text-gray-400 mb-1">المسار التقني (Track)</label>
                                 <select id="signup-track" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-b-primary outline-none transition-all appearance-none cursor-pointer">
-                                    <option value="" disabled selected>اختر المسار...</option>
-                                    <option  value="Digital IC Design">Digital IC Design</option>
-                                    <option disabled value="Analog IC Design">Analog IC Design</option>
+                                        <option value="" disabled selected>جاري التحميل...</option>
                                 </select>
                             </div>
 
@@ -411,9 +409,31 @@
     
 <script type="module">
     // 💡 تأكد من استيراد requestPasswordReset
-    import { registerUser, loginUser, resendVerification, requestPasswordReset } from '../js/auth-handler.js';
+    import { registerUser, loginUser, resendVerification, requestPasswordReset ,getAvailableTracks} from '../js/auth-handler.js';
     import { supabase } from '../js/supabase-config.js';
-
+document.addEventListener('DOMContentLoaded', async () => {
+    const trackSelect = document.getElementById('signup-track'); // تأكد أن هذا هو ID قائمة التراكات لديك
+    
+    if (trackSelect) {
+        // رسالة تحميل مؤقتة
+        trackSelect.innerHTML = '<option value="" disabled selected>جاري تحميل المسارات...</option>';
+        
+        // جلب البيانات من الداتابيز
+        const tracks = await getAvailableTracks();
+        
+        if (tracks.length > 0) {
+            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار التخصصي --</option>';
+            tracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.id; // سيتم حفظ الـ ID الخاص بالتراك في حساب الطالب
+                option.textContent = track.name;
+                trackSelect.appendChild(option);
+            });
+        } else {
+            trackSelect.innerHTML = '<option value="" disabled selected>لا توجد مسارات متاحة حالياً</option>';
+        }
+    }
+});
     // ==========================================
     // 1. تبديل التبويبات والخطوات (UI)
     // ==========================================

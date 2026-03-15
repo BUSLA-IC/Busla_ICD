@@ -319,27 +319,11 @@ async function renderSidebar() {
     const container = document.getElementById('playlist-container') || document.getElementById('playlist-items');
     if (!container) return;
 
-    // Fetch completed videos
-    const { data: completedVideos } = await supabase
-        .from('completed_materials')
-        .select('material_id')
-        .eq('user_id', currentUserData.id)
-        .eq('course_id', courseId);
-        
-    // Fetch passed quizzes
-    const { data: passedQuizzes } = await supabase
-        .from('quiz_attempts')
-        .select('quiz_id')
-        .eq('user_id', currentUserData.id)
-        .eq('passed', true);
-
-    // Fetch submitted and graded projects (only graded count as completed)
-    const { data: submittedProjects } = await supabase
-        .from('project_submissions')
-        .select('project_id')
-        .eq('user_id', currentUserData.id)
-        .in('status', ['graded', 'remarked']); 
-
+    // Fetch completed videos & quizzes & projects
+// Fetch completed videos & quizzes & projects
+    const { data: completedVideos } = await supabase.from('completed_materials').select('material_id').eq('user_id', currentUserData.id).eq('course_id', courseId);
+    const { data: passedQuizzes } = await supabase.from('quiz_attempts').select('quiz_id').eq('user_id', currentUserData.id).eq('passed', true);
+    const { data: submittedProjects } = await supabase.from('project_submissions').select('project_id').eq('user_id', currentUserData.id).in('status', ['graded', 'remarked']);
     const completedVideoIds = (completedVideos || []).map(row => row.material_id);
     const completedQuizIds = (passedQuizzes || []).map(row => row.quiz_id);
     const completedProjectIds = (submittedProjects || []).map(row => row.project_id);
@@ -349,15 +333,68 @@ async function renderSidebar() {
     let completedCount = 0;
     let mainIndex = 1;
 
-    courseContents.forEach((item) => {
-        // Render main video item
+    // 💡 المسار الافتراضي للفيديوهات (لكي يعمل بشكل طبيعي مع الكورسات القديمة بدون سكاشن)
+    let currentSectionBody = container; 
+
+    courseContents.forEach((item, index) => {
+        
+        // =====================================
+        // 💡 1. رسم العناوين (Sections)
+        // =====================================
+        if (item.type === 'section') {
+            const sectionId = `section-${item.content_id}`;
+            
+            // ذكاء الواجهة: فحص ما إذا كان الفيديو الذي يشاهده الطالب الآن موجوداً داخل هذا الفولدر لفتحه تلقائياً
+            let hasActiveContent = false;
+            for (let i = index; i < courseContents.length; i++) {
+                if (i !== index && courseContents[i].type === 'section') break; // وصلنا لـ Section جديد
+                if (currentContent && courseContents[i].content_id === currentContent.content_id) hasActiveContent = true;
+                if (currentContent && currentContent.ref_quiz_id && courseContents[i].ref_quiz_id === currentContent.ref_quiz_id) hasActiveContent = true;
+                if (currentContent && currentContent.ref_project_id && courseContents[i].ref_project_id === currentContent.ref_project_id) hasActiveContent = true;
+            }
+
+            const shouldBeOpen = hasActiveContent || index === 0;
+
+            const sectionHTML = `
+                <div class="mt-4 mb-2 animate-fade-in">
+                    <button onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-l from-b-surface to-black border border-white/10 hover:border-b-primary/50 rounded-xl transition-all group shadow-md">
+                        <span class="font-bold text-white text-sm group-hover:text-b-primary transition-colors flex items-center gap-3 text-right leading-tight">
+                            <div class="w-7 h-7 rounded-lg bg-b-primary/20 text-b-primary flex items-center justify-center text-xs border border-b-primary/30 shrink-0">
+                                <i class="fas fa-folder-open"></i>
+                            </div>
+                            ${item.title}
+                        </span>
+                        <div class="w-7 h-7 shrink-0 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 ${shouldBeOpen ? 'rotate-180' : ''}" id="icon-${sectionId}"></i>
+                        </div>
+                    </button>
+                    <div id="body-${sectionId}" class="section-body mt-3 space-y-1.5 transition-all overflow-hidden ${shouldBeOpen ? '' : 'hidden'} pr-4 border-r-2 border-white/5 mr-3">
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', sectionHTML);
+            
+            // تحويل مسار الرسم ليكون داخل هذا الـ Section الجديد
+            currentSectionBody = document.getElementById(`body-${sectionId}`);
+            
+            // 💡 تم حذف (return;) من هنا لكي يكمل الكود رسم الفيديو نفسه ليكون قابلاً للتشغيل!
+        }
+
+        // =====================================
+        // 💡 2. رسم الدروس (Videos / Playable Sections)
+        // =====================================
         const isVideoCompleted = completedVideoIds.includes(item.content_id);
-        renderSidebarItem(container, item, mainIndex, isVideoCompleted, false);
+        const isChild = currentSectionBody !== container; // لو هو جوه فولدر، نعطيه تنسيق الابن (Child)
+        
+        renderSidebarItem(currentSectionBody, item, mainIndex, isVideoCompleted, isChild);
+        
         totalItemsCount++;
         if (isVideoCompleted) completedCount++;
         mainIndex++;
 
-        // Render associated quiz item
+        // =====================================
+        // 💡 3. رسم الكويزات التابعة للدرس
+        // =====================================
         if (item.ref_quiz_id) {
             const qData = quizzesLookup[item.ref_quiz_id] || {};
             const quizItem = {
@@ -368,12 +405,14 @@ async function renderSidebar() {
                 base_xp: qData.max_xp || 0
             };
             const isQuizCompleted = completedQuizIds.includes(item.ref_quiz_id);
-            renderSidebarItem(container, quizItem, '', isQuizCompleted, true);
+            renderSidebarItem(currentSectionBody, quizItem, '', isQuizCompleted, true);
             totalItemsCount++; 
             if (isQuizCompleted) completedCount++;
         }
 
-        // Render associated project item
+        // =====================================
+        // 💡 4. رسم المشاريع التابعة للدرس
+        // =====================================
         if (item.ref_project_id) {
             const pData = projectsLookup[item.ref_project_id] || {};
             const projectItem = {
@@ -384,7 +423,7 @@ async function renderSidebar() {
                 base_xp: pData.max_points || 0
             };
             const isProjectCompleted = completedProjectIds.includes(item.ref_project_id);
-            renderSidebarItem(container, projectItem, '', isProjectCompleted, true);
+            renderSidebarItem(currentSectionBody, projectItem, '', isProjectCompleted, true);
             totalItemsCount++;
             if (isProjectCompleted) completedCount++;
         }
@@ -392,6 +431,16 @@ async function renderSidebar() {
 
     updateProgressBar(completedCount, totalItemsCount);
 }
+
+// 💡 دالة لفتح وإغلاق مجلدات السكاشن
+window.togglePlaylistSection = (sectionId) => {
+    const body = document.getElementById(`body-${sectionId}`);
+    const icon = document.getElementById(`icon-${sectionId}`);
+    if (body) {
+        body.classList.toggle('hidden');
+        if (icon) icon.classList.toggle('rotate-180');
+    }
+};
 
 function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
     let isActive = false;
@@ -401,30 +450,38 @@ function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
         if (item.type === 'project' && currentContent.ref_project_id === item.ref_project_id) isActive = true;
     }
 
-    let icon = "fa-play-circle";
-    let typeColor = "text-gray-500";
-    if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; }
-    if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; }
-
-    const baseClasses = "flex items-center gap-3 p-3 cursor-pointer transition-all border relative";
-    const activeClasses = isActive ? "bg-b-primary/20 border-b-primary shadow-inner" : "bg-white/5 border-white/5 hover:bg-white/10";
-    const childClasses = isChild ? "ml-6 mr-2 rounded-lg mt-1 mb-3 scale-[0.98] border-r-2 border-r-white/20" : "rounded-xl mb-1 mt-2";
+    let icon = "fa-play"; 
+    let typeColor = "text-gray-400";
+    let typeLabel = "فيديو"; // 💡 توحيد الاسم ليظهر (فيديو) حتى لو برمجياً مسجل (section)
     
-    const connectorHtml = isChild ? `<div class="absolute -right-4 top-1/2 w-4 h-[2px] bg-white/10"></div>` : '';
-    const displayTitle = isChild ? item.title : `${indexStr}. ${item.title}`;
+    if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; typeLabel = "كويز"; }
+    if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; typeLabel = "مشروع"; }
+
+    const baseClasses = "flex items-center gap-3 p-3 cursor-pointer transition-all relative rounded-xl mb-1.5";
+    const activeClasses = isActive 
+        ? "bg-b-primary/20 border border-b-primary/50 shadow-[0_0_15px_rgba(0,106,103,0.15)]" 
+        : "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10";
+    // 💡 إعطاء مسافة بادئة للدروس لتبدو كفروع (Tree structure)
+    const childClasses = isChild ? "mr-5 ml-2 scale-[0.98] border-r-2 border-r-white/10" : "";
+    
+    const connectorHtml = isChild ? `<div class="absolute -right-3 top-1/2 w-3 h-[2px] bg-white/10"></div>` : '';
+    const displayTitle = isChild ? item.title : `<span class="text-gray-500 font-mono mr-1">${indexStr}.</span> ${item.title}`;
+
+// 💡 التشفير الآمن: نقوم بتحويل علامات الاقتباس المفردة يدوياً لمنع الـ SyntaxError
+    const safeEncodedItem = encodeURIComponent(JSON.stringify(item)).replace(/'/g, "%27");
 
     const html = `
-        <div onclick="window.switchContentObj('${encodeURIComponent(JSON.stringify(item))}')" 
-             class="${baseClasses} ${activeClasses} ${childClasses}">
+        <div onclick="window.switchContentObj('${safeEncodedItem}')" 
+             class="${baseClasses} ${activeClasses} ${childClasses} group">
             ${connectorHtml}
-            <div class="w-8 h-8 rounded-full ${isCompleted ? 'bg-green-500/20 text-green-500' : 'bg-black/50 ' + typeColor} flex items-center justify-center shrink-0 text-sm">
+            <div class="w-8 h-8 rounded-full ${isCompleted ? 'bg-green-500/20 text-green-500' : 'bg-black/50 ' + typeColor} flex items-center justify-center shrink-0 text-[10px] group-hover:scale-110 transition-transform border border-white/5">
                 ${isCompleted ? '<i class="fas fa-check"></i>' : `<i class="fas ${icon}"></i>`}
             </div>
             <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-bold ${isActive ? 'text-white' : (isChild ? 'text-gray-300' : 'text-gray-100')} truncate">${displayTitle}</h4>
-                <div class="flex justify-between items-center mt-1">
-                    <span class="text-[10px] uppercase font-mono ${typeColor}">${item.type}</span>
-                    ${item.base_xp ? `<span class="text-[10px] text-yellow-500 font-bold bg-yellow-500/10 px-1.5 rounded"><i class="fas fa-star text-[8px]"></i> ${item.base_xp}</span>` : ''}
+                <h4 class="text-xs font-bold ${isActive ? 'text-white' : (isChild ? 'text-gray-300' : 'text-gray-200')} truncate group-hover:text-b-primary transition-colors leading-tight">${displayTitle}</h4>
+                <div class="flex justify-between items-center mt-1.5">
+                    <span class="text-[9px] uppercase font-mono tracking-widest ${typeColor} bg-black/40 px-1.5 py-0.5 rounded border border-white/5">${typeLabel}</span>
+                    ${item.base_xp ? `<span class="text-[9px] text-yellow-500 font-bold bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20"><i class="fas fa-star text-[8px]"></i> ${item.base_xp} XP</span>` : ''}
                 </div>
             </div>
         </div>
@@ -451,7 +508,7 @@ window.switchContentObj = async (encodedItemStr) => {
 // 5. CONTENT LOADING & ROUTING
 // ==========================================
 async function loadContent(item) {
-    // 💡 1. الإغلاق التلقائي للقائمة في الموبايل عند اختيار أي درس
+    // 💡 1. الإغلاق التلقائي للقائمة في الموبايل
     if (window.innerWidth < 1024) {
         const sidebar = document.getElementById('right-sidebar');
         if (sidebar && sidebar.classList.contains('translate-x-0')) {
@@ -463,7 +520,8 @@ async function loadContent(item) {
 
     if (!item) return;
 
-    if (currentContent && currentContent.type === 'video' && player && typeof player.getCurrentTime === 'function') {
+    // 💡 2. التعديل الهام هنا: حفظ تقدم الفيديو سواء كان video أو section
+    if (currentContent && (currentContent.type === 'video' || currentContent.type === 'section') && player && typeof player.getCurrentTime === 'function') {
         await saveVideoState(false);
     }
 
@@ -484,7 +542,8 @@ async function loadContent(item) {
     isCurrentContentCompleted = !!completedCheck;
     maxWatchedSeconds = 0;
 
-    if (item.type === 'video') {
+    // 💡 3. الكود الخاص بك (الممتاز) لتشغيل المشغل
+    if (item.type === 'video' || item.type === 'section') {
         document.getElementById('view-video')?.classList.remove('hidden');
         document.getElementById('video-header')?.classList.remove('hidden');
         if (progressPanel) progressPanel.classList.remove('hidden');
@@ -1446,7 +1505,7 @@ async function markContentComplete(contentId, pointsEarned = 0, type = 'video') 
 
     try {
         // Only insert video materials to completed table
-        if (type === 'video') {
+if (item.type === 'video' || item.type === 'section') {
             const { data: existing } = await supabase
                 .from('completed_materials')
                 .select('id')
@@ -1567,14 +1626,22 @@ function updateProgressBar(completedCount, totalCount) {
 // ==========================================
 // 10. GLOBAL UTILS
 // ==========================================
-function resolveImageUrl(url) {
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") return '../assets/icons/icon.jpg';
+function resolveImageUrl(url, type = 'course') {
     try {
-        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
-            if (idMatch && idMatch[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+        if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+            return '../assets/icons/icon.jpg';
         }
-    } catch (e) {}
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+            if (idMatch && idMatch[1]) {
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            }
+        }
+        if (url.includes('dropbox.com')) {
+            return url.replace('?dl=0', '?raw=1');
+        }
+    } catch(e) {}
     return url;
 }
 
@@ -1659,30 +1726,25 @@ function toggleFullscreen() {
     }
 }
 
-// ==========================================
-// 💡 وظائف الرجوع والتجاوب مع الموبايل (محدثة ومضادة للأخطاء)
-// ==========================================
-
+// 💡 دالة إظهار وإخفاء القائمة الجانبية مع تمديد شاشة العرض
 window.toggleSidebar = () => {
-    console.log("✅ زر القائمة يعمل!"); // للتأكد في الـ Console
     const sidebar = document.getElementById('right-sidebar');
     const overlay = document.getElementById('sidebar-overlay');
+    const mainContent = document.getElementById('main-content'); // 💡 تم إضافة هذا المتغير
     
-    if (!sidebar || !overlay) {
-        console.error("❌ لم يتم العثور على القائمة أو الطبقة السوداء في HTML");
-        return;
-    }
+    if (!sidebar) return;
 
-    if (sidebar.classList.contains('translate-x-full')) {
-        // فتح القائمة (إجبار)
-        sidebar.classList.remove('translate-x-full');
-        sidebar.classList.add('translate-x-0');
-        overlay.classList.remove('hidden');
-    } else {
-        // إغلاق القائمة (إجبار)
-        sidebar.classList.remove('translate-x-0');
-        sidebar.classList.add('translate-x-full');
-        overlay.classList.add('hidden');
+    // تبديل حالة القائمة (إظهار/إخفاء)
+    sidebar.classList.toggle('translate-x-full');
+    sidebar.classList.toggle('translate-x-0');
+    
+    // إظهار/إخفاء الطبقة السوداء في الموبايل
+    if (overlay) overlay.classList.toggle('hidden');
+
+    // 💡 الذكاء هنا: تمديد شاشة العرض لتأخذ الشاشة كاملة عند إغلاق القائمة في الديسكتوب
+    if (mainContent) {
+        mainContent.classList.toggle('lg:mr-80');
+        mainContent.classList.toggle('lg:w-[calc(100%-20rem)]');
     }
 };
 

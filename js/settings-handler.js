@@ -28,28 +28,23 @@ function getDirectImageLink(url) {
 // INITIALIZATION
 // =========================================================
 function resolveImageUrl(url, type = 'course') {
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        if (type === 'team') {
-            return '../assets/icons/icon.jpg';
-        } else if (type === 'user') {
-            return '../assets/icons/icon.jpg';
-        } else {
+    try {
+        if (!url || url.trim() === "" || url === "null" || url === "undefined") {
             return '../assets/icons/icon.jpg';
         }
-    }
-    if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-        const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
-        if (idMatch && idMatch[1]) {
-            return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+            if (idMatch && idMatch[1]) {
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            }
         }
-    }
-
-    if (url.includes('dropbox.com')) {
-        return url.replace('?dl=0', '?raw=1');
-    }
+        if (url.includes('dropbox.com')) {
+            return url.replace('?dl=0', '?raw=1');
+        }
+    } catch(e) {}
     return url;
 }
-
 export function initSettingsModal() {
     console.log("[Settings] --- INITIALIZING SETTINGS MODAL ---");
     

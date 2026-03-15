@@ -460,14 +460,20 @@ window.switchLeaderboardScope = (scope) => {
 // ==========================================
 // 9. UTILS
 // ==========================================
-function resolveImageUrl(url, type = 'user') {
-    if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-        return '../assets/icons/icon.jpg';
-    }
+function resolveImageUrl(url, type = 'course') {
     try {
+        if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+            return '../assets/icons/icon.jpg';
+        }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
-            const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
-            if (idMatch && idMatch[1]) return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+            const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+            if (idMatch && idMatch[1]) {
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            }
+        }
+        if (url.includes('dropbox.com')) {
+            return url.replace('?dl=0', '?raw=1');
         }
     } catch(e) {}
     return url;

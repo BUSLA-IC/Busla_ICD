@@ -19,7 +19,7 @@ async function checkAuthAndLoadState() {
     }
     currentUser = user;
 
-const { data: request, error } = await supabase
+    const { data: request, error } = await supabase
         .from('team_requests')
         .select('*')
         .eq('requester_id', currentUser.id)
@@ -32,6 +32,22 @@ const { data: request, error } = await supabase
     if (!request) {
         showFormView();
     } else {
+        // 💡 جلب اسم المسار من جدول التراكات باستخدام الـ ID المخزن
+        let displayTrackName = request.specialization;
+        if (request.specialization) {
+            const { data: trackData } = await supabase
+                .from('tracks')
+                .select('name')
+                .eq('id', request.specialization)
+                .maybeSingle();
+                
+            if (trackData && trackData.name) {
+                displayTrackName = trackData.name;
+            }
+        }
+        // حفظ الاسم في الكائن لاستخدامه في العرض
+        request.display_specialization = displayTrackName;
+
         const submittedDate = new Date(request.submitted_at);
         const now = new Date();
         const diffTime = Math.abs(now - submittedDate);
@@ -51,20 +67,27 @@ const { data: request, error } = await supabase
     }
 }
 
-function showFormView(requestData = null) {
+async function showFormView(requestData = null) { // 💡 جعل الدالة async
     document.getElementById('status-view').classList.add('hidden');
     document.getElementById('form-view').classList.remove('hidden');
     
+    await loadAvailableTracks(); // 💡 ننتظر تحميل التراكات أولاً
+
     if (requestData) {
         isEditMode = true;
         document.getElementById('req-name').value = requestData.team_name || '';
-        document.getElementById('req-specialization').value = requestData.specialization || '';
+        
+        // 💡 استخدام team-track بدلاً من req-specialization القديم
+        const trackSelect = document.getElementById('team-track');
+        if (trackSelect) {
+            trackSelect.value = requestData.track_id || requestData.specialization || '';
+        }
+        
         document.getElementById('req-logo').value = requestData.logo_url || '';
         document.getElementById('req-uni').value = requestData.university || '';
         document.getElementById('req-gov').value = requestData.governorate || '';
         document.getElementById('req-size').value = requestData.expected_size || '';
         
-        // 💡 إزالة الـ % من الرقم عند وضعها في الـ Input من نوع Number
         let gpaRaw = requestData.leader_gpa || '';
         document.getElementById('req-gpa').value = gpaRaw.replace('%', '').trim();
         
@@ -83,9 +106,12 @@ function showStatusView(request, daysLeft) {
     document.getElementById('status-logo').src = request.logo_url || '../assets/icons/icon.jpg';
     document.getElementById('sv-uni').innerText = request.university;
     document.getElementById('sv-gov').innerText = request.governorate;
-    document.getElementById('sv-spec').innerText = request.specialization;
+    
+    // 💡 عرض الاسم الفعلي للتراك بدلاً من الـ ID
+    document.getElementById('sv-spec').innerText = request.display_specialization || request.specialization;
+    
     document.getElementById('sv-size').innerText = `${request.expected_size} أفراد`;
-    document.getElementById('sv-gpa').innerText = request.leader_gpa; // 💡 إضافة التقدير في الـ Status View
+    document.getElementById('sv-gpa').innerText = request.leader_gpa; 
 
     document.getElementById('status-countdown').innerText = `${daysLeft} يوم`;
 
@@ -140,14 +166,18 @@ async function handleFormSubmit(e) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     btn.disabled = true;
 
-    // 💡 دمج الرقم مع علامة الـ % ليتم حفظها كنص في الـ DB
     const gpaVal = document.getElementById('req-gpa').value.trim();
     const formattedGpa = gpaVal + '%';
 
-    const requestData = {
+    // 💡 جلب القيمة من السلكتور الجديد
+    const selectedTrack = document.getElementById('team-track')?.value || '';
+
+const requestData = {
         requester_id: currentUser.id,
         team_name: document.getElementById('req-name').value.trim(),
-        specialization: document.getElementById('req-specialization').value,
+        
+        specialization: selectedTrack, 
+        
         logo_url: document.getElementById('req-logo').value.trim(),
         university: document.getElementById('req-uni').value,
         governorate: document.getElementById('req-gov').value,
@@ -277,3 +307,38 @@ window.showToast = (msg, type = 'info') => {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 };
+
+// =========================================================
+// 💡 جلب المسارات المتاحة لتأسيس الفريق
+// =========================================================
+async function loadAvailableTracks() {
+    const trackSelect = document.getElementById('team-track');
+    if (!trackSelect) return;
+
+    trackSelect.innerHTML = '<option value="" disabled selected>جاري تحميل المسارات...</option>';
+
+    try {
+        const { data: tracks, error } = await supabase
+            .from('tracks')
+            .select('id, name')
+            .eq('is_active', true)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (tracks && tracks.length > 0) {
+            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار التخصصي للفريق --</option>';
+            tracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.id; // سيتم حفظ ID المسار في بيانات الفريق
+                option.textContent = track.name;
+                trackSelect.appendChild(option);
+            });
+        } else {
+            trackSelect.innerHTML = '<option value="" disabled selected>لا توجد مسارات متاحة حالياً</option>';
+        }
+    } catch (err) {
+        console.error("Error loading tracks:", err);
+        trackSelect.innerHTML = '<option value="" disabled selected>خطأ في تحميل المسارات</option>';
+    }
+}

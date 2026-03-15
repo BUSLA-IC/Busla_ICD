@@ -162,6 +162,7 @@ async function initDashboard(uid) {
         }
         
         await fetchDataFromServer();
+        initTrackSelector();
         console.log("Re-rendering with fresh data...");
         renderAllTabs();
 
@@ -181,8 +182,10 @@ async function fetchDataFromServer() {
     try {
         console.log("Fetching Fresh Data from Supabase...");
         
-        const [phasesRes, coursesRes, materialsRes, projectsRes, quizzesRes] = await Promise.all([
-            supabase.from('phases').select('*'), 
+// تحديث جلب البيانات ليحتوي على التراكات
+        const [tracksRes, phasesRes, coursesRes, materialsRes, projectsRes, quizzesRes] = await Promise.all([
+            supabase.from('tracks').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+            supabase.from('phases').select('*').order('created_at', { ascending: true }), 
             supabase.from('courses').select('*'),
             supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
             supabase.from('projects').select('*'),
@@ -192,7 +195,7 @@ async function fetchDataFromServer() {
         if (phasesRes.error) throw phasesRes.error;
         if (coursesRes.error) throw coursesRes.error;
         if (materialsRes.error) throw materialsRes.error;
-
+        allData.tracks = tracksRes.data || [];
         allData.phases = (phasesRes.data || []).map(p => ({
             ...p, 
             id: p.phase_id,
@@ -217,15 +220,18 @@ async function fetchDataFromServer() {
         allData.quizzes = (quizzesRes.data || []).map(q => ({ ...q, id: q.quiz_id }));
         allData.rawContents = rawContents;
 
-        allData.courses = rawCourses.map(course => {
+allData.courses = rawCourses.map(course => {
             const courseContents = rawContents.filter(c => c.course_id === course.id);
-            const videoCount = courseContents.filter(c => c.type === 'video').length;
+            
+            // 💡 التعديل هنا: نعد العناصر اللي نوعها video أو section معاً
+            const videoCount = courseContents.filter(c => c.type === 'video' || c.type === 'section').length;
             
             let totalSeconds = 0;
             let instructor = course.created_by || ""; 
 
             courseContents.forEach(c => {
-                if(c.type === 'video') {
+                // 💡 التعديل هنا: نجمع وقت الـ video والـ section معاً
+                if(c.type === 'video' || c.type === 'section') {
                     let dur = typeof c.duration === 'number' ? c.duration : parseDurationToSeconds(c.duration);
                     totalSeconds += dur;
                     if (!instructor && c.author) instructor = c.author;
@@ -300,7 +306,29 @@ function loadFromCache() {
 // ==========================================
 // 4. UI RENDERING & NAVIGATION
 // ==========================================
+function initTrackSelector() {
+    const selector = document.getElementById('roadmap-track-selector');
+    if (!selector || !allData.tracks) return;
 
+    // بناء الخيارات
+    let html = '<option value="all" class="font-bold text-b-primary">🌍 عرض كل المسارات (All Tracks)</option>';
+    allData.tracks.forEach(track => {
+        html += `<option value="${track.id}">${track.name}</option>`;
+    });
+    selector.innerHTML = html;
+
+    // 💡 الذكاء هنا: تحديد المسار الافتراضي بناءً على بيانات الطالب
+    // نفترض أن المسار محفوظ في Profile الطالب تحت اسم track أو track_id
+    const userTrack = currentUserData?.track || currentUserData?.track_id; 
+    
+    if (userTrack) {
+        // البحث عن المسار سواء كان محفوظاً بالاسم أو بالـ ID
+        const matchedTrack = allData.tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
+        if (matchedTrack) {
+            selector.value = matchedTrack.id;
+        }
+    }
+}
 function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => {
         const el = document.getElementById(id);
@@ -768,6 +796,7 @@ window.unassignTask = (taskId) => {
 // ==========================================
 function renderRoadmapTree() {
     const container = document.getElementById('roadmap-tree-container');
+    const selector = document.getElementById('roadmap-track-selector'); // 💡 تم إضافة الـ Selector
     if (!container) return;
     container.innerHTML = '';
 
@@ -776,7 +805,29 @@ function renderRoadmapTree() {
          return;
     }
 
-    allData.tree.forEach((phase) => {
+    // =========================================
+    // 💡 تطبيق الفلترة بناءً على التراك المختار
+    // =========================================
+    const selectedTrackId = selector ? selector.value : 'all';
+    let filteredTree = allData.tree;
+
+    if (selectedTrackId && selectedTrackId !== 'all') {
+        filteredTree = allData.tree.filter(phase => String(phase.track_id) === String(selectedTrackId));
+    }
+
+    if (filteredTree.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-16 text-gray-500 bg-white/5 border border-white/5 border-dashed rounded-2xl">
+                <i class="fas fa-folder-open text-4xl mb-4 opacity-50"></i>
+                <p class="font-bold">لا توجد مراحل (Phases) متاحة في هذا المسار حالياً.</p>
+                <p class="text-xs mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة.</p>
+            </div>`;
+        return;
+    }
+    // =========================================
+
+    // 💡 نستخدم filteredTree بدلاً من allData.tree
+    filteredTree.forEach((phase) => {
         const phaseId = String(phase.id).trim();
         const phaseEl = document.createElement('div');
         phaseEl.className = "mb-8 border-l-4 border-white/10 pl-6 relative"; 
@@ -796,7 +847,7 @@ function renderRoadmapTree() {
             <div id="content-phase-${phaseId}" class="space-y-4"></div>
         `;
 
-        const itemsContainer = phaseEl.querySelector(`#content-phase-${phaseId}`);
+        const itemsContainer = phaseEl.querySelector(`[id="content-phase-${phaseId}"]`);
 
         if (!phase.courses || phase.courses.length === 0) {
             itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">No content.</p>';
@@ -982,7 +1033,12 @@ window.showDetails = (type, id, parentTitle = "") => {
     const imgEl = document.getElementById('detail-img');
     let img = resolveImageUrl(item.image_url, 'course');
     if (imgEl) {
-        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/images/1.jpg';
+        imgEl.onerror = function() {
+            this.onerror = null; 
+            this.src = '../assets/icons/icon.jpg';
+        };
+        
+        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/icons/icon.jpg';
     }
 
     const toggleArea = document.getElementById('course-action-area');
@@ -3020,7 +3076,8 @@ function resolveImageUrl(url, type = 'course') {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
             if (idMatch && idMatch[1]) {
-                return `https://lh3.googleusercontent.com/d/$${idMatch[1]}`;
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
         }
         if (url.includes('dropbox.com')) {
@@ -3095,3 +3152,6 @@ function showToast(msg, type='info') {
     container.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3500);
 }
+window.filterRoadmapByTrack = () => {
+    renderRoadmapTree();
+};

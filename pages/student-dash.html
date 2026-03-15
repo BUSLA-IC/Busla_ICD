@@ -206,14 +206,20 @@ main {
             </div>
         </section>
 
-        <section id="roadmap" class="tab-content space-y-6">
-            <div class="flex justify-between items-center bg-black/30 p-4 rounded-xl border border-white/10">
+<section id="roadmap" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 rounded-xl border border-white/10 gap-4">
                 <div>
                     <h3 class="font-bold text-xl text-purple-400">شجرة المنهج (Curriculum Tree)</h3>
-                    <p class="text-xs text-gray-400">اضغط على الكورس لعرض التفاصيل وتفعيله للفريق.</p>
+                    <p class="text-xs text-gray-400">استعرض مسار التعلم الخاص بك واضغط على الكورس لعرض التفاصيل والمشاهدة.</p>
+                </div>
+                
+                <div class="relative w-full md:w-64">
+                    <select id="roadmap-track-selector" onchange="window.renderRoadmapTree()" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">جاري تحميل المسارات...</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-220px)]">
                 <div class="lg:col-span-1 bg-b-surface rounded-2xl border border-white/10 overflow-y-auto p-6 custom-scroll" id="roadmap-tree-container">
                     <div class="text-center py-20 text-gray-500">
@@ -415,11 +421,11 @@ main {
             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1 lg:justify-end">
                 <input type="text" id="team-search-input" placeholder="بحث باسم الفريق..." class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-full sm:flex-1 lg:w-56 shrink-0" oninput="window.filterTeams()">
                 
-                <select id="team-track-filter" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" onchange="window.filterTeams()">
-                    <option value="all">كل المسارات</option>
-                    <option value="Digital IC Design">Digital IC Design</option>
-                    <option value="Analog IC Design">Analog IC Design</option>
+            <div class="relative">
+                <select id="team-track-filter" onchange="window.filterTeams()" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" >
+                    <option value="" disabled selected>جاري تحميل المسارات...</option>
                 </select>
+            </div>
 
                 <select id="team-uni-filter" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" onchange="window.filterTeams()">
                     <option value="all" selected>كل الجامعات </option>
@@ -469,15 +475,15 @@ main {
         
         <div class="p-0 overflow-y-auto overflow-x-auto custom-scroll flex-1 w-full">
             <table class="w-full text-right text-sm min-w-[600px]">
-                <thead class="bg-black/40 text-gray-400 border-b border-white/5 sticky top-0 z-10">
-                    <tr>
-                        <th class="p-4 font-bold">الفريق</th>
-                        <th class="p-4 font-bold">الليدر</th>
-                        <th class="p-4 font-bold text-center">الأعضاء</th>
-                        <th class="p-4 font-bold text-center">النقاط</th>
-                        <th class="p-4 font-bold text-center">إجراء</th>
-                    </tr>
-                </thead>
+              <thead>
+                <tr class="text-gray-400 text-xs uppercase tracking-wider border-b border-white/5">
+                    <th class="px-4 py-4 font-black text-right">الفريق</th>
+                    <th class="px-4 py-4 font-black text-right text-b-primary">المسار</th> <th class="px-4 py-4 font-black text-right">القائد</th>
+                    <th class="px-4 py-4 font-black text-right">الجامعة</th>
+                    <th class="px-4 py-4 font-black text-right">الأعضاء</th>
+                    <th class="px-4 py-4 font-black text-center">إجراء</th>
+                </tr>
+            </thead>
                 <tbody id="teams-browser-list" class="divide-y divide-white/5">
                 </tbody>
             </table>
@@ -533,23 +539,35 @@ main {
                         </div>
                     </div>
 
-                    <div class="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-6">
-                        <div class="flex-1">
-                            <p class="text-xs text-gray-500 mb-1">الجامعة أو المؤسسة</p>
-                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
-                                <i class="fas fa-university text-gray-400"></i>
-                                <span id="tdm-leader-uni">الجامعة</span>
-                            </div>
-                        </div>
-                        <div class="w-px bg-white/5 hidden sm:block"></div>
-                        <div class="flex-1">
-                            <p class="text-xs text-gray-500 mb-1">قائد الفريق (الليدر)</p>
-                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
-                                <i class="fas fa-crown text-yellow-500"></i>
-                                <span id="tdm-leader-name">الاسم</span>
-                            </div>
-                        </div>
-                    </div>
+<div class="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-6">
+    <div class="flex-1">
+        <p class="text-xs text-gray-500 mb-1">الجامعة أو المؤسسة</p>
+        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+            <i class="fas fa-university text-gray-400"></i>
+            <span id="tdm-leader-uni">الجامعة</span>
+        </div>
+    </div>
+
+    <div class="w-px bg-white/5 hidden sm:block"></div>
+
+    <div class="flex-1">
+        <p class="text-xs text-gray-500 mb-1">التخصص (Track)</p>
+        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+            <i class="fas fa-microchip text-b-primary"></i>
+            <span id="tdm-track-name" class="text-b-primary">التخصص</span>
+        </div>
+    </div>
+
+    <div class="w-px bg-white/5 hidden sm:block"></div>
+    
+    <div class="flex-1">
+        <p class="text-xs text-gray-500 mb-1">قائد الفريق (الليدر)</p>
+        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+            <i class="fas fa-crown text-yellow-500"></i>
+            <span id="tdm-leader-name">الاسم</span>
+        </div>
+    </div>
+</div>
 
                     <div class="bg-black/20 border border-white/5 rounded-2xl p-5">
                         <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
