@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الانضمام لفريق بوصلة | Busla Core Team</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'b-bg': '#000000', 'b-surface': '#111111', 'b-primary': '#006A67', 'b-accent': '#FFC107' },
+                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-out forwards' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0', transform: 'translateY(-10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #000; color: #fff; scroll-behavior: smooth; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        /* تأثيرات الإدخال */
+        .input-field {
+            width: 100%; background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; font-size: 0.875rem;
+            outline: none; transition: all 0.3s ease;
+        }
+        .input-field:focus { border-color: #006A67; box-shadow: 0 0 0 2px rgba(0, 106, 103, 0.2); }
+        .input-label { display: block; font-size: 0.75rem; color: #9ca3af; font-weight: 700; margin-bottom: 0.5rem; }
+        .form-card { background-color: #111111; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; padding: 2rem; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body class="custom-scroll relative">
+
+    <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-b-primary/10 via-black to-black"></div>
+
+    <header class="pt-24 pb-16 text-center px-4">
+        <div class="inline-block bg-b-primary/10 border border-b-primary/30 text-teal-400 px-4 py-1.5 rounded-full text-sm font-bold mb-6 tracking-wide">
+            <i class="fas fa-rocket mr-2"></i> Busla Core Team - Phase 1
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black mb-6 tracking-tight">انضم إلى فريق <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-b-primary">Busla</span></h1>
+        <p class="text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed mb-8">نبحث عن مساهمين شغوفين لبناء أكبر منصة تعلم Digital IC Design عربية. كن جزءاً من النواة الأولى التي ستشكل مستقبل المنصة التقني.</p>
+        <a href="#tracks" class="inline-flex items-center justify-center bg-white text-black hover:bg-gray-200 font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg hover:shadow-white/20 gap-3">
+            استعرض المسارات <i class="fas fa-arrow-down"></i>
+        </a>
+    </header>
+
+    <section id="tracks" class="max-w-6xl mx-auto px-4 mb-24 pt-10">
+        <h2 class="text-2xl font-bold mb-8 text-center"><i class="fas fa-layer-group text-b-primary mr-2"></i> المسارات المتاحة</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-b-surface border-2 border-b-primary/50 rounded-2xl p-6 relative overflow-hidden group shadow-xl shadow-b-primary/5 transition-transform hover:-translate-y-1">
+                <div class="absolute top-0 right-0 bg-b-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">مفعل - Active</div>
+                <div class="w-14 h-14 bg-b-primary/10 text-b-primary rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-laptop-code"></i></div>
+                <h3 class="text-xl font-bold mb-3 text-white">Content Contributor</h3>
+                <p class="text-xs text-gray-400 mb-5 leading-relaxed">المساهمة في بناء وتطوير المحتوى العلمي والعملي الخاص بمجال تصميم الدوائر المتكاملة.</p>
+                <ul class="text-xs text-gray-300 space-y-2.5 mb-8">
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> إدخال الكورسات والمشاريع للمنصة</li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> تنظيم الرودماب (Roadmaps)</li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> مراجعة وتقييم المحتوى التقني</li>
+                </ul>
+                <a href="#application-form" class="block w-full text-center bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-all shadow-md">ابدأ التقديم</a>
+            </div>
+
+            <div class="bg-black/50 border border-white/5 rounded-2xl p-6 relative opacity-60 grayscale-[50%]">
+                <div class="absolute top-0 right-0 bg-gray-700 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Coming Soon</div>
+                <div class="w-14 h-14 bg-white/5 text-gray-400 rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-cogs"></i></div>
+                <h3 class="text-xl font-bold mb-3 text-gray-300">Operations Track</h3>
+                <p class="text-xs text-gray-500 mb-5 leading-relaxed">إدارة العمليات الداخلية، متابعة أداء الطلاب، والتنظيم العام لسير العمل داخل المنصة.</p>
+                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">غير متاح حالياً</button>
+            </div>
+
+            <div class="bg-black/50 border border-white/5 rounded-2xl p-6 relative opacity-60 grayscale-[50%]">
+                <div class="absolute top-0 right-0 bg-gray-700 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Coming Soon</div>
+                <div class="w-14 h-14 bg-white/5 text-gray-400 rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-user-graduate"></i></div>
+                <h3 class="text-xl font-bold mb-3 text-gray-300">Academic Oversight</h3>
+                <p class="text-xs text-gray-500 mb-5 leading-relaxed">الإشراف الأكاديمي، مراجعة معايير التقييم (Rubrics)، والتوجيه التقني المتقدم للطلاب.</p>
+                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">غير متاح حالياً</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="application-form" class="max-w-4xl mx-auto px-4 mb-32 pt-10">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-black text-white mb-3">نموذج التقديم</h2>
+            <p class="text-gray-400 text-sm">يرجى تعبئة البيانات التالية بدقة. سيتم مراجعة طلبك والتواصل معك في أقرب وقت.</p>
+        </div>
+
+        <form id="joinForm" onsubmit="handleApplicationSubmit(event)">
+            
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-user mr-2"></i> 1. البيانات الأساسية</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="input-label">الاسم الثلاثي (Full Name) *</label>
+                        <input type="text" id="f-name" required class="input-field" placeholder="أحمد محمد...">
+                    </div>
+                    <div>
+                        <label class="input-label">البريد الإلكتروني (Email) *</label>
+                        <input type="email" id="f-email" required class="input-field dir-ltr text-left" placeholder="example@gmail.com">
+                    </div>
+                    <div>
+                        <label class="input-label">رقم الهاتف / الواتساب (اختياري)</label>
+                        <input type="tel" id="f-phone" class="input-field dir-ltr text-left" placeholder="+20 10...">
+                    </div>
+                    <div>
+                        <label class="input-label">العمر (Age) *</label>
+                        <input type="number" id="f-age" required min="15" max="60" class="input-field">
+                    </div>
+                    <div>
+                        <label class="input-label">النوع (Gender) - اختياري</label>
+                        <select id="f-gender" class="input-field text-gray-300">
+                            <option value="">-- اختر --</option>
+                            <option value="Male">ذكر (Male)</option>
+                            <option value="Female">أنثى (Female)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-graduation-cap mr-2"></i> 2. البيانات الأكاديمية</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="input-label">الجامعة (University) *</label>
+                        <input type="text" id="f-uni" required class="input-field" placeholder="مثال: جامعة الزقازيق">
+                    </div>
+                    <div>
+                        <label class="input-label">الكلية (Faculty) *</label>
+                        <input type="text" id="f-faculty" required class="input-field" placeholder="مثال: الهندسة">
+                    </div>
+                    <div>
+                        <label class="input-label">القسم (Department)</label>
+                        <input type="text" id="f-dept" class="input-field" placeholder="مثال: اتصالات وإلكترونيات">
+                    </div>
+                    <div>
+                        <label class="input-label">الحالة الأكاديمية (Status) *</label>
+                        <select id="f-status" required class="input-field text-gray-300">
+                            <option value="" disabled selected>-- اختر حالتك --</option>
+                            <option value="Student">طالب (Student)</option>
+                            <option value="Graduate">خريج (Graduate)</option>
+                            <option value="Gap Year">سنة فراغ (Gap Year)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="input-label">السنة الدراسية (Academic Year)</label>
+                        <div class="flex flex-wrap gap-4 mt-2">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="f-year" value="1st" class="text-b-primary accent-b-primary w-4 h-4"><span class="text-sm">الأولى</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="f-year" value="2nd" class="text-b-primary accent-b-primary w-4 h-4"><span class="text-sm">الثانية</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="f-year" value="3rd" class="text-b-primary accent-b-primary w-4 h-4"><span class="text-sm">الثالثة</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="f-year" value="4th" class="text-b-primary accent-b-primary w-4 h-4"><span class="text-sm">الرابعة / الخامسة</span></label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="f-year" value="Graduate" class="text-b-primary accent-b-primary w-4 h-4"><span class="text-sm">خريج</span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-clock mr-2"></i> 3. الالتزام الزمني والتفرغ</h3>
+                
+                <div class="mb-6">
+                    <label class="input-label">عدد الساعات المتاحة أسبوعياً للتطوع *</label>
+                    <select id="f-hours" required class="input-field text-gray-300">
+                        <option value="" disabled selected>-- اختر عدد الساعات --</option>
+                        <option value="3-5">من 3 إلى 5 ساعات</option>
+                        <option value="5-8">من 5 إلى 8 ساعات</option>
+                        <option value="8-12">من 8 إلى 12 ساعة</option>
+                        <option value="12+">أكثر من 12 ساعة</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="input-label">الأيام المفضلة للعمل (يمكنك اختيار أكثر من يوم)</label>
+                    <div class="flex flex-wrap gap-3 mt-2">
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Sat" class="chk-day accent-b-primary"><span class="text-xs">السبت</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Sun" class="chk-day accent-b-primary"><span class="text-xs">الأحد</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Mon" class="chk-day accent-b-primary"><span class="text-xs">الاثنين</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Tue" class="chk-day accent-b-primary"><span class="text-xs">الثلاثاء</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Wed" class="chk-day accent-b-primary"><span class="text-xs">الأربعاء</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Thu" class="chk-day accent-b-primary"><span class="text-xs">الخميس</span>
+                        </label>
+                        <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer transition-colors flex items-center gap-2">
+                            <input type="checkbox" value="Fri" class="chk-day accent-b-primary"><span class="text-xs">الجمعة</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="input-label">الوقت المفضل للعمل (Preferred Time)</label>
+                    <select id="f-pref-time" class="input-field text-gray-300">
+                        <option value="">-- غير محدد --</option>
+                        <option value="Morning">صباحاً (Morning)</option>
+                        <option value="Afternoon">عصراً (Afternoon)</option>
+                        <option value="Night">ليلاً (Night)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-microchip mr-2"></i> 4. الاهتمام التقني والمسارات</h3>
+                
+                <div class="mb-6">
+                    <label class="input-label">المسار التقني الذي تهتم به وترغب بالمساهمة فيه *</label>
+                    <select id="f-academic-track" required onchange="updateTechSkills()" class="input-field text-gray-300 border-b-primary/50">
+                        <option value="" disabled selected>-- اختر المسار (Track) --</option>
+                        <option value="Digital IC Design">تصميم الدوائر الرقمية (Digital IC Design)</option>
+                        <option value="Analog IC Design">تصميم الدوائر التناظرية (Analog IC Design)</option>
+                        <option value="Layout Design">تصميم المخططات (IC Layout Design)</option>
+                        <option value="Embedded Systems">الأنظمة المدمجة (Embedded Systems)</option>
+                        <option value="General">عام / غير محدد بعد</option>
+                    </select>
+                </div>
+
+                <div id="dynamic-skills-container" class="hidden animate-fade-in transition-all">
+                    <div class="mb-6">
+                        <label class="input-label">ما هو مدى ارتباطك واهتمامك بهذا المسار المختار؟ *</label>
+                        <select id="f-ic-interest" required class="input-field text-gray-300">
+                            <option value="" disabled selected>-- اختر إجابة --</option>
+                            <option value="studying">أدرسه حالياً بشكل أكاديمي أو ذاتي (متقدم)</option>
+                            <option value="started">مهتم جداً وبدأت في تعلم الأساسيات مؤخراً</option>
+                            <option value="curious">لدي فضول ومتحمس للتعلم من خلال المساهمة</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="input-label">هل لديك معرفة أو خبرة سابقة في أي من الآتي؟ (اختر ما ينطبق)</label>
+                        <div id="skills-checkboxes" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-comment-dots mr-2"></i> 5. أسئلة شخصية</h3>
+                <div class="space-y-5">
+                    <div>
+                        <label class="input-label">لماذا تريد الانضمام إلى فريق عمل منصة Busla؟ *</label>
+                        <textarea id="f-motivation" required rows="3" class="input-field resize-y" placeholder="حدثنا عن الدوافع التي جعلتك تتقدم لهذا المسار..."></textarea>
+                    </div>
+                    <div>
+                        <label class="input-label">كيف تعتقد أنك تستطيع المساهمة أو إضافة قيمة (Value) في مسار الـ Content؟ *</label>
+                        <textarea id="f-contribution" required rows="3" class="input-field resize-y" placeholder="مثال: أستطيع تلخيص المحاضرات، بناء كويزات، إلخ..."></textarea>
+                    </div>
+                    <div>
+                        <label class="input-label">هل سبق لك العمل في تنظيم محتوى أو التطوع في فرق طلابية من قبل؟ اذكر باختصار.</label>
+                        <textarea id="f-experience" rows="2" class="input-field resize-y" placeholder="اختياري..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-link mr-2"></i> 6. روابط إضافية (اختياري)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="input-label"><i class="fab fa-linkedin text-blue-500 mr-1"></i> حساب لينكد إن (LinkedIn)</label>
+                        <input type="url" id="f-linkedin" class="input-field dir-ltr text-left" placeholder="https://linkedin.com/in/...">
+                    </div>
+                    <div>
+                        <label class="input-label"><i class="fab fa-github text-gray-400 mr-1"></i> حساب جيت هاب (GitHub)</label>
+                        <input type="url" id="f-github" class="input-field dir-ltr text-left" placeholder="https://github.com/...">
+                    </div>
+                    <div>
+                        <label class="input-label"><i class="fas fa-globe text-green-400 mr-1"></i> بورتفوليو أو سي في (Portfolio / CV Link)</label>
+                        <input type="url" id="f-portfolio" class="input-field dir-ltr text-left" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card bg-b-primary/5 border-b-primary/30">
+                <div class="flex items-start gap-4 mb-8">
+                    <div class="mt-1">
+                        <input type="checkbox" id="f-agree" required class="w-5 h-5 accent-b-primary cursor-pointer rounded border-white/20">
+                    </div>
+                    <div>
+                        <label for="f-agree" class="font-bold text-white cursor-pointer select-none text-sm md:text-base">أتعهد بالالتزام بالمهام الأسبوعية وساعات العمل المتفق عليها في حال تم قبولي ضمن نواة فريق Busla الأولية.</label>
+                        <p class="text-xs text-gray-400 mt-2">تقديمك للطلب يعني أنك قرأت وفهمت طبيعة المسار المختار وجديته.</p>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full bg-b-primary hover:bg-teal-600 text-white font-black text-lg py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(0,106,103,0.4)] hover:shadow-[0_0_30px_rgba(0,106,103,0.6)] flex items-center justify-center gap-3">
+                    <i class="fas fa-paper-plane"></i> إرسال طلب الانضمام
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <div id="toast-container" class="fixed bottom-6 left-6 z-[999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <script type="module">
+        // ملاحظة: تأكد من استدعاء إعدادات الـ Supabase الخاصة بك هنا
+        // import { supabase } from './js/supabase-config.js'; 
+        
+        // ---------------------------------------------
+        // نظام الإشعارات (Toasts)
+        // ---------------------------------------------
+        window.showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const color = type === 'success' ? 'border-green-500 text-green-400' : type === 'error' ? 'border-red-500 text-red-400' : 'border-blue-500 text-blue-400';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            toast.className = `bg-gray-900 px-6 py-4 rounded-xl border-l-4 ${color} shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-10 opacity-0 min-w-[300px]`;
+            toast.innerHTML = `<i class="fas ${icon} text-xl"></i><span class="text-white text-sm font-bold">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-x-10');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+
+        // ---------------------------------------------
+        // المهارات الديناميكية بناءً على المسار 💡
+        // ---------------------------------------------
+        const trackSkillsMap = {
+            "Digital IC Design": ["Digital Electronics", "Verilog / VHDL", "FPGA", "Computer Architecture", "Sequential Circuits", "Logic Synthesis"],
+            "Analog IC Design": ["Analog Electronics", "CMOS", "Op-Amps", "SPICE Simulation", "Circuit Analysis", "Transistor Sizing"],
+            "Layout Design": ["Magic / Cadence", "DRC / LVS", "Stick Diagrams", "Fabrication Basics", "VLSI Layout", "Parasitic Extraction"],
+            "Embedded Systems": ["C/C++", "Microcontrollers", "ARM Cortex", "RTOS", "IoT", "PCB Design"],
+            "General": ["Basic Electronics", "Programming (Python/C)", "Mathematics", "Physics", "Research Skills"]
+        };
+
+        window.updateTechSkills = () => {
+            const track = document.getElementById('f-academic-track').value;
+            const container = document.getElementById('dynamic-skills-container');
+            const checkboxesDiv = document.getElementById('skills-checkboxes');
+            
+            if (!track) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            
+            const skills = trackSkillsMap[track] || [];
+            let html = '';
+            skills.forEach(skill => {
+                html += `
+                <label class="flex items-center gap-2 p-3 bg-black/30 border border-white/5 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                    <input type="checkbox" value="${skill}" class="chk-tech accent-b-primary w-4 h-4">
+                    <span class="text-xs font-mono text-gray-300">${skill}</span>
+                </label>`;
+            });
+            
+            html += `
+                <label class="flex items-center gap-2 p-3 bg-black/30 border border-white/5 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                    <input type="checkbox" value="None" class="chk-tech accent-gray-500 w-4 h-4">
+                    <span class="text-xs text-gray-500">لا يوجد خبرة سابقة</span>
+                </label>`;
+            
+            checkboxesDiv.innerHTML = html;
+        };
+
+        // ---------------------------------------------
+        // معالجة وإرسال الفورم (Form Submission)
+        // ---------------------------------------------
+        window.handleApplicationSubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            
+            const selectedYear = document.querySelector('input[name="f-year"]:checked')?.value || null;
+            
+            const availableDays = [];
+            document.querySelectorAll('.chk-day:checked').forEach(cb => availableDays.push(cb.value));
+            
+            const techBackground = [];
+            document.querySelectorAll('.chk-tech:checked').forEach(cb => techBackground.push(cb.value));
+
+            if (availableDays.length === 0) {
+                return window.showToast("يرجى اختيار يوم واحد على الأقل للعمل.", "error");
+            }
+
+            // 💡 تحديث البيانات لتشمل الـ academic_track وعدم إرسال باسوورد
+            const payload = {
+                full_name: document.getElementById('f-name').value.trim(),
+                email: document.getElementById('f-email').value.trim(),
+                phone: document.getElementById('f-phone').value.trim() || null,
+                age: parseInt(document.getElementById('f-age').value),
+                gender: document.getElementById('f-gender').value || null,
+                
+                university: document.getElementById('f-uni').value.trim(),
+                faculty: document.getElementById('f-faculty').value.trim() || null,
+                department: document.getElementById('f-dept').value.trim() || null,
+                status: document.getElementById('f-status').value,
+                academic_year: selectedYear,
+                
+                hours_per_week: document.getElementById('f-hours').value,
+                available_days: availableDays,
+                preferred_time: document.getElementById('f-pref-time').value || null,
+                
+                academic_track: document.getElementById('f-academic-track').value,
+                ic_interest_level: document.getElementById('f-ic-interest').value,
+                technical_background: techBackground,
+                
+                motivation_text: document.getElementById('f-motivation').value.trim(),
+                contribution_text: document.getElementById('f-contribution').value.trim(),
+                experience_text: document.getElementById('f-experience').value.trim() || null,
+                
+                linkedin: document.getElementById('f-linkedin').value.trim() || null,
+                github: document.getElementById('f-github').value.trim() || null,
+                portfolio: document.getElementById('f-portfolio').value.trim() || null,
+                
+                track: 'content',
+                application_status: 'pending'
+            };
+
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i> جاري إرسال الطلب...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                // 💡 إدخال الطلب في جدول التقديمات فقط (بدون إنشاء حساب)
+                /*
+                const { error } = await supabase.from('admin_applications').insert([payload]);
+                if (error) throw error;
+                */
+
+                // محاكاة للشبكة للتجربة
+                await new Promise(r => setTimeout(r, 1500));
+
+                window.showToast("تم إرسال طلبك بنجاح! سيتم مراجعة بياناتك والتواصل معك قريباً.", "success");
+                
+                // تفريغ الفورم وإخفاء المهارات الديناميكية
+                document.getElementById('joinForm').reset();
+                document.getElementById('dynamic-skills-container').classList.add('hidden');
+                
+            } catch (error) {
+                console.error("Submission Error:", error);
+                window.showToast("حدث خطأ أثناء إرسال الطلب: " + error.message, "error");
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        };
+    </script>
+</body>
+</html>
