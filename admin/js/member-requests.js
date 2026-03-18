@@ -224,7 +224,6 @@ async function executeAcceptance(appId, notes) {
     const originalHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     btn.disabled = true;
-// xsmtpsib-215c839f4af6f70131f54490220ac3a6589ca28c59b47fccc31d162458dbdfa9-XCFXQDtsa1Swj5lq
 try {
         // 1. جلب بيانات المتقدم لإرسال الإيميل له
         const app = applicationsData.find(a => a.id === appId);
