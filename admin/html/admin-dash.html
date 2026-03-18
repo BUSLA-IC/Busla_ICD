@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -606,6 +607,32 @@
                 <button onclick="projectAiEngine.backToStep1()" class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl">رجوع</button>
                 <button onclick="projectAiEngine.saveAll()" id="btn-project-ai-save" class="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg flex items-center gap-2"><i class="fas fa-save"></i> حفظ المشروع والمعايير</button>
             </div>
+        </div>
+    </div>
+</div>
+<div id="accept-config-modal" class="fixed inset-0 z-[700] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl">
+    <div class="bg-b-surface border border-teal-500/30 rounded-2xl w-full max-w-md shadow-[0_0_30px_rgba(0,106,103,0.3)] flex flex-col overflow-hidden">
+        <div class="p-5 border-b border-white/10 bg-teal-900/20 text-center">
+            <div class="w-12 h-12 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl mx-auto mb-3"><i class="fas fa-check-double"></i></div>
+            <h3 class="text-xl font-bold text-white">تأكيد قبول العضو</h3>
+            <p class="text-xs text-gray-400 mt-1">سيتم إرسال إيميل رسمي بالقبول فوراً.</p>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-2">رابط الانضمام للجروب (WhatsApp/Telegram) *</label>
+                <div class="relative">
+                    <i class="fas fa-link absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="url" id="accept-group-link" placeholder="https://chat.whatsapp.com/..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-9 pl-4 py-3 text-sm text-white focus:border-teal-500 outline-none dir-ltr text-left">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-2">ملاحظة إضافية في الإيميل (اختياري)</label>
+                <textarea id="accept-extra-note" rows="2" placeholder="مثال: يرجى الانضمام للجروب في أسرع وقت..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-teal-500 outline-none resize-none"></textarea>
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/10 flex gap-3 bg-black">
+            <button onclick="document.getElementById('accept-config-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all">إلغاء</button>
+            <button id="btn-confirm-accept" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all flex items-center justify-center gap-2"><i class="fas fa-paper-plane"></i> اعتماد وإرسال</button>
         </div>
     </div>
 </div>

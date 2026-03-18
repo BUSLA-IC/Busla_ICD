@@ -100,7 +100,7 @@ export async function requestPasswordReset(email) {
     try {
         // ✅ نستخدم supabase مباشرة بدلاً من AuthService.supabase
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password.html',
+            redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
         });
         if (error) throw error;
         return true;

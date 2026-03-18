@@ -192,31 +192,85 @@ window.openApplicantDetails = (id) => {
     document.getElementById('applicant-details-modal').classList.remove('hidden');
 };
 
-// 6. اتخاذ القرار وتحديث الداتابيز (شاملاً الأرشيف)
+// 6. اتخاذ القرار وتحديث الداتابيز (محدثة لدعم الإيميلات)
 window.updateAppStatus = async (newStatus) => {
     const appId = document.getElementById('modal-current-app-id').value;
     const notes = document.getElementById('modal-internal-notes').value;
     if (!appId) return;
 
-    try {
-        const { error } = await supabase
-            .from('admin_applications')
-            .update({
-                application_status: newStatus,
-                internal_notes: notes,
-                reviewed_at: new Date()
-            })
-            .eq('id', appId);
-
-        if (error) throw error;
-
-        window.showToast("تم التحديث بنجاح", "success");
+    // 💡 إذا كان القرار "قبول"، نفتح نافذة إدخال رابط الجروب أولاً ولا نحفظ فوراً
+    if (newStatus === 'accepted') {
+        document.getElementById('accept-group-link').value = '';
+        document.getElementById('accept-extra-note').value = '';
+        document.getElementById('accept-config-modal').classList.remove('hidden');
         
+        // تجهيز زر الإرسال داخل النافذة
+        document.getElementById('btn-confirm-accept').onclick = () => executeAcceptance(appId, notes);
+        return;
+    }
+
+    // إذا كان رفض أو أرشفة، ينفذ الحفظ العادي
+    executeStatusUpdate(appId, newStatus, notes);
+};
+
+// دالة تنفيذ القبول وإرسال الإيميل
+async function executeAcceptance(appId, notes) {
+    const groupLink = document.getElementById('accept-group-link').value.trim();
+    const extraNote = document.getElementById('accept-extra-note').value.trim();
+    const btn = document.getElementById('btn-confirm-accept');
+
+    if (!groupLink) return window.showToast("يجب إدخال رابط الجروب!", "error");
+
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.disabled = true;
+
+    try {
+        // 1. جلب بيانات المتقدم لإرسال الإيميل له
+        const app = applicationsData.find(a => a.id === appId);
+        if (!app) throw new Error("بيانات المتقدم غير موجودة");
+
+        // 2. تحديث حالة الطلب في قاعدة البيانات
+        await executeStatusUpdate(appId, 'accepted', notes, false);
+
+        // 3. إرسال إيميل القبول عبر EmailJS
+        emailjs.init("YOUR_PUBLIC_KEY"); // ⚠️ ضع الـ Public Key الخاص بك
+        await emailjs.send(
+            "service_brevo", // ⚠️ ضع الـ Service ID الخاص بك
+            "template_accepted", // ⚠️ ضع الـ Template ID الخاص بقالب القبول (سننشئه بالأسفل)
+            {
+                to_name: app.full_name,
+                to_email: app.email,
+                track_name: app.track === 'content' ? 'Content Contributor' : app.track,
+                group_link: groupLink,
+                extra_note: extraNote ? extraNote : 'مرحباً بك في فريقنا!'
+            }
+        );
+
+        window.showToast("تم قبول العضو وإرسال الإيميل بنجاح!", "success");
+        document.getElementById('accept-config-modal').classList.add('hidden');
         document.getElementById('applicant-details-modal').classList.add('hidden');
-        await fetchApplications(); // إعادة جلب البيانات لتحديث الإحصائيات
+        await fetchApplications();
 
     } catch (err) {
-        console.error("Update Status Error:", err);
-        window.showToast("حدث خطأ أثناء التحديث: " + err.message, "error");
+        console.error(err);
+        window.showToast("حدث خطأ أثناء القبول: " + err.message, "error");
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
     }
-};
+}
+
+// دالة التحديث الأساسية للداتابيز
+async function executeStatusUpdate(appId, newStatus, notes, showMsg = true) {
+    const { error } = await supabase.from('admin_applications').update({
+        application_status: newStatus, internal_notes: notes, reviewed_at: new Date()
+    }).eq('id', appId);
+
+    if (error) throw error;
+    if (showMsg) {
+        window.showToast("تم التحديث بنجاح", "success");
+        document.getElementById('applicant-details-modal').classList.add('hidden');
+        await fetchApplications();
+    }
+}
