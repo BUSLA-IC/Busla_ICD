@@ -235,7 +235,7 @@ try {
         // 3. إرسال إيميل القبول عبر EmailJS
         emailjs.init("ejz_KrYv1VtCu9DJq"); // ⚠️ نفس المفتاح العام السابق
         await emailjs.send(
-            "service_chpckfz", // ✅ تم وضع الخدمة الخاصة بك
+            "service_xsjpfql", // ✅ تم وضع الخدمة الخاصة بك
             "template_62mykgf", // ⚠️ انسخه من صفحة Templates للقالب الثاني
             {
                 to_name: app.full_name,

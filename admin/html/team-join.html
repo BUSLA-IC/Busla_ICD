@@ -58,20 +58,37 @@
         const statusBox = document.getElementById('status-box');
         const btn = document.getElementById('btn-submit');
 
-        // 1. التحقق من وجود الإيميل في الطلبات المقبولة
+// 💡 الدالة المطورة للتحقق من الطلب
         async function verifyApplicant() {
             if (!userEmail) return welcomeText.innerText = "الرابط غير صالح.";
+            
             try {
-                const { data, error } = await supabase.from('admin_applications').select('full_name').eq('email', userEmail).eq('application_status', 'accepted').single();
-                if (error || !data) throw new Error();
+                // 1. استخدام .ilike لتجاهل حالة الأحرف (A vs a)
+                // 2. استخدام .maybeSingle() بدلاً من .single() لتجنب خطأ 406
+                const { data, error } = await supabase
+                    .from('admin_applications')
+                    .select('full_name, application_status')
+                    .ilike('email', userEmail.trim()) 
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (!data) {
+                    throw new Error("لم يتم العثور على طلب بهذا الإيميل في قاعدة البيانات.");
+                }
+
+                if (data.application_status !== 'accepted') {
+                    throw new Error("هذا الطلب مسجل ولكنه لم يُقبل بعد.");
+                }
                 
                 welcomeText.innerHTML = `أهلاً بك يا <span class="text-teal-400 font-bold">${data.full_name}</span><br>قم بإنشاء كلمة مرور لحسابك الجديد.`;
                 form.classList.remove('hidden');
+
             } catch (err) {
-                welcomeText.innerText = "عذراً، الطلب غير موجود أو منتهي الصلاحية.";
+                console.error("Verification Error:", err);
+                welcomeText.innerText = "عذراً، " + err.message;
             }
         }
-        
         verifyApplicant();
 
         // 2. إنشاء الحساب وإرسال رسالة التأكيد
