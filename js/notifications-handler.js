@@ -401,7 +401,7 @@ window.openPostDetail = (postId) => {
             seenData = post.seen_by.find(item => typeof item === 'object' ? item.uid === member.id : item === member.id);
         }
 
-        const avatar = (member.avatar_url && member.avatar_url !== 'null') ? member.avatar_url : '../assets/icons/icon.jpg';
+        const avatar = (member.avatar_url && member.avatar_url !== 'null') ? member.avatar_url : '../assets/icons/BUSLA-icon.png';
         const hasSeen = !!seenData;
         const seenIcon = hasSeen ? '<i class="fas fa-check-double text-green-400"></i>' : '<i class="fas fa-clock text-gray-600"></i>';
         const seenText = hasSeen ? '<span class="text-green-400 font-bold">قرأ الإشعار</span>' : '<span class="text-gray-500">لم يقرأه بعد</span>';
@@ -430,8 +430,8 @@ window.openPostDetail = (postId) => {
     const seenCount = post.seen_by ? post.seen_by.length : 0;
     const totalCount = targetList.length;
 
-    let avatar = post.creator_avatar || '../assets/icons/icon.jpg';
-    if(avatar.includes('null') || avatar.includes('undefined')) avatar = '../assets/icons/icon.jpg';
+    let avatar = post.creator_avatar || '../assets/icons/BUSLA-icon.png';
+    if(avatar.includes('null') || avatar.includes('undefined')) avatar = '../assets/icons/BUSLA-icon.png';
 
     const actionButtons = `
         <div class="flex items-center gap-2">
@@ -634,7 +634,7 @@ window.toggleTargetMembers = () => {
             list.innerHTML = teamMembersCache.map(m => `
                 <label class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg cursor-pointer border border-transparent hover:border-white/10 transition-colors">
                     <input type="checkbox" value="${m.id}" class="target-member-checkbox w-4 h-4 accent-b-primary rounded bg-black border-white/10">
-                    <img src="${m.avatar_url ? (m.avatar_url.startsWith('http') ? m.avatar_url : `../assets/icons/icon.jpg`) : '../assets/icons/icon.jpg'}" class="w-6 h-6 rounded-full bg-black object-cover">
+                    <img src="${m.avatar_url ? (m.avatar_url.startsWith('http') ? m.avatar_url : `../assets/icons/BUSLA-icon.png`) : '../assets/icons/BUSLA-icon.png'}" class="w-6 h-6 rounded-full bg-black object-cover">
                     <span class="text-sm text-gray-300">${m.full_name}</span>
                 </label>
             `).join('');

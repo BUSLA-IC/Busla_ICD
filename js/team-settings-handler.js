@@ -9,7 +9,7 @@ let currentTeamId = null;
 // =========================================================
 
 function getDirectImageLink(url) {
-    if (!url || url.trim() === "") return "../assets/icons/icon.jpg";
+    if (!url || url.trim() === "") return "../assets/icons/BUSLA-icon.png";
     try {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);

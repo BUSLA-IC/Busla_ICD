@@ -1199,7 +1199,7 @@ window.ytImportEngine = {
             ytImportEngine.state.videos = allItems.map((item, i) => {
                 const vId = item.contentDetails.videoId;
                 const snippet = item.snippet;
-                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../assets/icons/icon.jpg';
+                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../assets/icons/BUSLA-icon.png';
                 const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
                 return { id: `vid_${Date.now()}_${i}`, videoId: vId, title: snippet.title, duration: durationsMap[vId] || 0, thumbnail: thumb, order_index: i + 1, type: 'video', is_excluded: isDeleted };
             });

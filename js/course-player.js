@@ -1629,7 +1629,7 @@ function updateProgressBar(completedCount, totalCount) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/icon.jpg';
+            return '../assets/icons/BUSLA-icon.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);

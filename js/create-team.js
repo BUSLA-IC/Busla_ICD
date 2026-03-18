@@ -103,7 +103,7 @@ function showStatusView(request, daysLeft) {
     document.getElementById('status-view').classList.remove('hidden');
 
     document.getElementById('status-team-name').innerText = request.team_name;
-    document.getElementById('status-logo').src = request.logo_url || '../assets/icons/icon.jpg';
+    document.getElementById('status-logo').src = request.logo_url || '../assets/icons/BUSLA-icon.png';
     document.getElementById('sv-uni').innerText = request.university;
     document.getElementById('sv-gov').innerText = request.governorate;
     

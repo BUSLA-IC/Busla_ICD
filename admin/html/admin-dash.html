@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busla Admin Panel</title>
-    <link rel="icon" type="image/jpg" href="../assets/icons/icon.jpg">
+    <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -48,9 +48,9 @@
                 <i class="fas fa-photo-video"></i> <span>إدارة المحتوى</span>
             </button>
 
-            <button data-target="team-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-user-shield"></i> <span>طلبات الفرق</span>
-            </button>
+<button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
+    <i class="fas fa-users"></i> <span>طلبات الأعضاء</span>
+</button>
 
             <button data-target="project-audit" data-perm="audit_projects" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
                 <i class="fas fa-check-double"></i> <span>إشراف المشاريع</span>
@@ -193,7 +193,7 @@
                 <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)]">
                     <i class="fas fa-user-shield"></i>
                 </div>
-                إدارة طلبات الانضمام
+                إدارة طلبات الأعضاء
             </h2>
             <p class="text-gray-400 text-sm mt-1 ml-14">مراجعة وفرز المتقدمين لفريق Busla Core Team</p>
         </div>
@@ -215,26 +215,33 @@
                 <span class="text-[10px] text-red-500/70 font-bold uppercase tracking-wider">مرفوض</span>
                 <span id="stat-rejected-apps" class="text-xl font-black text-red-400">0</span>
             </div>
+            <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
+                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">مؤرشف</span>
+                <span id="stat-archived-apps" class="text-xl font-black text-gray-400">0</span>
+            </div>
         </div>
     </div>
 
-    <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 shrink-0">
-        <div class="relative flex-1">
+    <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row flex-wrap gap-3 shrink-0">
+        <div class="relative flex-1 min-w-[250px]">
             <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
             <input type="text" id="app-filter-search" oninput="filterApplications()" placeholder="بحث بالاسم، الجامعة، أو الإيميل..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner">
         </div>
-        <select id="app-filter-status" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary w-full sm:w-40">
+        <select id="app-filter-status" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
             <option value="all">الحالة: الكل</option>
             <option value="pending">⏳ قيد المراجعة</option>
             <option value="accepted">✅ مقبول</option>
             <option value="rejected">❌ مرفوض</option>
+            <option value="archived">📦 مؤرشف</option>
         </select>
-        <select id="app-filter-track" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary w-full sm:w-48">
-            <option value="all">المسار: الكل</option>
-            <option value="Digital IC Design">Digital IC Design</option>
-            <option value="Analog IC Design">Analog IC Design</option>
-            <option value="Layout Design">Layout Design</option>
-            <option value="Embedded Systems">Embedded Systems</option>
+        <select id="app-filter-general-track" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
+            <option value="all">نوع التقديم: الكل</option>
+            <option value="content">Content Contributor</option>
+            <option value="operations">Operations Track</option>
+            <option value="academic">Academic Oversight</option>
+        </select>
+        <select id="app-filter-academic-track" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
+            <option value="all">المسار التقني: الكل (جاري التحميل...)</option>
         </select>
         <button onclick="fetchApplications()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all" title="تحديث البيانات">
             <i class="fas fa-sync-alt"></i>
@@ -249,7 +256,7 @@
                         <th class="p-4 font-bold">المتقدم (Applicant)</th>
                         <th class="p-4 font-bold text-center">الخلفية الأكاديمية</th>
                         <th class="p-4 font-bold text-center">التفرغ (الساعات)</th>
-                        <th class="p-4 font-bold text-center">المسار التقني (Track)</th>
+                        <th class="p-4 font-bold text-center">نوع التقديم</th>
                         <th class="p-4 font-bold text-center">تاريخ التقديم</th>
                         <th class="p-4 font-bold text-center">الحالة</th>
                         <th class="p-4 font-bold text-center">إجراءات</th>
@@ -264,7 +271,7 @@
 </div>
 
 <div id="applicant-details-modal" class="fixed inset-0 z-[600] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl">
-    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col overflow-hidden max-h-[95vh] h-full">
+    <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col overflow-hidden max-h-[95vh] h-full">
         
         <div class="p-5 border-b border-white/10 bg-black/40 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
@@ -288,6 +295,7 @@
                 <div class="bg-black/50 border border-white/5 rounded-xl p-5">
                     <h4 class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider"><i class="fas fa-id-card mr-1"></i> بيانات أساسية</h4>
                     <div class="space-y-3 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">تاريخ التقديم:</span> <span id="modal-app-date" class="text-white font-bold font-mono text-xs">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">العمر:</span> <span id="modal-app-age" class="text-white font-bold">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">النوع:</span> <span id="modal-app-gender" class="text-white font-bold">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">الهاتف:</span> <span id="modal-app-phone" class="text-white font-bold dir-ltr">--</span></div>
@@ -295,8 +303,9 @@
                 </div>
 
                 <div class="bg-black/50 border border-white/5 rounded-xl p-5">
-                    <h4 class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider"><i class="fas fa-university mr-1"></i> الخلفية الأكاديمية</h4>
+                    <h4 class="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider"><i class="fas fa-university mr-1"></i> الجغرافيا والأكاديمية</h4>
                     <div class="space-y-3 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">المحافظة:</span> <span id="modal-app-gov" class="text-white font-bold">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">الجامعة:</span> <span id="modal-app-uni" class="text-white font-bold">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">الكلية:</span> <span id="modal-app-faculty" class="text-white font-bold">--</span></div>
                         <div class="flex justify-between"><span class="text-gray-400">القسم:</span> <span id="modal-app-dept" class="text-white font-bold text-left text-xs">--</span></div>
@@ -327,6 +336,7 @@
 
                     <div class="bg-black/50 border border-white/5 rounded-xl p-5 border-t-2 border-t-teal-500/50">
                         <h4 class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider"><i class="fas fa-microchip mr-1"></i> الاهتمام التقني</h4>
+                        <div class="text-xs text-gray-400 mb-1">المسار العام: <span class="text-white font-bold" id="modal-app-general-track">--</span></div>
                         <div class="text-lg font-bold text-teal-400 mb-1" id="modal-app-track">--</div>
                         <p class="text-[10px] text-gray-400 mb-4 p-2 bg-white/5 rounded-lg" id="modal-app-ic-level">--</p>
                         <div id="modal-app-skills" class="flex flex-wrap gap-1.5"></div>
@@ -335,18 +345,17 @@
 
                 <div class="bg-black/50 border border-white/5 rounded-xl p-5 space-y-5">
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider"><i class="fas fa-comment-dots mr-1"></i> الإجابات الشخصية</h4>
-                    
                     <div>
                         <span class="text-xs text-teal-400 font-bold mb-1 block">لماذا يريد الانضمام لـ Busla؟</span>
-                        <p id="modal-app-motivation" class="text-sm text-gray-300 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5">--</p>
+                        <p id="modal-app-motivation" class="text-sm text-gray-300 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5 whitespace-pre-wrap">--</p>
                     </div>
                     <div>
                         <span class="text-xs text-teal-400 font-bold mb-1 block">كيفية المساهمة المتوقعة:</span>
-                        <p id="modal-app-contribution" class="text-sm text-gray-300 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5">--</p>
+                        <p id="modal-app-contribution" class="text-sm text-gray-300 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5 whitespace-pre-wrap">--</p>
                     </div>
                     <div>
                         <span class="text-xs text-gray-400 font-bold mb-1 block">الخبرات التطوعية السابقة:</span>
-                        <p id="modal-app-experience" class="text-sm text-gray-400 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5 italic">--</p>
+                        <p id="modal-app-experience" class="text-sm text-gray-400 leading-relaxed bg-black/30 p-3 rounded-lg border border-white/5 italic whitespace-pre-wrap">--</p>
                     </div>
                 </div>
             </div>
@@ -355,13 +364,14 @@
         <div class="p-5 border-t border-white/10 bg-black flex flex-col md:flex-row gap-4 shrink-0">
             <div class="flex-1 relative">
                 <i class="fas fa-edit absolute right-3 top-3 text-gray-500"></i>
-                <textarea id="modal-internal-notes" rows="2" placeholder="ملاحظات الإدارة (لا يراها المتقدم)..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-yellow-500 focus:border-yellow-500 outline-none transition-colors resize-none"></textarea>
+                <textarea id="modal-internal-notes" rows="2" placeholder="ملاحظات الإدارة (لا يراها المتقدم)..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-yellow-500 focus:border-yellow-500 outline-none transition-colors resize-none custom-scroll"></textarea>
             </div>
-            <div class="flex items-end gap-2 shrink-0">
+            <div class="flex items-end gap-2 shrink-0 flex-wrap justify-end">
                 <input type="hidden" id="modal-current-app-id">
-                <button onclick="updateAppStatus('rejected')" class="h-[42px] px-6 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold rounded-xl transition-all">رفض</button>
-                <button onclick="updateAppStatus('pending')" class="h-[42px] px-4 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 font-bold rounded-xl transition-all" title="حفظ الملاحظات فقط"><i class="fas fa-save"></i></button>
-                <button onclick="updateAppStatus('accepted')" class="h-[42px] px-8 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(13,148,136,0.3)]">قبول في الفريق</button>
+                <button onclick="updateAppStatus('rejected')" class="h-[42px] px-5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold rounded-xl transition-all">رفض</button>
+                <button onclick="updateAppStatus('archived')" class="h-[42px] px-5 bg-gray-500/10 hover:bg-gray-500/20 text-gray-400 border border-gray-500/20 font-bold rounded-xl transition-all" title="أرشفة لوقت لاحق"><i class="fas fa-box-archive mr-1"></i> أرشفة</button>
+                <button onclick="updateAppStatus('pending')" class="h-[42px] px-4 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 font-bold rounded-xl transition-all" title="حفظ الملاحظات فقط وإبقاءه قيد المراجعة"><i class="fas fa-save"></i></button>
+                <button onclick="updateAppStatus('accepted')" class="h-[42px] px-6 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(13,148,136,0.3)]"><i class="fas fa-check mr-1"></i> قبول في الفريق</button>
             </div>
         </div>
     </div>

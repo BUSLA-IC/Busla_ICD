@@ -1,10 +1,27 @@
+import { supabase } from '../../js/supabase-config.js';
+
 // ==========================================
 // 🚀 RECRUITMENT & APPLICATIONS ENGINE
 // ==========================================
 
 let applicationsData = [];
 
-// 1. جلب البيانات من الداتابيز
+// 💡 1. جلب التراكات الديناميكية لفلتر المسار الأكاديمي
+window.fetchFilterTracks = async () => {
+    try {
+        const { data, error } = await supabase.from('tracks').select('id, name');
+        if (error) throw error;
+        const select = document.getElementById('app-filter-academic-track');
+        if (select) {
+            select.innerHTML = '<option value="all">المسار التقني: الكل</option>' + 
+                (data || []).map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+        }
+    } catch (err) {
+        console.error("Error fetching tracks for filter:", err);
+    }
+};
+
+// 2. جلب البيانات من الداتابيز
 window.fetchApplications = async () => {
     const tbody = document.getElementById('applications-table-body');
     if(tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-2xl"></i></td></tr>`;
@@ -27,25 +44,31 @@ window.fetchApplications = async () => {
     }
 };
 
-// 2. تحديث الإحصائيات
+// 3. تحديث الإحصائيات (بما فيها الأرشيف)
 function updateAppStats() {
     document.getElementById('stat-total-apps').innerText = applicationsData.length;
     document.getElementById('stat-pending-apps').innerText = applicationsData.filter(a => a.application_status === 'pending').length;
     document.getElementById('stat-accepted-apps').innerText = applicationsData.filter(a => a.application_status === 'accepted').length;
     document.getElementById('stat-rejected-apps').innerText = applicationsData.filter(a => a.application_status === 'rejected').length;
+    document.getElementById('stat-archived-apps').innerText = applicationsData.filter(a => a.application_status === 'archived').length;
 }
 
-// 3. الفلترة ورسم الجدول
+// 4. الفلترة ورسم الجدول
 window.filterApplications = () => {
     const search = document.getElementById('app-filter-search')?.value.toLowerCase() || '';
     const status = document.getElementById('app-filter-status')?.value || 'all';
-    const track = document.getElementById('app-filter-track')?.value || 'all';
+    
+    // 💡 الفلاتر الجديدة
+    const generalTrack = document.getElementById('app-filter-general-track')?.value || 'all';
+    const academicTrack = document.getElementById('app-filter-academic-track')?.value || 'all';
 
     const filtered = applicationsData.filter(app => {
         const matchSearch = app.full_name.toLowerCase().includes(search) || app.university.toLowerCase().includes(search) || app.email.toLowerCase().includes(search);
         const matchStatus = status === 'all' || app.application_status === status;
-        const matchTrack = track === 'all' || app.academic_track === track;
-        return matchSearch && matchStatus && matchTrack;
+        const matchGeneral = generalTrack === 'all' || app.track === generalTrack;
+        const matchAcademic = academicTrack === 'all' || app.academic_track === academicTrack;
+        
+        return matchSearch && matchStatus && matchGeneral && matchAcademic;
     });
 
     renderApplicationsTable(filtered);
@@ -66,7 +89,10 @@ function renderApplicationsTable(data) {
         let statusBadge = '';
         if (app.application_status === 'accepted') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">مقبول</span>';
         else if (app.application_status === 'rejected') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوض</span>';
+        else if (app.application_status === 'archived') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">مؤرشف</span>';
         else statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>';
+
+        const trackMap = { 'content': 'Content', 'operations': 'Operations', 'academic': 'Academic' };
 
         return `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
@@ -80,7 +106,7 @@ function renderApplicationsTable(data) {
                 </td>
                 <td class="p-4 text-center font-mono text-teal-400 font-bold text-xs">${app.hours_per_week}</td>
                 <td class="p-4 text-center text-xs text-gray-300">
-                    ${app.academic_track || '-'}
+                    <span class="bg-white/5 border border-white/10 rounded px-2 py-0.5">${trackMap[app.track] || app.track || '-'}</span>
                 </td>
                 <td class="p-4 text-center text-xs font-mono text-gray-500">${date}</td>
                 <td class="p-4 text-center">${statusBadge}</td>
@@ -94,7 +120,7 @@ function renderApplicationsTable(data) {
     }).join('');
 }
 
-// 4. فتح بيانات المتقدم بالكامل في الـ Modal
+// 5. فتح بيانات المتقدم بالكامل في الـ Modal (شاملة كافة البيانات)
 window.openApplicantDetails = (id) => {
     const app = applicationsData.find(a => a.id === id);
     if (!app) return;
@@ -109,15 +135,18 @@ window.openApplicantDetails = (id) => {
     badge.className = `px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
         app.application_status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
         app.application_status === 'rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
+        app.application_status === 'archived' ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20' :
         'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
     }`;
-    badge.innerText = app.application_status === 'accepted' ? 'مقبول' : app.application_status === 'rejected' ? 'مرفوض' : 'قيد المراجعة';
+    badge.innerText = app.application_status === 'accepted' ? 'مقبول' : app.application_status === 'rejected' ? 'مرفوض' : app.application_status === 'archived' ? 'مؤرشف' : 'قيد المراجعة';
 
     // Personal & Academic
+    document.getElementById('modal-app-date').innerText = new Date(app.submitted_at).toLocaleString('en-GB');
     document.getElementById('modal-app-age').innerText = app.age || '--';
     document.getElementById('modal-app-gender').innerText = app.gender === 'Male' ? 'ذكر' : app.gender === 'Female' ? 'أنثى' : '--';
     document.getElementById('modal-app-phone').innerText = app.phone || '--';
     
+    document.getElementById('modal-app-gov').innerText = app.governorate || '--';
     document.getElementById('modal-app-uni').innerText = app.university;
     document.getElementById('modal-app-faculty').innerText = app.faculty || '--';
     document.getElementById('modal-app-dept').innerText = app.department || '--';
@@ -143,6 +172,8 @@ window.openApplicantDetails = (id) => {
     daysDiv.innerHTML = (app.available_days || []).map(d => `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-gray-300 border border-white/5">${daysMap[d] || d}</span>`).join('');
 
     // Tech
+    const trackMap = { 'content': 'Content Contributor', 'operations': 'Operations Track', 'academic': 'Academic Oversight' };
+    document.getElementById('modal-app-general-track').innerText = trackMap[app.track] || app.track || '--';
     document.getElementById('modal-app-track').innerText = app.academic_track || 'لم يحدد';
     const icLevelMap = { studying: 'يدرسه حالياً / متقدم', started: 'بدأ في الأساسيات', curious: 'فضول وحماس للتعلم' };
     document.getElementById('modal-app-ic-level').innerText = icLevelMap[app.ic_interest_level] || app.ic_interest_level || '--';
@@ -161,7 +192,7 @@ window.openApplicantDetails = (id) => {
     document.getElementById('applicant-details-modal').classList.remove('hidden');
 };
 
-// 5. اتخاذ القرار (قبول / رفض / حفظ ملاحظات)
+// 6. اتخاذ القرار وتحديث الداتابيز (شاملاً الأرشيف)
 window.updateAppStatus = async (newStatus) => {
     const appId = document.getElementById('modal-current-app-id').value;
     const notes = document.getElementById('modal-internal-notes').value;
@@ -174,30 +205,18 @@ window.updateAppStatus = async (newStatus) => {
                 application_status: newStatus,
                 internal_notes: notes,
                 reviewed_at: new Date()
-                // reviewed_by: سيتم تسجيله عبر الـ Row Level Security أو يمكن تمرير الـ user.id هنا
             })
             .eq('id', appId);
 
         if (error) throw error;
 
-        window.showToast("تم تحديث حالة الطلب بنجاح", "success");
+        window.showToast("تم التحديث بنجاح", "success");
         
-        // إغلاق المودال وتحديث البيانات
         document.getElementById('applicant-details-modal').classList.add('hidden');
-        await fetchApplications();
+        await fetchApplications(); // إعادة جلب البيانات لتحديث الإحصائيات
 
     } catch (err) {
         console.error("Update Status Error:", err);
         window.showToast("حدث خطأ أثناء التحديث: " + err.message, "error");
     }
 };
-
-// تشغيل جلب البيانات عند الضغط على تبويبة Recruitment في الـ Nav
-document.addEventListener('DOMContentLoaded', () => {
-   const recruitmentBtn = document.querySelector('[data-target="member-requests"]');
-    if (recruitmentBtn) {
-        recruitmentBtn.addEventListener('click', () => {
-            if (applicationsData.length === 0) fetchApplications();
-        });
-    }
-});

@@ -407,14 +407,14 @@ function updateHeaderInfo(user, team) {
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
         let rawTeamLogo = team ? team.logo_url : null;
-        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/icon.jpg";
+        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/BUSLA-icon.png";
     }
 
     // Update User Avatar
     const headerAvatarEl = document.getElementById('header-user-avatar');
     if(headerAvatarEl) {
         const rawUserAvatar = user.avatar_url;
-        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/icon.jpg";
+        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/BUSLA-icon.png";
     }
 }
 
@@ -1035,10 +1035,10 @@ window.showDetails = (type, id, parentTitle = "") => {
     if (imgEl) {
         imgEl.onerror = function() {
             this.onerror = null; 
-            this.src = '../assets/icons/icon.jpg';
+            this.src = '../assets/icons/BUSLA-icon.png';
         };
         
-        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/icons/icon.jpg';
+        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/icons/BUSLA-icon.png';
     }
 
     const toggleArea = document.getElementById('course-action-area');
@@ -1429,7 +1429,7 @@ async function renderSquad() {
                 memberRow.innerHTML = `
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
-                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/icon.jpg'">
+                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/BUSLA-icon.png'">
                         </div>
                         <div>
                             <h4 class="font-bold text-sm text-white flex items-center gap-2">
@@ -3071,7 +3071,7 @@ function formatDuration(rawTime) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/icon.jpg';
+            return '../assets/icons/BUSLA-icon.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);

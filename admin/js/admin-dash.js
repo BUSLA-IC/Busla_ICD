@@ -126,11 +126,12 @@ function setupNavigation() {
 }
 
 function loadModuleData(moduleId) {
-    // Dynamically load data when tab is clicked to save resources
     if (moduleId === 'content-mgmt') {
         // loadContentData('phases');
-    } else if (moduleId === 'team-requests') {
-        // loadTeamRequests();
+    } else if (moduleId === 'member-requests') {
+        // 💡 استدعاء جلب البيانات والتراكات عند فتح التاب
+        if (typeof window.fetchFilterTracks === 'function') window.fetchFilterTracks();
+        if (typeof window.fetchApplications === 'function') window.fetchApplications();
     }
 }
 

@@ -488,14 +488,14 @@ function updateHeaderInfo(user, team) {
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
         let rawTeamLogo = team ? team.logo_url : null;
-        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/icon.jpg";
+        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/BUSLA-icon.png";
     }
 
     // Update User Avatar
     const headerAvatarEl = document.getElementById('header-user-avatar');
     if(headerAvatarEl) {
         const rawUserAvatar = user.avatar_url;
-        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/icon.jpg";
+        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/BUSLA-icon.png";
     }
 }
 
@@ -1228,7 +1228,7 @@ async function renderSquad() {
                 <div class="hidden md:flex items-center justify-center w-14 text-3xl font-black text-white/5 font-mono">#${index + 1}</div>
                 <div class="relative mb-4 md:mb-0 md:ml-8 flex-shrink-0">
                     <div class="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[${rankData.stage_color}] to-transparent relative">
-                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.src='../assets/icons/icon.jpg'">
+                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.src='../assets/icons/BUSLA-icon.png'">
                     </div>
                     <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-[${rankData.stage_color}] shadow-lg z-10">
                         <img src="../assets/user-badge/lv${rankData.level}.png" class="w-10 h-10 object-contain">
@@ -1483,10 +1483,10 @@ window.filterTeams = () => {
     // 💡 رسم الجدول
     filtered.forEach(t => {
         const logo = (t.logo_url && t.logo_url !== 'null' && t.logo_url !== '') 
-                     ? t.logo_url : '../assets/icons/icon.jpg';
+                     ? t.logo_url : '../assets/icons/BUSLA-icon.png';
         const displayUni = window.translateUni ? window.translateUni(t.university) : (t.university || 'غير محدد');
         const leaderAvatar = (t.leaderAvatar && t.leaderAvatar !== 'null' && t.leaderAvatar !== '') 
-                             ? t.leaderAvatar : '../assets/icons/icon.jpg';
+                             ? t.leaderAvatar : '../assets/icons/BUSLA-icon.png';
         
         const maxMembers = t.max_members || 5;
         const membersColor = t.memberCount >= maxMembers ? 'text-red-400' : 'text-green-400'; 
@@ -2232,7 +2232,7 @@ function formatDuration(rawTime) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/icon.jpg';
+            return '../assets/icons/BUSLA-icon.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
@@ -2372,7 +2372,7 @@ window.loadStudentNotifications = async () => {
                     const isPersonal = msg.target_leader_id === myId;
                     combined.push({
                         id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
-                        creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/icon.jpg',
+                        creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/BUSLA-icon.png',
                         _sourceType: 'admin', _targetLevel: isPersonal ? 'personal' : 'admin', 
                         _icon: 'fa-server', _color: 'text-red-400 bg-red-500/10 border-red-500/20', 
                         _badgeText: isPersonal ? 'رسالة خاصة' : 'رسالة إدارة'
@@ -2393,7 +2393,7 @@ window.loadStudentNotifications = async () => {
                         const isPersonal = msg.target_leader_id === myId;
                         combined.push({
                             id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
-                            creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/icon.jpg',
+                            creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/BUSLA-icon.png',
                             _sourceType: 'admin', _targetLevel: 'admin', 
                             _icon: isPersonal ? 'fa-envelope' : 'fa-server', 
                             _color: isPersonal ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20', 
@@ -2515,7 +2515,7 @@ function renderStudentNotifsTable(posts, tbodyId, isArchive) {
             <td class="p-4 text-center text-xs text-gray-400 font-mono">${dateStr}</td>
             <td class="p-4 text-center text-xs text-gray-300">
                 <div class="flex items-center justify-center gap-2">
-                    <img src="${post.creator_avatar && post.creator_avatar !== 'null' ? post.creator_avatar : '../assets/icons/icon.jpg'}" class="w-6 h-6 rounded-full object-cover bg-black">
+                    <img src="${post.creator_avatar && post.creator_avatar !== 'null' ? post.creator_avatar : '../assets/icons/BUSLA-icon.png'}" class="w-6 h-6 rounded-full object-cover bg-black">
                     ${post.creator_name}
                 </div>
             </td>
@@ -2547,7 +2547,7 @@ window.openStudentPostDetail = async (postId) => {
     const linkHtml = post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> فتح الرابط المرفق</a>` : '';
     const expiryHtml = post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> الموعد النهائي: ${new Date(post.expiry_date).toLocaleDateString('ar-EG')}</div>` : '';
 
-    let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/icon.jpg';
+    let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/BUSLA-icon.png';
 
     // بناء الواجهة المبسطة والنظيفة
     contentBox.innerHTML = `
