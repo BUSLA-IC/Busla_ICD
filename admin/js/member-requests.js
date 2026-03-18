@@ -224,8 +224,8 @@ async function executeAcceptance(appId, notes) {
     const originalHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     btn.disabled = true;
-
-    try {
+// xsmtpsib-215c839f4af6f70131f54490220ac3a6589ca28c59b47fccc31d162458dbdfa9-XCFXQDtsa1Swj5lq
+try {
         // 1. جلب بيانات المتقدم لإرسال الإيميل له
         const app = applicationsData.find(a => a.id === appId);
         if (!app) throw new Error("بيانات المتقدم غير موجودة");
@@ -234,10 +234,10 @@ async function executeAcceptance(appId, notes) {
         await executeStatusUpdate(appId, 'accepted', notes, false);
 
         // 3. إرسال إيميل القبول عبر EmailJS
-        emailjs.init("YOUR_PUBLIC_KEY"); // ⚠️ ضع الـ Public Key الخاص بك
+        emailjs.init("ejz_KrYv1VtCu9DJq"); // ⚠️ نفس المفتاح العام السابق
         await emailjs.send(
-            "service_brevo", // ⚠️ ضع الـ Service ID الخاص بك
-            "template_accepted", // ⚠️ ضع الـ Template ID الخاص بقالب القبول (سننشئه بالأسفل)
+            "service_chpckfz", // ✅ تم وضع الخدمة الخاصة بك
+            "template_62mykgf", // ⚠️ انسخه من صفحة Templates للقالب الثاني
             {
                 to_name: app.full_name,
                 to_email: app.email,

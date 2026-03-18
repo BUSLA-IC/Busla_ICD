@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفعيل حساب الفريق | منصة بوصلة</title>
+    <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'b-bg': '#000000', 'b-surface': '#111111', 'b-primary': '#006A67' },
+                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>body { font-family: 'Cairo', sans-serif; background-color: #000; color: white; }</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 bg-[url('../assets/patterns/circuit.png')] bg-opacity-5 relative">
+
+    <div class="bg-b-surface border border-white/10 p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full relative z-10 mx-4">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-b-primary/20 text-teal-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-teal-500/30 shadow-[0_0_15px_rgba(0,106,103,0.4)]">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h1 class="text-2xl font-black text-white mb-2">تفعيل حساب الإدارة</h1>
+            <p class="text-sm text-gray-400" id="welcome-text">جاري التحقق من الطلب...</p>
+        </div>
+
+        <form id="team-setup-form" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-2">قم بإنشاء كلمة مرور لحسابك</label>
+                <div class="relative">
+                    <input type="password" id="new-password" required minlength="6" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none pl-10 text-left" dir="ltr" placeholder="••••••••">
+                    <i class="fas fa-lock absolute left-4 top-3.5 text-gray-500"></i>
+                </div>
+            </div>
+
+            <button type="submit" id="btn-submit" class="w-full py-3.5 mt-2 bg-b-primary hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-rocket"></i> حجز الحساب وتأكيد الإيميل
+            </button>
+        </form>
+
+        <div id="status-box" class="hidden text-center p-4 rounded-xl mt-4 font-bold text-sm"></div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userEmail = urlParams.get('email');
+        const welcomeText = document.getElementById('welcome-text');
+        const form = document.getElementById('team-setup-form');
+        const statusBox = document.getElementById('status-box');
+        const btn = document.getElementById('btn-submit');
+
+        // 1. التحقق من وجود الإيميل في الطلبات المقبولة
+        async function verifyApplicant() {
+            if (!userEmail) return welcomeText.innerText = "الرابط غير صالح.";
+            try {
+                const { data, error } = await supabase.from('admin_applications').select('full_name').eq('email', userEmail).eq('application_status', 'accepted').single();
+                if (error || !data) throw new Error();
+                
+                welcomeText.innerHTML = `أهلاً بك يا <span class="text-teal-400 font-bold">${data.full_name}</span><br>قم بإنشاء كلمة مرور لحسابك الجديد.`;
+                form.classList.remove('hidden');
+            } catch (err) {
+                welcomeText.innerText = "عذراً، الطلب غير موجود أو منتهي الصلاحية.";
+            }
+        }
+        
+        verifyApplicant();
+
+        // 2. إنشاء الحساب وإرسال رسالة التأكيد
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+            btn.disabled = true;
+
+            const password = document.getElementById('new-password').value;
+
+            try {
+                // إنشاء الحساب (سيرسل رسالة تأكيد تلقائياً لأن الميزة مفعلة في Supabase)
+                const { data, error } = await supabase.auth.signUp({ 
+                    email: userEmail, 
+                    password: password 
+                });
+                if (error) throw error;
+
+                // إخفاء الفورم وإظهار رسالة النجاح التي تطلب من المستخدم فحص إيميله
+                form.classList.add('hidden');
+                statusBox.classList.remove('hidden');
+                statusBox.classList.add('bg-green-500/20', 'border', 'border-green-500', 'text-green-400');
+                statusBox.innerHTML = '🎉 تم حجز حسابك بنجاح!<br><br><span class="text-white text-xs">لقد أرسلنا رسالة تأكيد إلى بريدك الإلكتروني. يرجى الضغط على الرابط الموجود فيها لتتمكن من تسجيل الدخول بصلاحيات الإدارة.</span>';
+
+            } catch (err) {
+                statusBox.classList.remove('hidden');
+                statusBox.classList.add('bg-red-500/20', 'border', 'border-red-500', 'text-red-400');
+                statusBox.innerText = "حدث خطأ: " + err.message;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> حجز الحساب وتأكيد الإيميل';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

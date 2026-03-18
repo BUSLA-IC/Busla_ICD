@@ -574,54 +574,72 @@
             btn.disabled = true;
 
 try {
-                // 💡 1. التحقق من الإيميل أولاً عبر الدالة الآمنة (RPC)
-                const checkEmail = payload.email;
-                const { data: emailStatus, error: checkError } = await supabase.rpc('check_email_availability', { email_to_check: checkEmail });
+    // 💡 1. التحقق من الإيميل أولاً عبر الدالة الآمنة (RPC)
+    const checkEmail = payload.email;
+    const { data: emailStatus, error: checkError } = await supabase.rpc('check_email_availability', { email_to_check: checkEmail });
 
-                if (checkError) throw checkError;
+    if (checkError) throw checkError;
 
-                // معالجة إذا كان الإيميل له طلب معلق
-                if (emailStatus === 'pending') {
-                    window.showToast("يوجد طلب انضمام معلق بهذا البريد بالفعل. يرجى انتظار الرد.", "error");
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                    return; // إيقاف الإرسال
-                }
+    // معالجة إذا كان الإيميل له طلب معلق
+    if (emailStatus === 'pending') {
+        window.showToast("يوجد طلب انضمام معلق بهذا البريد بالفعل. يرجى انتظار الرد.", "error");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        return; // إيقاف الإرسال
+    }
 
-                // معالجة إذا كان الإيميل مسجل كحساب في المنصة
-                if (emailStatus === 'exists') {
-                    window.showToast("هذا البريد مسجل كحساب في المنصة مسبقاً (طالب أو مسؤول). لا يمكن التقديم به.", "error");
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                    return; // إيقاف الإرسال
-                }
+    // معالجة إذا كان الإيميل مسجل كحساب في المنصة
+    if (emailStatus === 'exists') {
+        window.showToast("هذا البريد مسجل كحساب في المنصة مسبقاً (طالب أو مسؤول). لا يمكن التقديم به.", "error");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        return; // إيقاف الإرسال
+    }
 
-                // 💡 2. إذا كان الإيميل (available)، نقوم بحفظ الطلب
-                const { error } = await supabase.from('admin_applications').insert([payload]);
-                if (error) throw error;
-                
-                window.showToast("تم إرسال طلبك بنجاح! سيتم مراجعة بياناتك والتواصل معك.", "success");
-                
-                // إعادة التهيئة وتحديث الواجهة للبداية
-                document.getElementById('joinForm').reset();
-                document.getElementById('application-container').classList.add('hidden');
-                document.getElementById('tracks-section').classList.remove('hidden');
-                currentStep = 1;
-                
-            } catch (error) {
-                console.error("Submission Error:", error);
-                window.showToast("حدث خطأ أثناء إرسال الطلب: " + error.message, "error");
-            } finally {
-                // في حالة النجاح أو خطأ غير متوقع (غير الشيك)
-                if (document.getElementById('application-container').classList.contains('hidden') === false) {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                }
+    // 💡 2. حفظ الطلب في قاعدة البيانات
+    const { error } = await supabase.from('admin_applications').insert([payload]);
+    if (error) throw error;
+    
+    // 💡 3. إرسال إيميل تأكيد الاستلام للطالب (الجزء الذي كان مفقوداً)
+    try {
+        emailjs.init("ejz_KrYv1VtCu9DJq"); // ⚠️ انسخه من Account في EmailJS
+        await emailjs.send(
+            "service_chpckfz", // ✅ الخدمة الخاصة بك
+            "template_7oginph", // ⚠️ انسخه من Templates
+            {
+                to_name: payload.full_name,
+                to_email: payload.email,
+                track_name: payload.track === 'content' ? 'Content Contributor' : payload.track
             }
+        );
+    } catch (emailErr) {
+        console.error("EmailJS Error:", emailErr);
+    }
+
+    window.showToast("تم إرسال طلبك بنجاح! سيتم مراجعة بياناتك والتواصل معك.", "success");
+    
+    // إعادة التهيئة وتحديث الواجهة للبداية
+    document.getElementById('joinForm').reset();
+    document.getElementById('application-container').classList.add('hidden');
+    document.getElementById('tracks-section').classList.remove('hidden');
+    currentStep = 1;
+    
+} catch (error) {
+    console.error("Submission Error:", error);
+    window.showToast("حدث خطأ أثناء إرسال الطلب: " + error.message, "error");
+} finally {
+    // في حالة النجاح أو خطأ غير متوقع (غير الشيك)
+    if (document.getElementById('application-container').classList.contains('hidden') === false) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    }
+}
         };
+
+
 
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchDynamicTracks();

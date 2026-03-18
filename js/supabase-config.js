@@ -141,7 +141,7 @@ async signUp(email, password, metaData = {}) {
     async resetPassword(email) {
         return handleRequest(
             supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '/reset-password.html',
+               redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
             })
         );
     }
