@@ -60,11 +60,16 @@ export async function registerUser(email, password, personalInfo, academicInfo) 
 // =========================================================
 export async function loginUser(email, password) {
     try {
-        const result = await AuthService.signIn(email, password);
-        if (!result.success) throw new Error(result.error);
-        return result.data.user;
+        // ✅ استخدام supabase.auth مباشرة بدلاً من AuthService
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+        return data.user;
+        
     } catch (error) {
-        // نمرر رسالة الخطأ المترجمة للواجهة
         throw new Error(translateAuthError(error));
     }
 }
@@ -91,8 +96,13 @@ export async function resendVerification(email) {
 // =========================================================
 
 export async function logoutUser() {
-    await AuthService.signOut();
-    window.location.href = "auth.html";
+    try {
+        // ✅ استخدام supabase.auth مباشرة
+        await supabase.auth.signOut();
+        window.location.href = "auth.html";
+    } catch (error) {
+        console.error("Logout Error:", error);
+    }
 }
 
 // 💡 دالة طلب إعادة تعيين كلمة المرور
