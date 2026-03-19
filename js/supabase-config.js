@@ -62,88 +62,53 @@ async function handleRequest(request) {
 // ============================================================================
 
 export const AuthService = {
-    /**
-     * Sign up a new user and create their profile.
-     * @param {string} email 
-     * @param {string} password 
-     * @param {Object} metadata - { full_name, university, faculty, governorate }
-     */
+    onAuthStateChange: (callback) => {
+        return supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT') {
+                callback(null);
+            } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                const user = session?.user;
+                if (user) {
+                    // 1. فحص هل له بروفايل أم لا؟
+                    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+                    
+                    if (!profile) {
+                        // 💡 2. الترقية السحرية: قبل أن نجعله طالباً، نبحث في الطلبات المقبولة أولاً
+                        const { data: acceptedApp } = await supabase.from('admin_applications')
+                            .select('*')
+                            .eq('email', user.email)
+                            .eq('application_status', 'accepted')
+                            .maybeSingle();
 
-
-/**
-     * Sign up a new user
-     */
-async signUp(email, password, metaData = {}) {
-        return handleRequest(
-            supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: metaData // إرسال الداتا المجمعة مباشرة
+                        if (acceptedApp) {
+                            // ✅ إدراج كـ Admin بكامل بياناته من طلب التقديم
+                            await supabase.from('profiles').insert([{
+                                id: user.id,
+                                email: acceptedApp.email,
+                                full_name: acceptedApp.full_name,
+                                role: 'admin', // 👑 الترقية
+                                university: acceptedApp.university,
+                                faculty: acceptedApp.faculty,
+                                department: acceptedApp.department,
+                                governorate: acceptedApp.governorate,
+                                academic_year: acceptedApp.academic_year,
+                                track: acceptedApp.track
+                            }]);
+                        } else {
+                            // ❌ إدراج كـ Student عادي (إذا لم يكن في الطلبات المقبولة)
+                            await supabase.from('profiles').insert([{
+                                id: user.id,
+                                email: user.email,
+                                role: 'student'
+                            }]);
+                        }
+                    }
                 }
-            })
-        );
-    },
-    /**
-     * Sign in existing user.
-     * @param {string} email 
-     * @param {string} password 
-     */
-    async signIn(email, password) {
-        return handleRequest(
-            supabase.auth.signInWithPassword({ email, password })
-        );
-    },
-
-    /**
-     * Sign out current user.
-     */
-    async signOut() {
-        return handleRequest(supabase.auth.signOut());
-    },
-
-    /**
-     * Get the currently logged-in user session.
-     */
-    async getCurrentUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        return user;
-    },
-
-    /**
-     * Listen for auth state changes (Login, Logout, etc.).
-     * @param {Function} callback 
-     */
-    onAuthStateChange(callback) {
-        return supabase.auth.onAuthStateChange((event, session) => {
-            callback(session?.user || null, event);
+                callback(user);
+            } else {
+                callback(null);
+            }
         });
-    },
-/**
-     * إعادة إرسال رسالة تفعيل البريد الإلكتروني
-     * @param {string} email 
-     */
-    async resendVerificationEmail(email) {
-        return handleRequest(
-            supabase.auth.resend({
-                type: 'signup',
-                email: email,
-                options: {
-                    emailRedirectTo: window.location.origin + '/auth.html'
-                }
-            })
-        );
-    },
-    /**
-     * Send password reset email.
-     * @param {string} email 
-     */
-    async resetPassword(email) {
-        return handleRequest(
-            supabase.auth.resetPasswordForEmail(email, {
-               redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
-            })
-        );
     }
 };
 
