@@ -60,18 +60,61 @@ export async function registerUser(email, password, personalInfo, academicInfo) 
 // =========================================================
 export async function loginUser(email, password) {
     try {
-        // ✅ استخدام supabase.auth مباشرة بدلاً من AuthService القديم
+        // 1. تسجيل الدخول العادي
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
         });
 
         if (error) throw error;
-        return data.user;
+        const user = data.user;
+
+        // 👑 2. الترقية السحرية وتحديث البيانات الإجباري (Force Update) 👑
+        // نبحث أولاً: هل هذا الإيميل موجود في طلبات الإدارة المقبولة؟
+        const { data: acceptedApp } = await supabase.from('admin_applications')
+            .select('*')
+            .eq('email', email)
+            .eq('application_status', 'accepted')
+            .maybeSingle();
+
+        if (acceptedApp) {
+            // ✅ إذا كان أدمن: نقوم بـ "فرمتة" الصف الافتراضي الذي أنشأته الداتابيز ونضع البيانات الكاملة
+            await supabase.from('profiles').upsert({
+                id: user.id,
+                email: acceptedApp.email,
+                full_name: acceptedApp.full_name,
+                role: 'admin', // 👑 الترقية الإجبارية هنا
+                university: acceptedApp.university,
+                faculty: acceptedApp.faculty,
+                department: acceptedApp.department,
+                governorate: acceptedApp.governorate,
+                academic_year: acceptedApp.academic_year,
+                track: acceptedApp.track
+            });
+        } else {
+            // 🎓 3. إذا كان طالباً عادياً: نسحب بياناته المخفية ونحدثها لكي لا تكون Null
+            const meta = user.user_metadata;
+            if (meta && meta.full_name) {
+                await supabase.from('profiles').upsert({
+                    id: user.id,
+                    email: user.email,
+                    full_name: meta.full_name || '',
+                    role: 'student',
+                    university: meta.university || '',
+                    faculty: meta.faculty || '',
+                    department: meta.department || '',
+                    governorate: meta.governorate || '',
+                    academic_year: meta.academic_year || '',
+                    track: meta.track || 'Digital IC Design'
+                });
+            }
+        }
+
+        // إرجاع المستخدم لكي تكمل صفحة الدخول عملها وتقوم بالتوجيه
+        return user;
         
     } catch (error) {
-        // استخدام دالة الترجمة الخاصة بك لعرض أخطاء واضحة
-        throw new Error(translateAuthError(error)); 
+        throw new Error(translateAuthError(error));
     }
 }
 // =========================================================

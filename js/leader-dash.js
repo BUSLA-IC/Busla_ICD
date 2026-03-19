@@ -30,21 +30,52 @@ let currentGradingSubmission = null;
 // ==========================================
 // 2. INITIALIZATION & LIFECYCLE
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+// ==========================================
+// 2. INITIALIZATION & LIFECYCLE
+// ==========================================
+let hasInitialized = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
     initSettingsModal();
     initTeamSettingsModal();
-    setupEventListeners();
+    initBadgesSystem();
+    initTeamBadgesSystem();
+    initLeaderboard();
+    initNotificationsSystem();
 
-    // Check Auth State
-    AuthService.onAuthStateChange(async (user) => {
-        if (user) {
-            if (isInitialized && currentUser?.id === user.id) return;
-            isInitialized = true;
-            currentUser = user;
-            await initDashboard(user.id);
+    try {
+        // 💡 جلب الجلسة مرة واحدة فقط لمنع الانهيار
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (session && session.user) {
+            currentUser = session.user;
+            if (!hasInitialized) {
+                hasInitialized = true;
+                await initDashboard(currentUser.id);
+            }
         } else {
             window.location.href = "auth.html";
+            return;
         }
+
+        // 💡 مراقبة الخروج فقط
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                window.location.href = "auth.html";
+            }
+        });
+    } catch (err) {
+        console.error("Session Error:", err);
+        window.location.href = "auth.html";
+    }
+
+    // Setup module tabs
+    document.querySelectorAll('.module-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-target');
+            switchTab(targetId);
+        });
     });
 });
 
@@ -100,15 +131,21 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     }
 }
 
-
 async function initDashboard(uid) {
     try {
-        const { data: profile, error: profileError } = await UserService.getProfile(uid);
+        // 💡 التعديل هنا: استخدام supabase مباشرة بدلاً من UserService المفقود
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', uid)
+            .maybeSingle();
+            
         if (profileError || !profile) throw new Error("User profile not found");
         
         currentUserData = profile;
         const teamId = currentUserData.team_id; 
 
+        // إذا لم يكن له فريق، قم بتوجيهه (خاصة في لوحة الليدر)
         if (!teamId) {
             window.location.href = "student-dash.html";
             return;
@@ -151,29 +188,35 @@ async function initDashboard(uid) {
         currentTeam.members = members ? members.map(m => m.id) : [];
 
         // Initial Render
-        renderSquadTab(currentTeam);   
-        updateHeaderInfo(currentUserData, currentTeam);
+        if (typeof renderSquadTab === 'function') renderSquadTab(currentTeam);   
+        if (typeof updateHeaderInfo === 'function') updateHeaderInfo(currentUserData, currentTeam);
 
-        const hasCache = loadFromCache();
-        if (hasCache) {
-            console.log("Rendering from Cache immediately...");
-            renderAllTabs(); 
-        } else {
-            console.log("No cache found, waiting for server...");
+        // التعامل مع الكاش (إن وجد)
+        if (typeof loadFromCache === 'function') {
+            const hasCache = loadFromCache();
+            if (hasCache) {
+                console.log("Rendering from Cache immediately...");
+                if (typeof renderAllTabs === 'function') renderAllTabs(); 
+            } else {
+                console.log("No cache found, waiting for server...");
+            }
         }
         
-        await fetchDataFromServer();
-        initTrackSelector();
+        // جلب البيانات الأساسية للمنهج
+        if (typeof fetchDataFromServer === 'function') await fetchDataFromServer();
+        if (typeof initTrackSelector === 'function') initTrackSelector();
+        
         console.log("Re-rendering with fresh data...");
-        renderAllTabs();
+        if (typeof renderAllTabs === 'function') renderAllTabs();
 
+        // تشغيل نظام الإشعارات
         if (typeof initNotificationsSystem === 'function') {
             initNotificationsSystem(teamId);
         }
 
     } catch (e) {
         console.error("Init Error:", e);
-        showToast("Error loading dashboard", "error");
+        if (typeof showToast === 'function') showToast("Error loading dashboard", "error");
     }
 }
 // ==========================================

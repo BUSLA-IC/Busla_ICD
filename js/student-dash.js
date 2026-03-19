@@ -29,20 +29,49 @@ let currentGradingSubmission = null;
 // ==========================================
 // 2. INITIALIZATION & LIFECYCLE
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    initSettingsModal();
-    setupEventListeners();
 
-    // Check Auth State
-    AuthService.onAuthStateChange(async (user) => {
-        if (user) {
-            if (isInitialized && currentUser?.id === user.id) return;
-            isInitialized = true;
-            currentUser = user;
-            await initDashboard(user.id);
+let hasInitialized = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    initSettingsModal();
+    initBadgesSystem();
+    initTeamBadgesSystem();
+    initLeaderboard();
+    initNotificationsSystem();
+
+    try {
+        // 💡 جلب الجلسة مرة واحدة
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        if (session && session.user) {
+            currentUser = session.user;
+            if (!hasInitialized) {
+                hasInitialized = true;
+                await initDashboard(currentUser.id);
+            }
         } else {
             window.location.href = "auth.html";
+            return;
         }
+
+        // 💡 مراقبة الخروج
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                window.location.href = "auth.html";
+            }
+        });
+    } catch (err) {
+        console.error("Session Error:", err);
+        window.location.href = "auth.html";
+    }
+
+    // Setup module tabs
+    document.querySelectorAll('.module-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-target');
+            switchTab(targetId);
+        });
     });
 });
 // ==========================================
@@ -132,7 +161,13 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 
 async function initDashboard(uid) {
     try {
-        const { data: profile, error: profileError } = await UserService.getProfile(uid);
+        // 💡 التعديل هنا: استخدام supabase مباشرة بدلاً من UserService المفقود
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', uid)
+            .maybeSingle();
+            
         if (profileError || !profile) throw new Error("User profile not found");
         
         currentUserData = profile;
