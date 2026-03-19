@@ -241,6 +241,7 @@ try {
     document.getElementById('application-container').classList.add('hidden');
     document.getElementById('tracks-section').classList.remove('hidden');
     currentStep = 1;
+    window.location.reload();
     
 } catch (error) {
     console.error("Submission Error:", error);
