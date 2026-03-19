@@ -58,13 +58,14 @@ function setupEventListeners() {
         });
     }
 
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await AuthService.signOut();
-            window.location.href = "auth.html";
-        });
+document.getElementById('logout-btn').addEventListener('click', async () => {
+    try {
+        await AuthService.signOut(); // ❌ السطر الذي يسبب المشكلة
+         window.location.href = "auth.html";
+    } catch (error) {
+        console.error(error);
     }
+});
 
     const teamSettingsBtn = document.getElementById('open-team-settings-btn');
     if (teamSettingsBtn) {

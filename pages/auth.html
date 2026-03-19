@@ -435,7 +435,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-
+// دالة الترقية التلقائية للأعضاء المقبولين
+    async function autoPromoteAdminOnFirstLogin(user) {
+        try {
+            // 1. التأكد هل هذا الشخص مسجل مسبقاً في جدول (profiles)؟
+            const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
+            
+            // 2. إذا لم يكن مسجلاً (يعني حسابه جديد تماماً)
+            if (!existingProfile) {
+                // نبحث عن إيميله في الطلبات المقبولة
+                const { data: acceptedApp } = await supabase.from('admin_applications')
+                    .select('*')
+                    .eq('email', user.email)
+                    .eq('application_status', 'accepted')
+                    .maybeSingle();
+                    
+                // 3. إذا وجدناه مقبولاً، ننشئ له بروفايل بصلاحيات أدمن!
+                if (acceptedApp) {
+                    await supabase.from('profiles').insert([{
+                        id: user.id,
+                        email: acceptedApp.email,
+                        full_name: acceptedApp.full_name,
+                        role: 'admin', // 👑 الترقية التلقائية
+                        phone: acceptedApp.phone,
+                        university: acceptedApp.university,
+                        governorate: acceptedApp.governorate,
+                        faculty: acceptedApp.faculty,
+                        department: acceptedApp.department,
+                        track: acceptedApp.track
+                    }]);
+                    
+                    return true; // تمت الترقية بنجاح
+                }
+            }
+            return false; // لم تتم الترقية
+        } catch (err) {
+            console.error("Auto Promote Error:", err);
+            return false;
+        }
+    }
     // ==========================================
     // 1. تبديل التبويبات والخطوات (UI)
     // ==========================================
@@ -525,24 +563,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         err.classList.add('hidden');
 
 try {
-            // تسجيل الدخول
-            const user = await loginUser(emailVal, document.getElementById('login-password').value);
+            // تسجيل الدخول (تأكد أن المتغيرات تطابق ما كتبته أنت)
+            const user = await loginUser(
+                document.getElementById('login-email').value, 
+                document.getElementById('login-password').value
+            );
             
-            // جلب البروفايل (الذي تم إنشاؤه وتعبئته بالبيانات الصحيحة في auth-handler)
+            // 💡 --- السحر يبدأ هنا --- 💡
+            const isPromoted = await autoPromoteAdminOnFirstLogin(user);
+            
+            if (isPromoted) {
+                window.location.href = '../admin/html/admin-dash.html';
+                return; // توقف هنا، لقد تم تحويله كأدمن!
+            }
+            // 💡 --- السحر ينتهي هنا --- 💡
+
+            // الكود القديم لتوجيه المستخدمين العاديين
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-            
             const role = profile ? (profile.role).toLowerCase() : 'student';
             
-            // التوجيه بناءً على الرتبة
             if (role === 'owner' || role === 'admin') {
-                window.location.href = "../admin/html/admin-dash.html"; 
+                window.location.href = '../admin/html/admin-dash.html';
             } else if (role === 'leader') {
-                window.location.href = "leader-dash.html";
+                window.location.href = 'leader-dash.html'; // أو المسار الصحيح عندك
             } else {
-                window.location.href = "student-dash.html";
+                window.location.href = 'student-dash.html'; // مسار لوحة الطالب
             }
 
-        }catch (error) {
+        } catch (error) {
             btn.innerHTML = originalText;
             btn.disabled = false;
             

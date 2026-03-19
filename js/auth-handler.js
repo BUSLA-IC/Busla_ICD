@@ -60,7 +60,7 @@ export async function registerUser(email, password, personalInfo, academicInfo) 
 // =========================================================
 export async function loginUser(email, password) {
     try {
-        // ✅ استخدام supabase.auth مباشرة بدلاً من AuthService
+        // ✅ استخدام supabase.auth مباشرة بدلاً من AuthService القديم
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -70,10 +70,10 @@ export async function loginUser(email, password) {
         return data.user;
         
     } catch (error) {
-        throw new Error(translateAuthError(error));
+        // استخدام دالة الترجمة الخاصة بك لعرض أخطاء واضحة
+        throw new Error(translateAuthError(error)); 
     }
 }
-
 // =========================================================
 // 3. إعادة إرسال التفعيل (جديد ✨)
 // =========================================================
@@ -96,13 +96,8 @@ export async function resendVerification(email) {
 // =========================================================
 
 export async function logoutUser() {
-    try {
-        // ✅ استخدام supabase.auth مباشرة
-        await supabase.auth.signOut();
-        window.location.href = "auth.html";
-    } catch (error) {
-        console.error("Logout Error:", error);
-    }
+    await AuthService.signOut();
+    window.location.href = "auth.html";
 }
 
 // 💡 دالة طلب إعادة تعيين كلمة المرور
