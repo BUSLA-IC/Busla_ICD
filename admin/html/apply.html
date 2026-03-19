@@ -104,15 +104,15 @@
                     <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-user mr-2"></i> البيانات الشخصية</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="md:col-span-2">
-                            <label class="input-label">الاسم الثلاثي (Full Name) *</label>
-                            <input type="text" id="f-name" required class="input-field" placeholder="أحمد محمد...">
+                            <label class="input-label">الاسم (Full Name) *</label>
+                            <input type="text" id="f-name" required class="input-field" placeholder="">
                         </div>
                         <div>
                             <label class="input-label">البريد الإلكتروني (Email) *</label>
                             <input type="email" id="f-email" required class="input-field dir-ltr text-left" placeholder="example@gmail.com">
                         </div>
                         <div>
-                            <label class="input-label text-teal-400">رقم الواتساب (WhatsApp) * إجباري</label>
+                            <label class="input-label text-teal-400">رقم الواتساب (WhatsApp) *</label>
                             <input type="tel" id="f-phone" required class="input-field dir-ltr text-left border-teal-500/30" placeholder="+20 10...">
                         </div>
                         <div>
@@ -303,6 +303,7 @@
                             <label class="input-label">ما هو مدى اهتمامك وارتباطك بهذا المسار؟ *</label>
                             <select id="f-ic-interest" required class="input-field text-gray-300">
                                 <option value="" disabled selected>-- اختر إجابة --</option>
+                                <option value="studying">خبير، ذو خبرة كبيره في هذا المجال </option>
                                 <option value="studying">نعم، أدرسه حالياً بشكل أكاديمي أو ذاتي</option>
                                 <option value="started">مهتم جداً وبدأت في تعلم الأساسيات</option>
                                 <option value="curious">لدي فضول للتعرف على المجال والتطوع فيه</option>
