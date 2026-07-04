@@ -7,6 +7,7 @@
     <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -115,12 +116,12 @@
 
             <div id="video-wrapper" class="relative flex-1 flex flex-col bg-black overflow-hidden min-h-0">
                 
-                <div class="relative w-full aspect-video lg:aspect-auto lg:flex-1 flex items-center justify-center bg-black min-h-0 shrink-0 lg:shrink">
+                <div id="player-container" class="relative w-full aspect-video lg:aspect-auto lg:flex-1 flex items-center justify-center bg-black min-h-0 shrink-0 lg:shrink">
                     <div id="youtube-player" class="w-full h-full"></div>
                     <div id="video-overlay" class="absolute inset-0 z-10 bg-transparent hidden"></div>
                 </div>
                 
-                <div class="h-14 md:h-16 bg-b-surface/90 backdrop-blur-sm border-t border-white/10 flex items-center justify-between px-3 md:px-6 z-50 shrink-0">
+                <div id="video-controls-bar" class="h-14 md:h-16 bg-b-surface/90 backdrop-blur-sm border-t border-white/10 flex items-center justify-between px-3 md:px-6 z-50 shrink-0">
                     <div class="flex items-center gap-2 md:gap-4">
                         <button id="btn-play" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-b-primary flex items-center justify-center hover:bg-teal-600 transition shadow-lg group shrink-0">
                             <i class="fas fa-play text-white group-hover:scale-110 transition-transform text-sm md:text-base"></i>
@@ -153,6 +154,15 @@
                             <i class="fas fa-tachometer-alt absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 pointer-events-none"></i>
                         </div>
                         <button id="btn-fullscreen" class="text-gray-400 hover:text-white transition p-1 md:p-2"><i class="fas fa-expand text-base md:text-lg"></i></button>
+                    </div>
+                </div>
+
+                <div id="iframe-controls-bar" class="hidden h-14 md:h-16 bg-b-surface/90 backdrop-blur-sm border-t border-white/10 flex items-center justify-between px-3 md:px-6 z-50 shrink-0">
+                    <div class="flex items-center gap-3 w-full justify-center">
+                        <button id="btn-iframe-complete" class="px-6 py-2.5 rounded-xl bg-b-primary text-white font-bold text-sm hover:bg-teal-600 transition flex items-center gap-2 shadow-lg">
+                            <i class="fas fa-check-circle"></i>
+                            <span>تأكيد مشاهدة الفيديو والحصول على النقاط</span>
+                        </button>
                     </div>
                 </div>
             </div>

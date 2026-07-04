@@ -1,4 +1,5 @@
 import { supabase, AuthService, TeamService, UserService } from './supabase-config.js';
+import { initInteractiveRoadmap } from './roadmap-interactive.js';
 import { initSettingsModal, openSettings } from './settings-handler.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTeamBadgesSystem();
     initLeaderboard();
     initNotificationsSystem();
+    setupEventListeners();
 
     try {
         // 💡 جلب الجلسة مرة واحدة
@@ -324,8 +326,8 @@ async function fetchDataFromServer() {
         console.log("Fetching Fresh Data from Supabase...");
         
         const [phasesRes, coursesRes, materialsRes, projectsRes, quizzesRes] = await Promise.all([
-            supabase.from('phases').select('*'), 
-            supabase.from('courses').select('*'),
+            supabase.from('phases').select('*').order('order_index', { ascending: true }), 
+            supabase.from('courses').select('*').order('order_index', { ascending: true }),
             supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
             supabase.from('projects').select('*'),
             supabase.from('quizzes').select('*')
@@ -916,13 +918,7 @@ window.unassignTask = (taskId) => {
         }
     };
 
-    if (typeof openConfirmModal === 'function') {
-        openConfirmModal(confirmMessage, performDeletion);
-    } else {
-        if (confirm(confirmMessage)) {
-            performDeletion();
-        }
-    }
+    window.showCustomConfirm("تأكيد الحذف", confirmMessage, performDeletion);
 };
 
 
@@ -940,151 +936,8 @@ window.formatExternalUrl = function(playlistId) {
     return `https://www.youtube.com/playlist?list=${str}`;
 };
 
-function renderRoadmapTree() {
-    const container = document.getElementById('roadmap-tree-container');
-    const selector = document.getElementById('roadmap-track-selector'); // 💡 الفلتر
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (!allData.tree || allData.tree.length === 0) {
-         container.innerHTML = '<div class="text-center py-10 text-gray-500">جاري تحميل المحتوى...</div>';
-         return;
-    }
-
-    // =========================================
-    // 💡 تطبيق الفلترة بناءً على التراك المختار
-    // =========================================
-    const selectedTrackId = selector ? selector.value : 'all';
-    let filteredTree = allData.tree;
-
-    if (selectedTrackId && selectedTrackId !== 'all') {
-        filteredTree = allData.tree.filter(phase => String(phase.track_id) === String(selectedTrackId));
-    }
-
-    if (filteredTree.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-16 text-gray-500 bg-white/5 border border-white/5 border-dashed rounded-2xl">
-                <i class="fas fa-folder-open text-4xl mb-4 opacity-50"></i>
-                <p class="font-bold">لا توجد مراحل (Phases) متاحة في هذا المسار حالياً.</p>
-                <p class="text-xs mt-2">سيتم إضافة المحتوى قريباً من قبل الإدارة.</p>
-            </div>`;
-        return;
-    }
-    // =========================================
-
-    // 💡 نستخدم filteredTree في الرسم
-    filteredTree.forEach((phase) => {
-        const phaseId = String(phase.id).trim();
-        const phaseEl = document.createElement('div');
-        phaseEl.className = "mb-8 border-l-4 border-white/10 pl-6 relative"; 
-
-        phaseEl.innerHTML = `
-            <div class="absolute -left-[11px] top-0 w-5 h-5 bg-b-primary rounded-full border-4 border-black box-content shadow-[0_0_10px_rgba(0,106,103,0.5)]"></div>
-            
-            <div class="flex items-center justify-between mb-5 select-none group cursor-pointer" onclick="window.togglePhaseContent('${phaseId}')">
-                <div class="flex-1" onclick="event.stopPropagation(); window.showDetails('phase', '${phaseId}')">
-                    <h3 class="font-bold text-xl text-white group-hover:text-b-primary transition-colors">${phase.title}</h3>
-                    <span class="text-xs text-gray-400 font-mono mt-1 block">${phase.description || ''}</span>
-                </div>
-                <div class="p-2 hover:bg-white/10 rounded-full transition-all">
-                    <i class="fas fa-chevron-down text-white transition-transform duration-300" id="icon-phase-${phaseId}"></i>
-                </div>
-            </div>
-            <div id="content-phase-${phaseId}" class="space-y-4"></div>
-        `;
-
-        const itemsContainer = phaseEl.querySelector(`[id="content-phase-${phaseId}"]`);
-
-        if (!phase.courses || phase.courses.length === 0) {
-            itemsContainer.innerHTML = '<p class="text-sm text-gray-600 italic pl-2">لا يوجد محتوى.</p>';
-        } else {
-            const mainCourses = phase.courses.filter(c => !c.related_with);
-            const subCourses = phase.courses.filter(c => c.related_with);
-
-            mainCourses.forEach(course => {
-                const courseId = String(course.id).trim();
-                const children = subCourses.filter(c => String(c.related_with).trim() === courseId);
-                const hasChildren = children.length > 0;
-                const isExpanded = expandedNodes.has(`course-children-${courseId}`);
-
-                // صلاحية الطالب (إذا الكورس مفعل أم مقفل)
-                const isActive = (currentTeam?.courses_plan || []).includes(courseId);
-
-                const itemHTML = document.createElement('div');
-                itemHTML.className = `rounded-xl overflow-hidden border-2 transition-all duration-300 shadow-sm ${isActive ? 'border-b-primary/50 bg-b-primary/5' : 'border-white/10 bg-black/40 hover:border-white/30'}`;
-
-                let childrenHtml = '';
-                if (hasChildren) {
-                    childrenHtml = `<div id="course-children-${courseId}" class="${isExpanded ? '' : 'hidden'} bg-black/60 border-t border-white/5 p-3 space-y-2">`;
-                    
-                    children.forEach(child => {
-                        const childId = String(child.id).trim();
-                        const isChildActive = (currentTeam?.courses_plan || []).includes(childId);
-                        
-                        childrenHtml += `
-                            <div class="flex items-center justify-between p-3 rounded-lg border border-white/5 hover:bg-white/5 transition-colors ${isChildActive ? 'bg-b-primary/10 border-b-primary/30' : 'bg-b-surface mr-4'}">
-                                <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="window.showDetails('course', '${childId}')">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-black/40 border border-white/10 shrink-0">
-                                        ${isChildActive ? '<i class="fas fa-unlock text-b-primary text-sm"></i>' : '<i class="fas fa-lock text-gray-500 text-sm"></i>'}
-                                    </div>
-                                    <div class="truncate flex-1">
-                                        <h5 class="font-bold text-sm ${isChildActive ? 'text-white' : 'text-gray-300'} truncate">${child.title}</h5>
-                                        ${child.real_video_count ? `<span class="text-[10px] text-blue-400"><i class="fas fa-video mr-1"></i> ${child.real_video_count} درس</span>` : ''}
-                                    </div>
-                                </div>
-                                <div class="pl-3 border-l border-white/10 flex gap-2">
-                                    <a href="course-player.html?id=${childId}" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-b-primary hover:text-white transition-colors text-gray-400" title="فتح المشغل">
-                                        <i class="fas fa-play text-xs"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    childrenHtml += `</div>`;
-                }
-
-                itemHTML.innerHTML = `
-                    <div class="p-4 flex items-center justify-between cursor-pointer select-none"
-                         onclick="window.handleItemClick('course', '${courseId}', ${hasChildren})">
-                        
-                        <div class="flex items-center gap-4 overflow-hidden flex-1">
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-black/40 border border-white/10 shrink-0 text-lg shadow-inner">
-                                ${isActive ? '<i class="fas fa-unlock text-b-primary text-xl"></i>' : '<i class="fas fa-lock text-gray-500"></i>'}
-                            </div>
-                            <div class="truncate flex-1">
-                                <h4 class="font-bold text-base ${isActive ? 'text-white' : 'text-gray-200'} truncate">${course.title}</h4>
-                                <div class="flex items-center gap-3 mt-1">
-                                    <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono">Module</span>
-                                    ${course.real_video_count ? `<span class="text-[10px] text-blue-400"><i class="fas fa-video ml-1"></i>${course.real_video_count}</span>` : ''}
-                                    ${hasChildren ? `<span class="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20"><i class="fas fa-sitemap ml-1"></i>${children.length} أقسام</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 pl-2">
-                            <a href="course-player.html?id=${courseId}" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-b-primary/20 text-b-primary hover:bg-b-primary hover:text-white transition-colors" title="فتح المشغل">
-                                <i class="fas fa-play text-sm"></i>
-                            </a>
-                            ${course.playlist_id ? `
-                            <a href="${window.formatExternalUrl(course.playlist_id)}" target="_blank" onclick="event.stopPropagation()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors" title="المصدر الخارجي">
-                                <i class="fas fa-external-link-alt text-sm"></i>
-                            </a>
-                            ` : ''}
-
-                            ${hasChildren ? `
-                            <div class="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors text-gray-400 ml-2" onclick="event.stopPropagation(); window.toggleCourseChildren('${courseId}')">
-                                <i class="fas fa-chevron-down transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}" id="icon-course-${courseId}"></i>
-                            </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                    ${childrenHtml}
-                `;
-                itemsContainer.appendChild(itemHTML);
-            });
-        }
-        container.appendChild(phaseEl);
-    });
+async function renderRoadmapTree() {
+    await initInteractiveRoadmap('student');
 }
 window.renderRoadmapTree = renderRoadmapTree; 
 
@@ -1117,6 +970,10 @@ window.togglePhaseContent = (phaseId) => {
 };
 
 window.showDetails = (type, id, parentTitle = "") => {
+    if (typeof window.selectInteractiveRoadmapNode === 'function') {
+        window.selectInteractiveRoadmapNode(type, id);
+        return;
+    }
     const ph = document.getElementById('node-details-placeholder');
     const ct = document.getElementById('node-details-content');
     
@@ -1298,7 +1155,10 @@ async function renderSquad() {
 
 // 2. مغادرة الفريق (احتفاظ بالطالب بنقاطه، وخصمها من الفريق)
 window.leaveCurrentTeam = () => {
-    openConfirmModal("هل أنت متأكد من مغادرة الفريق؟ ستحتفظ بنقاطك وإنجازاتك الشخصية، ولكن سيتم حذف مساهماتك من نقاط الفريق.", async () => {
+    window.showCustomConfirm(
+        "مغادرة الفريق",
+        "هل أنت متأكد من مغادرة الفريق؟ ستحتفظ بنقاطك وإنجازاتك الشخصية، ولكن سيتم حذف مساهماتك من نقاط الفريق.",
+        async () => {
         try {
             const teamId = currentTeam.team_id;
             const myId = currentUser.id;
@@ -1518,11 +1378,9 @@ window.filterTeams = () => {
 
     // 💡 رسم الجدول
     filtered.forEach(t => {
-        const logo = (t.logo_url && t.logo_url !== 'null' && t.logo_url !== '') 
-                     ? t.logo_url : '../assets/icons/BUSLA-icon.png';
+        const logo = resolveImageUrl(t.logo_url, 'team');
         const displayUni = window.translateUni ? window.translateUni(t.university) : (t.university || 'غير محدد');
-        const leaderAvatar = (t.leaderAvatar && t.leaderAvatar !== 'null' && t.leaderAvatar !== '') 
-                             ? t.leaderAvatar : '../assets/icons/BUSLA-icon.png';
+        const leaderAvatar = resolveImageUrl(t.leaderAvatar, 'user');
         
         const maxMembers = t.max_members || 5;
         const membersColor = t.memberCount >= maxMembers ? 'text-red-400' : 'text-green-400'; 
@@ -2187,28 +2045,7 @@ window.sendBroadcast = () => {
     }
 };
 
-window.openConfirmModal = (message, callback) => {
-    const modal = document.getElementById('confirm-modal');
-    const msgEl = document.getElementById('confirm-msg');
-    const yesBtn = document.getElementById('btn-confirm-yes');
-    
-    if(msgEl) msgEl.innerText = message;
-    confirmCallback = callback;
-    
-    const newBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newBtn, yesBtn);
-    
-    newBtn.addEventListener('click', () => {
-        if (confirmCallback) confirmCallback();
-        closeConfirmModal();
-    });
-    modal.classList.remove('hidden');
-};
-
-window.closeConfirmModal = () => {
-    document.getElementById('confirm-modal').classList.add('hidden');
-    confirmCallback = null;
-};
+// openConfirmModal and closeConfirmModal are now managed globally by custom-dialogs.js
 
 // ==========================================
 // 13. UTILITY FUNCTIONS

@@ -67,7 +67,7 @@ function initContentManagement() {
                 if (typeof renderPlaceholderView === 'function') renderPlaceholderView();
             } else {
                 window.cmResetFilters(false); 
-                loadTableData(); 
+                loadTableData();
             }
             if (aiProjectBtn) {
                 // 💡 إظهار زر الذكاء الاصطناعي للمشاريع فقط في تبويبة المشاريع
@@ -81,15 +81,7 @@ function initContentManagement() {
     // ربط حدث إرسال نموذج البيانات
     document.getElementById('cm-crud-form')?.addEventListener('submit', handleFormSubmit);
 
-    // إضافة زر الفحص الشامل (Health Check)
-    const actionRow = document.querySelector('.bg-b-surface .flex-wrap.gap-3');
-    if(actionRow && !document.getElementById('btn-health-check')) {
-        actionRow.insertAdjacentHTML('afterbegin', `
-            <button id="btn-health-check" onclick="window.runHealthCheck()" class="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 font-bold px-5 py-2.5 rounded-xl border border-yellow-500/20 transition-all flex items-center gap-2">
-                <i class="fas fa-stethoscope"></i> فحص المنهج
-            </button>
-        `);
-    }
+
 
     buildDynamicFilters();
     loadTableData();
@@ -230,7 +222,9 @@ window.cmResetFilters = (reload = true) => {
     
     // إعادة بناء القوائم المنسدلة للوضع الأصلي
     if(hierarchyCache) updateCascadingFilters('track', 'all', hierarchyCache);
-    if(reload) applyFilters();
+    if(reload) {
+        applyFilters();
+    }
 };
 
 function applyFilters() {
@@ -401,7 +395,7 @@ function renderTable() {
         const pk = getPrimaryKey();
         const id = item[pk];
         const titleKey = LEVELS[cmCurrentLevel].title;
-        const title = item[titleKey] || item.name;
+        const title = String(item[titleKey] || item.name || item.title || '');
         const icon = LEVELS[cmCurrentLevel].icon;
         
         const isActive = item.hasOwnProperty('is_active') ? item.is_active : item.status;
@@ -421,6 +415,20 @@ function renderTable() {
             drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-xs"></i></button>`;
         }
 
+        let previewBtn = '';
+        if (cmCurrentLevel === 'course_materials' && item.type === 'video' && item.video_id) {
+            previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
+        }
+
+        let reorderBtn = '';
+        if (cmCurrentLevel === 'courses') {
+            reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
+        } else if (cmCurrentLevel === 'phases') {
+            reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب الكورسات داخل هذه المرحلة"><i class="fas fa-sort text-xs"></i></button>`;
+        } else if (cmCurrentLevel === 'tracks') {
+            reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب المراحل داخل هذا المسار"><i class="fas fa-sort text-xs"></i></button>`;
+        }
+
         return `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5 group">
                 <td class="p-4 text-center text-gray-500">${index + 1}</td>
@@ -435,6 +443,8 @@ function renderTable() {
                     <div class="flex items-center justify-center gap-2">
                         <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all" title="عرض التفاصيل"><i class="fas fa-info-circle text-xs"></i></button>
                         ${drillDownBtn}
+                        ${reorderBtn}
+                        ${previewBtn}
                         <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all" title="تعديل"><i class="fas fa-pen text-xs"></i></button>
                         <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all" title="حذف"><i class="fas fa-trash text-xs"></i></button>
                     </div>
@@ -448,16 +458,7 @@ function renderTable() {
 // 🚀 TREE VIEW & HEALTH CHECK ENGINE
 // ==========================================
 window.cmSwitchView = async (view) => {
-    const isGrid = view === 'grid';
-    document.getElementById('cm-view-tree').classList.toggle('hidden', isGrid);
-    document.getElementById('cm-view-grid').classList.toggle('hidden', !isGrid);
-    document.getElementById('btn-view-grid').className = isGrid ? 'px-4 py-1.5 rounded text-xs font-bold bg-white/10 text-white' : 'px-4 py-1.5 rounded text-xs font-bold text-gray-500 hover:text-white';
-    document.getElementById('btn-view-tree').className = !isGrid ? 'px-4 py-1.5 rounded text-xs font-bold bg-white/10 text-white' : 'px-4 py-1.5 rounded text-xs font-bold text-gray-500 hover:text-white';
-
-    if (!isGrid) {
-        document.getElementById('cm-view-tree').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-b-primary"></i></div>';
-        await loadAndBuildTree();
-    }
+    // Legacy switch view function - now always stays in grid view
 };
 
 async function loadAndBuildTree() {
@@ -871,9 +872,29 @@ async function generateFormFields(data = null) {
                 <div><label class="${labelStyle}">معرف المحتوى (تلقائي)</label><input type="text" id="f-content-id" readonly value="${data?.content_id || generateSystemID('cnt')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed"></div>
                 <div><label class="${labelStyle}">عنوان المحتوى (الدرس) *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
                 <div><label class="${labelStyle}">النوع *</label><select id="f-type" required class="${inputStyle}"><option value="video" ${data?.type==='video'?'selected':''}>فيديو (Video)</option><option value="section" ${data?.type==='section'?'selected':''}>قسم فرعي (Section)</option><option value="quiz" ${data?.type==='quiz'?'selected':''}>اختبار (Quiz)</option><option value="project" ${data?.type==='project'?'selected':''}>مشروع (Project)</option></select></div>
-                <div><label class="${labelStyle}">معرف يوتيوب (Video ID)</label><input type="text" id="f-video-id" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr"></div>
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    <div class="sm:col-span-2">
+                        <label class="${labelStyle}">رابط الفيديو أو معرف اليوتيوب (Video URL / ID)</label>
+                        <input type="text" id="f-video-id" placeholder="مثال: dQw4w9WgXcQ أو رابط يوتيوب أو جوجل درايف أو رابط مباشر" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
+                    </div>
+                    <div>
+                        <button type="button" onclick="window.previewAdminVideo()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-play-circle text-teal-400"></i>
+                            <span>معاينة الفيديو</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="admin-video-preview-wrapper" class="md:col-span-2 hidden bg-black/50 border border-white/5 rounded-2xl p-4 transition-all duration-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-gray-400">شاشة المعاينة</span>
+                        <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">إغلاق المعاينة <i class="fas fa-times ml-1"></i></button>
+                    </div>
+                    <div id="admin-video-preview-content" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-white/10">
+                        <!-- Preview player injected here -->
+                    </div>
+                </div>
                 <div><label class="${labelStyle}">ترتيب العرض (Index)</label><input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">المدة بالثواني (Duration)</label><input type="number" id="f-duration" value="${data?.duration || 0}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">المدة بالدقائق (Duration in Minutes)</label><input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}"></div>
                 <div><label class="${labelStyle}">اختبار مرتبط (اختياري)</label><select id="f-ref-quiz" class="${inputStyle}"><option value="">-- بدون اختبار --</option>${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.ref_quiz_id)}</select></div>
                 <div><label class="${labelStyle}">مشروع مرتبط (اختياري)</label><select id="f-ref-project" class="${inputStyle}"><option value="">-- بدون مشروع --</option>${buildOpts(hData.projects, 'id', 'title', data?.ref_project_id)}</select></div>
                 <div class="md:col-span-2 flex items-center gap-3 bg-black/30 p-4 rounded-xl border border-white/5"><input type="checkbox" id="f-status" ${!data || data?.status ? 'checked' : ''} class="w-4 h-4 rounded text-red-500"><label class="text-sm font-bold text-white cursor-pointer">مفعل للطلاب</label></div>
@@ -1004,7 +1025,7 @@ async function handleFormSubmit(e) {
         if (cmCurrentLevel === 'tracks') { payload = { name: document.getElementById('f-name').value, description: document.getElementById('f-desc').value, is_active: document.getElementById('f-active').checked }; } 
         else if (cmCurrentLevel === 'phases') { payload = { phase_id: document.getElementById('f-phase-id').value, track_id: document.getElementById('f-track-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, image_url: document.getElementById('f-img-url').value, 'Module Time': document.getElementById('f-module-time').value, prerequisites: document.getElementById('f-prereq').value, will_learn: document.getElementById('f-will-learn').value, is_active: document.getElementById('f-active').checked }; } 
         else if (cmCurrentLevel === 'courses') { payload = { course_id: document.getElementById('f-course-id').value, phase_id: document.getElementById('f-phase-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, type: document.getElementById('f-type').value, playlist_id: document.getElementById('f-playlist').value, image_url: document.getElementById('f-img-url').value, related_with: document.getElementById('f-related').value || null, auto_sync: document.getElementById('f-auto-sync').checked, is_active: document.getElementById('f-active').checked }; }
-        else if (cmCurrentLevel === 'course_materials') { payload = { content_id: document.getElementById('f-content-id').value, course_id: document.getElementById('f-course-id').value, title: document.getElementById('f-title').value, type: document.getElementById('f-type').value, video_id: document.getElementById('f-video-id').value, duration: parseInt(document.getElementById('f-duration').value) || 0, order_index: parseInt(document.getElementById('f-order').value) || 0, ref_quiz_id: document.getElementById('f-ref-quiz').value || null, ref_project_id: document.getElementById('f-ref-project').value || null, status: document.getElementById('f-status').checked }; }
+        else if (cmCurrentLevel === 'course_materials') { payload = { content_id: document.getElementById('f-content-id').value, course_id: document.getElementById('f-course-id').value, title: document.getElementById('f-title').value, type: document.getElementById('f-type').value, video_id: document.getElementById('f-video-id').value, duration: Math.round(parseFloat(document.getElementById('f-duration').value) * 60) || 0, order_index: parseInt(document.getElementById('f-order').value) || 0, ref_quiz_id: document.getElementById('f-ref-quiz').value || null, ref_project_id: document.getElementById('f-ref-project').value || null, status: document.getElementById('f-status').checked }; }
         else if (cmCurrentLevel === 'quizzes') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, passing_score: parseInt(document.getElementById('f-pass').value) || 50, max_xp: parseInt(document.getElementById('f-max-xp').value) || 50, attempts_allowed: parseInt(document.getElementById('f-attempts').value) || 3, questions_to_show: document.getElementById('f-q-show').value ? parseInt(document.getElementById('f-q-show').value) : null }; }
         else if (cmCurrentLevel === 'quiz_questions') { payload = { quiz_id: document.getElementById('f-quiz-id').value, question_text: document.getElementById('f-q-text').value, option_a: document.getElementById('f-opt-a').value, option_b: document.getElementById('f-opt-b').value, option_c: document.getElementById('f-opt-c').value, option_d: document.getElementById('f-opt-d').value, correct_answer: document.getElementById('f-correct').value, hint: document.getElementById('f-hint').value }; }
         else if (cmCurrentLevel === 'projects') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value }; }
@@ -1053,15 +1074,360 @@ window.cmEditItem = async (id) => {
     if (window.initSearchableSelects) window.initSearchableSelects();
 };
 
+// --- Advanced Cascading Delete Logic ---
+
+function ensureDeleteModalExists() {
+    if (document.getElementById('cm-delete-modal')) return;
+    
+    const container = document.createElement('div');
+    container.innerHTML = `
+        <div id="cm-delete-modal" class="fixed inset-0 z-[1000] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-fade-in relative text-right">
+                <!-- Glowing Accent -->
+                <div class="absolute top-0 right-0 w-full h-32 bg-red-500/5 blur-[50px] pointer-events-none"></div>
+                
+                <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-center relative z-10">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-trash-alt text-red-500"></i>
+                        <span id="cm-delete-title">تأكيد الحذف المتقدم</span>
+                    </h3>
+                    <button onclick="document.getElementById('cm-delete-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-4 relative z-10">
+                    <p id="cm-delete-message" class="text-sm text-gray-300 leading-relaxed"></p>
+                    
+                    <div id="cm-delete-options" class="space-y-2">
+                        <!-- Dynamic checkboxes injected here -->
+                    </div>
+                    
+                    <div class="pt-4 border-t border-white/10 flex gap-3">
+                        <button type="button" id="cm-delete-btn-cancel" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all text-xs">إلغاء</button>
+                        <button type="button" id="cm-delete-btn-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all text-xs">تأكيد الحذف</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(container);
+}
+
+function showCustomDeleteModal(level, itemName) {
+    return new Promise((resolve) => {
+        ensureDeleteModalExists();
+        
+        const modal = document.getElementById('cm-delete-modal');
+        const titleEl = document.getElementById('cm-delete-title');
+        const messageEl = document.getElementById('cm-delete-message');
+        const optionsContainer = document.getElementById('cm-delete-options');
+        const confirmBtn = document.getElementById('cm-delete-btn-confirm');
+        const cancelBtn = document.getElementById('cm-delete-btn-cancel');
+        
+        titleEl.textContent = "تأكيد الحذف المتقدم";
+        
+        let levelTitle = LEVELS[level]?.title || level;
+        if (level === 'tracks') levelTitle = 'مسار (Track)';
+        else if (level === 'phases') levelTitle = 'مرحلة (Phase)';
+        else if (level === 'courses') levelTitle = 'كورس (Course)';
+        else if (level === 'course_materials') levelTitle = 'مادة تعليمية (Content)';
+        else if (level === 'quizzes') levelTitle = 'اختبار (Quiz)';
+        else if (level === 'quiz_questions') levelTitle = 'سؤال اختبار';
+        else if (level === 'projects') levelTitle = 'مشروع (Project)';
+        
+        messageEl.innerHTML = `أنت على وشك حذف <strong>${itemName}</strong> (${levelTitle}).<br>برجاء تحديد الإجراء المطلوب للبيانات المرتبطة به:`;
+        
+        // Dynamic checkboxes based on level
+        let optionsHtml = '';
+        if (level === 'tracks') {
+            optionsHtml = `
+                <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
+                    <input type="checkbox" id="cm-del-cascade-phases" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0">
+                    <span>🔥 حذف جميع المراحل (Phases) المرتبطة بهذا المسار</span>
+                </label>
+            `;
+        } else if (level === 'phases') {
+            optionsHtml = `
+                <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
+                    <input type="checkbox" id="cm-del-cascade-courses" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0">
+                    <span>🔥 حذف جميع الكورسات (Courses) المرتبطة بهذه المرحلة</span>
+                </label>
+            `;
+        } else if (level === 'courses') {
+            optionsHtml = `
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
+                        <input type="checkbox" id="cm-del-cascade-materials" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
+                        <span>🎬 حذف مواد ومحتويات هذا الكورس (فيديوهات، ملفات، إلخ)</span>
+                    </label>
+                    <div id="cm-course-child-options" class="mr-6 space-y-2">
+                        <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 transition-all">
+                            <input type="checkbox" id="cm-del-cascade-quizzes" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
+                            <span>📝 حذف الاختبارات (Quizzes) المرتبطة بمواد هذا الكورس</span>
+                        </label>
+                        <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 transition-all">
+                            <input type="checkbox" id="cm-del-cascade-projects" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
+                            <span>💻 حذف المشاريع (Projects) المرتبطة بمواد هذا الكورس</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        } else if (level === 'course_materials') {
+            optionsHtml = `
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
+                        <input type="checkbox" id="cm-del-cascade-mat-quiz" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
+                        <span>📝 حذف الاختبار المرتبط (Quiz) إن وجد</span>
+                    </label>
+                    <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
+                        <input type="checkbox" id="cm-del-cascade-mat-project" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
+                        <span>💻 حذف المشروع المرتبط (Project) إن وجد</span>
+                    </label>
+                </div>
+            `;
+        } else {
+            optionsHtml = `<p class="text-xs text-yellow-500 font-bold bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl"><i class="fas fa-exclamation-triangle"></i> سيتم حذف هذا السجل نهائياً. لا توجد تبعيات معقدة بحاجة للاختيار.</p>`;
+        }
+        
+        optionsContainer.innerHTML = optionsHtml;
+        
+        // Listeners for Course Cascade Checkboxes
+        if (level === 'courses') {
+            const matCb = document.getElementById('cm-del-cascade-materials');
+            const qCb = document.getElementById('cm-del-cascade-quizzes');
+            const pCb = document.getElementById('cm-del-cascade-projects');
+            matCb?.addEventListener('change', () => {
+                if (qCb) qCb.disabled = !matCb.checked;
+                if (pCb) pCb.disabled = !matCb.checked;
+                if (!matCb.checked) {
+                    if (qCb) qCb.checked = false;
+                    if (pCb) pCb.checked = false;
+                }
+            });
+        }
+        
+        modal.classList.remove('hidden');
+        
+        const close = () => {
+            modal.classList.add('hidden');
+        };
+        
+        confirmBtn.onclick = () => {
+            close();
+            const selections = {};
+            if (level === 'tracks') {
+                selections.deletePhases = document.getElementById('cm-del-cascade-phases')?.checked || false;
+            } else if (level === 'phases') {
+                selections.deleteCourses = document.getElementById('cm-del-cascade-courses')?.checked || false;
+            } else if (level === 'courses') {
+                selections.deleteMaterials = document.getElementById('cm-del-cascade-materials')?.checked || false;
+                selections.deleteQuizzes = document.getElementById('cm-del-cascade-quizzes')?.checked || false;
+                selections.deleteProjects = document.getElementById('cm-del-cascade-projects')?.checked || false;
+            } else if (level === 'course_materials') {
+                selections.deleteQuiz = document.getElementById('cm-del-cascade-mat-quiz')?.checked || false;
+                selections.deleteProject = document.getElementById('cm-del-cascade-mat-project')?.checked || false;
+            }
+            resolve({ confirmed: true, selections });
+        };
+        
+        cancelBtn.onclick = () => {
+            close();
+            resolve({ confirmed: false });
+        };
+    });
+}
+
+// Helpers for cascading deletes
+
+async function deleteQuizCascade(quizId) {
+    if (!quizId) return;
+    // 1. attempts
+    await supabase.from('quiz_attempts').delete().eq('quiz_id', quizId);
+    // 2. states
+    await supabase.from('active_quiz_states').delete().eq('quiz_id', quizId);
+    // 3. questions
+    await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+    // 4. remove references in course_materials
+    await supabase.from('course_materials').update({ ref_quiz_id: null }).eq('ref_quiz_id', quizId);
+    // 5. delete quiz
+    await supabase.from('quizzes').delete().eq('quiz_id', quizId);
+}
+
+async function deleteProjectCascade(projectId) {
+    if (!projectId) return;
+    // 1. submissions
+    await supabase.from('project_submissions').delete().eq('project_id', projectId);
+    // 2. remove references in course_materials
+    await supabase.from('course_materials').update({ ref_project_id: null }).eq('ref_project_id', projectId);
+    // 3. delete project
+    await supabase.from('projects').delete().eq('id', projectId);
+}
+
+async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true, deleteProject: true }) {
+    if (!contentId) return;
+    
+    // Fetch material info first to get quiz and project ids
+    const { data: material } = await supabase.from('course_materials')
+        .select('ref_quiz_id, ref_project_id')
+        .eq('content_id', contentId)
+        .single();
+        
+    if (material) {
+        // 1. completed_materials
+        await supabase.from('completed_materials').delete().eq('material_id', contentId);
+        // 2. team_tasks
+        await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
+        
+        // 3. Delete linked quiz if requested
+        if (selections.deleteQuiz && material.ref_quiz_id) {
+            await deleteQuizCascade(material.ref_quiz_id);
+        }
+        
+        // 4. Delete linked project if requested
+        if (selections.deleteProject && material.ref_project_id) {
+            await deleteProjectCascade(material.ref_project_id);
+        }
+    }
+    
+    // 5. Delete the material itself
+    await supabase.from('course_materials').delete().eq('content_id', contentId);
+}
+
+async function deleteCourseCascade(courseId, selections = { deleteMaterials: true, deleteQuizzes: true, deleteProjects: true }) {
+    if (!courseId) return;
+    
+    // 1. Always delete enrollments and completed_materials referencing this course
+    await supabase.from('enrollments').delete().eq('course_id', courseId);
+    await supabase.from('completed_materials').delete().eq('course_id', courseId);
+    await supabase.from('team_tasks').update({ course_id: null }).eq('course_id', courseId);
+    
+    if (selections.deleteMaterials) {
+        // Find materials
+        const { data: materials } = await supabase.from('course_materials')
+            .select('content_id, ref_quiz_id, ref_project_id')
+            .eq('course_id', courseId);
+            
+        if (materials && materials.length > 0) {
+            const matIds = materials.map(m => m.content_id);
+            // Delete completed_materials for these
+            await supabase.from('completed_materials').delete().in('material_id', matIds);
+            await supabase.from('team_tasks').update({ content_id: null }).in('content_id', matIds);
+            
+            // Delete quizzes if checked
+            if (selections.deleteQuizzes) {
+                const quizIds = materials.map(m => m.ref_quiz_id).filter(Boolean);
+                for (const qId of quizIds) {
+                    await deleteQuizCascade(qId);
+                }
+            }
+            
+            // Delete projects if checked
+            if (selections.deleteProjects) {
+                const projIds = materials.map(m => m.ref_project_id).filter(Boolean);
+                for (const pId of projIds) {
+                    await deleteProjectCascade(pId);
+                }
+            }
+            
+            // Delete materials
+            await supabase.from('course_materials').delete().eq('course_id', courseId);
+        }
+    } else {
+        // Just unlink them
+        await supabase.from('course_materials').update({ course_id: null }).eq('course_id', courseId);
+    }
+    
+    // Delete the course
+    await supabase.from('courses').delete().eq('course_id', courseId);
+}
+
+async function deletePhaseCascade(phaseId, selections = { deleteCourses: true }) {
+    if (!phaseId) return;
+    
+    if (selections.deleteCourses) {
+        const { data: courses } = await supabase.from('courses')
+            .select('course_id')
+            .eq('phase_id', phaseId);
+            
+        if (courses && courses.length > 0) {
+            for (const c of courses) {
+                await deleteCourseCascade(c.course_id, { deleteMaterials: true, deleteQuizzes: true, deleteProjects: true });
+            }
+        }
+    } else {
+        // Unlink courses
+        await supabase.from('courses').update({ phase_id: null }).eq('phase_id', phaseId);
+    }
+    
+    // Delete phase
+    await supabase.from('phases').delete().eq('phase_id', phaseId);
+}
+
+async function deleteTrackCascade(trackId, selections = { deletePhases: true }) {
+    if (!trackId) return;
+    
+    if (selections.deletePhases) {
+        const { data: phases } = await supabase.from('phases')
+            .select('phase_id')
+            .eq('track_id', trackId);
+            
+        if (phases && phases.length > 0) {
+            for (const p of phases) {
+                await deletePhaseCascade(p.phase_id, { deleteCourses: true });
+            }
+        }
+    } else {
+        // Unlink phases
+        await supabase.from('phases').update({ track_id: null }).eq('track_id', trackId);
+    }
+    
+    // Delete track
+    await supabase.from('tracks').delete().eq('id', trackId);
+}
+
 window.cmDeleteItem = async (id) => {
-    if(!confirm('⚠️ تحذير: هل أنت متأكد من الحذف النهائي؟ سيتم حذف جميع المحتويات المرتبطة!')) return;
+    const item = rawData.find(r => String(r[getPrimaryKey()]) === String(id));
+    if (!item) {
+        window.showToast("لم يتم العثور على العنصر المراد حذفه.", "error");
+        return;
+    }
+    
+    const titleKey = LEVELS[cmCurrentLevel]?.title || 'title';
+    const itemName = item[titleKey] || item.name || id;
+    
+    const { confirmed, selections } = await showCustomDeleteModal(cmCurrentLevel, itemName);
+    if (!confirmed) return;
+    
+    window.showToast("جاري تنفيذ عملية الحذف...", "info");
+    
     try {
-        const { error } = await supabase.from(cmCurrentLevel).delete().eq(getPrimaryKey(), id);
-        if (error) throw error;
+        if (cmCurrentLevel === 'tracks') {
+            await deleteTrackCascade(id, selections);
+        } else if (cmCurrentLevel === 'phases') {
+            await deletePhaseCascade(id, selections);
+        } else if (cmCurrentLevel === 'courses') {
+            await deleteCourseCascade(id, selections);
+        } else if (cmCurrentLevel === 'course_materials') {
+            await deleteMaterialCascade(id, selections);
+        } else if (cmCurrentLevel === 'quizzes') {
+            await deleteQuizCascade(id);
+        } else if (cmCurrentLevel === 'projects') {
+            await deleteProjectCascade(id);
+        } else {
+            // For other levels (quiz_questions, etc.), delete directly
+            const { error } = await supabase.from(cmCurrentLevel).delete().eq(getPrimaryKey(), id);
+            if (error) throw error;
+        }
+        
+        // Reset the cache so that filters are reloaded with fresh database values
+        hierarchyCache = null;
+        
         window.showToast("تم الحذف بنجاح", "success");
         loadTableData();
     } catch (err) {
-        window.showToast("فشل الحذف، قد يكون مرتبطاً ببيانات أخرى.", "error");
+        console.error("Delete Error:", err);
+        window.showToast("حدث خطأ أثناء عملية الحذف: " + err.message, "error");
     }
 };
 
@@ -1960,5 +2326,581 @@ window.projectAiEngine = {
             btn.innerHTML = '<i class="fas fa-save"></i> حفظ المشروع والمعايير';
             btn.disabled = false;
         }
+    }
+};
+
+window.previewAdminVideo = function() {
+    const videoInput = document.getElementById('f-video-id');
+    const previewWrapper = document.getElementById('admin-video-preview-wrapper');
+    const previewContent = document.getElementById('admin-video-preview-content');
+
+    if (!videoInput || !previewWrapper || !previewContent) return;
+
+    const source = videoInput.value.trim();
+    if (!source) {
+        window.showToast("برجاء إدخال رابط أو معرف الفيديو أولاً!", "error");
+        return;
+    }
+
+    // 1. Detect source type
+    let type = 'youtube';
+    let embedUrl = '';
+
+    // Google Drive
+    if (source.includes('drive.google.com') || source.includes('drive.usercontent.google.com')) {
+        const idMatch = source.match(/\/d\/([-\w]{25,})/) || source.match(/id=([-\w]{25,})/);
+        if (idMatch && idMatch[1]) {
+            type = 'drive';
+            embedUrl = `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+        }
+    }
+    // YouTube URL
+    else if (source.includes('youtube.com') || source.includes('youtu.be')) {
+        type = 'youtube';
+        let ytId = source;
+        if (ytId.includes('v=')) ytId = ytId.split('v=')[1];
+        if (ytId.includes('&')) ytId = ytId.split('&')[0];
+        if (ytId.includes('youtu.be/')) ytId = ytId.split('youtu.be/')[1];
+        if (ytId.includes('embed/')) ytId = ytId.split('embed/')[1];
+        if (ytId.includes('?')) ytId = ytId.split('?')[0];
+        embedUrl = `https://www.youtube.com/embed/${ytId.trim()}`;
+    }
+    // YouTube ID (11 chars)
+    else if (/^[-\w]{11}$/.test(source)) {
+        type = 'youtube';
+        embedUrl = `https://www.youtube.com/embed/${source}`;
+    }
+    // Direct/Other Link
+    else if (source.startsWith('http://') || source.startsWith('https://')) {
+        type = 'direct';
+        embedUrl = source;
+    }
+    // Fallback: assume YouTube ID
+    else {
+        type = 'youtube';
+        embedUrl = `https://www.youtube.com/embed/${source}`;
+    }
+
+    // 2. Render appropriate preview player
+    previewContent.innerHTML = '';
+    previewWrapper.classList.remove('hidden');
+
+    if (type === 'youtube' || type === 'drive') {
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.className = 'w-full h-full border-0';
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        iframe.setAttribute('allowfullscreen', '');
+        previewContent.appendChild(iframe);
+    } else if (type === 'direct') {
+        const video = document.createElement('video');
+        video.src = embedUrl;
+        video.controls = true;
+        video.className = 'w-full h-full object-contain';
+        previewContent.appendChild(video);
+    } else {
+        previewContent.innerHTML = `<p class="text-gray-400 text-sm">عذراً، لم نتمكن من تحديد نوع الرابط للمعاينة.</p>`;
+    }
+};
+
+window.cmPreviewTableRow = function(contentId, videoId) {
+    const source = videoId.trim();
+    if (!source) {
+        window.showToast("لا يوجد رابط فيديو متوفر لمعاينته!", "error");
+        return;
+    }
+
+    // 1. Detect source type
+    let type = 'youtube';
+    let embedUrl = '';
+
+    if (source.includes('drive.google.com') || source.includes('drive.usercontent.google.com')) {
+        const idMatch = source.match(/\/d\/([-\w]{25,})/) || source.match(/id=([-\w]{25,})/);
+        if (idMatch && idMatch[1]) {
+            type = 'drive';
+            embedUrl = `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+        }
+    } else if (source.includes('youtube.com') || source.includes('youtu.be')) {
+        type = 'youtube';
+        let ytId = source;
+        if (ytId.includes('v=')) ytId = ytId.split('v=')[1];
+        if (ytId.includes('&')) ytId = ytId.split('&')[0];
+        if (ytId.includes('youtu.be/')) ytId = ytId.split('youtu.be/')[1];
+        if (ytId.includes('embed/')) ytId = ytId.split('embed/')[1];
+        if (ytId.includes('?')) ytId = ytId.split('?')[0];
+        embedUrl = `https://www.youtube.com/embed/${ytId.trim()}`;
+    } else if (/^[-\w]{11}$/.test(source)) {
+        type = 'youtube';
+        embedUrl = `https://www.youtube.com/embed/${source}`;
+    } else if (source.startsWith('http://') || source.startsWith('https://')) {
+        type = 'direct';
+        embedUrl = source;
+    } else {
+        type = 'youtube';
+        embedUrl = `https://www.youtube.com/embed/${source}`;
+    }
+
+    // 2. Create Modal Overlay Element
+    const modalId = 'table-row-preview-modal';
+    let modal = document.getElementById(modalId);
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'fixed inset-0 z-[9999] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4';
+        document.body.appendChild(modal);
+    }
+
+    let playerHtml = '';
+    if (type === 'youtube' || type === 'drive') {
+        playerHtml = `<iframe src="${embedUrl}" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    } else if (type === 'direct') {
+        playerHtml = `<video src="${embedUrl}" controls autoplay class="w-full h-full object-contain"></video>`;
+    }
+
+    modal.innerHTML = `
+        <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl relative flex flex-col aspect-video">
+            <div class="absolute top-3 left-3 z-[10000] flex gap-2">
+                <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-black/60 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 w-full h-full bg-black">
+                ${playerHtml}
+            </div>
+        </div>
+    `;
+
+    // Add click listener outside to close
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+};
+
+window.cmOpenReorderModal = async function(courseId, courseTitle) {
+    // 1. Fetch course materials from Supabase
+    const modalId = 'cm-reorder-modal';
+    let loadingDiv = document.createElement('div');
+    loadingDiv.id = 'cm-reorder-loading';
+    loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل المحتويات للترتيب...</p></div>';
+    document.body.appendChild(loadingDiv);
+
+    try {
+        const { data: materials, error } = await supabase
+            .from('course_materials')
+            .select('content_id, title, order_index, type, status')
+            .eq('course_id', courseId)
+            .order('order_index', { ascending: true });
+
+        loadingDiv.remove();
+
+        if (error) throw error;
+        if (!materials || materials.length === 0) {
+            window.showToast("هذا الكورس لا يحتوي على أي مواد تعليمية لترتيبها!", "info");
+            return;
+        }
+
+        // 2. Render Modal
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            document.body.appendChild(modal);
+        }
+
+        let listItemsHtml = materials.map(item => {
+            let icon = 'fa-file-video';
+            if (item.type === 'section') icon = 'fa-folder';
+            else if (item.type === 'quiz') icon = 'fa-lightbulb';
+            else if (item.type === 'project') icon = 'fa-code';
+
+            return `
+                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.content_id}">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
+                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">${item.type}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        modal.innerHTML = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
+                    <div>
+                        <h3 class="font-bold text-white text-base">إعادة ترتيب محتويات الكورس</h3>
+                        <p class="text-xs text-gray-400 mt-1">كورس: ${courseTitle}</p>
+                    </div>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <!-- List Container -->
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                    ${listItemsHtml}
+                </div>
+                <!-- Footer -->
+                <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span>حفظ الترتيب الجديد</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Bind drag & drop events
+        bindDragEvents();
+
+        // Bind save action
+        document.getElementById('cm-save-order-btn').onclick = async () => {
+            const saveBtn = document.getElementById('cm-save-order-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const items = Array.from(document.querySelectorAll('.reorder-item'));
+            const updates = items.map((item, index) => {
+                const contentId = item.getAttribute('data-id');
+                const orderIndex = index + 1;
+                return supabase
+                    .from('course_materials')
+                    .update({ order_index: orderIndex })
+                    .eq('content_id', contentId);
+            });
+
+            try {
+                await Promise.all(updates);
+                window.showToast("🎉 تم حفظ الترتيب الجديد للمحتويات بنجاح!", "success");
+                document.getElementById(modalId).remove();
+                if (typeof loadTableData === 'function') loadTableData();
+            } catch (e) {
+                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+            }
+        };
+
+    } catch (e) {
+        if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
+        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
+    }
+};
+
+window.cmMoveOrderItem = function(btn, direction) {
+    const item = btn.closest('.reorder-item');
+    const container = document.getElementById('cm-reorder-list');
+    if (!item || !container) return;
+
+    if (direction === 'up' && item.previousElementSibling) {
+        container.insertBefore(item, item.previousElementSibling);
+    } else if (direction === 'down' && item.nextElementSibling) {
+        container.insertBefore(item, item.nextElementSibling.nextElementSibling);
+    }
+    window.cmRefreshOrderInputs();
+};
+
+window.cmOrderInputChange = function(input) {
+    const container = document.getElementById('cm-reorder-list');
+    if (!container) return;
+
+    const items = Array.from(container.querySelectorAll('.reorder-item'));
+    items.sort((a, b) => {
+        const valA = parseInt(a.querySelector('.order-input').value) || 0;
+        const valB = parseInt(b.querySelector('.order-input').value) || 0;
+        return valA - valB;
+    });
+
+    container.innerHTML = '';
+    items.forEach(item => container.appendChild(item));
+    window.cmRefreshOrderInputs();
+};
+
+window.cmRefreshOrderInputs = function() {
+    const container = document.getElementById('cm-reorder-list');
+    if (!container) return;
+    const inputs = container.querySelectorAll('.order-input');
+    inputs.forEach((input, index) => {
+        input.value = index + 1;
+    });
+};
+
+function bindDragEvents() {
+    const container = document.getElementById('cm-reorder-list');
+    if (!container) return;
+
+    let dragEl = null;
+
+    container.addEventListener('dragstart', (e) => {
+        dragEl = e.target.closest('.reorder-item');
+        if (dragEl) {
+            dragEl.classList.add('opacity-50', 'border-b-primary');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+    });
+
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const target = e.target.closest('.reorder-item');
+        if (target && target !== dragEl) {
+            const rect = target.getBoundingClientRect();
+            const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+            container.insertBefore(dragEl, next ? target.nextSibling : target);
+        }
+    });
+
+    container.addEventListener('dragend', () => {
+        if (dragEl) {
+            dragEl.classList.remove('opacity-50', 'border-b-primary');
+            dragEl = null;
+            window.cmRefreshOrderInputs();
+        }
+    });
+}
+
+window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
+    const modalId = 'cm-reorder-modal';
+    let loadingDiv = document.createElement('div');
+    loadingDiv.id = 'cm-reorder-loading';
+    loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل الكورسات للترتيب...</p></div>';
+    document.body.appendChild(loadingDiv);
+
+    try {
+        const { data: courses, error } = await supabase
+            .from('courses')
+            .select('course_id, title, order_index, is_active')
+            .eq('phase_id', phaseId)
+            .order('order_index', { ascending: true });
+
+        loadingDiv.remove();
+
+        if (error) throw error;
+        if (!courses || courses.length === 0) {
+            window.showToast("هذه المرحلة لا تحتوي على أي كورسات لترتيبها!", "info");
+            return;
+        }
+
+        // 2. Render Modal
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            document.body.appendChild(modal);
+        }
+
+        let listItemsHtml = courses.map(item => {
+            let icon = 'fa-book';
+            return `
+                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.course_id}">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
+                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">course</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        modal.innerHTML = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
+                    <div>
+                        <h3 class="font-bold text-white text-base">إعادة ترتيب الكورسات</h3>
+                        <p class="text-xs text-gray-400 mt-1">المرحلة: ${phaseTitle}</p>
+                    </div>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <!-- List Container -->
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                    ${listItemsHtml}
+                </div>
+                <!-- Footer -->
+                <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span>حفظ الترتيب الجديد</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        bindDragEvents();
+
+        document.getElementById('cm-save-order-btn').onclick = async () => {
+            const saveBtn = document.getElementById('cm-save-order-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const items = Array.from(document.querySelectorAll('.reorder-item'));
+            const updates = items.map((item, index) => {
+                const courseId = item.getAttribute('data-id');
+                const orderIndex = index + 1;
+                return supabase
+                    .from('courses')
+                    .update({ order_index: orderIndex })
+                    .eq('course_id', courseId);
+            });
+
+            try {
+                await Promise.all(updates);
+                window.showToast("🎉 تم حفظ الترتيب الجديد للكورسات بنجاح!", "success");
+                document.getElementById(modalId).remove();
+                if (typeof loadTableData === 'function') loadTableData();
+            } catch (e) {
+                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+            }
+        };
+
+    } catch (e) {
+        if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
+        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
+    }
+};
+
+window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
+    const modalId = 'cm-reorder-modal';
+    let loadingDiv = document.createElement('div');
+    loadingDiv.id = 'cm-reorder-loading';
+    loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل المراحل للترتيب...</p></div>';
+    document.body.appendChild(loadingDiv);
+
+    try {
+        const { data: phases, error } = await supabase
+            .from('phases')
+            .select('phase_id, title, order_index, is_active')
+            .eq('track_id', trackId)
+            .order('order_index', { ascending: true });
+
+        loadingDiv.remove();
+
+        if (error) throw error;
+        if (!phases || phases.length === 0) {
+            window.showToast("هذا المسار لا يحتوي على أي مراحل لترتيبها!", "info");
+            return;
+        }
+
+        // 2. Render Modal
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            document.body.appendChild(modal);
+        }
+
+        let listItemsHtml = phases.map(item => {
+            let icon = 'fa-layer-group';
+            return `
+                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.phase_id}">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
+                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">phase</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        modal.innerHTML = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
+                    <div>
+                        <h3 class="font-bold text-white text-base">إعادة ترتيب المراحل</h3>
+                        <p class="text-xs text-gray-400 mt-1">المسار: ${trackTitle}</p>
+                    </div>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <!-- List Container -->
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                    ${listItemsHtml}
+                </div>
+                <!-- Footer -->
+                <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span>حفظ الترتيب الجديد</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        bindDragEvents();
+
+        document.getElementById('cm-save-order-btn').onclick = async () => {
+            const saveBtn = document.getElementById('cm-save-order-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+
+            const items = Array.from(document.querySelectorAll('.reorder-item'));
+            const updates = items.map((item, index) => {
+                const phaseId = item.getAttribute('data-id');
+                const orderIndex = index + 1;
+                return supabase
+                    .from('phases')
+                    .update({ order_index: orderIndex })
+                    .eq('phase_id', phaseId);
+            });
+
+            try {
+                await Promise.all(updates);
+                window.showToast("🎉 تم حفظ الترتيب الجديد للمراحل بنجاح!", "success");
+                document.getElementById(modalId).remove();
+                if (typeof loadTableData === 'function') loadTableData();
+            } catch (e) {
+                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+            }
+        };
+
+    } catch (e) {
+        if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
+        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
     }
 };

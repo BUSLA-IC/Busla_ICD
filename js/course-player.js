@@ -594,59 +594,147 @@ function updateVideoHeader(item) {
 // ==========================================
 // 6. YOUTUBE VIDEO PLAYER
 // ==========================================
-function loadVideo(videoId, startSeconds = 0, isCompleted = false, savedSpeed = 1) {
-    if (!videoId) return;
+function detectVideoSource(source) {
+    if (!source) return { type: 'unknown', value: '' };
+    source = source.toString().trim();
 
-    if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
-        setTimeout(() => loadVideo(videoId, startSeconds, isCompleted, savedSpeed), 500);
-        return;
-    }
-
-    if (videoId.includes('v=')) videoId = videoId.split('v=')[1];
-    if (videoId.includes('&')) videoId = videoId.split('&')[0];
-    if (videoId.includes('youtu.be/')) videoId = videoId.split('youtu.be/')[1];
-
-    const desiredControlsState = isCompleted ? 1 : 0;
-    const playerVars = {
-        'controls': desiredControlsState,
-        'disablekb': isCompleted ? 0 : 1,
-        'rel': 0,
-        'modestbranding': 1,
-        'origin': window.location.origin,
-        'enablejsapi': 1,
-        'cc_load_policy': 1,
-        'playsinline': 1,
-        'start': Math.floor(startSeconds)
-    };
-
-    const overlay = document.getElementById('video-overlay');
-    if (overlay) {
-        if (isCompleted) {
-            overlay.classList.add('hidden');
-            overlay.style.pointerEvents = "none";
-        } else {
-            overlay.classList.remove('hidden');
-            overlay.style.pointerEvents = "auto";
+    // 1. Google Drive
+    if (source.includes('drive.google.com') || source.includes('drive.usercontent.google.com')) {
+        const idMatch = source.match(/\/d\/([-\w]{25,})/) || source.match(/id=([-\w]{25,})/);
+        if (idMatch && idMatch[1]) {
+            return { type: 'drive', id: idMatch[1], url: `https://drive.google.com/file/d/${idMatch[1]}/preview` };
         }
     }
 
-    if (player && typeof player.destroy === 'function' && currentPlayerControlsState !== desiredControlsState) {
-        player.destroy();
+    // 2. YouTube
+    const ytIdRegex = /^[-\w]{11}$/;
+    if (ytIdRegex.test(source)) {
+        return { type: 'youtube', id: source };
+    }
+    if (source.includes('youtube.com') || source.includes('youtu.be')) {
+        let ytId = source;
+        if (ytId.includes('v=')) ytId = ytId.split('v=')[1];
+        if (ytId.includes('&')) ytId = ytId.split('&')[0];
+        if (ytId.includes('youtu.be/')) ytId = ytId.split('youtu.be/')[1];
+        if (ytId.includes('embed/')) ytId = ytId.split('embed/')[1];
+        if (ytId.includes('?')) ytId = ytId.split('?')[0];
+        return { type: 'youtube', id: ytId.trim() };
+    }
+
+    // 3. Direct/Other URL (e.g. mp4, webm)
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+        return { type: 'direct', url: source };
+    }
+
+    // Fallback: assume youtube ID
+    return { type: 'youtube', id: source };
+}
+
+function setupIframeControls(isCompleted) {
+    const btnIframeComplete = document.getElementById('btn-iframe-complete');
+    if (!btnIframeComplete) return;
+
+    if (isCompleted) {
+        btnIframeComplete.disabled = true;
+        btnIframeComplete.className = "px-6 py-2.5 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30 font-bold text-sm cursor-not-allowed flex items-center gap-2";
+        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>تم إكمال مشاهدة الفيديو بنجاح</span>';
+    } else {
+        btnIframeComplete.disabled = false;
+        btnIframeComplete.className = "px-6 py-2.5 rounded-xl bg-b-primary text-white font-bold text-sm hover:bg-teal-600 transition flex items-center gap-2 shadow-lg cursor-pointer";
+        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>تأكيد مشاهدة الفيديو والحصول على النقاط</span>';
+        btnIframeComplete.onclick = async () => {
+            const points = currentContent.base_xp || 10;
+            await markContentComplete(currentContent.content_id, points, 'video');
+            setupIframeControls(true);
+        };
+    }
+}
+
+function loadVideo(videoId, startSeconds = 0, isCompleted = false, savedSpeed = 1) {
+    if (!videoId) return;
+
+    const source = detectVideoSource(videoId);
+
+    // If YouTube video, require YouTube API
+    if (source.type === 'youtube') {
+        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+            setTimeout(() => loadVideo(videoId, startSeconds, isCompleted, savedSpeed), 500);
+            return;
+        }
+    }
+
+    // Destroy existing player
+    if (player) {
+        if (typeof player.destroy === 'function') {
+            try { player.destroy(); } catch (e) { console.error("Error destroying player:", e); }
+        }
         player = null;
     }
 
-    if (player && typeof player.loadVideoById === 'function') {
-        player.loadVideoById({ 'videoId': videoId, 'startSeconds': startSeconds, 'suggestedQuality': selectedQuality });
-        player.setPlaybackRate(parseFloat(savedSpeed) || 1);
-        const speedSelect = document.getElementById('playback-speed');
-        if (speedSelect) speedSelect.value = parseFloat(savedSpeed) || 1;
-    } else {
+    // Clean player-container (clear iframe, video, etc.)
+    const playerContainer = document.getElementById('player-container');
+    if (playerContainer) {
+        const overlay = document.getElementById('video-overlay');
+        playerContainer.innerHTML = '';
+        if (overlay) {
+            playerContainer.appendChild(overlay);
+        } else {
+            const newOverlay = document.createElement('div');
+            newOverlay.id = 'video-overlay';
+            newOverlay.className = 'absolute inset-0 z-10 bg-transparent hidden';
+            playerContainer.appendChild(newOverlay);
+        }
+    }
+
+    const overlay = document.getElementById('video-overlay');
+    const controlsBar = document.getElementById('video-controls-bar');
+    const iframeBar = document.getElementById('iframe-controls-bar');
+    const btnQual = document.getElementById('btn-quality');
+    const btnCap = document.getElementById('btn-captions');
+
+    // 1. YouTube Player
+    if (source.type === 'youtube') {
+        if (overlay) {
+            if (isCompleted) {
+                overlay.classList.add('hidden');
+                overlay.style.pointerEvents = "none";
+            } else {
+                overlay.classList.remove('hidden');
+                overlay.style.pointerEvents = "auto";
+            }
+        }
+
+        if (controlsBar) controlsBar.classList.remove('hidden');
+        if (iframeBar) iframeBar.classList.add('hidden');
+        if (btnQual) btnQual.classList.remove('hidden');
+        if (btnCap) btnCap.classList.remove('hidden');
+
+        if (playerContainer) {
+            const ytPlayerDiv = document.createElement('div');
+            ytPlayerDiv.id = 'youtube-player';
+            ytPlayerDiv.className = 'w-full h-full';
+            playerContainer.insertBefore(ytPlayerDiv, overlay);
+        }
+
+        const desiredControlsState = isCompleted ? 1 : 0;
+        const playerVars = {
+            'controls': desiredControlsState,
+            'disablekb': isCompleted ? 0 : 1,
+            'rel': 0,
+            'modestbranding': 1,
+            'origin': window.location.origin,
+            'enablejsapi': 1,
+            'cc_load_policy': 1,
+            'playsinline': 1,
+            'start': Math.floor(startSeconds)
+        };
+
         currentPlayerControlsState = desiredControlsState;
         try {
             player = new YT.Player('youtube-player', {
                 height: '100%',
                 width: '100%',
-                videoId: videoId,
+                videoId: source.id,
                 playerVars: playerVars,
                 events: {
                     'onReady': (e) => onPlayerReady(e, savedSpeed),
@@ -656,6 +744,149 @@ function loadVideo(videoId, startSeconds = 0, isCompleted = false, savedSpeed = 
                 }
             });
         } catch (e) { console.error("Player creation error:", e); }
+    } 
+    // 2. Direct MP4/WebM Video (HTML5 Player)
+    else if (source.type === 'direct') {
+        if (overlay) {
+            if (isCompleted) {
+                overlay.classList.add('hidden');
+                overlay.style.pointerEvents = "none";
+            } else {
+                overlay.classList.remove('hidden');
+                overlay.style.pointerEvents = "auto";
+            }
+        }
+
+        if (controlsBar) controlsBar.classList.remove('hidden');
+        if (iframeBar) iframeBar.classList.add('hidden');
+        if (btnQual) btnQual.classList.add('hidden');
+        if (btnCap) btnCap.classList.add('hidden');
+
+        let videoEl;
+        if (playerContainer) {
+            videoEl = document.createElement('video');
+            videoEl.id = 'custom-html5-player';
+            videoEl.className = 'w-full h-full object-contain';
+            videoEl.setAttribute('playsinline', '');
+            playerContainer.insertBefore(videoEl, overlay);
+        }
+
+        if (videoEl) {
+            videoEl.src = source.url;
+            videoEl.currentTime = startSeconds;
+            videoEl.playbackRate = parseFloat(savedSpeed) || 1;
+            videoEl.load();
+
+            player = {
+                type: 'html5',
+                playVideo: () => videoEl.play(),
+                pauseVideo: () => videoEl.pause(),
+                getCurrentTime: () => videoEl.currentTime,
+                getDuration: () => videoEl.duration || 0,
+                seekTo: (seconds) => { videoEl.currentTime = seconds; },
+                setPlaybackRate: (rate) => { videoEl.playbackRate = rate; },
+                getPlaybackRate: () => videoEl.playbackRate,
+                getPlayerState: () => videoEl.paused ? 2 : 1,
+                getAvailableQualityLevels: () => [],
+                getOption: () => null,
+                getVideoData: () => ({ video_id: videoId }),
+                destroy: () => {
+                    videoEl.pause();
+                    videoEl.remove();
+                }
+            };
+
+            // Hook events to sync controls
+            videoEl.onplay = () => {
+                const btnIcon = document.querySelector('#btn-play i');
+                if (btnIcon) btnIcon.className = "fas fa-pause";
+                
+                clearInterval(progressInterval);
+                progressInterval = setInterval(trackVideoProgress, 1000);
+            };
+
+            videoEl.onpause = () => {
+                const btnIcon = document.querySelector('#btn-play i');
+                if (btnIcon) btnIcon.className = "fas fa-play";
+                clearInterval(progressInterval);
+            };
+
+            videoEl.onended = async () => {
+                if (!isCurrentContentCompleted) {
+                    await saveVideoState(true);
+                }
+            };
+
+            videoEl.onloadedmetadata = () => {
+                currentVideoDuration = videoEl.duration || 100;
+                document.getElementById('time-duration').innerText = formatTime(currentVideoDuration);
+            };
+
+            const speedSelect = document.getElementById('playback-speed');
+            if (speedSelect) {
+                speedSelect.value = parseFloat(savedSpeed) || 1;
+                speedSelect.onchange = (e) => {
+                    player.setPlaybackRate(parseFloat(e.target.value));
+                };
+            }
+
+            const btnPlay = document.getElementById('btn-play');
+            if (btnPlay) {
+                btnPlay.onclick = () => {
+                    if (videoEl.paused) videoEl.play();
+                    else videoEl.pause();
+                };
+            }
+
+            // Start intervals immediately for progress updates
+            clearInterval(progressInterval);
+            clearInterval(dbSaveInterval);
+            progressInterval = setInterval(trackVideoProgress, 1000);
+            dbSaveInterval = setInterval(() => saveVideoState(false), 30000);
+        }
+    } 
+    // 3. Google Drive / Iframe Player
+    else if (source.type === 'drive') {
+        // ALWAYS hide overlay for iframes so clicks reach the video
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.pointerEvents = "none";
+        }
+
+        if (controlsBar) controlsBar.classList.add('hidden');
+        if (iframeBar) iframeBar.classList.remove('hidden');
+
+        if (playerContainer) {
+            const iframeEl = document.createElement('iframe');
+            iframeEl.id = 'drive-iframe-player';
+            iframeEl.src = source.url;
+            iframeEl.className = 'w-full h-full border-0';
+            iframeEl.setAttribute('allow', 'autoplay; encrypted-media');
+            iframeEl.setAttribute('allowfullscreen', '');
+            playerContainer.insertBefore(iframeEl, overlay);
+        }
+
+        player = {
+            type: 'drive',
+            playVideo: () => {},
+            pauseVideo: () => {},
+            getCurrentTime: () => 0,
+            getDuration: () => 0,
+            seekTo: () => {},
+            setPlaybackRate: () => {},
+            getPlaybackRate: () => 1,
+            getPlayerState: () => 2,
+            getAvailableQualityLevels: () => [],
+            getOption: () => null,
+            getVideoData: () => ({ video_id: videoId }),
+            destroy: () => {
+                const iframe = document.getElementById('drive-iframe-player');
+                if (iframe) iframe.remove();
+            }
+        };
+
+        // Configure manual watch confirmation button
+        setupIframeControls(isCompleted);
     }
 }
 
@@ -985,8 +1216,10 @@ window.submitQuiz = async () => {
         return showToast("Please answer all questions before submitting.", "warning");
     }
 
-    openConfirmModal("Are you sure you want to submit your answers?", async () => {
-        closeConfirmModal();
+    window.showCustomConfirm(
+        "Submit Quiz",
+        "Are you sure you want to submit your answers?",
+        async () => {
 
         const container = document.getElementById('quiz-questions-container');
         container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Grading...</p></div>';
@@ -1466,12 +1699,12 @@ window.submitProjectAction = async (projectId, projectTitle) => {
 };
 
 window.resubmitProject = (projectId) => {
-    openConfirmModal(
+    window.showCustomConfirm(
+        "إعادة تسليم المشروع",
         "هل أنت متأكد من رغبتك في إعادة التسليم؟ سيتم إلغاء وحذف الرابط القديم نهائياً.",
         async () => {
             const container = document.getElementById('submission-card');
             container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-purple-500 text-3xl"></i><p class="text-gray-400 mt-2 text-sm">جاري إلغاء التسليم السابق...</p></div>';
-            document.getElementById('confirm-modal').classList.add('hidden');
 
             try {
                 // Delete old submission
@@ -1674,29 +1907,7 @@ window.showToast = (message, type = 'info') => {
     }, 3000);
 };
 
-window.openConfirmModal = (message, callback) => {
-    const modal = document.getElementById('confirm-modal');
-    if (!modal) {
-        if (confirm(message)) callback();
-        return;
-    }
-    const msgEl = document.getElementById('confirm-msg');
-    const yesBtn = document.getElementById('btn-confirm-yes');
-
-    if (msgEl) msgEl.innerText = message;
-    
-    const newBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newBtn, yesBtn);
-    newBtn.addEventListener('click', () => {
-        callback();
-        window.closeConfirmModal();
-    });
-    modal.classList.remove('hidden');
-};
-
-window.closeConfirmModal = () => {
-    document.getElementById('confirm-modal')?.classList.add('hidden');
-};
+// openConfirmModal and closeConfirmModal are now managed globally by custom-dialogs.js
 
 function toggleFullscreen() {
     const wrapper = document.getElementById('video-wrapper') || document.getElementById('youtube-player-container');

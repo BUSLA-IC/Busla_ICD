@@ -1,6 +1,6 @@
 
         import { supabase } from '../../js/supabase-config.js'; 
-
+import { getAvailableTracks } from '../../js/auth-handler.js';
         window.showToast = (message, type = 'info') => {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -76,17 +76,17 @@
             document.getElementById('btn-submit').classList.toggle('hidden', currentStep !== totalSteps);
         }
 
-        async function fetchDynamicTracks() {
-            try {
-                const { data, error } = await supabase.from('tracks').select('id, name');
-                if (error) throw error;
-                const trackSelect = document.getElementById('f-academic-track');
-                if (data && data.length > 0) {
-                    trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار الذي يناسبك --</option>' + 
-                        data.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-                }
-            } catch (err) { console.error(err); }
+async function fetchDynamicTracks() {
+    try {
+        const { data, error } = await supabase.from('tracks').select('id, name');
+        if (error) throw error;
+        const trackSelect = document.getElementById('f-academic-track');
+        if (data && data.length > 0) {
+            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار الذي يناسبك --</option>' + 
+                data.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
         }
+    } catch (err) { console.error(err); }
+}
 
         window.showDynamicSkills = () => {
             const trackName = document.getElementById('f-academic-track').value;

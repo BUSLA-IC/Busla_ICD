@@ -6,6 +6,7 @@
     <title>تأسيس فريق | Busla</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -269,30 +270,7 @@
     </div>
 
     <div id="toast-container" class="fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
-<div id="custom-confirm-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md hidden transition-opacity duration-300 opacity-0">
-        <div class="bg-[#0a0a0a] border border-white/10 rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 relative overflow-hidden" id="custom-confirm-card">
-            
-            <div class="absolute top-0 right-0 w-full h-32 bg-red-500/10 blur-[50px] pointer-events-none"></div>
 
-            <div class="flex items-center gap-5 mb-4 relative z-10">
-                <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <h3 id="confirm-title" class="text-2xl font-black text-white">تأكيد الإجراء</h3>
-            </div>
-            
-            <p id="confirm-message" class="text-gray-400 text-sm leading-relaxed mb-8 relative z-10">هل أنت متأكد؟</p>
-            
-            <div class="flex gap-4 relative z-10">
-                <button id="btn-confirm-yes" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-1">
-                    نعم، قم بالإلغاء
-                </button>
-                <button id="btn-confirm-no" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 rounded-xl transition-all border border-white/5 hover:border-white/10">
-                    تراجع
-                </button>
-            </div>
-        </div>
-    </div>
     <script type="module" src="../js/create-team.js"></script>
 </body>
 </html>

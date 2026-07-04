@@ -506,16 +506,21 @@ window.editFromDetail = (postId) => {
 };
 
 window.deletePost = (id) => {
-    openConfirmModal("هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.", async () => {
-        closeModal('confirm-modal');
-        try {
-            await supabase.from('team_posts').delete().eq('id', id);
-            showToast("تم الحذف بنجاح", "success");
-            await fetchAndRenderPosts();
-        } catch (e) {
-            showToast("فشل الحذف", "error");
-        }
-    });
+    window.showCustomConfirm(
+        "حذف الإشعار",
+        "هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.",
+        async () => {
+            try {
+                await supabase.from('team_posts').delete().eq('id', id);
+                showToast("تم الحذف بنجاح", "success");
+                await fetchAndRenderPosts();
+            } catch (e) {
+                showToast("فشل الحذف", "error");
+            }
+        },
+        null,
+        'danger'
+    );
 };
 window.closePostDetailModal = () => document.getElementById('post-detail-modal')?.classList.add('hidden');
 
@@ -600,16 +605,21 @@ window.savePost = async () => {
     }
 };
 window.deletePost = (id) => {
-    openConfirmModal("هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.", async () => {
-        closeModal('confirm-modal');
-        try {
-            await supabase.from('team_posts').delete().eq('id', id);
-            showToast("تم الحذف بنجاح", "success");
-            await fetchAndRenderPosts();
-        } catch (e) {
-            showToast("فشل الحذف", "error");
-        }
-    });
+    window.showCustomConfirm(
+        "حذف الإشعار",
+        "هل أنت متأكد من حذف هذا الإشعار نهائياً؟ لن يتمكن فريقك من رؤيته بعد الآن.",
+        async () => {
+            try {
+                await supabase.from('team_posts').delete().eq('id', id);
+                showToast("تم الحذف بنجاح", "success");
+                await fetchAndRenderPosts();
+            } catch (e) {
+                showToast("فشل الحذف", "error");
+            }
+        },
+        null,
+        'danger'
+    );
 };
 
 window.togglePinPost = async (id, isPinned) => {

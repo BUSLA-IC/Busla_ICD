@@ -1,0 +1,565 @@
+/* ============================================================================
+   BUSLA LMS - Interactive Learning Roadmap CSS
+   Design: Glassmorphism, Neon Glow, and Dark/Teal Theme
+   ============================================================================ */
+
+:root {
+    --color-track: #00F5FF;        /* Turquoise */
+    --color-phase: #3B82F6;        /* Blue */
+    --color-course: #22C45D;       /* Green */
+    --color-video: #9CA3AF;        /* Gray */
+    --color-quiz: #8B5CF6;         /* Purple */
+    --color-project: #F97316;      /* Orange */
+    --color-locked: #4B5563;       /* Muted gray for locked */
+    --bg-glass: rgba(17, 17, 17, 0.7);
+    --border-glass: rgba(255, 255, 255, 0.08);
+}
+
+/* === Roadmap Layout === */
+.roadmap-container-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.roadmap-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid var(--border-glass);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.roadmap-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #050505;
+    background-image: 
+        radial-gradient(rgba(0, 106, 103, 0.08) 1px, transparent 0),
+        radial-gradient(rgba(34, 196, 93, 0.04) 1px, transparent 0);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    overflow: hidden;
+    cursor: grab;
+    border-radius: 16px;
+    border: 1px solid var(--border-glass);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.roadmap-viewport:active {
+    cursor: grabbing;
+}
+
+.roadmap-canvas {
+    position: absolute;
+    width: 3000px; /* Large space for graph rendering */
+    height: 3000px;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.roadmap-nodes-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+}
+
+.roadmap-svg-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* === SVG Connection Styles === */
+.roadmap-link {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s, stroke-width 0.3s, stroke-dashoffset 0.3s;
+}
+
+/* Vertical backbone between Track → Phase and Phase → Phase */
+.roadmap-link.link-backbone {
+    stroke: rgba(0, 245, 255, 0.35);
+    stroke-width: 3px;
+    stroke-dasharray: none;
+}
+
+/* L-shaped elbow from Phase right edge → Course */
+.roadmap-link.link-phase-branch {
+    stroke: rgba(59, 130, 246, 0.55);
+    stroke-width: 2px;
+}
+
+/* L-shaped elbow from Course right edge → Material (Course → first mat) */
+.roadmap-link.link-course-branch {
+    stroke: rgba(34, 196, 93, 0.55);
+    stroke-width: 2px;
+}
+
+/* Vertical chain between sequential materials: Mat1 → Mat2 → Mat3 … */
+.roadmap-link.link-mat-chain {
+    stroke: rgba(34, 196, 93, 0.40);
+    stroke-width: 1.5px;
+    stroke-dasharray: 6 4;
+}
+
+/* Curved dependency arc */
+.roadmap-link.link-dependency {
+    stroke: rgba(0, 245, 255, 0.5);
+    stroke-width: 2.5px;
+    stroke-dasharray: 8 5;
+}
+
+/* Legacy class aliases */
+.roadmap-link.link-prereq {
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-width: 2px;
+}
+.roadmap-link.link-dep {
+    stroke: rgba(0, 245, 255, 0.4);
+    stroke-width: 2.5px;
+}
+.roadmap-link.link-recommended {
+    stroke: rgba(139, 92, 246, 0.4);
+    stroke-width: 2px;
+    stroke-dasharray: 6 6;
+}
+.roadmap-link.link-optional {
+    stroke: rgba(249, 115, 22, 0.4);
+    stroke-width: 2px;
+    stroke-dasharray: 4 4;
+}
+.roadmap-link.link-core {
+    stroke: var(--color-course);
+    stroke-width: 3px;
+    opacity: 0.7;
+}
+
+.roadmap-link.highlighted-link {
+    stroke: var(--color-track) !important;
+    stroke-width: 4px !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 5px var(--color-track));
+}
+
+/* SVG Line Draw Animation */
+.roadmap-link-animated {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    animation: roadmapDrawPath 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes roadmapDrawPath {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* === Roadmap Node Styles === */
+.roadmap-node {
+    position: absolute;
+    width: 260px;
+    border-radius: 14px;
+    background: rgba(14, 14, 14, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    /* top padding increased to avoid overlap with collapse (left) + info (right) buttons */
+    padding: 36px 16px 14px 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, border-color 0.2s;
+    cursor: pointer;
+    z-index: 2;
+    transform: translate(-50%, -50%);
+}
+
+.roadmap-node:hover {
+    transform: translate(-50%, -53%) scale(1.04);
+    border-color: rgba(255, 255, 255, 0.18);
+    z-index: 5;
+}
+
+/* Node Color Themes & Glows */
+.node-track {
+    width: 320px;
+    border-left: 5px solid var(--color-track);
+    box-shadow: 0 4px 24px rgba(0, 245, 255, 0.18);
+}
+.node-track:hover {
+    box-shadow: 0 4px 32px rgba(0, 245, 255, 0.35);
+    border-color: var(--color-track);
+}
+
+.node-phase {
+    width: 300px;
+    border-left: 5px solid var(--color-phase);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+.node-phase:hover {
+    box-shadow: 0 4px 30px rgba(59, 130, 246, 0.3);
+    border-color: var(--color-phase);
+}
+
+.node-course {
+    border-left: 5px solid var(--color-course);
+    box-shadow: 0 4px 20px rgba(34, 196, 93, 0.15);
+}
+.node-course:hover {
+    box-shadow: 0 4px 30px rgba(34, 196, 93, 0.3);
+    border-color: var(--color-course);
+}
+
+.node-video {
+    width: 240px;
+    border-left: 3px solid var(--color-video);
+    box-shadow: 0 3px 16px rgba(156, 163, 175, 0.08);
+    padding: 10px 14px;
+}
+.node-video:hover {
+    box-shadow: 0 4px 22px rgba(156, 163, 175, 0.22);
+    border-color: var(--color-video);
+}
+
+.node-quiz {
+    width: 240px;
+    border-left: 3px solid var(--color-quiz);
+    box-shadow: 0 3px 16px rgba(139, 92, 246, 0.1);
+    padding: 10px 14px;
+}
+.node-quiz:hover {
+    box-shadow: 0 4px 22px rgba(139, 92, 246, 0.28);
+    border-color: var(--color-quiz);
+}
+
+.node-project {
+    width: 240px;
+    border-left: 3px solid var(--color-project);
+    box-shadow: 0 3px 16px rgba(249, 115, 22, 0.1);
+    padding: 10px 14px;
+}
+.node-project:hover {
+    box-shadow: 0 4px 22px rgba(249, 115, 22, 0.28);
+    border-color: var(--color-project);
+}
+
+/* Locked Node State */
+.node-locked {
+    opacity: 0.6;
+    border-left-color: var(--color-locked) !important;
+}
+.node-locked:hover {
+    box-shadow: none !important;
+    border-color: var(--color-locked) !important;
+}
+
+/* Collapsed Node State — subtle dash border to signal hidden children */
+.node-collapsed {
+    border-style: dashed !important;
+    opacity: 0.85;
+}
+
+/* Collapse button hover */
+.roadmap-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Selected & Active Glow */
+.node-active-selection {
+    outline: none;
+    border-color: #ffffff !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.4) !important;
+    z-index: 10 !important;
+}
+
+/* Search Matching Highlight */
+.node-search-highlight {
+    animation: nodePulseGlow 1.2s infinite ease-in-out;
+    border-color: #ffffff !important;
+    z-index: 9 !important;
+}
+
+@keyframes nodePulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 245, 255, 0.8);
+    }
+}
+
+/* === Navigation Tools Floating Controls === */
+.roadmap-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 5;
+}
+
+.roadmap-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(10, 10, 10, 0.85);
+    border: 1px solid var(--border-glass);
+    color: #F6F6F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.roadmap-btn:hover {
+    background: var(--color-course);
+    border-color: var(--color-course);
+    color: white;
+    box-shadow: 0 0 12px var(--color-course);
+}
+
+/* === Mini Map === */
+.roadmap-minimap {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    width: 140px;
+    height: 140px;
+    background: rgba(10, 10, 10, 0.9);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 5;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    display: none; /* hidden on small screen, block on large */
+}
+
+@media (min-width: 1024px) {
+    .roadmap-minimap {
+        display: block;
+    }
+}
+
+.roadmap-minimap-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.roadmap-minimap-viewport {
+    position: absolute;
+    border: 1.5px solid var(--color-track);
+    background: rgba(0, 245, 255, 0.08);
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+/* === Legend Overlay === */
+.roadmap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    font-size: 11px;
+}
+
+.roadmap-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #9CA3AF;
+}
+
+.roadmap-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* === Custom scrollbar for sidebar === */
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+/* === Course Details Mini Roadmap === */
+.mini-roadmap-container {
+    position: relative;
+    border-left: 2px solid rgba(255, 255, 255, 0.08);
+    padding-left: 24px;
+    margin-left: 12px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.mini-roadmap-step {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.mini-roadmap-step:last-child {
+    padding-bottom: 0;
+}
+
+.mini-roadmap-dot {
+    position: absolute;
+    left: -31px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #000;
+    border: 2px solid #ccc;
+    z-index: 2;
+    transition: all 0.3s;
+}
+
+.mini-roadmap-content {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.mini-roadmap-content:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.mini-roadmap-step.step-completed .mini-roadmap-dot {
+    background: var(--color-course);
+    border-color: var(--color-course);
+    box-shadow: 0 0 8px var(--color-course);
+}
+
+.mini-roadmap-step.step-current .mini-roadmap-dot {
+    background: #FFF4B7;
+    border-color: #FFF4B7;
+    box-shadow: 0 0 8px #FFF4B7;
+}
+
+.mini-roadmap-step.step-locked .mini-roadmap-dot {
+    background: #374151;
+    border-color: #4B5563;
+}
+
+/* ============================================================================
+   INFO SIDE PANEL
+   ============================================================================ */
+
+.roadmap-info-panel {
+    width: 310px;
+    flex-shrink: 0;
+    background: rgba(10, 10, 10, 0.95);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 14px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: rmPanelSlideIn 0.22s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+@keyframes rmPanelSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+.rm-panel-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid;
+    border-radius: 6px;
+    padding: 3px 10px;
+    margin-bottom: 12px;
+}
+
+.rm-panel-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin: 14px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.rm-panel-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 11px;
+}
+
+.rm-panel-key {
+    color: rgba(255,255,255,0.35);
+    min-width: 100px;
+    flex-shrink: 0;
+    font-size: 10px;
+    padding-top: 1px;
+}
+
+.rm-panel-val {
+    color: rgba(255,255,255,0.8);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+/* ============================================================================
+   ADMIN DASHBOARD DEDICATED ROADMAP TAB STYLING
+   ============================================================================ */
+
+#learning-roadmap.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+#learning-roadmap .roadmap-container-wrapper {
+    flex: 1;
+    min-height: 0;
+}

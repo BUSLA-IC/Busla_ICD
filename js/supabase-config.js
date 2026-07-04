@@ -62,6 +62,53 @@ async function handleRequest(request) {
 // ============================================================================
 
 export const AuthService = {
+    async signUp(email, password, metaData = {}) {
+        return handleRequest(
+            supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: metaData
+                }
+            })
+        );
+    },
+
+    async signIn(email, password) {
+        return handleRequest(
+            supabase.auth.signInWithPassword({ email, password })
+        );
+    },
+
+    async signOut() {
+        return handleRequest(supabase.auth.signOut());
+    },
+
+    async getCurrentUser() {
+        const { data: { user } } = await supabase.auth.getUser();
+        return user;
+    },
+
+    async resendVerificationEmail(email) {
+        return handleRequest(
+            supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                    emailRedirectTo: window.location.origin + '/auth.html'
+                }
+            })
+        );
+    },
+
+    async resetPassword(email) {
+        return handleRequest(
+            supabase.auth.resetPasswordForEmail(email, {
+               redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
+            })
+        );
+    },
+
     onAuthStateChange: (callback) => {
         return supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_OUT') {
@@ -406,3 +453,52 @@ export const StorageService = {
         }
     }
 };
+
+// 💡 معالج تلقائي لصور Imgur لتفادي خطأ 403 Forbidden
+if (typeof document !== 'undefined') {
+    const fixImgurReferrer = (img) => {
+        if (img && img.src && img.src.includes('imgur.com') && img.referrerPolicy !== 'no-referrer') {
+            img.referrerPolicy = 'no-referrer';
+            
+            // إعادة ضبط src لإجبار المتصفح على تحميل الصورة بدون Referer
+            const currentSrc = img.src;
+            img.src = '';
+            img.src = currentSrc;
+        }
+    };
+
+    // مراقبة التغييرات في شجرة الـ DOM لتطبيق ذلك ديناميكياً
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (node.tagName === 'IMG') {
+                        fixImgurReferrer(node);
+                    } else if (node.querySelectorAll) {
+                        node.querySelectorAll('img').forEach(fixImgurReferrer);
+                    }
+                });
+            } else if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                if (mutation.target.tagName === 'IMG') {
+                    fixImgurReferrer(mutation.target);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['src']
+    });
+
+    // تشغيل فوري على الصور الموجودة بالصفحة
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(fixImgurReferrer);
+        });
+    } else {
+        document.querySelectorAll('img').forEach(fixImgurReferrer);
+    }
+}

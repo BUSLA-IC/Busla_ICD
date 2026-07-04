@@ -103,7 +103,7 @@ function showStatusView(request, daysLeft) {
     document.getElementById('status-view').classList.remove('hidden');
 
     document.getElementById('status-team-name').innerText = request.team_name;
-    document.getElementById('status-logo').src = request.logo_url || '../assets/icons/BUSLA-icon.png';
+    document.getElementById('status-logo').src = resolveImageUrl(request.logo_url, 'team');
     document.getElementById('sv-uni').innerText = request.university;
     document.getElementById('sv-gov').innerText = request.governorate;
     
@@ -219,41 +219,7 @@ window.editRequest = async () => {
     }
 };
 
-// ==========================================
-// 💡 نظام نافذة التأكيد المخصصة (Custom Confirm)
-// ==========================================
-window.showCustomConfirm = (title, message, onConfirmCallback) => {
-    const modal = document.getElementById('custom-confirm-modal');
-    const card = document.getElementById('custom-confirm-card');
-    
-    // تعيين النصوص
-    document.getElementById('confirm-title').innerText = title;
-    document.getElementById('confirm-message').innerText = message;
-    
-    // إظهار النافذة مع أنيميشن الدخول
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        card.classList.remove('scale-95');
-        card.classList.add('scale-100');
-    }, 10);
-
-    // دالة إغلاق النافذة
-    const closeModal = () => {
-        modal.classList.add('opacity-0');
-        card.classList.remove('scale-100');
-        card.classList.add('scale-95');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    };
-
-    // ربط الأزرار
-    document.getElementById('btn-confirm-no').onclick = closeModal;
-    
-    document.getElementById('btn-confirm-yes').onclick = () => {
-        closeModal();
-        if (onConfirmCallback) onConfirmCallback();
-    };
-};
+// Custom Confirm Modal is now managed globally by custom-dialogs.js
 
 // ==========================================
 // ACTIONS (EDIT & CANCEL)
@@ -341,4 +307,23 @@ async function loadAvailableTracks() {
         console.error("Error loading tracks:", err);
         trackSelect.innerHTML = '<option value="" disabled selected>خطأ في تحميل المسارات</option>';
     }
+}
+
+function resolveImageUrl(url, type = 'course') {
+    try {
+        if (!url || url.trim() === "" || url === "null" || url === "undefined") {
+            return '../assets/icons/BUSLA-icon.png';
+        }
+        if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+            const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+            if (idMatch && idMatch[1]) {
+                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+            }
+        }
+        if (url.includes('dropbox.com')) {
+            return url.replace('?dl=0', '?raw=1');
+        }
+    } catch(e) {}
+    return url;
 }
