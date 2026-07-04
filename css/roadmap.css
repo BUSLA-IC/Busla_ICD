@@ -65,6 +65,8 @@
     height: 3000px;
     transform-origin: 0 0;
     will-change: transform;
+    direction: rtl !important;
+    text-align: right;
 }
 
 .roadmap-nodes-layer {
@@ -184,6 +186,10 @@
     cursor: pointer;
     z-index: 2;
     transform: translate(-50%, -50%);
+    direction: rtl !important;
+    text-align: right;
+    font-family: 'Cairo', sans-serif !important;
+    letter-spacing: normal !important;
 }
 
 .roadmap-node:hover {
@@ -562,4 +568,11 @@
 #learning-roadmap .roadmap-container-wrapper {
     flex: 1;
     min-height: 0;
+}
+
+/* Ensure html2canvas parses RTL Arabic text with normal letter spacing */
+.roadmap-node *,
+.roadmap-nodes-layer * {
+    direction: rtl !important;
+    letter-spacing: normal !important;
 }

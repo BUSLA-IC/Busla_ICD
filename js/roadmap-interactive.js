@@ -14,6 +14,7 @@ let currentRole = 'student';
 // Nodes that have been EXPLICITLY EXPANDED by the user.
 // Default state = collapsed. Add an ID here to mark it as open.
 let expandedNodes = new Set();
+let expandedRelated = new Set();
 let currentGraphData = null;
 
 // Standard icons for different node types
@@ -84,34 +85,12 @@ function setupRoadmapHTML(container) {
 
     container.innerHTML = `
         <div class="roadmap-container-wrapper" style="display:flex;flex-direction:column;height:100%;">
-
+ 
             <!-- ── Toolbar ── -->
             <div class="roadmap-toolbar" style="flex-shrink:0;">
                 <!-- Track Selector -->
                 ${trackSelectorHtml}
-
-                <!-- Search -->
-                <div class="relative w-full md:w-64">
-                    <input type="text" id="roadmap-search-input" placeholder="🔍 ابحث في الخريطة..."
-                           class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-purple-500 outline-none">
-                </div>
-
-                <!-- Filters -->
-                <div class="flex items-center gap-2">
-                    <select id="roadmap-filter-status" class="bg-black/50 border border-white/10 text-xs text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
-                        <option value="all">كل الحالات</option>
-                        <option value="completed">مكتمل</option>
-                        <option value="inprogress">جاري</option>
-                        <option value="locked">مغلق</option>
-                    </select>
-                    <select id="roadmap-filter-difficulty" class="bg-black/50 border border-white/10 text-xs text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
-                        <option value="all">كل المستويات</option>
-                        <option value="beginner">مبتدئ</option>
-                        <option value="intermediate">متوسط</option>
-                        <option value="advanced">متقدم</option>
-                    </select>
-                </div>
-
+ 
                 <!-- Legend -->
                 <div class="roadmap-legend">
                     <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-track)"></span><span>مسار</span></div>
@@ -136,19 +115,15 @@ function setupRoadmapHTML(container) {
                         </button>
                         <button onclick="window._rmExport('png1')"
                                 class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — 1x
+                            <i class="fas fa-image text-green-400"></i> PNG — جودة عادية (1x)
                         </button>
                         <button onclick="window._rmExport('png2')"
                                 class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — 2x
+                            <i class="fas fa-image text-green-400"></i> PNG — جودة عالية (2x)
                         </button>
                         <button onclick="window._rmExport('png4')"
                                 class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — 4x
-                        </button>
-                        <button onclick="window._rmExport('png8')"
-                                class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — 8x
+                            <i class="fas fa-image text-green-400"></i> PNG — جودة ممتازة (4x)
                         </button>
                     </div>
                 </div>
@@ -211,9 +186,7 @@ function setupRoadmapHTML(container) {
     document.getElementById('roadmap-zoom-center').addEventListener('click', centerGraph);
     document.getElementById('roadmap-zoom-reset').addEventListener('click', resetRoadmapView);
 
-    document.getElementById('roadmap-search-input').addEventListener('input', handleRoadmapSearch);
-    document.getElementById('roadmap-filter-status').addEventListener('change', filterNodes);
-    document.getElementById('roadmap-filter-difficulty').addEventListener('change', filterNodes);
+
 
     // Export toggle
     const exportBtn  = document.getElementById('rm-export-btn');
@@ -276,6 +249,7 @@ function bindViewportEvents() {
 async function handleTrackChange() {
     currentGraphData = null;
     expandedNodes.clear(); // reset expanded state when switching track
+    expandedRelated.clear();
     await renderInteractiveRoadmapTree();
 }
 
@@ -411,11 +385,13 @@ function hidePlaceholder() {
  */
 async function fetchGraphData(trackId) {
     try {
-        const [trackRes, phasesRes, coursesRes, materialsRes] = await Promise.all([
+        const [trackRes, phasesRes, coursesRes, materialsRes, quizzesRes, projectsRes] = await Promise.all([
             supabase.from('tracks').select('*').eq('id', trackId).single(),
             supabase.from('phases').select('*').eq('track_id', trackId).order('order_index', { ascending: true }).order('created_at', { ascending: true }),
             supabase.from('courses').select('*').order('order_index', { ascending: true }),
-            supabase.from('course_materials').select('*').order('order_index', { ascending: true })
+            supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
+            supabase.from('quizzes').select('*'),
+            supabase.from('projects').select('*')
         ]);
 
         if (phasesRes.error) throw phasesRes.error;
@@ -432,7 +408,9 @@ async function fetchGraphData(trackId) {
             track: trackRes.data,
             phases,
             courses,
-            materials
+            materials,
+            quizzes: quizzesRes.data || [],
+            projects: projectsRes.data || []
         };
     } catch (e) {
         console.error("Error fetching graph data:", e);
@@ -463,8 +441,149 @@ function buildGraphStructure(data) {
 
     let lastPhaseNodeId = trackNode.id;
 
+    // Recursive helper to add courses and their related subtrees
+    function addCourseAndSubtree(course, isParentHidden, parentCourseId = null) {
+        const courseNodeId = `course-${course.course_id}`;
+        
+        const isCourseCollapsed = !expandedNodes.has(courseNodeId);
+        const isRelatedCollapsed = !expandedRelated.has(courseNodeId);
+        const isCourseHidden = isParentHidden;
+        
+        const courseNode = {
+            id: courseNodeId,
+            dbId: course.course_id,
+            type: 'course',
+            title: course.title,
+            description: course.description,
+            instructor: course.created_by || 'Busla Team',
+            duration: course['Module_Time'] || course['Module Time'] || 'غير محدد',
+            phaseId: course.phase_id,
+            trackId: data.track.id,
+            difficulty: course.type || 'Intermediate',
+            status: getCourseStatus(course, data.materials),
+            videosCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'video').length,
+            quizzesCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'quiz').length,
+            projectsCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'project').length,
+            prerequisites: course.prerequisites || [],
+            rawItem: course,
+            isCollapsed: isCourseCollapsed,
+            isRelatedCollapsed: isRelatedCollapsed,
+            isHidden: isCourseHidden,
+            relatedWith: course.related_with || null,
+            parentCourseId: parentCourseId
+        };
+        computedNodes.push(courseNode);
+
+        if (Array.isArray(courseNode.prerequisites) && courseNode.prerequisites.length > 0) {
+            courseNode.prerequisites.forEach(prereq => {
+                const targetId = typeof prereq === 'string' ? prereq : prereq.course_id;
+                const relType = prereq.type || 'prerequisite';
+                computedLinks.push({
+                    from: `course-${targetId}`,
+                    to: courseNode.id,
+                    relationType: relType
+                });
+            });
+        }
+
+        if (parentCourseId) {
+            computedLinks.push({
+                from: `course-${parentCourseId}`,
+                to: courseNode.id,
+                relationType: 'related-course'
+            });
+        }
+
+        // Materials of this course
+        const courseMaterials = data.materials.filter(m => m.course_id === course.course_id);
+        let lastMatNodeId = courseNode.id;
+        
+        courseMaterials.forEach((mat) => {
+            const isMatHidden = isCourseHidden || isCourseCollapsed;
+            
+            // Subnodes (quizzes/projects linked to this material)
+            const subNodes = [];
+            if (mat.ref_quiz_id) {
+                const quizObj = data.quizzes.find(q => q.quiz_id === mat.ref_quiz_id);
+                if (quizObj) {
+                    subNodes.push({
+                        id: `quiz-${quizObj.quiz_id}`,
+                        dbId: quizObj.quiz_id,
+                        type: 'quiz',
+                        title: quizObj.title,
+                        description: quizObj.description,
+                        status: userProgress.passedQuizzes.has(quizObj.quiz_id) ? 'completed' : 'current',
+                        baseXp: quizObj.max_xp || 50,
+                        parentMaterialId: mat.content_id,
+                        courseId: course.course_id,
+                        isHidden: isMatHidden
+                    });
+                }
+            }
+            if (mat.ref_project_id) {
+                const projObj = data.projects.find(p => p.id === mat.ref_project_id);
+                if (projObj) {
+                    subNodes.push({
+                        id: `project-${projObj.id}`,
+                        dbId: projObj.id,
+                        type: 'project',
+                        title: projObj.title,
+                        description: projObj.description,
+                        status: userProgress.completedProjects.has(projObj.id) ? 'completed' : 'current',
+                        baseXp: projObj.max_points || 100,
+                        parentMaterialId: mat.content_id,
+                        courseId: course.course_id,
+                        isHidden: isMatHidden
+                    });
+                }
+            }
+            
+            const matNode = {
+                id: `material-${mat.content_id}`,
+                dbId: mat.content_id,
+                courseId: course.course_id,
+                phaseId: course.phase_id,
+                type: mat.type || 'video',
+                title: mat.title,
+                duration: mat.duration ? formatDuration(mat.duration) : null,
+                baseXp: mat.base_xp || 10,
+                status: getMaterialStatus(mat),
+                difficulty: courseNode.difficulty,
+                author: mat.author || 'Busla Team',
+                rawItem: mat,
+                isCollapsed: false,
+                isHidden: isMatHidden,
+                subNodesCount: subNodes.length
+            };
+            computedNodes.push(matNode);
+
+            computedLinks.push({
+                from: lastMatNodeId,
+                to: matNode.id,
+                relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
+            });
+            
+            subNodes.forEach(subNode => {
+                computedNodes.push(subNode);
+                computedLinks.push({
+                    from: matNode.id,
+                    to: subNode.id,
+                    relationType: 'material-to-subnode'
+                });
+            });
+            
+            lastMatNodeId = matNode.id;
+        });
+
+        // Recursively add related courses
+        const relatedCourses = data.courses.filter(c => c.related_with === course.course_id);
+        relatedCourses.forEach(relCourse => {
+            const isChildHidden = isCourseHidden || isRelatedCollapsed;
+            addCourseAndSubtree(relCourse, isChildHidden, course.course_id);
+        });
+    }
+
     // 2. Loop Phases
-    // Phases are ALWAYS EXPANDED by default in this new design to keep the main path visible.
     data.phases.forEach((phase, phaseIdx) => {
         const phaseNodeId = `phase-${phase.phase_id}`;
         const isPhaseCollapsed = false;
@@ -485,85 +604,15 @@ function buildGraphStructure(data) {
 
         lastPhaseNodeId = phaseNode.id;
 
-        // 3. Loop Courses inside Phase
-        // Courses are COLLAPSED by default unless user has explicitly expanded them
+        // Loop main courses (no related_with)
         const phaseCourses = data.courses.filter(c => c.phase_id === phase.phase_id && !c.related_with);
-
         phaseCourses.forEach((course) => {
-            const courseNodeId = `course-${course.course_id}`;
-            const isCourseCollapsed = !expandedNodes.has(courseNodeId);
-            const isCourseHidden = isPhaseCollapsed; // hidden when phase is collapsed
-            const courseNode = {
-                id: courseNodeId,
-                dbId: course.course_id,
-                type: 'course',
-                title: course.title,
-                description: course.description,
-                instructor: course.created_by || 'Busla Team',
-                duration: course['Module_Time'] || course['Module Time'] || 'غير محدد',
-                phaseId: phase.phase_id,
-                trackId: data.track.id,
-                difficulty: course.type || 'Intermediate',
-                status: getCourseStatus(course, data.materials),
-                videosCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'video').length,
-                quizzesCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'quiz').length,
-                projectsCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'project').length,
-                prerequisites: course.prerequisites || [],
-                rawItem: course,
-                isCollapsed: isCourseCollapsed,
-                isHidden: isCourseHidden
-            };
-            computedNodes.push(courseNode);
-
-            if (Array.isArray(courseNode.prerequisites) && courseNode.prerequisites.length > 0) {
-                courseNode.prerequisites.forEach(prereq => {
-                    const targetId = typeof prereq === 'string' ? prereq : prereq.course_id;
-                    const relType = prereq.type || 'prerequisite';
-                    computedLinks.push({
-                        from: `course-${targetId}`,
-                        to: courseNode.id,
-                        relationType: relType
-                    });
-                });
-            }
-
-            // 4. Materials — chain sequentially: Course → Mat1 → Mat2 → Mat3 …
-            // This eliminates the "fan" of lines all coming from the same course node.
-            const courseMaterials = data.materials.filter(m => m.course_id === course.course_id);
-            let lastMatNodeId = courseNode.id; // first material connects to the course
-            courseMaterials.forEach((mat) => {
-                const isMatHidden = isCourseHidden || isCourseCollapsed;
-                const matNode = {
-                    id: `material-${mat.content_id}`,
-                    dbId: mat.content_id,
-                    courseId: course.course_id,
-                    phaseId: phase.phase_id,
-                    type: mat.type || 'video',
-                    title: mat.title,
-                    duration: mat.duration ? formatDuration(mat.duration) : null,
-                    baseXp: mat.base_xp || 10,
-                    status: getMaterialStatus(mat),
-                    difficulty: courseNode.difficulty,
-                    author: mat.author || 'Busla Team',
-                    rawItem: mat,
-                    isCollapsed: false,
-                    isHidden: isMatHidden
-                };
-                computedNodes.push(matNode);
-
-                // Sequential chain: previous node → this material
-                computedLinks.push({
-                    from: lastMatNodeId,
-                    to: matNode.id,
-                    relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
-                });
-                lastMatNodeId = matNode.id;
-            });
+            addCourseAndSubtree(course, isPhaseCollapsed);
         });
     });
 
     // 5. Build the main vertical backbone connecting visible track, phase, and course nodes in sequence
-    const visibleMainNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase' || n.type === 'course') && !n.isHidden);
+    const visibleMainNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase' || (n.type === 'course' && !n.relatedWith)) && !n.isHidden);
     for (let i = 0; i < visibleMainNodes.length - 1; i++) {
         computedLinks.push({
             from: visibleMainNodes[i].id,
@@ -583,35 +632,100 @@ function buildGraphStructure(data) {
  *  - Canvas dimensions are set AFTER all nodes are placed (accurate sizing).
  */
 function calculateGraphLayout() {
+    // 1. Find max depth of related courses to adjust X_CENTER and prevent clipping on the left
+    let maxDepth = 0;
+    computedNodes.forEach(node => {
+        if (node.type === 'course' && !node.isHidden) {
+            let depth = 0;
+            let temp = node;
+            while (temp.parentCourseId) {
+                depth++;
+                const parent = computedNodes.find(n => n.id === `course-${temp.parentCourseId}`);
+                if (!parent) break;
+                temp = parent;
+            }
+            if (depth > maxDepth) maxDepth = depth;
+        }
+    });
 
-    // ── Canvas padding on all sides ─────────────────────────────────────────
-    const PAD   = 250;   // top / left / right / bottom canvas padding (px)
+    // Canvas padding on all sides
+    const PAD = 250;
 
-    // ── Horizontal positions relative to canvas ──
-    const X_CENTER = PAD + 250;              // Main Path (Track, Phase, Course) — center column
-    const X_BRANCH = X_CENTER + 330;         // Materials (Video, Quiz, Project) — branch column (right)
+    // Dynamic X_CENTER to make space for left-branching related courses
+    const X_CENTER = maxDepth > 0 ? (PAD + 960 + (maxDepth - 1) * 990) : (PAD + 250);
 
-    // ── Card heights (match CSS card sizes exactly) ──────────────────────────
+    // Card heights
     const H = { track: 96, phase: 72, course: 104, material: 74 };
 
-    // ── Vertical gaps between nodes ──────────────────────────────────────────
+    // Vertical gaps between nodes
     const GAP = {
-        afterTrack:           90,   // Space below Track card before first Phase
-        beforePhase:          60,   // Space between consecutive Phases
-        phaseToFirstCourse:   60,   // Space from Phase card to first Course
-        betweenCourses:       75,   // Space between consecutive Course cards
-        betweenMaterials:     40,   // Space between consecutive Material cards
-        afterPhaseBlock:     100,   // Extra space after the last course of a Phase
+        afterTrack:           90,
+        beforePhase:          60,
+        phaseToFirstCourse:   60,
+        betweenCourses:       75,
+        betweenMaterials:     40,
+        afterPhaseBlock:     100,
     };
 
-    // ── Y cursor starts at top padding ───────────────────────────────────────
     let y = PAD;
 
-    /** Advance Y by the node height and return the node's vertical center */
     function placeNode(height) {
         const cy = y + height / 2;
         y += height;
         return cy;
+    }
+
+    // Recursive layout function for a course block
+    function layoutCourse(courseNode, startY, depth) {
+        courseNode.x = (depth === 0) ? X_CENTER : (X_CENTER - 330 - (depth - 1) * 990);
+        courseNode.y = startY + H.course / 2;
+        
+        const nextY = startY + H.course;
+        let materialsBottom = courseNode.y + H.course / 2;
+        
+        // 1. Layout materials if not collapsed
+        if (!courseNode.isCollapsed) {
+            const materials = computedNodes.filter(n => n.courseId === courseNode.dbId && n.type !== 'course' && !n.parentMaterialId && !n.isHidden);
+            let matY = courseNode.y;
+            materials.forEach((mat, mi) => {
+                mat.x = (depth === 0) ? (courseNode.x + 330) : (courseNode.x - 330);
+                mat.y = matY;
+                
+                // Subnodes (quizzes/projects linked to this material)
+                const subNodes = computedNodes.filter(n => n.parentMaterialId === mat.dbId && !n.isHidden);
+                if (subNodes.length > 0) {
+                    let subY = matY;
+                    subNodes.forEach((sub, si) => {
+                        sub.x = (depth === 0) ? (mat.x + 300) : (mat.x - 300);
+                        sub.y = subY;
+                        if (si < subNodes.length - 1) {
+                            subY += H.material + GAP.betweenMaterials;
+                        }
+                    });
+                    const subNodesBottom = subY + H.material / 2;
+                    materialsBottom = Math.max(materialsBottom, subNodesBottom);
+                    matY = Math.max(matY + H.material + GAP.betweenMaterials, subY + H.material + GAP.betweenMaterials);
+                } else {
+                    materialsBottom = Math.max(materialsBottom, matY + H.material / 2);
+                    matY += H.material + GAP.betweenMaterials;
+                }
+            });
+        }
+        
+        // 2. Layout related courses if not collapsed
+        let relatedBottom = courseNode.y + H.course / 2;
+        if (!courseNode.isRelatedCollapsed) {
+            const related = computedNodes.filter(n => n.parentCourseId === courseNode.dbId && n.type === 'course' && !n.isHidden);
+            let relY = nextY + GAP.betweenCourses;
+            related.forEach((relCourse) => {
+                const childBottom = layoutCourse(relCourse, relY, depth + 1);
+                relatedBottom = Math.max(relatedBottom, childBottom);
+                relY = childBottom + GAP.betweenCourses;
+            });
+        }
+        
+        const blockBottom = Math.max(courseNode.y + H.course / 2, materialsBottom, relatedBottom);
+        return blockBottom;
     }
 
     // ── Track ────────────────────────────────────────────────────────────────
@@ -630,14 +744,13 @@ function calculateGraphLayout() {
         phase.x = X_CENTER;
         phase.y = placeNode(H.phase);
 
-        // If collapsed → leave a small gap and skip children
         if (phase.isCollapsed) {
             y += GAP.afterPhaseBlock / 4;
             return;
         }
 
         const courses = computedNodes.filter(n =>
-            n.type === 'course' && n.phaseId === phase.dbId && !n.isHidden);
+            n.type === 'course' && n.phaseId === phase.dbId && !n.isHidden && !n.relatedWith);
 
         if (courses.length === 0) {
             y += GAP.afterPhaseBlock / 2;
@@ -646,45 +759,25 @@ function calculateGraphLayout() {
 
         y += GAP.phaseToFirstCourse;
 
-        // ── Courses inside Phase ──────────────────────────────────────────
         courses.forEach((course, ci) => {
             if (ci > 0) y += GAP.betweenCourses;
-
-            course.x = X_CENTER;
-            course.y = placeNode(H.course);
-
-            if (course.isCollapsed) return;
-
-            // ── Materials (branch to the right) ───────────────────────────
-            const materials = computedNodes.filter(n =>
-                n.courseId === course.dbId && !n.isHidden);
-
-            if (materials.length === 0) return;
-
-            let matY = course.y; // first material aligns horizontally with the course center
-            materials.forEach((mat, mi) => {
-                mat.x = X_BRANCH;
-                mat.y = matY;
-                if (mi < materials.length - 1) {
-                    matY += H.material + GAP.betweenMaterials;
-                }
-            });
-
-            // Adjust vertical cursor to the bottom of the lowest element (course or last material card)
-            const maxMatY = materials.length > 0 ? Math.max(...materials.map(m => m.y)) : course.y;
-            const branchBottom = maxMatY + H.material / 2;
-            const courseBottom = course.y + H.course / 2;
-            y = Math.max(courseBottom, branchBottom);
+            const courseBottom = layoutCourse(course, y, 0);
+            y = courseBottom;
         });
 
         y += GAP.afterPhaseBlock;
     });
 
-    // ── Set canvas dimensions AFTER all nodes are placed ─────────────────────
-    // Height = final Y cursor + bottom padding
+    // Set canvas dimensions AFTER all nodes are placed
+    let maxX = X_CENTER;
+    const visibleNodes = computedNodes.filter(n => !n.isHidden);
+    visibleNodes.forEach(node => {
+        const hw = (node.type === 'track') ? 160 : (node.type === 'phase') ? 150 : (node.type === 'course') ? 130 : 120;
+        if (node.x + hw > maxX) maxX = node.x + hw;
+    });
+
     const totalHeight = y + PAD;
-    // Width  = material column right-edge + right padding
-    const totalWidth  = X_BRANCH + 120 + PAD;   // 120 = half material card width
+    const totalWidth  = maxX + PAD;
 
     const canvas = document.getElementById('roadmap-canvas');
     if (canvas) {
@@ -718,21 +811,51 @@ function renderHtmlNodes() {
         nodeEl.style.left = `${node.x}px`;
         nodeEl.style.top = `${node.y}px`;
 
-        // Build card HTML with collapse toggle only for course nodes with materials
+        // Build card HTML with collapse toggles for course nodes
         let collapseBtn = '';
-        const hasMaterials = node.type === 'course' && computedNodes.some(n => n.courseId === node.dbId);
-
-        if (hasMaterials) {
-            const icon = node.isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up';
-            const tip  = node.isCollapsed ? 'فتح الفروع' : 'طي الفروع';
-            collapseBtn = `
-                <button class="roadmap-collapse-btn" data-node-id="${node.id}" title="${tip}" onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
-                    style="position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;
-                           background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
-                           display:flex;align-items:center;justify-content:center;cursor:pointer;
-                           color:#9ca3af;font-size:9px;z-index:10;transition:all 0.2s">
-                    <i class="fas ${icon}"></i>
-                </button>`;
+        if (node.type === 'course') {
+            const hasMaterials = currentGraphData && currentGraphData.materials.some(m => m.course_id === node.dbId);
+            const hasRelated = currentGraphData && currentGraphData.courses.some(c => c.related_with === node.dbId);
+            
+            let matBtn = '';
+            if (hasMaterials) {
+                const icon = node.isCollapsed ? 'fa-list' : 'fa-chevron-right';
+                const tip = node.isCollapsed ? 'عرض الدروس والمحتويات' : 'إخفاء الدروس والمحتويات';
+                const color = node.isCollapsed ? '#9ca3af' : 'var(--color-course)';
+                const bg = node.isCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(34,196,93,0.15)';
+                const border = node.isCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(34,196,93,0.3)';
+                matBtn = `
+                    <button class="roadmap-collapse-btn" data-node-id="${node.id}" title="${tip}" onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
+                        style="position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;
+                               background:${bg};border:${border};
+                               display:flex;align-items:center;justify-content:center;cursor:pointer;
+                               color:${color};font-size:9px;z-index:10;transition:all 0.2s"
+                        onmouseover="this.style.background='rgba(34,196,93,0.25)';"
+                        onmouseout="this.style.background='${bg}';">
+                        <i class="fas ${icon}"></i>
+                    </button>`;
+            }
+            
+            let relBtn = '';
+            if (hasRelated) {
+                const icon = node.isRelatedCollapsed ? 'fa-sitemap' : 'fa-chevron-left';
+                const tip = node.isRelatedCollapsed ? 'عرض الكورسات المرتبطة' : 'إخفاء الكورسات المرتبطة';
+                const color = node.isRelatedCollapsed ? '#9ca3af' : 'var(--color-track)';
+                const bg = node.isRelatedCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(0,245,255,0.15)';
+                const border = node.isRelatedCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,245,255,0.3)';
+                relBtn = `
+                    <button class="roadmap-collapse-related-btn" data-node-id="${node.id}" title="${tip}" onclick="event.stopPropagation(); window._roadmapToggleRelatedCollapse('${node.id}')"
+                        style="position:absolute;top:6px;left:30px;width:20px;height:20px;border-radius:50%;
+                               background:${bg};border:${border};
+                               display:flex;align-items:center;justify-content:center;cursor:pointer;
+                               color:${color};font-size:9px;z-index:10;transition:all 0.2s"
+                        onmouseover="this.style.background='rgba(0,245,255,0.25)';"
+                        onmouseout="this.style.background='${bg}';">
+                        <i class="fas ${icon}"></i>
+                    </button>`;
+            }
+            
+            collapseBtn = matBtn + relBtn;
         }
 
         // ── Info button (ⓘ) — top-right of every node ──
@@ -759,16 +882,26 @@ function renderHtmlNodes() {
         container.appendChild(nodeEl);
     });
 
-    // Expose global toggle function
-    // expandedNodes is INVERTED: nodes are collapsed by default.
-    // Toggle adds/removes from expandedNodes to mark a node as explicitly open.
+    // Expose global toggle functions
     window._roadmapToggleCollapse = function(nodeId) {
         if (expandedNodes.has(nodeId)) {
             expandedNodes.delete(nodeId); // collapse it
         } else {
             expandedNodes.add(nodeId);    // expand it
         }
-        // Rebuild graph with new state (data cached — no network call)
+        buildGraphStructure(currentGraphData);
+        calculateGraphLayout();
+        renderHtmlNodes();
+        renderSvgLines();
+        requestAnimationFrame(updateMinimap);
+    };
+
+    window._roadmapToggleRelatedCollapse = function(nodeId) {
+        if (expandedRelated.has(nodeId)) {
+            expandedRelated.delete(nodeId); // collapse it
+        } else {
+            expandedRelated.add(nodeId);    // expand it
+        }
         buildGraphStructure(currentGraphData);
         calculateGraphLayout();
         renderHtmlNodes();
@@ -796,12 +929,12 @@ function getNodeInnerHtml(node) {
     if (node.type === 'track') {
         return `
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-[#006A67]/20 flex items-center justify-center border border-[#006A67]/30 text-[#00F5FF]">
-                    <i class="fas ${icon} text-lg"></i>
+                <div class="w-10 h-10 rounded-xl bg-[#006A67]/20 flex items-center justify-center border border-[#006A67]/30 text-[#00F5FF] leading-none">
+                    <i class="fas ${icon} text-lg leading-none"></i>
                 </div>
                 <div class="flex-1 min-w-0 text-right">
                     <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">مسار تعليمي</span>
-                    <h4 class="font-bold text-white text-sm truncate">${node.title}</h4>
+                    <h4 class="font-bold text-white text-sm line-clamp-1 leading-relaxed pb-1">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
@@ -814,12 +947,12 @@ function getNodeInnerHtml(node) {
     if (node.type === 'phase') {
         return `
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400">
-                    <i class="fas ${icon} text-lg"></i>
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 leading-none">
+                    <i class="fas ${icon} text-lg leading-none"></i>
                 </div>
                 <div class="flex-1 min-w-0 text-right">
                     <span class="text-[9px] text-blue-400 font-bold uppercase tracking-widest block mb-0.5">المرحلة ${node.orderIndex}</span>
-                    <h4 class="font-bold text-white text-sm truncate">${node.title}</h4>
+                    <h4 class="font-bold text-white text-sm line-clamp-1 leading-relaxed pb-1">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
@@ -838,13 +971,13 @@ function getNodeInnerHtml(node) {
 
         return `
             <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-[9px] px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold">كورس</span>
+                <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">كورس</span>
                 <div class="flex items-center">
-                    ${isPlanActive ? `<span class="bg-teal-500/10 text-teal-400 text-[9px] px-1.5 py-0.5 rounded border border-teal-500/25 ml-2 font-bold"><i class="fas fa-unlock"></i> مفعل</span>` : ''}
+                    ${isPlanActive ? `<span class="inline-flex items-center justify-center bg-teal-500/10 text-teal-400 text-[9px] px-1.5 h-5 rounded border border-teal-500/25 ml-2 font-bold leading-none"><i class="fas fa-unlock ml-1"></i> مفعل</span>` : ''}
                     ${statusBadge}
                 </div>
             </div>
-            <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-3">${node.title}</h4>
+            <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-2.5 leading-relaxed pb-1">${node.title}</h4>
             <div class="grid grid-cols-3 gap-1.5 text-[9px] text-gray-400 border-t border-white/5 pt-2 text-center">
                 <div><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
                 <div><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
@@ -861,15 +994,15 @@ function getNodeInnerHtml(node) {
 
     return `
         <div class="flex items-center gap-2.5">
-            <div class="flex-shrink-0 w-9 h-9 rounded-xl ${typeBg} flex items-center justify-center border ${typeBorder} ${typeColor}">
-                <i class="fas ${icon} text-sm"></i>
+            <div class="flex-shrink-0 w-9 h-9 rounded-xl ${typeBg} flex items-center justify-center border ${typeBorder} ${typeColor} leading-none">
+                <i class="fas ${icon} text-sm leading-none"></i>
             </div>
             <div class="flex-grow min-w-0">
                 <div class="flex items-center justify-between gap-1 mb-0.5">
                     <span class="text-[8px] font-bold uppercase tracking-wider ${typeColor}">${typeLabel}</span>
                     ${statusBadge}
                 </div>
-                <p class="font-semibold text-white text-xs leading-snug line-clamp-2 text-right">${node.title}</p>
+                <p class="font-semibold text-white text-xs leading-relaxed line-clamp-2 text-right pb-0.5">${node.title}</p>
                 ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : ''}
             </div>
         </div>
@@ -956,47 +1089,58 @@ function renderSvgLines() {
         const tnTop    = tn.y - tnHH;   // top    edge of to-node
 
         // ── Backbone Core Path: Track → Phase → Course → Course → Phase ──
-        // Sit in the same X column — draw a clean straight vertical line.
         if (link.relationType === 'core') {
             addPath(`M ${fnCx} ${fnBottom} V ${tnTop}`, 'link-backbone', false);
             return;
         }
 
+        // ── Related Course connection elbow ──
+        if (link.relationType === 'related-course') {
+            const startX = lx(fn); // left edge of parent
+            const endX = rx(tn);   // right edge of child
+            const midX = Math.round((startX + endX) / 2);
+            addPath(`M ${startX} ${fn.y} H ${midX} V ${tn.y} H ${endX}`, 'link-course-branch', false);
+            return;
+        }
+
         // ── Course → First Material (branch elbow backbone + first leaf) ──
         if (link.relationType === 'course-to-first-mat') {
-            const startX = rx(fn);                // right edge of Course card
-            const branchLineX = fn.x + 170;       // branch guide line X position
-            const matLeftX = lx(tn);             // left edge of material card
+            const isToLeft = tn.x < fn.x;
+            const startX = isToLeft ? lx(fn) : rx(fn);
+            const branchLineX = isToLeft ? (fn.x - 170) : (fn.x + 170);
+            const matEdgeX = isToLeft ? rx(tn) : lx(tn);
 
-            // Find all visible materials belonging to this Course to know the vertical extent
-            const materials = computedNodes.filter(m => m.courseId === fn.dbId && !m.isHidden);
+            const materials = computedNodes.filter(m => m.courseId === fn.dbId && !m.parentMaterialId && !m.isHidden);
             const lastMatY = materials.length > 0 ? Math.max(...materials.map(m => m.y)) : fn.y;
 
-            console.log("DEBUG SVG:", {
-                courseId: fn.dbId,
-                courseType: fn.type,
-                fnId: fn.id,
-                materialsCount: materials.length,
-                lastMatY: lastMatY,
-                firstMatY: tn.y,
-                materialsList: materials.map(m => ({ id: m.id, title: m.title.slice(0, 20), y: m.y }))
-            });
-
-            // 1. Draw Course branch backbone (horizontal out, then vertical down to last material Y)
+            // 1. Draw Course branch backbone
             addPath(`M ${startX} ${fn.y} H ${branchLineX} V ${lastMatY}`, 'link-course-branch', false);
 
-            // 2. Draw first leaf connection (horizontal from branch line to first material left edge)
-            addPath(`M ${branchLineX} ${tn.y} H ${matLeftX}`, 'link-course-branch', false);
+            // 2. Draw first leaf connection
+            addPath(`M ${branchLineX} ${tn.y} H ${matEdgeX}`, 'link-course-branch', false);
             return;
         }
 
         // ── Material → Material (subsequent leaves of the branch) ──
         if (link.relationType === 'mat-chain') {
-            const branchLineX = tn.x - 160;       // X position of the branch line (tn is at X_BRANCH)
-            const matLeftX = lx(tn);             // left edge of material card
+            const parentCourse = computedNodes.find(n => n.dbId === tn.courseId && n.type === 'course');
+            const isToLeftFromCourse = parentCourse ? (tn.x < parentCourse.x) : false;
             
-            // Draw leaf connection from branch guide line to material left edge
-            addPath(`M ${branchLineX} ${tn.y} H ${matLeftX}`, 'link-course-branch', false);
+            const branchLineX = isToLeftFromCourse ? (tn.x + 160) : (tn.x - 160);
+            const matEdgeX = isToLeftFromCourse ? rx(tn) : lx(tn);
+            
+            addPath(`M ${branchLineX} ${tn.y} H ${matEdgeX}`, 'link-course-branch', false);
+            return;
+        }
+
+        // ── Material → Subnode (Quiz/Project linked to video) ──
+        if (link.relationType === 'material-to-subnode') {
+            const isChildToLeft = tn.x < fn.x;
+            const startX = isChildToLeft ? lx(fn) : rx(fn);
+            const endX = isChildToLeft ? rx(tn) : lx(tn);
+            const midX = Math.round((startX + endX) / 2);
+            const linkClass = tn.type === 'quiz' ? 'link-recommended' : 'link-optional';
+            addPath(`M ${startX} ${fn.y} H ${midX} V ${tn.y} H ${endX}`, linkClass, false);
             return;
         }
 
@@ -1320,6 +1464,29 @@ async function exportAsSvg() {
     root.setAttribute('width',   bounds.w);
     root.setAttribute('height',  bounds.h);
     root.setAttribute('viewBox', `${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}`);
+    root.setAttribute('class', 'roadmap-viewport');
+
+    // Embed all document stylesheets for styling foreignObjects and paths
+    const styleEl = document.createElementNS(ns, 'style');
+    let cssText = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');\n`;
+    try {
+        for (const sheet of document.styleSheets) {
+            try {
+                const href = sheet.href;
+                if (!href || href.includes('roadmap.css') || href.includes('tailwind') || href.includes('css') || href.includes('style')) {
+                    for (const rule of sheet.cssRules) {
+                        cssText += rule.cssText + '\n';
+                    }
+                }
+            } catch (e) {
+                // Ignore cross-origin stylesheet errors
+            }
+        }
+    } catch (e) {
+        console.warn("Could not read stylesheets:", e);
+    }
+    styleEl.textContent = `/* <![CDATA[ */\n${cssText}\n/* ]]> */`;
+    root.appendChild(styleEl);
 
     // Dark background
     const bg = document.createElementNS(ns, 'rect');
@@ -1330,9 +1497,11 @@ async function exportAsSvg() {
     bg.setAttribute('fill', '#050505');
     root.appendChild(bg);
 
-    // Clone SVG paths (connection lines)
-    const pathsClone = svgLayer.cloneNode(true);
-    root.appendChild(pathsClone);
+    // Copy SVG markers and paths (connection lines) directly to root to avoid nested SVG styling issues
+    Array.from(svgLayer.childNodes).forEach(child => {
+        const clone = child.cloneNode(true);
+        root.appendChild(clone);
+    });
 
     // Embed each HTML node as foreignObject
     nodesContainer.querySelectorAll('.roadmap-node').forEach(el => {
@@ -1350,10 +1519,19 @@ async function exportAsSvg() {
         const body = document.createElement('div');
         body.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
         body.style.cssText = el.style.cssText;
-        body.style.position = 'relative';
-        body.style.width  = w + 'px';
-        body.style.height = h + 'px';
+        body.className = el.className;
+        body.style.setProperty('position', 'relative', 'important');
+        body.style.setProperty('width', w + 'px', 'important');
+        body.style.setProperty('height', h + 'px', 'important');
+        body.style.setProperty('left', '0', 'important');
+        body.style.setProperty('top', '0', 'important');
+        body.style.setProperty('transform', 'none', 'important');
         body.innerHTML = el.innerHTML;
+
+        // Hide collapse/info buttons in the exported SVG to make it clean
+        body.querySelectorAll('.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn').forEach(btn => {
+            btn.style.display = 'none';
+        });
 
         fo.appendChild(body);
         root.appendChild(fo);
@@ -1381,22 +1559,39 @@ async function exportAsPng(scale = 1) {
     const canvas = document.getElementById('roadmap-canvas');
     if (!canvas) throw new Error('لم يتم العثور على الكانفاس');
 
+    // 1. Temporarily reset transform to avoid html2canvas offset issues
+    const origTransform = canvas.style.transform;
+    canvas.style.transform = 'none';
+
+    // Force style recalculation/repaint
+    canvas.offsetHeight; 
+
+    // 2. Hide collapse/info buttons during export for a cleaner image
+    const buttonsToHide = canvas.querySelectorAll('.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn');
+    buttonsToHide.forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+
     const bounds = getRoadmapBounds(60);
 
-    const h2c = await window.html2canvas(canvas, {
-        scale,
-        backgroundColor: '#050505',
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.w,
-        height: bounds.h,
-    });
+    try {
+        const h2c = await window.html2canvas(canvas, {
+            scale,
+            backgroundColor: '#050505',
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.w,
+            height: bounds.h,
+        });
 
-    const blob = await new Promise(res => h2c.toBlob(res, 'image/png'));
-    _rmDownload(blob, `roadmap-busla-${scale}x.png`);
+        const blob = await new Promise(res => h2c.toBlob(res, 'image/png'));
+        _rmDownload(blob, `roadmap-busla-${scale}x.png`);
+    } finally {
+        // 3. Restore original transform and button display properties
+        canvas.style.transform = origTransform;
+        buttonsToHide.forEach(btn => btn.style.removeProperty('display'));
+    }
 }
 
 /** Trigger a file download */
@@ -1613,8 +1808,11 @@ function renderMiniRoadmap(courseId) {
         let stepClass = isCompleted ? 'step-completed' : mat.status === 'current' ? 'step-current' : 'step-locked';
         let statusIcon = isCompleted ? '<i class="fas fa-check text-green-500"></i>' : mat.type === 'video' ? '<i class="far fa-play-circle text-gray-400"></i>' : mat.type === 'quiz' ? '<i class="fas fa-clipboard-question text-purple-400"></i>' : '<i class="fas fa-code-branch text-orange-400"></i>';
 
+        const isSubNode = !!mat.parentMaterialId;
+        const indentStyle = isSubNode ? 'margin-right: 1.5rem; border-right: 1px dashed rgba(255,255,255,0.1); padding-right: 0.75rem;' : '';
+
         return `
-            <div class="mini-roadmap-step ${stepClass}" onclick="window.selectRoadmapNodeById('${mat.id}')">
+            <div class="mini-roadmap-step ${stepClass}" onclick="window.selectRoadmapNodeById('${mat.id}')" style="${indentStyle}">
                 <div class="mini-roadmap-dot"></div>
                 <div class="mini-roadmap-content">
                     <div class="flex items-center gap-2">
@@ -1686,11 +1884,19 @@ function renderActionButtons(node) {
                 </div>
             `;
         }
-    } else if (node.type === 'material') {
+    } else if (node.type === 'material' || node.type === 'video') {
         // Direct link to material player
         html += `
             <a href="course-player.html?id=${node.courseId}&content=${node.dbId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
                 <i class="fas fa-external-link-alt"></i> ابدأ الدراسة الآن
+            </a>
+        `;
+    } else if (node.type === 'quiz' || node.type === 'project') {
+        // Direct link to quiz/project player context
+        const targetContentId = node.parentMaterialId || node.dbId;
+        html += `
+            <a href="course-player.html?id=${node.courseId}&content=${targetContentId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-external-link-alt"></i> ${node.type === 'quiz' ? 'ابدأ الاختبار الآن' : 'ابدأ المشروع الآن'}
             </a>
         `;
     } else {
