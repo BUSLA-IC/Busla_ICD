@@ -977,8 +977,8 @@ window.showDetails = (type, id, parentTitle = "") => {
     const ph = document.getElementById('node-details-placeholder');
     const ct = document.getElementById('node-details-content');
     
-    ph.classList.add('hidden');
-    ct.classList.remove('hidden');
+    if (ph) ph.classList.add('hidden');
+    if (ct) ct.classList.remove('hidden');
 
     let item;
     if (type === 'phase') {

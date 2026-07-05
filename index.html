@@ -10,8 +10,8 @@
     <script src="js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="css/roadmap.css">
 
     <script>
         tailwind.config = {
@@ -101,9 +101,9 @@
     <nav class="nav-glass fixed w-full z-50 top-0 transition-all duration-300">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             
-            <a href="index.html" class="text-3xl font-bold text-b-primary hover:text-b-hl-light transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                <i class="text-4xl">🧭</i>
-                <span>بوصلة</span>
+            <a href="#hero" class="text-3xl font-bold text-b-primary hover:text-b-hl-light transition-all duration-300 hover:scale-105 flex items-center gap-2">
+                <img src="assets/icons/BUSLA-icon.png" class="w-10 h-10 object-contain" alt="لوجو بوصلة">
+                <span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light">بوصلة</span>
             </a>
 
             <div class="hidden md:flex items-center gap-6 text-sm font-bold">
@@ -111,6 +111,7 @@
                 <a href="#roadmap" class="nav-link">المسار</a>
                 <a href="#experts" class="nav-link">الخبراء</a>
                 <a href="#tools" class="nav-link">الادوات</a>
+                <a href="#courses" class="nav-link">الدورات</a>
             </div>
 
             <div class="flex items-center gap-4">
@@ -121,94 +122,299 @@
                     <i class="fas fa-user-plus"></i>
                     <span>حساب جديد</span>
                 </a>
+                <!-- Hamburger menu button for mobile -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-white focus:outline-none w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
             </div>
         </div>
     </nav>
 
-    <header id="hero" class="min-h-screen flex items-center justify-center pt-24 pb-12 relative overflow-hidden">
-        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
-            
-            <div class="space-y-8 glass-panel p-8 rounded-xl  bg-[#000000ba] text-center lg:text-right animate-float">
-                <div class="inline-flex glass-panel items-center gap-2 px-4 py-2 rounded-full bg-b-primary/10 border border-b-primary/30 text-b-hl-light text-sm font-bold backdrop-blur-md">
-                    <span class="w-2 h-2 rounded-full bg-b-hl-light animate-pulse"></span>
-                    <span>مجتمع المهندسين العرب</span>
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobile-menu" class="hidden fixed top-[73px] left-0 w-full bg-black/95 backdrop-blur-lg border-b border-white/10 z-40 p-6 flex flex-col gap-4 text-center font-bold shadow-2xl transition-all duration-300">
+        <a href="#hero" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الرئيسية</a>
+        <a href="#roadmap" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المسار</a>
+        <a href="#experts" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الخبراء</a>
+        <a href="#tools" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الأدوات</a>
+        <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2">الدورات</a>
+        
+        <div class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
+            <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white py-2 text-sm">تسجيل دخول</a>
+        </div>
+    </div>
+
+    <main id="app-modules">
+        <!-- Module: Home/Hero (الرئيسية) -->
+        <div id="module-hero" class="app-module pt-10">
+            <header id="hero" class="min-h-screen flex items-center justify-center pt-24 pb-12 relative overflow-hidden">
+                <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
+                    
+                    <div class="space-y-8 glass-panel p-8 rounded-xl bg-[#000000ba] text-center lg:text-right animate-float">
+                        <div class="inline-flex glass-panel items-center gap-2 px-4 py-2 rounded-full bg-b-primary/10 border border-b-primary/30 text-b-hl-light text-sm font-bold backdrop-blur-md">
+                            <span class="w-2 h-2 rounded-full bg-b-hl-light animate-pulse"></span>
+                            <span>مجتمع المهندسين العرب</span>
+                        </div>
+                        
+                        <h1 class="text-5xl lg:text-7xl font-black leading-tight text-white">
+                            احترف تصميم <br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light">الدوائر الرقمية</span>
+                        </h1>
+                        
+                        <p class="text-xl text-gray-400 max-w-lg leading-relaxed mx-auto lg:mx-0 border-r-4 border-b-primary pr-4 mr-0">
+                            منصة "بوصلة" تجمع لك المسار الأكاديمي، المشاريع العملية، ونصائح الخبراء في مكان واحد. جهز نفسك لسوق العمل العالمي.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
+                            <a href="pages/auth.html?mode=signup" class="px-8 py-4 bg-b-primary hover:bg-[#005a57] rounded-xl font-bold text-lg shadow-lg shadow-b-primary/20 transition-all flex items-center gap-2 group">
+                                <span>انطلق الآن</span>
+                                <i class="fas fa-rocket group-hover:-translate-x-1 transition-transform"></i>
+                            </a>
+                            <a href="#roadmap" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-bold text-lg transition-all flex items-center gap-2">
+                                <i class="far fa-map"></i>
+                                <span>تصفح الخريطة</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="hidden lg:flex justify-center relative">
+                        <div class="absolute inset-0 bg-b-primary blur-[100px] opacity-20 rounded-full"></div>
+                        <img src="./assets/icons/1.png" alt="Chip Icon" class="w-3/4 animate-float relative z-10 drop-shadow-2xl grayscale hover:grayscale-0 transition-all duration-500">
+                    </div>
+                </div>
+            </header>
+        </div>
+
+        <!-- Module: Roadmap (المسار) -->
+        <div id="module-roadmap" class="app-module hidden pt-24 pb-12 px-6">
+            <div class="container mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-5 rounded-2xl border border-white/10 gap-4 mb-6">
+                    <div>
+                        <h3 class="font-bold text-xl text-[#00F5FF]">🗺️ خريطة المنهج التفاعلية (Curriculum Roadmap)</h3>
+                        <p class="text-xs text-gray-400">استعرض مسار التعلم بشكل مرئي، واضغط على أي عنصر لمشاهدة تفاصيله ومتطلباته.</p>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <select id="roadmap-track-selector" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none appearance-none cursor-pointer">
+                            <option value="">اختر المسار التعليمي...</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
+                    </div>
                 </div>
                 
-                <h1 class="text-5xl lg:text-7xl font-black leading-tight text-white">
-                    احترف تصميم <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light">الدوائر الرقمية</span>
-                </h1>
+                <!-- Roadmap 70% | Details 30% grid -->
+                <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 h-[calc(100vh-260px)] relative">
+                    <!-- Roadmap tree viewer (70%) -->
+                    <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="roadmap-tree-container">
+                        <!-- Populated by roadmap-interactive.js -->
+                    </div>
+                    
+                    <!-- Unified Details Panel (30%) -->
+                    <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
+                        <!-- Populated by NodeDetailsPanel -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module: Experts (الخبراء) -->
+        <div id="module-experts" class="app-module hidden pt-24 pb-12">
+            <section id="experts" class="py-20 relative">
+                <div class="container mx-auto px-6">
+                    <div class="flex justify-between items-end mb-10">
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-2">👨‍🏫 تعلم من الخبراء</h2>
+                            <p class="text-gray-400">نصائح وخبرات من مهندسين يعملون في كبرى الشركات</p>
+                        </div>
+                        <a href="pages/experts.html" class="text-b-hl-light hover:underline text-sm font-bold">عرض الكل</a>
+                    </div>
+                    <div id="experts-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                        <!-- Experts will be loaded here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Module: Tools (الأدوات) -->
+        <div id="module-tools" class="app-module hidden pt-24 pb-12 px-6">
+            <div class="container mx-auto">
+                <div class="mb-8 text-right flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-12 h-12 object-contain" alt="لوجو بوصلة">
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-1">مكتبة الأدوات</h2>
+                        </div>  
+                    </div>
+                </div>
+
+                <!-- Mobile Filter Toggle Button -->
+                <button id="btn-toggle-filters-mobile" class="lg:hidden w-full bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex items-center justify-between text-white font-bold transition-all shadow-md mb-4 text-right">
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-sliders-h text-teal-400"></i>
+                        <span>خيارات تصفية وبحث الأدوات</span>
+                    </span>
+                    <i id="filters-mobile-chevron" class="fas fa-chevron-down text-gray-400 transition-transform animate-pulse"></i>
+                </button>
+
+                <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+                    <!-- Filters Sidebar (3/10) -->
+                    <aside id="tools-filters-sidebar" class="hidden lg:block lg:col-span-3 bg-b-surface border border-white/10 rounded-2xl p-5 space-y-6 text-right">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                            <button id="btn-clear-all-filters" class="text-xs text-teal-400 hover:text-teal-300 font-bold transition-all">تهيئة الفلاتر</button>
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i class="fas fa-filter text-teal-500"></i> خيارات التصفية
+                            </h3>
+                        </div>
+
+                        <!-- Track Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
+                            <select id="flt-tool-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل المسارات</option>
+                            </select>
+                        </div>
+
+                        <!-- Tool Type Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">نوع الأداة</label>
+                            <select id="flt-tool-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل الأنواع</option>
+                                <option value="Software">Software</option>
+                                <option value="Website">Website</option>
+                                <option value="Online Platform">Online Platform</option>
+                                <option value="IDE">IDE</option>
+                                <option value="Simulator">Simulator</option>
+                                <option value="CAD Tool">CAD Tool</option>
+                                <option value="AI Tool">AI Tool</option>
+                                <option value="Documentation">Documentation</option>
+                                <option value="Library">Library</option>
+                                <option value="Framework">Framework</option>
+                                <option value="Extension">Extension</option>
+                                <option value="Plugin">Plugin</option>
+                                <option value="Learning Platform">Learning Platform</option>
+                                <option value="Community">Community</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Level Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">مستوى الخبرة المطلوبة</label>
+                            <select id="flt-tool-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل المستويات</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Professional">Professional</option>
+                            </select>
+                        </div>
+
+                        <!-- OS Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">نظام التشغيل</label>
+                            <select id="flt-tool-os" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل الأنظمة</option>
+                                <option value="Windows">Windows</option>
+                                <option value="Linux">Linux</option>
+                                <option value="macOS">macOS</option>
+                                <option value="Android">Android</option>
+                                <option value="iOS">iOS</option>
+                                <option value="Web">Web</option>
+                            </select>
+                        </div>
+
+                        <!-- Toggle pricing / license -->
+                        <div class="space-y-3 pt-3 border-t border-white/5 flex flex-col items-stretch">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>مجانية فقط (Free)</span>
+                                <input type="checkbox" id="flt-tool-free" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>مفتوحة المصدر (Open Source)</span>
+                                <input type="checkbox" id="flt-tool-osource" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>تعمل بدون إنترنت (Offline)</span>
+                                <input type="checkbox" id="flt-tool-offline" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                        </div>
+                    </aside>
+
+                    <!-- Main Grid & Controls (7/10) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- Toolbar Controls -->
+                        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface border border-white/10 p-4 rounded-xl gap-4">
+                            <!-- Search -->
+                            <div class="relative w-full md:w-80">
+                                <input type="text" id="tools-search-input" placeholder="ابحث بالاسم، الوصف، أو الوسوم..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none text-right">
+                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                            </div>
+
+                            <!-- Show Count, Sorters & Views Toggles -->
+                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+                                <div class="text-xs text-gray-400">
+                                    المعروض: <span id="tools-showing-count" class="font-bold text-white">0</span> من <span id="tools-total-count" class="font-bold text-white">0</span>
+                                </div>
+                                <div class="relative w-44">
+                                    <select id="tools-sort-selector" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
+                                        <option value="name_asc">الترتيب: بالاسم أ-ي</option>
+                                        <option value="name_desc">الترتيب: بالاسم ي-أ</option>
+                                        <option value="popularity">الأكثر استخداماً (Clicks)</option>
+                                        <option value="views">الأكثر زيارة (Views)</option>
+                                        <option value="latest">الأحدث إضافتاً</option>
+                                    </select>
+                                    <i class="fas fa-sort absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
+                                </div>
+                                <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
+                                    <button id="btn-tools-grid-view" class="px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10">
+                                        <i class="fas fa-th-large"></i>
+                                    </button>
+                                    <button id="btn-tools-list-view" class="px-3 py-2 text-gray-400 hover:text-white transition-all text-xs">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tools List Container -->
+                        <div id="tools-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Populated dynamically from Supabase -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module: Courses (الدورات) -->
+        <div id="module-courses" class="app-module hidden pt-24 pb-12 px-6">
+            <div class="container mx-auto">
+                <div class="mb-8 text-right">
+                    <h2 class="text-3xl font-bold text-white mb-2">📚 الدورات والمناهج التعليمية</h2>
+                    <p class="text-gray-400">تصفح الدورات المتوفرة وابدأ رحلتك الأكاديمية الآن</p>
+                </div>
                 
-                <p class="text-xl text-gray-400 max-w-lg leading-relaxed mx-auto lg:mx-0 border-r-4 border-b-primary pr-4 mr-0">
-                    منصة "بوصلة" تجمع لك المسار الأكاديمي، المشاريع العملية، ونصائح الخبراء في مكان واحد. جهز نفسك لسوق العمل العالمي.
-                </p>
+                <!-- Filters & Search -->
+                <div class="flex flex-col md:flex-row justify-between gap-4 mb-8 bg-b-surface p-4 border border-white/10 rounded-xl">
+                    <div class="w-full md:w-80 relative">
+                        <input type="text" id="courses-search-input" placeholder="ابحث عن دورة تعليمية..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none text-right">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <select id="courses-phase-filter" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-right">
+                            <option value="all">كل المراحل</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
+                    </div>
+                </div>
                 
-                <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
-                    <a href="pages/auth.html?mode=signup" class="px-8 py-4 bg-b-primary hover:bg-[#005a57] rounded-xl font-bold text-lg shadow-lg shadow-b-primary/20 transition-all flex items-center gap-2 group">
-                        <span>انطلق الآن</span>
-                        <i class="fas fa-rocket group-hover:-translate-x-1 transition-transform"></i>
-                    </a>
-                    <a href="pages/roadmap.html" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-bold text-lg transition-all flex items-center gap-2">
-                        <i class="far fa-map"></i>
-                        <span>تصفح الخريطة</span>
-                    </a>
+                <!-- Courses Grid -->
+                <div id="public-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
-            
-            <div class="hidden lg:flex justify-center relative">
-                <div class="absolute inset-0 bg-b-primary blur-[100px] opacity-20 rounded-full"></div>
-                <img src="./assets/icons/1.png" alt="Chip Icon" class="w-3/4 animate-float relative z-10 drop-shadow-2xl grayscale hover:grayscale-0 transition-all duration-500">
-            </div>
         </div>
-    </header>
+    </main>
 
-    <section id="roadmap" class="py-20 relative">
-        <div class="container mx-auto px-6">
-            <div class="flex justify-between items-end mb-10">
-                <div>
-                    <h2 class="text-3xl font-bold text-white mb-2">🗺️ المسار التعليمي</h2>
-                    <p class="text-gray-400">خطوات مدروسة تنقلك من المبتدئ إلى المحترف</p>
-                </div>
-            </div>
-
-            <div class="swiper roadmap-swiper">
-                <div class="swiper-wrapper" id="roadmap-container">
-                    <!-- Roadmap items will be loaded here -->
-                </div>
-                <div class="swiper-pagination"></div>
-            </div>
-        </div>
-    </section>
-
-    <section id="experts" class="py-20 bg-white/5 relative">
-        <div class="container mx-auto px-6">
-            <div class="flex justify-between items-end mb-10">
-                <div>
-                    <h2 class="text-3xl font-bold text-white mb-2">👨‍🏫 تعلم من الخبراء</h2>
-                    <p class="text-gray-400">نصائح وخبرات من مهندسين يعملون في كبرى الشركات</p>
-                </div>
-                <a href="pages/experts.html" class="text-b-hl-light hover:underline text-sm font-bold">عرض الكل</a>
-            </div>
-            <div id="experts-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <!-- Experts will be loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <section id="tools" class="py-20 relative">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-white mb-2">🛠️ صندوق الأدوات</h2>
-                <p class="text-gray-400">كل البرامج التي ستحتاجها في رحلتك</p>
-            </div>
-            <div id="tools-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Tools will be loaded here -->
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-b-surface border-t border-gray-800 pt-16 pb-8">
-        <div class="container mx-auto px-6">
+    <footer class="bg-b-surface border-t border-gray-800">
+        <div class="container mx-auto px-6 pt-8 pb-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center gap-2 mb-4">
@@ -216,17 +422,15 @@
                         <h2 class="text-2xl font-bold text-white">بوصلة</h2>
                     </div>
                     <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
-                        منصة تعليمية مفتوحة المصدر تهدف لتمكين الطلاب العرب في مجال تصميم الإلكترونيات الرقمية (Digital IC Design) وسد الفجوة بين الدراسة الأكاديمية وسوق العمل.
+                        منصة تعليمية مفتوحة المصدر تهدف لتمكين الطلاب العرب وسد الفجوة بين الدراسة الأكاديمية وسوق العمل.
                     </p>
                 </div>
                 <div>
                     <h3 class="text-white font-bold mb-4">روابط سريعة</h3>
                     <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="pages/roadmap.html" class="hover:text-b-primary transition">خريطة الطريق</a></li>
-                        <li><a href="pages/resources.html" class="hover:text-b-primary transition">المصادر</a></li>
-                        <li><a href="pages/experts.html" class="hover:text-b-primary transition">الخبراء</a></li>
-                        <li><a href="pages/auth.html" class="hover:text-b-primary transition">انضم كمتعلم</a></li>
-                    </ul>
+                        <li><a href="#roadmap" class="hover:text-b-primary transition">خريطة الطريق</a></li>
+                        <li><a href="#experts" class="hover:text-b-primary transition">الخبراء</a></li>
+                    </ul>   
                 </div>
                 <div>
                     <h3 class="text-white font-bold mb-4">تواصل معنا</h3>
@@ -239,179 +443,598 @@
             </div>
             <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm flex flex-col md:flex-row justify-between items-center">
                 <p>&copy; <span id="current-year"></span> Busla Platform. All rights reserved.</p>
-                <p>Made with <i class="fas fa-heart text-red-500 mx-1"></i> by <a href="https://www.linkedin.com/in/ahmed-m-attia-757aa6292/" target="_blank" rel="noopener noreferrer" class="text-b-primary hover:text-b-hl-light transition-all font-semibold">
+                <!-- <p>Made with <i class="fas fa-heart text-red-500 mx-1"></i> by <a href="https://www.linkedin.com/in/ahmed-m-attia-757aa6292/" target="_blank" rel="noopener noreferrer" class="text-b-primary hover:text-b-hl-light transition-all font-semibold">
                         Ahmed M. Attia
-                    </a></p>
+                    </a></p> -->
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    <script>
+    <script type="module">
         import { CONFIG } from './js/config.js';
+        import { supabase } from './js/supabase-config.js';
+        import { initInteractiveRoadmap } from './js/roadmap-interactive.js';
+        import './js/tools-drawer.js';
+
+        // Expose to window for inline onclick HTML bindings
+        window.supabase = supabase;
+        window.initInteractiveRoadmap = initInteractiveRoadmap;
+
         document.getElementById('current-year').textContent = new Date().getFullYear();
-   // رابط الـ API الخاص بك
-const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
+        const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
+        const CACHE_KEY = 'busla_home_data_v1';
 
-const CACHE_KEY = 'busla_home_data_v1'; // مفتاح التخزين في المتصفح
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDataSmartly();
+            initSPARouter();
+            setupMobileMenu();
+            setupMobileFilters();
+        });
 
-// متغير عالمي لتخزين نسخة السلايدر (عشان نقدر نعمله تحديث لو البيانات تغيرت)
-let roadmapSwiperInstance = null;
+        function setupMobileMenu() {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            if (btn && menu) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menu.classList.toggle('hidden');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                });
+                
+                // Close menu when resizing to desktop
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth >= 768) {
+                        menu.classList.add('hidden');
+                    }
+                });
+            }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadDataSmartly();
-});
-
-async function loadDataSmartly() {
-    // 1️⃣ الخطوة الأولى: محاولة العرض الفوري من الكاش
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    let hasCache = false;
-
-    if (cachedData) {
-        try {
-            console.log("🚀 عرض البيانات من الكاش (بسرعة البرق)");
-            const data = JSON.parse(cachedData);
-            renderAllSections(data);
-            hasCache = true;
-        } catch (e) {
-            console.error("خطأ في قراءة الكاش", e);
-        }
-    }
-
-    // 2️⃣ الخطوة الثانية: جلب البيانات الحديثة من السيرفر (في الخلفية)
-    try {
-        console.log("🔄 جاري طلب البيانات الحديثة من السيرفر...");
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=getAllContent`);
-        const newData = await response.json();
-
-        // 3️⃣ الخطوة الثالثة: المقارنة والتحديث
-        // لو مفيش كاش أصلاً، أو لو البيانات الجديدة مختلفة عن المخزنة -> نحدث الموقع
-        const newDataString = JSON.stringify(newData);
-        
-        if (!hasCache || cachedData !== newDataString) {
-            console.log("✅ تم اكتشاف تحديثات جديدة، جاري تحديث الموقع والكاش.");
-            
-            // تحديث الكاش
-            localStorage.setItem(CACHE_KEY, newDataString);
-            
-            // إعادة رسم الموقع بالبيانات الجديدة
-            renderAllSections(newData);
-        } else {
-            console.log("👌 البيانات مطابقة للكاش، لا داعي لإعادة الرسم.");
+            // Close mobile menu on clicking any navigation link
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    const menu = document.getElementById('mobile-menu');
+                    if (menu) menu.classList.add('hidden');
+                });
+            });
         }
 
-    } catch (error) {
-        console.error('⚠️ تعذر الاتصال بالسيرفر:', error);
-        // لو مفيش كاش ومفيش نت، ممكن نعرض رسالة خطأ هنا
-    }
-}
+        function setupMobileFilters() {
+            const btn = document.getElementById('btn-toggle-filters-mobile');
+            const sidebar = document.getElementById('tools-filters-sidebar');
+            const chevron = document.getElementById('filters-mobile-chevron');
+            if (btn && sidebar) {
+                btn.addEventListener('click', () => {
+                    sidebar.classList.toggle('hidden');
+                    if (chevron) {
+                        chevron.classList.toggle('rotate-180');
+                    }
+                });
+            }
+        }
 
-// --- دالة مجمعة لتوزيع البيانات ---
-function renderAllSections(data) {
-    // تجهيز البيانات (دعم الأسماء القديمة والجديدة)
-    const roadmap = data.board_Roadmap || data['board_Roadmap'] || data.Roadmap;
-    const experts = data.board_Experts || data['board_Experts'] || data.Experts;
-    const tools = data.board_Tools || data['board_Tools'] || data.Tools;
+        // --- Data Loading (Experts & Tools) ---
+        async function loadDataSmartly() {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                try {
+                    const parsedData = JSON.parse(cachedData);
+                    renderAllSections(parsedData);
+                } catch (e) {
+                    console.error("Failed to parse cached home data", e);
+                }
+            }
 
-    if (roadmap) renderRoadmap(roadmap);
-    if (experts) renderExperts(experts);
-    if (tools) renderTools(tools);
+            try {
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) throw new Error("HTTP status " + response.status);
+                const newData = await response.json();
+                
+                const newDataString = JSON.stringify(newData);
+                if (newDataString !== cachedData) {
+                    localStorage.setItem(CACHE_KEY, newDataString);
+                    renderAllSections(newData);
+                } else {
+                    console.log("👌 البيانات مطابقة للكاش، لا داعي لإعادة الرسم.");
+                }
+            } catch (error) {
+                console.error('⚠️ تعذر الاتصال بالسيرفر لتحديث البيانات:', error);
+            }
+        }
 
-    // تشغيل السلايدر بعد الرسم
-    initSwiper();
-}
+        function renderAllSections(data) {
+            const experts = data.board_Experts || data['board_Experts'] || data.Experts;
+            const tools = data.board_Tools || data['board_Tools'] || data.Tools;
 
-// --- دوال العرض (Rendering Functions) ---
+            if (experts) renderExperts(experts);
+            if (tools) renderTools(tools);
+        }
 
-function renderRoadmap(items) {
-    const container = document.getElementById('roadmap-container');
-    if (!container) return;
+        function renderExperts(experts) {
+            const container = document.getElementById('experts-container');
+            if (!container) return;
 
-    const cleanItems = items.filter(item => item.title && item.title !== '');
+            const cleanExperts = experts.filter(ex => ex.name && ex.name !== '');
 
-    container.innerHTML = cleanItems.map(item => `
-        <div class="swiper-slide p-6 bg-b-surface rounded-xl border border-white/10 hover:border-b-primary transition-all group h-auto">
-            <div class="w-12 h-12 rounded-full bg-b-primary/20 flex items-center justify-center mb-4 group-hover:bg-b-primary transition-colors">
-                <i class="${item.icon_class || 'fa-solid fa-code'} text-b-primary group-hover:text-white text-xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-2">${item.title}</h3>
-            <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                ${item.description}
-            </p>
-            <span class="text-xs py-1 px-3 rounded-full bg-white/5 text-b-hl-medium border border-white/10">
-                ${item.status || 'متاح'}
-            </span>
-        </div>
-    `).join('');
-}
-
-function renderExperts(experts) {
-    const container = document.getElementById('experts-container');
-    if (!container) return;
-
-    const cleanExperts = experts.filter(ex => ex.name && ex.name !== '');
-
-    container.innerHTML = cleanExperts.map(expert => `
-        <div class="bg-b-surface rounded-xl p-6 border border-white/5 text-center hover:-translate-y-2 transition-transform duration-300">
-            <div class="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-b-primary mb-4">
-                <img src="${expert.image_url}" alt="${expert.name}" class="w-full h-full object-cover">
-            </div>
-            <h3 class="text-lg font-bold text-white">${expert.name}</h3>
-            <p class="text-b-primary text-sm mb-4">${expert.role}</p>
-            <div class="flex justify-center space-x-3 space-x-reverse">
-                <a href="${expert.linkedin_url}" target="_blank" class="text-gray-400 hover:text-b-primary transition-colors">
-                    <i class="fa-brands fa-linkedin text-xl"></i>
-                </a>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderTools(tools) {
-    const container = document.getElementById('tools-container');
-    if (!container) return;
-
-    const cleanTools = tools.filter(t => t.name && t.name !== '');
-
-    container.innerHTML = cleanTools.map(tool => `
-        <a href="${tool.link}" target="_blank" class="block bg-b-surface p-6 rounded-xl border border-white/5 hover:border-b-primary transition-all group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-10 h-10 rounded bg-white/5 flex items-center justify-center text-2xl overflow-hidden">
-                    <img src="${tool.icon_url}" alt="${tool.name}" class="w-full h-full object-contain p-1">
+            container.innerHTML = cleanExperts.map(expert => `
+                <div class="bg-b-surface rounded-xl p-6 border border-white/5 text-center hover:-translate-y-2 transition-transform duration-300">
+                    <div class="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-b-primary mb-4">
+                        <img src="${expert.image_url}" alt="${expert.name}" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-lg font-bold text-white">${expert.name}</h3>
+                    <p class="text-b-primary text-sm mb-4">${expert.role}</p>
+                    <div class="flex justify-center space-x-3 space-x-reverse">
+                        <a href="${expert.linkedin_url}" target="_blank" class="text-gray-400 hover:text-b-primary transition-colors">
+                            <i class="fa-brands fa-linkedin text-xl"></i>
+                        </a>
+                    </div>
                 </div>
-                <i class="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-b-primary transition-colors"></i>
-            </div>
-            <h4 class="text-white font-bold mb-1">${tool.name}</h4>
-            <p class="text-gray-400 text-xs">${tool.description}</p>
-        </a>
-    `).join('');
-}
+            `).join('');
+        }
 
-// دالة تشغيل السلايدر (محسنة لتدعم التحديث)
-function initSwiper() {
-    const container = document.querySelector(".roadmap-swiper");
-    if (!container) return;
+        function renderTools(tools) {
+            // Deprecated: Tools are now loaded dynamically from Supabase in loadPublicTools()
+        }
 
-    // لو السلايدر شغال من قبل، لازم ندمره عشان نعمل واحد جديد بالبيانات الجديدة
-    if (roadmapSwiperInstance) {
-        roadmapSwiperInstance.destroy(true, true);
-    }
+        // --- Public Tools Library Loader ---
+        let toolsLibraryViewMode = 'grid'; // 'grid' or 'list'
+        let tracksListMap = {}; // track_id -> track_name
 
-    roadmapSwiperInstance = new Swiper(".roadmap-swiper", {
-        slidesPerView: 1,
-        spaceBetween: 20,
-        loop: true,
-        observer: true, 
-        observeParents: true,
-        autoplay: { delay: 4000, disableOnInteraction: false },
-        pagination: { el: ".swiper-pagination", clickable: true },
-        breakpoints: {
-            768: { slidesPerView: 2, spaceBetween: 30 },
-            1024: { slidesPerView: 3, spaceBetween: 30 },
-        },
-    });
-}
+        async function loadPublicTools() {
+            const container = document.getElementById('tools-library-container');
+            if (!container) return;
+
+            // Render Loader Spinner
+            container.innerHTML = `
+                <div class="col-span-full text-center py-20 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-4 text-teal-400 font-normal"></i>
+                    <p class="font-bold">جاري تحميل مكتبة الأدوات الرقمية...</p>
+                </div>
+            `;
+
+            try {
+                // 1. Fetch Tracks to build filter list and resolve names
+                const { data: tracks, error: tracksErr } = await supabase
+                    .from('tracks')
+                    .select('id, name')
+                    .eq('is_active', true);
+                
+                if (tracksErr) throw tracksErr;
+
+                // Populate Track Selector dropdown if empty
+                const trackSelect = document.getElementById('flt-tool-track');
+                if (trackSelect && trackSelect.options.length <= 1) {
+                    tracks.forEach(track => {
+                        tracksListMap[track.id] = track.name;
+                        const opt = document.createElement('option');
+                        opt.value = track.id;
+                        opt.textContent = track.name;
+                        trackSelect.appendChild(opt);
+                    });
+
+                    // Add Event Listeners for Filters & Sorting
+                    const filtersList = [
+                        'flt-tool-track', 'flt-tool-type', 'flt-tool-level', 'flt-tool-os',
+                        'flt-tool-free', 'flt-tool-osource', 'flt-tool-offline',
+                        'tools-search-input', 'tools-sort-selector'
+                    ];
+                    filtersList.forEach(id => {
+                        document.getElementById(id)?.addEventListener('change', filterAndRenderTools);
+                        if (id === 'tools-search-input') {
+                            document.getElementById(id)?.addEventListener('input', filterAndRenderTools);
+                        }
+                    });
+
+                    // Clear Filters Button
+                    document.getElementById('btn-clear-all-filters')?.addEventListener('click', () => {
+                        document.getElementById('flt-tool-track').value = 'all';
+                        document.getElementById('flt-tool-type').value = 'all';
+                        document.getElementById('flt-tool-level').value = 'all';
+                        document.getElementById('flt-tool-os').value = 'all';
+                        document.getElementById('flt-tool-free').checked = false;
+                        document.getElementById('flt-tool-osource').checked = false;
+                        document.getElementById('flt-tool-offline').checked = false;
+                        document.getElementById('tools-search-input').value = '';
+                        document.getElementById('tools-sort-selector').value = 'name_asc';
+                        filterAndRenderTools();
+                    });
+
+                    // Grid/List View Toggles
+                    const btnGrid = document.getElementById('btn-tools-grid-view');
+                    const btnList = document.getElementById('btn-tools-list-view');
+                    btnGrid?.addEventListener('click', () => {
+                        toolsLibraryViewMode = 'grid';
+                        btnGrid.className = 'px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10';
+                        btnList.className = 'px-3 py-2 text-gray-400 hover:text-white transition-all text-xs';
+                        filterAndRenderTools();
+                    });
+                    btnList?.addEventListener('click', () => {
+                        toolsLibraryViewMode = 'list';
+                        btnList.className = 'px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10';
+                        btnGrid.className = 'px-3 py-2 text-gray-400 hover:text-white transition-all text-xs';
+                        filterAndRenderTools();
+                    });
+                }
+
+                // 2. Fetch Tools
+                const { data: tools, error: toolsErr } = await supabase
+                    .from('tools')
+                    .select('*')
+                    .eq('status', 'Published')
+                    .order('name', { ascending: true });
+
+                if (toolsErr) throw toolsErr;
+
+                window.publicToolsList = tools;
+                document.getElementById('tools-total-count').textContent = tools.length;
+                filterAndRenderTools();
+
+            } catch (err) {
+                console.error("Error loading tools library:", err);
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-20 text-red-500 bg-red-500/5 rounded-xl border border-red-500/10">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p class="font-bold">تعذر تحميل مكتبة الأدوات حالياً.</p>
+                        <p class="text-xs text-gray-500 mt-1">يرجى المحاولة لاحقاً.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function filterAndRenderTools() {
+            const list = window.publicToolsList || [];
+            
+            // Get filter values
+            const search = document.getElementById('tools-search-input').value.toLowerCase().trim();
+            const track = document.getElementById('flt-tool-track').value;
+            const type = document.getElementById('flt-tool-type').value;
+            const level = document.getElementById('flt-tool-level').value;
+            const os = document.getElementById('flt-tool-os').value;
+            
+            const freeOnly = document.getElementById('flt-tool-free').checked;
+            const openSourceOnly = document.getElementById('flt-tool-osource').checked;
+            const offlineOnly = document.getElementById('flt-tool-offline').checked;
+            
+            const sort = document.getElementById('tools-sort-selector').value;
+
+            // Apply Filters
+            let filtered = list.filter(t => {
+                // Search Match (name, short description, tags, type)
+                const searchStr = `${t.name} ${t.short_description || ''} ${(t.tags || []).join(' ')} ${t.type}`.toLowerCase();
+                if (search && !searchStr.includes(search)) return false;
+
+                // Track Match (track_ids array)
+                if (track !== 'all' && !(t.track_ids || []).includes(track)) return false;
+
+                // Type Match
+                if (type !== 'all' && t.type !== type) return false;
+
+                // Level Match
+                if (level !== 'all' && t.experience_level !== level) return false;
+
+                // OS Match (supported_os array)
+                if (os !== 'all') {
+                    const cleanOSList = (t.supported_os || []).map(o => o.toLowerCase().trim());
+                    if (!cleanOSList.includes(os.toLowerCase())) return false;
+                }
+
+                // Features Checkbox filters
+                const cleanFeatList = (t.features || []).map(f => f.toLowerCase().trim());
+                
+                // Free/Paid pricing
+                if (freeOnly) {
+                    const isFree = cleanFeatList.includes('free') || cleanFeatList.includes('مجاني') || cleanFeatList.includes('مجانية') || t.importance === 'Free'; 
+                    const hasFreeTag = (t.tags || []).some(tag => tag.toLowerCase().includes('free') || tag.includes('مجاني'));
+                    if (!isFree && !hasFreeTag) return false;
+                }
+
+                // Open Source
+                if (openSourceOnly) {
+                    const isOSource = cleanFeatList.includes('open source') || cleanFeatList.includes('مفتوح المصدر') || cleanFeatList.includes('مفتوحة المصدر');
+                    const hasOSTag = (t.tags || []).some(tag => tag.toLowerCase().includes('open') || tag.includes('مصدر'));
+                    if (!isOSource && !hasOSTag) return false;
+                }
+
+                // Offline
+                if (offlineOnly) {
+                    const isOffline = cleanFeatList.includes('offline') || cleanFeatList.includes('بدون انترنت') || cleanFeatList.includes('يعمل بدون اتصال') || cleanFeatList.includes('offline-mode');
+                    if (!isOffline) return false;
+                }
+
+                return true;
+            });
+
+            // Apply Sorters
+            if (sort === 'name_asc') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            } else if (sort === 'name_desc') {
+                filtered.sort((a, b) => b.name.localeCompare(a.name, 'ar'));
+            } else if (sort === 'popularity') {
+                filtered.sort((a, b) => (b.clicks_count || 0) - (a.clicks_count || 0));
+            } else if (sort === 'views') {
+                filtered.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+            } else if (sort === 'latest') {
+                filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+
+            document.getElementById('tools-showing-count').textContent = filtered.length;
+            renderPublicToolsList(filtered);
+        }
+
+        function renderPublicToolsList(tools) {
+            const container = document.getElementById('tools-library-container');
+            if (!container) return;
+
+            if (tools.length === 0) {
+                container.className = 'col-span-full';
+                container.innerHTML = `
+                    <div class="text-center py-20 text-gray-500 bg-white/5 rounded-xl border border-white/5">
+                        <i class="fas fa-search text-3xl mb-4 text-gray-600"></i>
+                        <p class="font-bold">لم نجد أي أدوات مطابقة لخيارات التصفية.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Grid vs List setup
+            if (toolsLibraryViewMode === 'grid') {
+                container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                container.innerHTML = tools.map(tool => {
+                    const firstTrackName = tool.track_ids && tool.track_ids.length > 0 ? (tracksListMap[tool.track_ids[0]] || 'مسار تخصصي') : 'أداة عامة';
+                    const featBadges = (tool.features || []).slice(0, 2).map(f => `
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/15">${f}</span>
+                    `).join('');
+                    
+                    return `
+                        <div class="bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-5 flex flex-col justify-between h-full hover:-translate-y-1 transition-all duration-300 shadow-md group">
+                            <div>
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="w-12 h-12 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center text-3xl overflow-hidden shrink-0">
+                                        <img src="${tool.logo_url || 'assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='assets/icons/BUSLA-icon.png'">
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[9px] px-2.5 py-0.5 rounded font-bold uppercase">${tool.type}</span>
+                                        <span class="text-[9px] text-gray-500">${firstTrackName}</span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-bold text-white mb-2 leading-none hover:text-teal-400 cursor-pointer text-right" onclick="window.openToolDetailDrawer('${tool.id}')">${tool.name}</h3>
+                                <p class="text-gray-400 text-xs line-clamp-2 leading-relaxed text-right mb-4">${tool.short_description || ''}</p>
+                            </div>
+                            <div class="mt-auto space-y-4">
+                                <div class="flex flex-wrap gap-1.5 justify-end">
+                                    ${featBadges}
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-white/5 uppercase">${tool.experience_level}</span>
+                                </div>
+                                <button onclick="window.openToolDetailDrawer('${tool.id}')" class="w-full py-2 bg-white/5 hover:bg-teal-500 hover:text-white border border-white/10 hover:border-teal-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                                    <span>عرض التفاصيل والتحميل</span>
+                                    <i class="fas fa-chevron-left text-[9px] group-hover:-translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // List View
+                container.className = 'flex flex-col gap-3';
+                container.innerHTML = tools.map(tool => {
+                    const firstTrackName = tool.track_ids && tool.track_ids.length > 0 ? (tracksListMap[tool.track_ids[0]] || 'مسار تخصصي') : 'أداة عامة';
+                    return `
+                        <div class="bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hover:-translate-y-0.5 transition-all duration-300 shadow-md">
+                            <div class="flex items-center gap-4 w-full md:w-auto text-right">
+                                <div class="w-12 h-12 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center text-3xl overflow-hidden shrink-0">
+                                    <img src="${tool.logo_url || 'assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='assets/icons/BUSLA-icon.png'">
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-base font-bold text-white hover:text-teal-400 cursor-pointer" onclick="window.openToolDetailDrawer('${tool.id}')">${tool.name}</h3>
+                                    <p class="text-gray-400 text-xs truncate max-w-lg mt-1">${tool.short_description || ''}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end text-xs">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-gray-500 text-[10px]">النوع والتراك</span>
+                                    <span class="text-white font-bold">${tool.type} • <span class="text-gray-400">${firstTrackName}</span></span>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-gray-500 text-[10px]">الخبرة والأهمية</span>
+                                    <span class="text-teal-400 font-bold">${tool.importance} • <span class="text-gray-400">${tool.experience_level}</span></span>
+                                </div>
+                                <button onclick="window.openToolDetailDrawer('${tool.id}')" class="px-4 py-2 bg-white/5 hover:bg-teal-500 hover:text-white border border-white/10 hover:border-teal-500 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                                    <span>عرض</span>
+                                    <i class="fas fa-chevron-left text-[9px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // SPA Router
+        function initSPARouter() {
+            const modules = {
+                '#hero': 'module-hero',
+                '#roadmap': 'module-roadmap',
+                '#experts': 'module-experts',
+                '#tools': 'module-tools',
+                '#courses': 'module-courses'
+            };
+
+            function handleRouting() {
+                let hash = window.location.hash || '#hero';
+                if (!modules[hash]) {
+                    hash = '#hero';
+                }
+
+                // Hide all modules
+                Object.keys(modules).forEach(key => {
+                    const el = document.getElementById(modules[key]);
+                    if (el) el.classList.add('hidden');
+                });
+
+                // Show active module
+                const activeModule = document.getElementById(modules[hash]);
+                if (activeModule) {
+                    activeModule.classList.remove('hidden');
+                }
+
+                // Update active class on nav links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href === hash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                // Special initialization on entering module
+                if (hash === '#roadmap') {
+                    if (typeof window.initInteractiveRoadmap === 'function') {
+                        window.initInteractiveRoadmap('guest'); // Guest role
+                    }
+                } else if (hash === '#courses') {
+                    loadPublicCourses();
+                } else if (hash === '#tools') {
+                    loadPublicTools();
+                }
+            }
+
+            // Intercept clicks on links starting with #
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const hash = this.getAttribute('href');
+                    history.pushState(null, null, hash);
+                    handleRouting();
+                });
+            });
+
+            // Listen to back/forward navigation
+            window.addEventListener('popstate', handleRouting);
+
+            // Initial check
+            handleRouting();
+        }
+
+        // Public Courses Grid Loader
+        async function loadPublicCourses() {
+            const grid = document.getElementById('public-courses-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-20 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-4 text-teal-400"></i>
+                    <p class="font-bold">جاري تحميل قائمة الدورات...</p>
+                </div>
+            `;
+            
+            try {
+                const { data: courses, error } = await supabase
+                    .from('courses')
+                    .select('*, phases(title)')
+                    .eq('is_active', true)
+                    .order('order_index');
+                    
+                if (error) throw error;
+                
+                // Populate phase filter if not populated yet
+                const filter = document.getElementById('courses-phase-filter');
+                if (filter && filter.options.length <= 1) {
+                    const phases = [...new Set(courses.map(c => c.phases?.title).filter(Boolean))];
+                    phases.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        filter.appendChild(opt);
+                    });
+                    
+                    filter.addEventListener('change', filterCourses);
+                    document.getElementById('courses-search-input').addEventListener('input', filterCourses);
+                }
+                
+                window.publicCoursesList = courses;
+                renderPublicCoursesList(courses);
+            } catch (err) {
+                console.error("Error loading public courses:", err);
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 text-red-500 bg-red-500/5 rounded-xl border border-red-500/10">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p class="font-bold">تعذر تحميل الدورات التعليمية حالياً.</p>
+                        <p class="text-xs text-gray-500 mt-1">يرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderPublicCoursesList(courses) {
+            const grid = document.getElementById('public-courses-grid');
+            if (!grid) return;
+            
+            if (courses.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 text-gray-500 bg-white/5 rounded-xl border border-white/5">
+                        <i class="fas fa-search text-3xl mb-4 text-gray-600"></i>
+                        <p class="font-bold">لم نجد أي دورات مطابقة لبحثك.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = courses.map(course => {
+                return `
+                    <div class="bg-b-surface p-6 rounded-2xl border border-white/5 hover:border-teal-500 hover:-translate-y-1 transition-all flex flex-col h-full group shadow-lg">
+                        <div class="relative w-full h-44 rounded-xl overflow-hidden mb-4 border border-white/10">
+                            <img src="${course.image_url || 'assets/images/1.jpg'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='assets/icons/BUSLA-icon.png'">
+                            <span class="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-[9px] px-2.5 py-1 rounded font-bold uppercase tracking-wider">
+                                ${course.phases?.title || 'مرحلة غير مححددة'}
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2 line-clamp-1 text-right">${course.title}</h3>
+                        <p class="text-gray-400 text-xs text-right line-clamp-3 mb-4 leading-relaxed">${course.description || 'لا يوجد وصف متوفر حالياً لهذه الدورة.'}</p>
+                        <div class="mt-auto flex justify-between items-center pt-4 border-t border-white/5 text-xs text-gray-400">
+                            <span><i class="far fa-clock ml-1 text-teal-400"></i>${course.Module_Time || course['Module Time'] || 'مرنة'}</span>
+                            <span><i class="fas fa-layer-group ml-1 text-blue-400"></i>${course.type || 'Course'}</span>
+                        </div>
+                        <button onclick="window.viewCourseInRoadmap('${course.course_id}')" class="mt-4 w-full py-2.5 bg-teal-500/10 hover:bg-teal-500 hover:text-white border border-teal-500/20 text-teal-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                            <span>عرض في خريطة الطريق</span>
+                            <i class="fas fa-sitemap"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterCourses() {
+            const searchVal = document.getElementById('courses-search-input').value.toLowerCase();
+            const phaseVal = document.getElementById('courses-phase-filter').value;
+            
+            let filtered = window.publicCoursesList || [];
+            if (searchVal) {
+                filtered = filtered.filter(c => c.title.toLowerCase().includes(searchVal) || (c.description && c.description.toLowerCase().includes(searchVal)));
+            }
+            if (phaseVal && phaseVal !== 'all') {
+                filtered = filtered.filter(c => c.phases?.title === phaseVal);
+            }
+            renderPublicCoursesList(filtered);
+        }
+
+        window.viewCourseInRoadmap = function(courseId) {
+            history.pushState(null, null, '#roadmap');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            setTimeout(() => {
+                if (typeof window.selectInteractiveRoadmapNode === 'function') {
+                    window.selectInteractiveRoadmapNode('course', courseId);
+                }
+            }, 400);
+        };
     </script>
 
 </body>

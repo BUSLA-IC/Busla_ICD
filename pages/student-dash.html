@@ -222,127 +222,19 @@ main {
                     <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
                 </div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-220px)]">
-                <div class="lg:col-span-1 bg-b-surface rounded-2xl border border-white/10 overflow-y-auto p-6 custom-scroll" id="roadmap-tree-container">
+            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 h-[calc(100vh-260px)] relative">
+                <!-- Roadmap tree viewer (70%) -->
+                <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="roadmap-tree-container">
                     <div class="text-center py-20 text-gray-500">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>جاري تحميل المنهج...
                     </div>
                 </div>
 
-                <div class="bg-b-surface rounded-2xl border border-white/10 p-6 overflow-y-auto custom-scroll relative">
-                    <div id="node-details-placeholder" class="text-center text-gray-500 mt-20">
-                        <i class="fas fa-mouse-pointer text-4xl mb-4 text-gray-700"></i>
-                        <p>حدد عنصراً من الشجرة لعرض التفاصيل.</p>
-                    </div>
-                    
-                    <div id="node-details-content" class="hidden lg:col-span-1 flex flex-col">
-                        <div class="relative w-full h-52 shrink-0 rounded-2xl overflow-hidden mb-6 group border border-white/10 shadow-2xl">
-                            <img id="detail-img" src="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-                            <span id="detail-type" class="absolute top-4 right-4 bg-b-primary/90 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg font-bold shadow-lg border border-white/20 uppercase tracking-widest"></span>
-                        </div>
-
-                        <div class="space-y-6 mb-6">
-                            <h2 id="detail-title" class="text-3xl font-bold text-white leading-tight font-heading drop-shadow-md"></h2>
-                            
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-colors">
-                                    <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-lg border border-purple-500/20">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">المحاضر</p>
-                                        <p id="detail-instructor" class="text-white font-bold text-sm truncate">--</p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-colors">
-                                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-lg border border-blue-500/20">
-                                        <i class="fas fa-play-circle"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">المحتوى</p>
-                                        <p id="detail-videos" class="text-white font-bold text-sm">--</p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-colors">
-                                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-lg border border-yellow-500/20">
-                                        <i class="far fa-clock"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">المدة الفعلية</p>
-                                        <p id="detail-duration" class="text-white font-bold text-sm dir-ltr font-mono">--</p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-colors">
-                                    <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-lg border border-green-500/20">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">الخطة الزمنية</p>
-                                        <p id="detail-plan-time" class="text-white font-bold text-sm">--</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-4">
-                            <div class="bg-b-surface p-5 rounded-2xl border border-white/10 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-white/20"></div>
-                                <h4 class="text-xs font-bold text-gray-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-align-right text-b-primary"></i> نبذة عن المحتوى
-                                </h4>
-                                <p id="detail-desc" class="text-sm text-gray-200 leading-relaxed font-light"></p>
-                            </div>
-
-                            <div id="detail-learn-container" class="hidden bg-green-900/10 p-5 rounded-2xl border border-green-500/20">
-                                <h4 class="text-xs font-bold text-green-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-check-circle"></i> المخرجات التعليمية
-                                </h4>
-                                <p id="detail-learn" class="text-sm text-gray-300 leading-relaxed"></p>
-                            </div>
-
-                            <div id="detail-prereq-container" class="hidden bg-red-900/10 p-5 rounded-2xl border border-red-500/20">
-                                <h4 class="text-xs font-bold text-red-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-exclamation-triangle"></i> المتطلبات
-                                </h4>
-                                <p id="detail-prereq" class="text-sm text-gray-300"></p>
-                            </div>
-
-                            <div id="detail-tools-container" class="hidden bg-blue-900/10 p-5 rounded-2xl border border-blue-500/20">
-                                <h4 class="text-xs font-bold text-blue-400 mb-3 uppercase tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-tools"></i> الأدوات المطلوبة
-                                </h4>
-                                <p id="detail-tools" class="text-sm text-gray-300"></p>
-                            </div>
-
-                            <div id="detail-notes-container" class="hidden bg-yellow-900/10 p-5 rounded-2xl border border-yellow-500/20">
-                                <h4 class="text-xs font-bold text-yellow-400 mb-2 uppercase tracking-widest flex items-center gap-2">
-                                    <i class="fas fa-lightbulb"></i> ملاحظات
-                                </h4>
-                                <p id="detail-notes" class="text-sm text-gray-300 italic"></p>
-                            </div>
-                        </div>
-
-                        <div id="course-action-area" class="mt-4 pt-4 border-t border-white/10 shrink-0">
-                            <label class="flex items-center justify-between bg-b-primary hover:bg-teal-700 p-4 rounded-xl shadow-lg cursor-pointer transition-all group">
-                                <div class="flex items-center gap-3">
-                                    <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-power-off text-white"></i></div>
-                                    <div>
-                                        <span class="font-bold text-white block text-sm">تفعيل هذا الكورس للفريق</span>
-                                        <span class="text-[10px] text-white/70">سيظهر للطلاب في خطتهم</span>
-                                    </div>
-                                </div>
-                                <div class="relative inline-flex items-center pointer-events-none">
-                                    <input type="checkbox" id="course-toggle-btn" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-black/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-white/30"></div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+                <!-- Unified Details Panel (30%) -->
+                <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
+                    <!-- Populated dynamically by NodeDetailsPanel -->
                 </div>
+            </div>
             </div>
         </section>
 <section id="squad" class="tab-content hidden space-y-8">

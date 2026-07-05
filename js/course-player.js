@@ -35,6 +35,14 @@ let currentQuizState = {
 let quizzesLookup = {};
 let projectsLookup = {};
 
+// Preview Mode State
+let isPreview = false;
+let previewType = null;
+let previewItemId = null;
+let previewAttempts = [];
+let previewActiveState = null;
+let previewProjectSubmission = null;
+
 // ==========================================
 // 2. INITIALIZATION & SETUP
 // ==========================================
@@ -43,10 +51,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
 
     const urlParams = new URLSearchParams(window.location.search);
-    courseId = urlParams.get('id');
-    currentTaskId = urlParams.get('task_id');
+    isPreview = urlParams.get('preview') === 'true' || urlParams.get('mode') === 'preview';
+    
+    if (isPreview) {
+        previewType = urlParams.get('type');
+        previewItemId = urlParams.get('id');
+        courseId = null;
+        currentTaskId = null;
+    } else {
+        courseId = urlParams.get('id');
+        currentTaskId = urlParams.get('task_id');
+    }
 
-    if (!courseId) {
+    if (!courseId && !isPreview) {
         showToast("Course ID is missing!", "error");
         setTimeout(() => window.location.href = "student-dash.html", 2000);
         return;
@@ -130,6 +147,48 @@ function closeAllMenus() {
 // ==========================================
 // 3. DATA FETCHING & SYNCING
 // ==========================================
+async function getCourseTitleForPreview(type, refId) {
+    try {
+        const idCol = type === 'quiz' ? 'ref_quiz_id' : 'ref_project_id';
+        const { data } = await supabase
+            .from('course_materials')
+            .select('course_id, courses(title)')
+            .eq(idCol, refId)
+            .limit(1)
+            .maybeSingle();
+        
+        if (data && data.courses) {
+            return data.courses.title;
+        }
+    } catch (e) {
+        console.error("Error fetching course title for preview:", e);
+    }
+    return "عام / غير مرتبط بكورس";
+}
+
+function showPreviewBanner() {
+    let banner = document.getElementById('preview-mode-banner');
+    if (!banner) {
+        const mainEl = document.querySelector('main');
+        if (!mainEl) return;
+        
+        banner = document.createElement('div');
+        banner.id = 'preview-mode-banner';
+        banner.className = 'bg-gradient-to-r from-yellow-500/20 via-yellow-500/30 to-yellow-500/20 border-b border-yellow-500/40 text-yellow-300 px-6 py-3 text-center font-bold text-sm tracking-wide z-[9999] flex items-center justify-between gap-2 select-none shadow-md shrink-0';
+        banner.innerHTML = `
+            <div class="flex items-center gap-2 mx-auto">
+                <i class="fas fa-eye animate-pulse text-yellow-500"></i>
+                <span>وضع المعاينة (Preview Mode) - لن يتم حفظ أي بيانات أو محاولات في قاعدة البيانات</span>
+            </div>
+            <button onclick="window.goBackToDashboard()" class="bg-yellow-500 text-black hover:bg-yellow-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow shrink-0">
+                <i class="fas fa-arrow-left"></i>
+                الخروج من المعاينة
+            </button>
+        `;
+        mainEl.insertBefore(banner, mainEl.firstChild);
+    }
+}
+
 async function initPlayer() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -144,9 +203,61 @@ async function initPlayer() {
 
         await updateHeaderUserInfo();
 
+        if (isPreview) {
+            // Adjust layouts for preview mode
+            const mainEl = document.querySelector('main');
+            if (mainEl) {
+                mainEl.className = "relative w-full h-[100dvh] flex flex-col transition-all duration-300 overflow-hidden";
+            }
+            document.getElementById('right-sidebar')?.classList.add('hidden');
+            const leftSidebar = document.querySelector('aside:not([id])');
+            if (leftSidebar) leftSidebar.classList.add('hidden');
+            document.getElementById('sidebar-overlay')?.classList.add('hidden');
+
+            // Hide toggle sidebar and back buttons on mobile/header
+            document.querySelectorAll('.lg\\:hidden').forEach(el => el.classList.add('hidden'));
+
+            // Inject the premium preview mode banner at the top of main
+            showPreviewBanner();
+
+            // Override goBackToDashboard
+            window.goBackToDashboard = () => {
+                if (window.opener || window.history.length === 1) {
+                    window.close();
+                } else {
+                    window.location.href = "../admin/html/admin-dash.html";
+                }
+            };
+
+            // Load content directly
+            if (previewType === 'quiz') {
+                const viewQuiz = document.getElementById('view-quiz');
+                if (viewQuiz) {
+                    viewQuiz.classList.remove('hidden');
+                    viewQuiz.classList.add('flex-1', 'min-h-0');
+                    viewQuiz.classList.remove('h-full');
+                }
+                currentContent = { type: 'quiz', ref_quiz_id: previewItemId };
+                await loadQuizViewer(previewItemId);
+            } else if (previewType === 'project') {
+                const viewProject = document.getElementById('view-project');
+                if (viewProject) {
+                    viewProject.classList.remove('hidden');
+                    viewProject.classList.add('flex-1', 'min-h-0');
+                    viewProject.classList.remove('h-full');
+                }
+                currentContent = { type: 'project', ref_project_id: previewItemId };
+                await loadProjectViewer(previewItemId);
+            }
+            return;
+        }
+
         const { data: course, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).single();
         if (courseErr) throw courseErr;
         courseData = course;
+
+        // Load recommended tools for this course
+        loadCourseRecommendedTools(courseId);
         
         const courseTitleEl = document.getElementById('course-title');
         if (courseTitleEl) courseTitleEl.innerText = course.title || "Course Player";
@@ -1046,6 +1157,67 @@ window.changeQuality = (quality) => {
 // ==========================================
 // 7. QUIZ MODULE
 // ==========================================
+async function showQuizLandingPage(quiz) {
+    const container = document.getElementById('quiz-questions-container');
+    if(!container) return;
+
+    container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Loading Quiz Details...</p></div>';
+
+    let qCount = quiz.questions_to_show;
+    try {
+        if (!qCount) {
+            const { count } = await supabase.from('quiz_questions').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.quiz_id);
+            qCount = count || 0;
+        }
+    } catch (e) {
+        console.error(e);
+        qCount = 0;
+    }
+
+    const courseTitle = await getCourseTitleForPreview('quiz', quiz.quiz_id);
+    const maxAttempts = quiz.attempts_allowed || 3;
+    const passingScore = quiz.passing_score || 50;
+    const maxXP = quiz.max_xp || 50;
+
+    container.innerHTML = `
+        <div class="bg-b-surface border border-white/10 rounded-2xl p-6 md:p-8 text-center max-w-xl mx-auto space-y-6 animate-fade-in shadow-2xl">
+            <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto border border-yellow-500/20 text-yellow-500 text-3xl">
+                <i class="fas fa-clipboard-question"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-2">${quiz.title}</h2>
+                <p class="text-gray-400 text-sm leading-relaxed">${quiz.description || 'لا يوجد وصف متاح للاختبار.'}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-right">
+                <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">المادة / الكورس</span>
+                    <span class="text-white font-bold text-sm truncate" title="${courseTitle}"><i class="fas fa-book text-yellow-500 ml-1 text-xs"></i> ${courseTitle}</span>
+                </div>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">عدد الأسئلة</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-list-ol text-yellow-500 ml-1 text-xs"></i> ${qCount} أسئلة</span>
+                </div>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">المحاولات المسموحة</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-redo text-yellow-500 ml-1 text-xs"></i> ${maxAttempts} محاولات</span>
+                </div>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">النقاط القصوى</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-trophy text-yellow-500 ml-1 text-xs"></i> ${maxXP} XP</span>
+                </div>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between col-span-2">
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">نسبة النجاح المطلوبة</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-check-circle text-yellow-500 ml-1 text-xs"></i> %${passingScore}</span>
+                </div>
+            </div>
+            <button onclick="window.retryQuiz()" class="w-full py-4 rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white font-bold transition-all shadow-lg shadow-yellow-900/20 flex items-center justify-center gap-2 text-base">
+                <i class="fas fa-play text-sm"></i>
+                <span>بدء الاختبار (Start Quiz)</span>
+            </button>
+        </div>
+    `;
+}
+
 async function loadQuizViewer(quizId) {
     const container = document.getElementById('quiz-questions-container');
     if(!container) return;
@@ -1056,9 +1228,15 @@ async function loadQuizViewer(quizId) {
         const { data: quiz } = await supabase.from('quizzes').select('*').eq('quiz_id', quizId).single();
         if (!quiz) throw new Error("Quiz not found");
 
-        const { data: attempts } = await supabase.from('quiz_attempts')
-            .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id)
-            .order('submitted_at', { ascending: false });
+        let attempts = [];
+        if (isPreview) {
+            attempts = previewAttempts;
+        } else {
+            const { data: dbAttempts } = await supabase.from('quiz_attempts')
+                .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id)
+                .order('submitted_at', { ascending: false });
+            attempts = dbAttempts || [];
+        }
 
         currentQuizState.metaData = quiz;
         currentQuizState.allAttempts = attempts || [];
@@ -1074,8 +1252,14 @@ async function loadQuizViewer(quizId) {
 
         updateQuizHeaderStats(quiz, currentQuizState.savedState);
 
-        const { data: activeState } = await supabase.from('active_quiz_states')
-            .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id).maybeSingle();
+        let activeState = null;
+        if (isPreview) {
+            activeState = previewActiveState;
+        } else {
+            const { data: dbActiveState } = await supabase.from('active_quiz_states')
+                .select('*').eq('quiz_id', quizId).eq('user_id', currentUserData.id).maybeSingle();
+            activeState = dbActiveState;
+        }
 
         if (activeState && activeState.questions && activeState.questions.length > 0) {
             currentQuizState.questions = activeState.questions;
@@ -1091,7 +1275,7 @@ async function loadQuizViewer(quizId) {
             return;
         }
 
-        window.retryQuiz();
+        await showQuizLandingPage(quiz);
 
     } catch (e) {
         container.innerHTML = `<p class="text-center text-red-500 py-20">${e.message}</p>`;
@@ -1186,14 +1370,25 @@ window.selectAnswer = async (qId, option) => {
     renderCurrentQuestion();
 
     if(currentQuizState.metaData) {
-        supabase.from('active_quiz_states')
-            .update({ 
-                user_answers: currentQuizState.userAnswers,
-                updated_at: new Date()
-            })
-            .eq('quiz_id', currentQuizState.metaData.quiz_id)
-            .eq('user_id', currentUserData.id)
-            .then(); 
+        if (isPreview) {
+            if (!previewActiveState) {
+                previewActiveState = {
+                    quiz_id: currentQuizState.metaData.quiz_id,
+                    questions: currentQuizState.questions,
+                    user_answers: {}
+                };
+            }
+            previewActiveState.user_answers = currentQuizState.userAnswers;
+        } else {
+            supabase.from('active_quiz_states')
+                .update({ 
+                    user_answers: currentQuizState.userAnswers,
+                    updated_at: new Date()
+                })
+                .eq('quiz_id', currentQuizState.metaData.quiz_id)
+                .eq('user_id', currentUserData.id)
+                .then(); 
+        }
     }
 };
 
@@ -1236,24 +1431,41 @@ window.submitQuiz = async () => {
         const xpEarned = passed ? Math.round((scorePercent / 100) * (currentQuizState.metaData.max_xp || 50)) : 0;
 
         try {
-            await supabase.from('quiz_attempts').insert([{
-                user_id: currentUserData.id,
-                quiz_id: currentQuizState.metaData.quiz_id,
-                score: scorePercent,
-                passed: passed,
-                answers: currentQuizState.userAnswers 
-            }]);
+            if (isPreview) {
+                previewAttempts.unshift({
+                    quiz_id: currentQuizState.metaData.quiz_id,
+                    score: scorePercent,
+                    passed: passed,
+                    answers: JSON.parse(JSON.stringify(currentQuizState.userAnswers)),
+                    submitted_at: new Date().toISOString()
+                });
+                previewActiveState = null;
 
-            await supabase.from('active_quiz_states')
-                .delete()
-                .eq('quiz_id', currentQuizState.metaData.quiz_id)
-                .eq('user_id', currentUserData.id);
-
-            if (passed) {
-                await markContentComplete(currentContent.content_id, xpEarned, 'quiz');
-                showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP`, "success");
+                if (passed) {
+                    showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP (Preview)`, "success");
+                } else {
+                    showToast(`Failed. Score: ${scorePercent}% (Preview)`, "error");
+                }
             } else {
-                showToast(`Failed. Score: ${scorePercent}%`, "error");
+                await supabase.from('quiz_attempts').insert([{
+                    user_id: currentUserData.id,
+                    quiz_id: currentQuizState.metaData.quiz_id,
+                    score: scorePercent,
+                    passed: passed,
+                    answers: currentQuizState.userAnswers 
+                }]);
+
+                await supabase.from('active_quiz_states')
+                    .delete()
+                    .eq('quiz_id', currentQuizState.metaData.quiz_id)
+                    .eq('user_id', currentUserData.id);
+
+                if (passed) {
+                    await markContentComplete(currentContent.content_id, xpEarned, 'quiz');
+                    showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP`, "success");
+                } else {
+                    showToast(`Failed. Score: ${scorePercent}%`, "error");
+                }
             }
 
             loadQuizViewer(currentQuizState.metaData.quiz_id);
@@ -1438,14 +1650,23 @@ window.retryQuiz = async () => {
         currentQuizState.currentIndex = 0;
         currentQuizState.isReviewMode = false;
 
-        await supabase.from('active_quiz_states').upsert({
-            user_id: currentUserData.id,
-            quiz_id: quizId,
-            questions: selectedQuestions,
-            user_answers: {},
-            current_attempt: attemptsCount + 1,
-            updated_at: new Date()
-        }, { onConflict: 'user_id,quiz_id' });
+        if (isPreview) {
+            previewActiveState = {
+                quiz_id: quizId,
+                questions: selectedQuestions,
+                user_answers: {},
+                current_attempt: attemptsCount + 1
+            };
+        } else {
+            await supabase.from('active_quiz_states').upsert({
+                user_id: currentUserData.id,
+                quiz_id: quizId,
+                questions: selectedQuestions,
+                user_answers: {},
+                current_attempt: attemptsCount + 1,
+                updated_at: new Date()
+            }, { onConflict: 'user_id,quiz_id' });
+        }
 
         updateQuizHeaderStats(currentQuizState.metaData, { attempts_count: attemptsCount, passed: false });
         renderCurrentQuestion();
@@ -1467,8 +1688,14 @@ async function loadProjectViewer(projectId) {
         const { data: project } = await supabase.from('projects').select('*').eq('id', projectId).single();
         if (!project) throw new Error("Project not found");
 
-        const { data: sub } = await supabase.from('project_submissions')
-            .select('*').eq('project_id', projectId).eq('user_id', currentUserData.id).maybeSingle();
+        let sub = null;
+        if (isPreview) {
+            sub = previewProjectSubmission;
+        } else {
+            const { data: dbSub } = await supabase.from('project_submissions')
+                .select('*').eq('project_id', projectId).eq('user_id', currentUserData.id).maybeSingle();
+            sub = dbSub;
+        }
 
         renderProjectUI(project, sub);
 
@@ -1483,13 +1710,22 @@ function renderProjectUI(projectData, submissionData) {
     document.getElementById('project-desc').innerHTML = projectData.description || "لا يوجد وصف.";
     document.getElementById('project-max-points').innerText = projectData.max_points || 100;
 
-    const relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
     const lessonTag = document.getElementById('project-lesson-tag');
-    if (relatedLesson) {
-        lessonTag.innerText = `تابع لدرس: ${relatedLesson.title}`;
-        lessonTag.classList.remove('hidden');
+    if (isPreview) {
+        getCourseTitleForPreview('project', projectData.id).then(courseTitle => {
+            if (lessonTag) {
+                lessonTag.innerText = `الكورس: ${courseTitle}`;
+                lessonTag.classList.remove('hidden');
+            }
+        });
     } else {
-        lessonTag.classList.add('hidden');
+        const relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
+        if (relatedLesson) {
+            lessonTag.innerText = `تابع لدرس: ${relatedLesson.title}`;
+            lessonTag.classList.remove('hidden');
+        } else {
+            lessonTag.classList.add('hidden');
+        }
     }
 
     const reqBtn = document.getElementById('btn-project-requirements');
@@ -1676,19 +1912,30 @@ window.submitProjectAction = async (projectId, projectTitle) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
 
     try {
-        const { error } = await supabase.from('project_submissions').upsert({
-            user_id: currentUserData.id,
-            project_id: projectId,
-            submission_link: link,
-            status: "pending"
-        }, { onConflict: 'user_id,project_id' });
+        if (isPreview) {
+            previewProjectSubmission = {
+                project_id: projectId,
+                submission_link: link,
+                status: "pending",
+                submitted_at: new Date().toISOString()
+            };
+            showToast("تم تسليم المشروع بنجاح (معاينة)!", "success");
+            loadProjectViewer(projectId);
+        } else {
+            const { error } = await supabase.from('project_submissions').upsert({
+                user_id: currentUserData.id,
+                project_id: projectId,
+                submission_link: link,
+                status: "pending"
+            }, { onConflict: 'user_id,project_id' });
 
-        if (error) throw error; // Stop execution if DB rejects submission
+            if (error) throw error; // Stop execution if DB rejects submission
 
-        await updateTaskStatus('completed'); 
+            await updateTaskStatus('completed'); 
 
-        showToast("تم تسليم المشروع بنجاح!", "success");
-        loadProjectViewer(projectId);
+            showToast("تم تسليم المشروع بنجاح!", "success");
+            loadProjectViewer(projectId);
+        }
 
     } catch (e) {
         console.error("Submission Error:", e);
@@ -1707,19 +1954,25 @@ window.resubmitProject = (projectId) => {
             container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-purple-500 text-3xl"></i><p class="text-gray-400 mt-2 text-sm">جاري إلغاء التسليم السابق...</p></div>';
 
             try {
-                // Delete old submission
-                const { error } = await supabase
-                    .from('project_submissions')
-                    .delete()
-                    .eq('project_id', projectId)
-                    .eq('user_id', currentUserData.id);
+                if (isPreview) {
+                    previewProjectSubmission = null;
+                    showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن (معاينة).", "success");
+                    loadProjectViewer(projectId);
+                } else {
+                    // Delete old submission
+                    const { error } = await supabase
+                        .from('project_submissions')
+                        .delete()
+                        .eq('project_id', projectId)
+                        .eq('user_id', currentUserData.id);
 
-                if (error) throw error;
+                    if (error) throw error;
 
-                showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن.", "success");
-                
-                // Reload UI from DB directly
-                loadProjectViewer(projectId);
+                    showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن.", "success");
+                    
+                    // Reload UI from DB directly
+                    loadProjectViewer(projectId);
+                }
 
             } catch (error) {
                 console.error("Delete Submission Error:", error);
@@ -1980,3 +2233,57 @@ window.goBackToDashboard = async () => {
         window.location.href = 'student-dash.html';
     }
 };
+
+/**
+ * Fetches and renders the published tools recommended for the current course.
+ * @param {string} cId - Course ID
+ */
+async function loadCourseRecommendedTools(cId) {
+    const card = document.getElementById('course-recommended-tools-card');
+    const list = document.getElementById('course-recommended-tools-list');
+    if (!card || !list) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('tools')
+            .select('*')
+            .contains('course_ids', [String(cId)])
+            .eq('status', 'Published')
+            .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            card.classList.add('hidden');
+            card.classList.remove('flex');
+            return;
+        }
+
+        card.classList.remove('hidden');
+        card.classList.add('flex');
+        
+        list.innerHTML = data.map(tool => {
+            const impBadge = tool.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : tool.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
+            const importanceName = tool.importance === 'Required' ? 'مطلوب' : tool.importance === 'Recommended' ? 'مستحسن' : 'اختياري';
+            return `
+                <div onclick="if (typeof window.openToolDetailDrawer === 'function') { window.openToolDetailDrawer('${tool.id}'); } else { window.open('${tool.official_website || '#'}', '_blank'); }" 
+                     class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-7 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-0.5" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                        </div>
+                        <div class="text-right truncate">
+                            <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate">${tool.name}</span>
+                            <span class="text-[8px] text-gray-500 block truncate mt-0.5">${tool.type}</span>
+                        </div>
+                    </div>
+                    <span class="text-[8px] border px-1.5 py-0.5 rounded font-black shrink-0 ${impBadge}">${importanceName}</span>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("loadCourseRecommendedTools error:", err);
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+    }
+}

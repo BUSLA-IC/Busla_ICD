@@ -70,7 +70,7 @@ export async function initInteractiveRoadmap(role = 'student') {
  * Sets up the container layout (adds toolbar, viewport, canvas, controls, minimap, legends)
  */
 function setupRoadmapHTML(container) {
-    if (document.getElementById('roadmap-info-panel')) {
+    if (document.getElementById('roadmap-viewport')) {
         bindViewportEvents();
         return;
     }
@@ -129,24 +129,10 @@ function setupRoadmapHTML(container) {
                 </div>
             </div>
 
-            <!-- ── Main area: viewport + info panel ── -->
+            <!-- ── Main area: viewport ── -->
             <div style="flex:1;display:flex;overflow:hidden;position:relative;">
 
-                <!-- ── Info Side Panel (Placed first to render on the right side in RTL layouts) ── -->
-                <div id="roadmap-info-panel" class="roadmap-info-panel" style="display:none;">
-                    <!-- Panel header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-bold text-white" id="rm-panel-title">تفاصيل العنصر</h3>
-                        <button id="rm-panel-close"
-                                class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all">
-                            <i class="fas fa-times text-xs"></i>
-                        </button>
-                    </div>
-                    <!-- Scrollable content -->
-                    <div id="rm-panel-content" class="overflow-y-auto custom-scroll" style="flex:1;"></div>
-                </div>
-
-                <!-- Viewport (Placed second to render on the left side in RTL layouts) ── -->
+                <!-- Viewport ── -->
                 <div id="roadmap-viewport" class="roadmap-viewport" style="flex:1;min-width:0;">
                     <!-- Controls -->
                     <div class="roadmap-controls">
@@ -196,9 +182,6 @@ function setupRoadmapHTML(container) {
         exportMenu.classList.toggle('hidden');
     });
     document.addEventListener('click', () => exportMenu.classList.add('hidden'));
-
-    // Panel close button
-    document.getElementById('rm-panel-close').addEventListener('click', closeInfoPanel);
 
     bindViewportEvents();
 }
@@ -1156,39 +1139,15 @@ function renderSvgLines() {
 }
 
 // ============================================================
-// INFO SIDE PANEL
+// INFO PANEL GLOBALS
 // ============================================================
 
-/**
- * Exposes _rmShowInfo globally (called from inline onclick on nodes)
- */
 function initInfoPanelGlobals() {
     window._rmShowInfo = function(nodeId) {
-        const node = computedNodes.find(n => n.id === nodeId);
-        if (node) showNodeInfoPanel(node);
+        if (typeof window.selectRoadmapNodeById === 'function') {
+            window.selectRoadmapNodeById(nodeId);
+        }
     };
-}
-
-/** Open the info panel and populate it for the given node */
-function showNodeInfoPanel(node) {
-    const panel = document.getElementById('roadmap-info-panel');
-    const titleEl = document.getElementById('rm-panel-title');
-    const contentEl = document.getElementById('rm-panel-content');
-    if (!panel || !contentEl) return;
-
-    titleEl.textContent = node.title || 'تفاصيل العنصر';
-    contentEl.innerHTML = buildInfoPanelHTML(node);
-    panel.style.display = 'flex';
-    panel.style.flexDirection = 'column';
-
-    // Make relationship links clickable (pan to node)
-    contentEl.querySelectorAll('[data-jump-node]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetId = btn.dataset.jumpNode;
-            const target = computedNodes.find(n => n.id === targetId);
-            if (target) panToNode(target);
-        });
-    });
 }
 
 /** Close the info panel */
@@ -1606,7 +1565,7 @@ function _rmDownload(blob, filename) {
 }
 
 // ============================================================
-// ── Standard select node action ──
+// ── Standard select node action & Unified Details Panel ──
 // ============================================================
 
 /**
@@ -1620,20 +1579,14 @@ function selectNode(node) {
     activeNode = node;
 
     // Highlight clicked card
-    const nodeEl = document.getElementById(`node-node-${node.id}`);
+    const nodeEl = document.getElementById(`node-${node.id}`);
     if (nodeEl) nodeEl.classList.add('node-active-selection');
 
     // Highlight relationships/links attached to this node
     highlightRelationships(node.id);
 
-    // Update details side panel or trigger admin details modal
-    if (currentRole === 'admin') {
-        if (typeof window.cmShowInfo === 'function') {
-            window.cmShowInfo(node.dbId);
-        }
-    } else {
-        showSidebarDetails(node);
-    }
+    // Update details side panel
+    renderNodeDetailsPanel(node);
 
     // Pan camera smoothly to center this node
     panToNode(node);
@@ -1652,259 +1605,818 @@ function highlightRelationships(nodeId) {
 }
 
 /**
- * Handles sidebar details loading
+ * Renders the unified details panel content inside '#node-details-container'
+ * @param {Object|null} node - The selected node, or null to show placeholder
  */
-function showSidebarDetails(node) {
-    const placeholder = document.getElementById('node-details-placeholder');
-    const content = document.getElementById('node-details-content');
-    if (!content) return;
+export function renderNodeDetailsPanel(node) {
+    const container = document.getElementById('node-details-container');
+    if (!container) return;
 
-    if (placeholder) placeholder.classList.add('hidden');
-    content.classList.remove('hidden');
-
-    // 1. Breadcrumb calculation
-    const breadcrumb = getBreadcrumbPath(node);
-    
-    // 2. Render details panel dynamically
-    content.innerHTML = `
-        <!-- Breadcrumb -->
-        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-4 flex items-center gap-1.5 flex-row-reverse">
-            ${breadcrumb.map((b, idx) => `
-                <span>${b}</span>
-                ${idx < breadcrumb.length - 1 ? '<i class="fas fa-chevron-left text-[8px] opacity-50"></i>' : ''}
-            `).join('')}
-        </div>
-
-        <!-- Banner Header -->
-        <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl">
-            <img src="${node.image_url ? node.image_url : '../assets/images/1.jpg'}" 
-                 class="w-full h-full object-cover" onerror="this.src='../assets/icons/BUSLA-icon.png'">
-            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-            <span class="absolute top-4 right-4 bg-b-primary/95 backdrop-blur text-white text-[9px] px-2.5 py-1 rounded-lg font-black tracking-widest border border-white/20 uppercase">
-                ${node.type}
-            </span>
-        </div>
-
-        <!-- Info Body -->
-        <div class="space-y-5 flex-1 pr-1">
-            <h2 class="text-2xl font-black text-white leading-tight font-heading">${node.title}</h2>
-            <p class="text-sm text-gray-300 leading-relaxed text-right">${node.description || 'لا يوجد وصف مضاف حالياً لهذا العنصر.'}</p>
-            
-            <!-- Metadata Grid -->
-            <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-chalkboard-teacher"></i></div>
-                    <div class="min-w-0">
-                        <span class="text-[9px] text-gray-500 block">المدرس</span>
-                        <span class="text-white font-bold truncate block">${node.instructor || node.author || 'Busla Team'}</span>
-                    </div>
-                </div>
-
-                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
-                    <div class="min-w-0">
-                        <span class="text-[9px] text-gray-500 block">المدة</span>
-                        <span class="text-white font-bold truncate block">${node.duration || 'مرنة'}</span>
-                    </div>
-                </div>
-
-                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
-                    <div class="min-w-0">
-                        <span class="text-[9px] text-gray-500 block">نقاط XP</span>
-                        <span class="text-white font-bold block">${node.baseXp || (node.videosCount * 10) || 50} XP</span>
-                    </div>
-                </div>
-
-                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fas fa-brain"></i></div>
-                    <div class="min-w-0">
-                        <span class="text-[9px] text-gray-500 block">المستوى</span>
-                        <span class="text-white font-bold block">${node.difficulty || 'Intermediate'}</span>
-                    </div>
-                </div>
+    if (!node) {
+        container.innerHTML = `
+            <div id="node-details-placeholder" class="text-center text-gray-500 my-auto py-20 flex flex-col items-center justify-center">
+                <i class="fas fa-mouse-pointer text-4xl mb-4 text-gray-700 animate-bounce"></i>
+                <p class="font-bold text-gray-400">حدد عنصراً من الشجرة لعرض التفاصيل.</p>
+                <p class="text-xs text-gray-500 mt-2">اضغط على أي مسار أو مرحلة أو كورس أو درس لاستكشاف تفاصيله وعلاقاته.</p>
             </div>
+        `;
+        container.classList.remove('sheet-open');
+        return;
+    }
 
-            <!-- Mini Roadmap (If Course node) -->
-            ${node.type === 'course' ? `
-                <div class="border-t border-white/5 pt-4">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                        <i class="fas fa-sitemap text-b-primary"></i> خريطة الكورس المصغرة (Mini Roadmap)
-                    </h4>
-                    <div class="mini-roadmap-container">
-                        ${renderMiniRoadmap(node.dbId)}
-                    </div>
-                </div>
-            ` : ''}
+    // Add sheet-open class on mobile to slide drawer up
+    container.classList.add('sheet-open');
 
-            <!-- Prerequisites list -->
-            ${node.type === 'course' && node.prerequisites.length > 0 ? `
-                <div class="border-t border-white/5 pt-4 text-right">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">المتطلبات السابقة:</h4>
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        ${node.prerequisites.map(p => {
-                            const name = typeof p === 'string' ? p : p.course_id;
-                            const matched = computedNodes.find(n => n.dbId === name);
-                            return `<span class="bg-white/5 border border-white/10 text-[10px] px-2 py-1 rounded">${matched ? matched.title : name}</span>`;
-                        }).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
-            <!-- Action buttons area -->
-            <div class="border-t border-white/5 pt-4 mt-6" id="roadmap-action-buttons">
-                ${renderActionButtons(node)}
-            </div>
+    // Panel close button & header
+    let headerHtml = `
+        <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span class="w-1.5 h-4 bg-teal-500 rounded-full"></span>
+                تفاصيل العنصر
+            </h3>
+            <button onclick="window.closeRoadmapDetailsPanel()"
+                    class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-red-400 transition-all">
+                <i class="fas fa-times text-xs"></i>
+            </button>
         </div>
     `;
-}
 
-/**
- * Compares and gathers the path hierarchy to construct breadcrumbs
- */
-function getBreadcrumbPath(node) {
-    const path = [];
-    if (node.type === 'material') {
-        const parentCourse = computedNodes.find(n => n.dbId === node.courseId && n.type === 'course');
-        if (parentCourse) {
-            const parentPhase = computedNodes.find(n => n.dbId === parentCourse.phaseId && n.type === 'phase');
-            if (parentPhase) {
-                const track = computedNodes.find(n => n.type === 'track');
-                if (track) path.push(track.title);
-                path.push(`المرحلة ${parentPhase.orderIndex}`);
-            }
-            path.push(parentCourse.title);
-        }
-        path.push(node.title);
-    } else if (node.type === 'course') {
-        const parentPhase = computedNodes.find(n => n.dbId === node.phaseId && n.type === 'phase');
-        if (parentPhase) {
-            const track = computedNodes.find(n => n.type === 'track');
-            if (track) path.push(track.title);
-            path.push(`المرحلة ${parentPhase.orderIndex}`);
-        }
-        path.push(node.title);
-    } else if (node.type === 'phase') {
-        const track = computedNodes.find(n => n.type === 'track');
-        if (track) path.push(track.title);
-        path.push(`المرحلة ${node.orderIndex}`);
-    } else {
-        path.push(node.title);
-    }
-    return path;
-}
+    // Type Badge details
+    const typeColors = {
+        track: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+        phase: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        course: 'bg-green-500/10 text-green-400 border-green-500/20',
+        video: 'bg-gray-500/10 text-gray-300 border-gray-500/20',
+        quiz: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+        project: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+    };
+    const typeNames = {
+        track: 'مسار تعليمي',
+        phase: 'مرحلة تعليمية',
+        course: 'كورس تعليمي',
+        video: 'درس فيديو',
+        quiz: 'اختبار تقييمي',
+        project: 'مشروع عملي'
+    };
+    const colorClass = typeColors[node.type] || 'bg-gray-500/10 text-gray-400';
+    const typeName = typeNames[node.type] || node.type;
 
-/**
- * Builds HTML for course contents mini roadmap list
- */
-function renderMiniRoadmap(courseId) {
-    const materials = computedNodes.filter(n => n.courseId === courseId);
-    if (materials.length === 0) {
-        return '<p class="text-xs text-gray-500 italic">لا توجد دروس أو كويزات مضافة للكورس حالياً.</p>';
-    }
+    let badgeHtml = `
+        <span class="inline-flex items-center justify-center text-[10px] px-2.5 py-1 rounded-lg border font-bold uppercase tracking-wider ${colorClass} mb-4">
+            ${typeName}
+        </span>
+    `;
 
-    return materials.map((mat) => {
-        let isCompleted = mat.status === 'completed';
-        let stepClass = isCompleted ? 'step-completed' : mat.status === 'current' ? 'step-current' : 'step-locked';
-        let statusIcon = isCompleted ? '<i class="fas fa-check text-green-500"></i>' : mat.type === 'video' ? '<i class="far fa-play-circle text-gray-400"></i>' : mat.type === 'quiz' ? '<i class="fas fa-clipboard-question text-purple-400"></i>' : '<i class="fas fa-code-branch text-orange-400"></i>';
+    // Content body depending on type
+    let bodyHtml = '';
+    let actionButtonsHtml = '';
 
-        const isSubNode = !!mat.parentMaterialId;
-        const indentStyle = isSubNode ? 'margin-right: 1.5rem; border-right: 1px dashed rgba(255,255,255,0.1); padding-right: 0.75rem;' : '';
+    if (node.type === 'track') {
+        const track = node.rawItem || {};
+        const phasesCount = currentGraphData ? currentGraphData.phases.length : 0;
+        const coursesCount = currentGraphData ? currentGraphData.courses.length : 0;
+        const videosCount = currentGraphData ? currentGraphData.materials.filter(m => m.type === 'video').length : 0;
+        const quizzesCount = currentGraphData ? currentGraphData.quizzes.length : 0;
+        const projectsCount = currentGraphData ? currentGraphData.projects.length : 0;
+        const totalSec = currentGraphData ? currentGraphData.materials.reduce((sum, m) => sum + (m.duration || 0), 0) : 0;
+        const totalHours = totalSec > 0 ? formatDuration(totalSec) : 'مرنة';
+        const completionRate = node.completionRate || 0;
 
-        return `
-            <div class="mini-roadmap-step ${stepClass}" onclick="window.selectRoadmapNodeById('${mat.id}')" style="${indentStyle}">
-                <div class="mini-roadmap-dot"></div>
-                <div class="mini-roadmap-content">
-                    <div class="flex items-center gap-2">
-                        <span class="text-white text-xs font-bold line-clamp-1">${mat.title}</span>
+        bodyHtml = `
+            <h2 class="text-2xl font-black text-white leading-tight font-heading mb-4 text-right">${node.title}</h2>
+            <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${node.description || 'لا يوجد وصف مضاف حالياً لهذا المسار.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-sm"><i class="fas fa-layer-group"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">المراحل</span>
+                        <span class="text-white font-bold block">${phasesCount} مراحل</span>
                     </div>
-                    <div class="shrink-0 pl-2">
-                        ${statusIcon}
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-book-open"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الكورسات</span>
+                        <span class="text-white font-bold block">${coursesCount} كورسات</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-play"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الفيديوهات</span>
+                        <span class="text-white font-bold block">${videosCount} فيديوهات</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fas fa-clipboard-question"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الكويزات</span>
+                        <span class="text-white font-bold block">${quizzesCount} كويزات</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-code-branch"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">المشاريع</span>
+                        <span class="text-white font-bold block">${projectsCount} مشاريع</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">ساعات التعلم</span>
+                        <span class="text-white font-bold block">${totalHours}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white/5 border border-white/10 p-4 rounded-xl mb-6 text-right">
+                <span class="text-[10px] text-gray-500 block mb-1">نسبة الإكمال للمسار</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-cyan-400 font-bold font-mono text-sm">${completionRate}%</span>
+                    <div class="flex-1 bg-black/50 h-2 rounded-full overflow-hidden">
+                        <div class="bg-cyan-400 h-full" style="width: ${completionRate}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-white/5 pt-4 text-right mb-6">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                    <i class="fas fa-graduation-cap text-cyan-400 text-xs"></i> المهارات المكتسبة
+                </h4>
+                <p class="text-xs text-gray-400 leading-relaxed">${track.what_you_will_learn || 'اكتساب المهارات الأساسية للـ Digital IC Design.'}</p>
+            </div>
+
+            <div class="border-t border-white/5 pt-4 text-right">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                    <i class="fas fa-info-circle text-gray-400 text-xs"></i> المتطلبات السابقة للمسار
+                </h4>
+                <p class="text-xs text-gray-400 leading-relaxed">${track.prerequisites || 'لا توجد متطلبات سابقة للمسار.'}</p>
+            </div>
+        `;
+    } 
+    else if (node.type === 'phase') {
+        const phase = node.rawItem || {};
+        const coursesCount = currentGraphData ? currentGraphData.courses.filter(c => c.phase_id === node.dbId).length : 0;
+        
+        // Calculate phase completion rate
+        let completionRate = 0;
+        if (currentGraphData) {
+            const phaseCourses = currentGraphData.courses.filter(c => c.phase_id === node.dbId);
+            const phaseCourseIds = phaseCourses.map(c => c.course_id);
+            const phaseMats = currentGraphData.materials.filter(m => phaseCourseIds.includes(m.course_id));
+            const completedPhaseMats = phaseMats.filter(m => userProgress.completedMats.has(m.content_id));
+            completionRate = phaseMats.length ? Math.round((completedPhaseMats.length / phaseMats.length) * 100) : 0;
+        }
+
+        bodyHtml = `
+            <h2 class="text-2xl font-black text-white leading-tight font-heading mb-4 text-right">${node.title}</h2>
+            <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${node.description || 'لا يوجد وصف مضاف حالياً لهذه المرحلة.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-sort-numeric-up"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">ترتيب المرحلة</span>
+                        <span class="text-white font-bold block">المرحلة ${node.orderIndex || phase.order_index || '--'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-book-open"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">عدد الكورسات</span>
+                        <span class="text-white font-bold block">${coursesCount} كورسات</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2 col-span-2">
+                    <div class="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
+                    <div class="min-w-0 text-right flex-1">
+                        <span class="text-[9px] text-gray-500 block">المدة المتوقعة للمرحلة</span>
+                        <span class="text-white font-bold block">${node.time || phase['Module Time'] || 'مرنة'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white/5 border border-white/10 p-4 rounded-xl mb-6 text-right">
+                <span class="text-[10px] text-gray-500 block mb-1">نسبة إكمال المرحلة</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-blue-400 font-bold font-mono text-sm">${completionRate}%</span>
+                    <div class="flex-1 bg-black/50 h-2 rounded-full overflow-hidden">
+                        <div class="bg-blue-400 h-full" style="width: ${completionRate}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-white/5 pt-4 text-right mb-6">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                    <i class="fas fa-bullseye text-blue-400 text-xs"></i> المهارات المستهدفة
+                </h4>
+                <p class="text-xs text-gray-400 leading-relaxed">${phase.what_you_will_learn || 'تطوير وتعميق المهارات الهندسية الأساسية.'}</p>
+            </div>
+        `;
+    }
+    else if (node.type === 'course') {
+        const course = node.rawItem || {};
+        const trackName = currentGraphData?.track?.name || 'مسار بوصلة';
+        const phase = currentGraphData?.phases?.find(p => p.phase_id === node.phaseId) || {};
+        const phaseTitle = phase.title || 'مرحلة غير محددة';
+        
+        // Calculate course completion
+        let completionRate = 0;
+        let completedVideos = 0, totalVideos = 0;
+        let completedQuizzes = 0, totalQuizzes = 0;
+        let completedProjects = 0, totalProjects = 0;
+        
+        if (currentGraphData) {
+            const courseMats = currentGraphData.materials.filter(m => m.course_id === node.dbId);
+            
+            totalVideos = courseMats.filter(m => m.type === 'video').length;
+            completedVideos = courseMats.filter(m => m.type === 'video' && userProgress.completedMats.has(m.content_id)).length;
+            
+            totalQuizzes = courseMats.filter(m => m.type === 'quiz').length;
+            completedQuizzes = courseMats.filter(m => m.type === 'quiz' && userProgress.completedMats.has(m.content_id)).length;
+            
+            totalProjects = courseMats.filter(m => m.type === 'project').length;
+            completedProjects = courseMats.filter(m => m.type === 'project' && userProgress.completedMats.has(m.content_id)).length;
+            
+            const totalMats = courseMats.length;
+            const completedMats = courseMats.filter(m => userProgress.completedMats.has(m.content_id)).length;
+            completionRate = totalMats ? Math.round((completedMats / totalMats) * 100) : 0;
+        }
+
+        // Prerequisites and next courses HTML
+        let prereqsHtml = '';
+        const prereqIds = node.prerequisites || [];
+        if (prereqIds.length > 0) {
+            prereqsHtml = prereqIds.map(prereq => {
+                const targetId = typeof prereq === 'string' ? prereq : prereq.course_id;
+                const matched = computedNodes.find(n => n.dbId === targetId && n.type === 'course');
+                return `<button onclick="window.selectRoadmapNodeById('${matched ? matched.id : 'course-' + targetId}')" class="bg-teal-500/10 border border-teal-500/25 text-teal-400 font-bold px-3 py-1.5 rounded-lg text-[10px] hover:bg-teal-500 hover:text-white transition-all text-right">
+                    <i class="fas fa-link ml-1"></i> ${matched ? matched.title : targetId}
+                </button>`;
+            }).join('');
+        } else {
+            prereqsHtml = '<span class="text-xs text-gray-500">لا يوجد متطلبات سابقة</span>';
+        }
+
+        let nextHtml = '';
+        if (currentGraphData) {
+            const nextCourses = currentGraphData.courses.filter(c => {
+                if (!c.prerequisites) return false;
+                let prqs = [];
+                try {
+                    if (typeof c.prerequisites === 'string') {
+                        prqs = c.prerequisites.split(',').map(s => s.trim());
+                    } else if (Array.isArray(c.prerequisites)) {
+                        prqs = c.prerequisites.map(p => typeof p === 'string' ? p : p.course_id);
+                    }
+                } catch (e) {}
+                return prqs.includes(String(node.dbId));
+            });
+            
+            if (nextCourses.length > 0) {
+                nextHtml = nextCourses.map(c => {
+                    const matched = computedNodes.find(n => n.dbId === c.course_id && n.type === 'course');
+                    return `<button onclick="window.selectRoadmapNodeById('${matched ? matched.id : 'course-' + c.course_id}')" class="bg-blue-500/10 border border-blue-500/25 text-blue-400 font-bold px-3 py-1.5 rounded-lg text-[10px] hover:bg-blue-500 hover:text-white transition-all text-right">
+                        <i class="fas fa-link ml-1"></i> ${c.title}
+                    </button>`;
+                }).join('');
+            } else {
+                nextHtml = '<span class="text-xs text-gray-500">لا توجد كورسات تالية</span>';
+            }
+        }
+
+        // Contents Lists HTML
+        let contentListsHtml = '';
+        if (currentGraphData) {
+            const courseMats = currentGraphData.materials.filter(m => m.course_id === node.dbId);
+            
+            if (courseMats.length > 0) {
+                contentListsHtml = `
+                    <div class="border-t border-white/5 pt-4 text-right mb-6">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2 justify-end">
+                            <i class="fas fa-list-ol text-green-400 text-xs"></i> قائمة المحتوى التفاعلية
+                        </h4>
+                        <div class="space-y-2 max-h-[300px] overflow-y-auto custom-scroll pr-1">
+                            ${courseMats.map((m, idx) => {
+                                const isCompleted = userProgress.completedMats.has(m.content_id);
+                                const matIcon = m.type === 'video' ? 'fa-play-circle text-gray-400' : m.type === 'quiz' ? 'fa-clipboard-question text-purple-400' : 'fa-code-branch text-orange-400';
+                                const checkIcon = isCompleted ? '<i class="fas fa-check-circle text-green-400 mr-2 text-[10px]"></i>' : '<i class="far fa-circle text-gray-600 mr-2 text-[10px]"></i>';
+                                
+                                return `
+                                    <button onclick="window.selectRoadmapNodeById('material-${m.content_id}')" 
+                                            class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500 p-2.5 rounded-xl text-gray-300 font-bold flex items-center justify-between transition-all">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas ${matIcon}"></i>
+                                            <span>${idx+1}. ${m.title}</span>
+                                        </div>
+                                        ${checkIcon}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Check if course plan is active
+        let isPlanActive = false;
+        if (window.currentTeam && Array.isArray(window.currentTeam.courses_plan)) {
+            isPlanActive = window.currentTeam.courses_plan.includes(String(node.dbId));
+        }
+
+        bodyHtml = `
+            <!-- Banner Image -->
+            <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl">
+                <img src="${course.image_url ? course.image_url : '../assets/images/1.jpg'}" 
+                     class="w-full h-full object-cover" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                ${isPlanActive ? `<span class="absolute top-4 right-4 bg-teal-500/95 backdrop-blur text-white text-[9px] px-2.5 py-1 rounded-lg font-black tracking-widest border border-white/20 uppercase"><i class="fas fa-unlock ml-1"></i> مفعل</span>` : ''}
+            </div>
+
+            <h2 class="text-2xl font-black text-white leading-tight font-heading mb-4 text-right">${node.title}</h2>
+            <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${node.description || 'لا يوجد وصف مضاف حالياً لهذا الكورس.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">المدرس</span>
+                        <span class="text-white font-bold truncate block">${node.instructor || course.created_by || 'Busla Team'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">المدة المقدرة</span>
+                        <span class="text-white font-bold truncate block">${node.duration || course['Module Time'] || 'مرنة'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fas fa-brain"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">المستوى</span>
+                        <span class="text-white font-bold block">${node.difficulty || course.type || 'Intermediate'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">نقاط XP</span>
+                        <span class="text-white font-bold block">${course.base_points || 100} XP</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2 col-span-2">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-sm"><i class="fas fa-layer-group"></i></div>
+                    <div class="min-w-0 text-right flex-1">
+                        <span class="text-[9px] text-gray-500 block">المسار والمرحلة</span>
+                        <span class="text-white font-bold text-xs block truncate">${trackName} — ${phaseTitle}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white/5 border border-white/10 p-4 rounded-xl mb-6 text-right">
+                <span class="text-[10px] text-gray-500 block mb-1">نسبة الإنجاز في الكورس</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-green-400 font-bold font-mono text-sm">${completionRate}%</span>
+                    <div class="flex-1 bg-black/50 h-2 rounded-full overflow-hidden">
+                        <div class="bg-green-400 h-full" style="width: ${completionRate}%"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 text-[10px] text-gray-400 text-center border-t border-white/5 pt-2">
+                    <div>دروس: ${completedVideos}/${totalVideos}</div>
+                    <div>كويزات: ${completedQuizzes}/${totalQuizzes}</div>
+                    <div>مشاريع: ${completedProjects}/${totalProjects}</div>
+                </div>
+            </div>
+
+            <!-- Relationships Visual System -->
+            <div class="border-t border-white/5 pt-4 text-right mb-6">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                    <i class="fas fa-long-arrow-left text-teal-400 text-xs"></i> المتطلبات السابقة (Prerequisites)
+                </h4>
+                <div class="flex flex-wrap gap-2 justify-end mt-1">
+                    ${prereqsHtml}
+                </div>
+            </div>
+
+            <div class="border-t border-white/5 pt-4 text-right mb-6">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                    <i class="fas fa-long-arrow-right text-blue-400 text-xs"></i> الكورسات التالية (Next Courses)
+                </h4>
+                <div class="flex flex-wrap gap-2 justify-end mt-1">
+                    ${nextHtml}
+                </div>
+            </div>
+
+            ${contentListsHtml}
+        `;
+
+        if (currentRole === 'student' || currentRole === 'leader') {
+            actionButtonsHtml += `
+                <a href="course-player.html?id=${node.dbId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-play"></i> فتح الكورس والتعلم
+                </a>
+            `;
+        } else if (currentRole === 'guest') {
+            const extUrl = course.playlist_url || 'pages/auth.html?mode=signup';
+            const buttonLabel = course.playlist_url ? 'مشاهدة الدورة على يوتيوب ↗' : 'سجل للتعلم مجاناً';
+            actionButtonsHtml += `
+                <a href="${extUrl}" target="_blank" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fab fa-youtube"></i> ${buttonLabel}
+                </a>
+            `;
+        }
+    }
+    else if (node.type === 'video') {
+        const mat = node.rawItem || {};
+        const isWatched = userProgress.completedMats.has(node.dbId);
+        const youtubeId = mat.video_id || '';
+        const thumbUrl = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : '../assets/images/1.jpg';
+
+        bodyHtml = `
+            <!-- Video Thumbnail -->
+            <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl">
+                <img src="${thumbUrl}" class="w-full h-full object-cover" onerror="this.src='../assets/images/1.jpg'">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div class="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center text-xl shadow-2xl border border-white/20"><i class="fas fa-play ml-1"></i></div>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold text-white leading-tight mb-4 text-right">${node.title}</h2>
+            <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${mat.Note || 'لا توجد ملاحظات تفصيلية مضافة لهذا الدرس.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">مدة الدرس</span>
+                        <span class="text-white font-bold block">${node.duration || mat.Duration || 'مرن'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">النقاط المكتسبة</span>
+                        <span class="text-white font-bold block">${node.baseXp || mat.base_points || 10} XP</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-sort-numeric-up"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الترتيب</span>
+                        <span class="text-white font-bold block">الدرس ${mat.order_index || '--'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-sm"><i class="fas fa-check-circle"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">حالة المشاهدة</span>
+                        <span class="text-white font-bold block">${isWatched ? 'شوهد بنجاح ✓' : 'لم يشاهد بعد'}</span>
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
+
+        if (currentRole === 'student' || currentRole === 'leader') {
+            actionButtonsHtml += `
+                <a href="course-player.html?id=${node.courseId}&content=${node.dbId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-play"></i> تشغيل الفيديو المباشر
+                </a>
+            `;
+        } else if (currentRole === 'guest') {
+            const extUrl = youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : 'pages/auth.html?mode=signup';
+            const buttonLabel = youtubeId ? 'مشاهدة الدرس على يوتيوب ↗' : 'سجل لمشاهدة الدروس';
+            actionButtonsHtml += `
+                <a href="${extUrl}" target="_blank" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fab fa-youtube"></i> ${buttonLabel}
+                </a>
+            `;
+        }
+    }
+    else if (node.type === 'quiz') {
+        const quizObj = currentGraphData?.quizzes?.find(q => q.quiz_id === node.dbId) || {};
+        const isPassed = userProgress.passedQuizzes.has(node.dbId);
+
+        bodyHtml = `
+            <div class="w-16 h-16 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mx-auto mb-4 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+                <i class="fas fa-clipboard-question"></i>
+            </div>
+            
+            <h2 class="text-xl font-bold text-white text-center mb-2 leading-tight">${node.title}</h2>
+            <p class="text-sm text-gray-300 text-center leading-relaxed mb-6">${quizObj.description || 'اختبار تقييمي لقياس مدى استيعاب المفاهيم الهندسية المعروضة.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-list-check"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">عدد الأسئلة</span>
+                        <span class="text-white font-bold block">${quizObj.questions_to_show || 'كل الأسئلة'} أسئلة</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">نقاط الاختبار</span>
+                        <span class="text-white font-bold block">${node.baseXp || quizObj.max_points || 50} XP</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-award"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">درجة النجاح</span>
+                        <span class="text-white font-bold block">%${quizObj.passing_score || 60} أو أكثر</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fas fa-check-double"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">حالة الاختبار</span>
+                        <span class="text-white font-bold block">${isPassed ? 'تم الاجتياز بنجاح ✓' : 'لم يجتز بعد'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (currentRole === 'student' || currentRole === 'leader') {
+            actionButtonsHtml += `
+                <a href="course-player.html?id=${node.courseId}&content=${node.parentMaterialId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-pencil-alt"></i> ابدأ الاختبار الآن
+                </a>
+            `;
+        } else if (currentRole === 'guest') {
+            actionButtonsHtml += `
+                <a href="pages/auth.html?mode=signup" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-user-plus"></i> سجل لتقديم الاختبارات
+                </a>
+            `;
+        }
+    }
+    else if (node.type === 'project') {
+        const proj = currentGraphData?.projects?.find(p => p.id === node.dbId) || {};
+        const isCompleted = userProgress.completedProjects.has(node.dbId);
+        
+        let rubricHtml = '';
+        try {
+            if (proj.rubric_json) {
+                const rubric = typeof proj.rubric_json === 'string' ? JSON.parse(proj.rubric_json) : proj.rubric_json;
+                if (Array.isArray(rubric)) {
+                    rubricHtml = `
+                        <div class="border-t border-white/5 pt-4 text-right mb-6">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                                <i class="fas fa-list-check text-orange-400 text-xs"></i> معايير التقييم والدرجات (Rubric)
+                            </h4>
+                            <div class="space-y-2 mt-2">
+                                ${rubric.map(r => `
+                                    <div class="flex justify-between items-center text-xs bg-white/5 border border-white/10 p-2.5 rounded-xl">
+                                        <span class="text-gray-300 font-bold">${r.criterion}</span>
+                                        <span class="text-amber-400 font-mono font-bold">${r.points} نقاط</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing rubric:", e);
+        }
+
+        bodyHtml = `
+            <div class="w-16 h-16 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center text-2xl mx-auto mb-4 shadow-[0_0_15px_rgba(249,115,22,0.15)]">
+                <i class="fas fa-code-branch"></i>
+            </div>
+            
+            <h2 class="text-xl font-bold text-white text-center mb-2 leading-tight">${node.title}</h2>
+            <p class="text-sm text-gray-300 text-center leading-relaxed mb-6">${proj.description || 'مشروع عملي تطبيقي متكامل لقياس المهارات والخبرة.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">نقاط المشروع</span>
+                        <span class="text-white font-bold block">${node.baseXp || proj.max_points || 100} XP</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-check-circle"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">حالة التقديم</span>
+                        <span class="text-white font-bold block">${isCompleted ? 'تم تقديم المشروع ✓' : 'لم يقدم بعد'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2 col-span-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-paperclip"></i></div>
+                    <div class="min-w-0 text-right flex-1">
+                        <span class="text-[9px] text-gray-500 block">طريقة التسليم المطلوبة</span>
+                        <span class="text-white font-bold block truncate">${proj.submission_method || 'مستندات وملفات المشروع'}</span>
+                    </div>
+                </div>
+            </div>
+
+            ${rubricHtml}
+        `;
+
+        if (currentRole === 'student' || currentRole === 'leader') {
+            actionButtonsHtml += `
+                <a href="course-player.html?id=${node.courseId}&content=${node.parentMaterialId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-upload"></i> تسليم المشروع العملي
+                </a>
+            `;
+        } else if (currentRole === 'guest') {
+            actionButtonsHtml += `
+                <a href="pages/auth.html?mode=signup" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-user-plus"></i> سجل لتسليم المشاريع
+                </a>
+            `;
+        }
+    }
+
+    // Role specific buttons for Admin
+    if (currentRole === 'admin') {
+        actionButtonsHtml += `
+            <div class="flex gap-2 mt-4 w-full">
+                <button onclick="window.cmEditRoadmapNode('${node.type}', '${node.dbId}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                    <i class="fas fa-pen"></i> تعديل السجل
+                </button>
+                <button onclick="window.cmDeleteRoadmapNode('${node.type}', '${node.dbId}')" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                    <i class="fas fa-trash"></i> حذف السجل
+                </button>
+            </div>
+        `;
+    }
+
+    // Embed all sections into the container
+    container.innerHTML = `
+        ${headerHtml}
+        <div class="flex flex-col flex-1 pr-1">
+            ${badgeHtml}
+            ${bodyHtml}
+            ${actionButtonsHtml ? `<div class="border-t border-white/5 pt-4 mt-6 flex gap-3">${actionButtonsHtml}</div>` : ''}
+            <div id="roadmap-node-tools-container" class="mt-6 border-t border-white/5 pt-4 hidden"></div>
+        </div>
+    `;
+
+    loadRoadmapNodeTools(node);
 }
 
-// Bind global selector callback so mini-roadmap items can click to jump
+/**
+ * Queries Supabase and displays published tools recommended for the current node (track, phase, or course)
+ * @param {Object} node 
+ */
+async function loadRoadmapNodeTools(node) {
+    const el = document.getElementById('roadmap-node-tools-container');
+    if (!el) return;
+
+    if (node.type !== 'track' && node.type !== 'phase' && node.type !== 'course') {
+        el.classList.add('hidden');
+        return;
+    }
+
+    let column = '';
+    let val = null;
+    if (node.type === 'track') {
+        column = 'track_ids';
+        val = node.dbId;
+    } else if (node.type === 'phase') {
+        column = 'phase_ids';
+        val = String(node.dbId);
+    } else if (node.type === 'course') {
+        column = 'course_ids';
+        val = String(node.dbId);
+    }
+
+    if (!column || !val) {
+        el.classList.add('hidden');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('tools')
+            .select('*')
+            .contains(column, [val])
+            .eq('status', 'Published')
+            .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            el.classList.add('hidden');
+            return;
+        }
+
+        el.classList.remove('hidden');
+        el.innerHTML = `
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2 justify-end">
+                <i class="fas fa-toolbox text-teal-400 text-xs"></i> الأدوات والبرمجيات الموصى بها
+            </h4>
+            <div class="space-y-2">
+                ${data.map(tool => {
+                    const impBadge = tool.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : tool.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
+                    const importanceName = tool.importance === 'Required' ? 'مطلوب' : tool.importance === 'Recommended' ? 'مستحسن' : 'اختياري';
+                    return `
+                        <div onclick="if (typeof window.openToolDetailDrawer === 'function') { window.openToolDetailDrawer('${tool.id}'); } else { window.open('${tool.official_website || '#'}', '_blank'); }" 
+                             class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                                    <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-white font-bold block group-hover:text-teal-400 transition-colors">${tool.name}</span>
+                                    <span class="text-[9px] text-gray-500 block mt-0.5">${tool.type} • مستوى ${tool.experience_level}</span>
+                                </div>
+                            </div>
+                            <span class="text-[9px] border px-2 py-0.5 rounded font-black ${impBadge}">${importanceName}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error("loadRoadmapNodeTools error:", err);
+        el.classList.add('hidden');
+    }
+}
+
+// Global helpers for navigation/actions inside Details Panel
+window.closeRoadmapDetailsPanel = function() {
+    renderNodeDetailsPanel(null);
+};
+
 window.selectRoadmapNodeById = (nodeId) => {
-    const matched = computedNodes.find(n => n.id === nodeId);
-    if (matched) {
-        selectNode(matched);
+    const node = computedNodes.find(n => n.id === nodeId);
+    if (node) {
+        // Expand parent chain first if the node is hidden!
+        let temp = node;
+        let changed = false;
+        while (temp.parentCourseId) {
+            const parentId = `course-${temp.parentCourseId}`;
+            if (!expandedRelated.has(parentId)) {
+                expandedRelated.add(parentId);
+                changed = true;
+            }
+            const parent = computedNodes.find(n => n.id === parentId);
+            if (!parent) break;
+            temp = parent;
+        }
+        
+        // If it's a material, make sure its parent course is expanded!
+        if (node.type === 'video' || node.type === 'quiz' || node.type === 'project' || node.type === 'material') {
+            const courseNodeId = `course-${node.courseId}`;
+            if (!expandedNodes.has(courseNodeId)) {
+                expandedNodes.add(courseNodeId);
+                changed = true;
+            }
+        }
+        
+        if (changed) {
+            // Re-layout and re-render to make the node visible
+            buildGraphStructure(currentGraphData);
+            calculateGraphLayout();
+            renderHtmlNodes();
+            renderSvgLines();
+            requestAnimationFrame(updateMinimap);
+        }
+        
+        // Select and pan to node
+        selectNode(node);
     }
 };
 
-/**
- * Renders the panel buttons dynamically based on roles and selection
- */
-function renderActionButtons(node) {
-    let html = '';
-
-    if (node.type === 'course') {
-        const isActive = window.currentTeam && Array.isArray(window.currentTeam.courses_plan) && window.currentTeam.courses_plan.includes(String(node.dbId));
-
-        if (currentRole === 'leader') {
-            // Activate toggle switch for Leader
-            html += `
-                <div class="flex flex-col gap-3">
-                    <div class="flex items-center justify-between bg-white/5 border border-white/10 p-3 rounded-xl">
-                        <span class="text-xs text-gray-300 font-bold">تفعيل الكورس للفريق:</span>
-                        <div class="relative flex items-center justify-center">
-                            <input type="checkbox" id="course-toggle-activation" 
-                                   class="appearance-none w-10 h-5 rounded-full bg-white/10 checked:bg-green-500 transition-all cursor-pointer relative"
-                                   ${isActive ? 'checked' : ''}>
-                        </div>
-                    </div>
-                    <a href="course-player.html?id=${node.dbId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                        <i class="fas fa-play"></i> فتح الكورس
-                    </a>
-                </div>
-            `;
-            
-            // Set listener on check toggle asynchronously after rendering
-            setTimeout(() => {
-                const chk = document.getElementById('course-toggle-activation');
-                if (chk) {
-                    chk.addEventListener('change', (e) => {
-                        if (typeof window.toggleActivate === 'function') {
-                            window.toggleActivate(String(node.dbId), e.target.checked);
-                        }
-                    });
-                }
-            }, 50);
-        } else {
-            // Student View open course player
-            html += `
-                <div class="flex flex-col gap-3">
-                    <a href="course-player.html?id=${node.dbId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                        <i class="fas fa-play"></i> فتح الكورس في المشغل
-                    </a>
-                    ${!isActive ? `<p class="text-[10px] text-yellow-500 text-center"><i class="fas fa-lock mr-1"></i> الكورس غير مفعل من قائد الفريق، لكن يمكنك تصفحه.</p>` : ''}
-                </div>
-            `;
-        }
-    } else if (node.type === 'material' || node.type === 'video') {
-        // Direct link to material player
-        html += `
-            <a href="course-player.html?id=${node.courseId}&content=${node.dbId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                <i class="fas fa-external-link-alt"></i> ابدأ الدراسة الآن
-            </a>
-        `;
-    } else if (node.type === 'quiz' || node.type === 'project') {
-        // Direct link to quiz/project player context
-        const targetContentId = node.parentMaterialId || node.dbId;
-        html += `
-            <a href="course-player.html?id=${node.courseId}&content=${targetContentId}" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                <i class="fas fa-external-link-alt"></i> ${node.type === 'quiz' ? 'ابدأ الاختبار الآن' : 'ابدأ المشروع الآن'}
-            </a>
-        `;
-    } else {
-        html += `<p class="text-xs text-gray-500 text-center">حدد كورس أو مادة دراسية لبدء التعلم.</p>`;
+window.cmEditRoadmapNode = (type, dbId) => {
+    const levelMap = {
+        'track': 'tracks',
+        'phase': 'phases',
+        'course': 'courses',
+        'video': 'course_materials',
+        'quiz': 'quizzes',
+        'project': 'projects'
+    };
+    const level = levelMap[type];
+    if (level && typeof window.cmEditItem === 'function') {
+        window.cmCurrentLevel = level;
+        window.cmEditItem(dbId);
     }
+};
 
-    return html;
-}
+window.cmDeleteRoadmapNode = (type, dbId) => {
+    const levelMap = {
+        'track': 'tracks',
+        'phase': 'phases',
+        'course': 'courses',
+        'video': 'course_materials',
+        'quiz': 'quizzes',
+        'project': 'projects'
+    };
+    const level = levelMap[type];
+    if (level && typeof window.cmDeleteItem === 'function') {
+        window.cmCurrentLevel = level;
+        window.cmDeleteItem(dbId);
+    }
+};
 
 /**
  * Smooth pan view to target node coordinate

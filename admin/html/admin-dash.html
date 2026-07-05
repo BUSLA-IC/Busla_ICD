@@ -111,6 +111,10 @@
                 <i class="fas fa-sitemap"></i> <span>شجرة المنهج</span>
             </button>
 
+            <button data-target="tools-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
+                <i class="fas fa-tools"></i> <span>إدارة الأدوات</span>
+            </button>
+
             <button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
                 <i class="fas fa-users"></i> <span>طلبات الأعضاء</span>
             </button>
@@ -687,9 +691,17 @@
                 </div>
             </div>
 
-            <!-- Viewport container - dynamic canvas size inside scroll-board -->
-            <div id="learning-roadmap-container" class="flex-1 w-full bg-b-surface relative overflow-hidden">
-                <!-- Dynamically populated by setupRoadmapHTML -->
+            <!-- Roadmap 70% | Details 30% grid -->
+            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 w-full relative overflow-hidden bg-black p-6">
+                <!-- Roadmap tree viewer (70%) -->
+                <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="learning-roadmap-container">
+                    <!-- Populated by setupRoadmapHTML -->
+                </div>
+                
+                <!-- Unified Details Panel (30%) -->
+                <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
+                    <!-- Details loaded dynamically by NodeDetailsPanel -->
+                </div>
             </div>
         </div>
 
@@ -1271,22 +1283,34 @@
         </div>
         
         <!-- Quick Stats -->
-        <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0">
-            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
+        <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full max-w-full lg:max-w-[70%]">
+            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
                 <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي الطلاب</span>
                 <span id="stat-mgmt-students" class="text-xl font-black text-white">0</span>
             </div>
-            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي القادة</span>
+            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي الليدرز</span>
                 <span id="stat-mgmt-leaders" class="text-xl font-black text-white">0</span>
             </div>
-            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                <span class="text-[10px] text-yellow-500/70 font-bold uppercase tracking-wider">قيد التفعيل</span>
-                <span id="stat-mgmt-pending" class="text-xl font-black text-yellow-500">0</span>
+            <div class="bg-teal-500/10 border border-teal-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-teal-400 font-bold uppercase tracking-wider">الطلاب النشطون</span>
+                <span id="stat-mgmt-active-students" class="text-xl font-black text-teal-400">0</span>
             </div>
-            <div class="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                <span class="text-[10px] text-red-500/70 font-bold uppercase tracking-wider">الموقوفين</span>
-                <span id="stat-mgmt-suspended" class="text-xl font-black text-red-400">0</span>
+            <div class="bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">الليدرز النشطون</span>
+                <span id="stat-mgmt-active-leaders" class="text-xl font-black text-purple-400">0</span>
+            </div>
+            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-yellow-500 font-bold uppercase tracking-wider">طلاب بدون فريق</span>
+                <span id="stat-mgmt-students-no-team" class="text-xl font-black text-yellow-500">0</span>
+            </div>
+            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-blue-400 font-bold uppercase tracking-wider">ليدرز بفرق</span>
+                <span id="stat-mgmt-leaders-with-team" class="text-xl font-black text-blue-400">0</span>
+            </div>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
+                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">المستخدمون الجدد</span>
+                <span id="stat-mgmt-new-users" class="text-xl font-black text-emerald-400">0</span>
             </div>
         </div>
     </div>
@@ -1594,6 +1618,401 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- Tab 7: Tools Management Dashboard -->
+        <div id="tools-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <span>إدارة الأدوات والبرمجيات (Tools Management)</span>
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">إضافة، تعديل، وحذف الأدوات والبرامج والمنصات وتصنيفها وربطها بالمنهج الأكاديمي</p>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase">إجمالي الأدوات</span>
+                        <span id="stat-tools-total" class="text-lg font-black text-white font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase">المنشورة</span>
+                        <span id="stat-tools-published" class="text-lg font-black text-emerald-400 font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-yellow-500 font-bold uppercase">المسودات</span>
+                        <span id="stat-tools-draft" class="text-lg font-black text-yellow-500 font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-purple-400 font-bold uppercase">إجمالي الضغطات</span>
+                        <span id="stat-tools-clicks" class="text-lg font-black text-purple-400 font-mono mt-0.5">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar Controls -->
+            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0">
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="admin-tools-search" placeholder="البحث بالاسم، التصنيف، أو الكلمات المفتاحية..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
+                    </div>
+                    <select id="admin-tools-type-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">كل الأنواع</option>
+                    </select>
+                    <select id="admin-tools-status-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">كل الحالات</option>
+                        <option value="Published">Published</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Archived">Archived</option>
+                        <option value="Hidden">Hidden</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto justify-end">
+                    <button id="btn-admin-tools-grid" class="p-2 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all text-xs" title="عرض شبكي">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button id="btn-admin-tools-table" class="p-2 border border-teal-500/20 bg-teal-500/10 rounded-xl text-teal-400 hover:text-white transition-all text-xs" title="عرض جدول">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <button id="btn-add-tool" onclick="window.openAddToolModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0">
+                        <i class="fas fa-plus"></i> أداة جديدة
+                    </button>
+                </div>
+            </div>
+
+            <!-- List Container (Table / Grid Switchable) -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-6">
+                <!-- Table View -->
+                <div id="admin-tools-table-container" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/10 bg-white/5 text-gray-300 text-xs font-bold">
+                                <th class="p-4 w-16 text-center">الشعار</th>
+                                <th class="p-4">اسم الأداة</th>
+                                <th class="p-4">النوع</th>
+                                <th class="p-4">الأهمية</th>
+                                <th class="p-4 text-center">الزيارات / الضغطات</th>
+                                <th class="p-4">آخر تحديث</th>
+                                <th class="p-4">الحالة</th>
+                                <th class="p-4 text-left">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-tools-table-body" class="divide-y divide-white/5 text-sm">
+                            <tr><td colspan="8" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>جاري تحميل قائمة الأدوات...</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Grid View -->
+                <div id="admin-tools-grid-container" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Loaded dynamically in JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 🌌 Create & Edit Tool Modal (Large tabbed modal) -->
+        <div id="admin-tool-modal" class="fixed inset-0 z-[700] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl select-text">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden max-h-[92vh]">
+                <!-- Modal Header -->
+                <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                    <h3 id="admin-tool-modal-title" class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-tools text-teal-400"></i>
+                        <span>إضافة أداة جديدة</span>
+                    </h3>
+                    <button onclick="window.closeToolModal()" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
+                </div>
+
+                <!-- Modal Sub-navigation tabs -->
+                <div class="flex border-b border-white/5 bg-black/20 text-xs font-bold text-gray-400 select-none">
+                    <button class="tool-form-tab active flex-1 py-3 px-2 text-center border-b-2 border-transparent active" data-formtab="tf-basic">البيانات الأساسية</button>
+                    <button class="tool-form-tab flex-1 py-3 px-2 text-center border-b-2 border-transparent" data-formtab="tf-content">ربط المحتوى</button>
+                    <button class="tool-form-tab flex-1 py-3 px-2 text-center border-b-2 border-transparent" data-formtab="tf-features">المميزات والأنظمة</button>
+                    <button class="tool-form-tab flex-1 py-3 px-2 text-center border-b-2 border-transparent" data-formtab="tf-links">الروابط والتحميل</button>
+                    <button class="tool-form-tab flex-1 py-3 px-2 text-center border-b-2 border-transparent" data-formtab="tf-seo">SEO والنشر</button>
+                </div>
+
+                <!-- Modal Content Form -->
+                <form id="admin-tool-form" class="flex-1 overflow-y-auto custom-scroll p-6 space-y-6 text-right" onsubmit="window.submitToolForm(event)">
+                    <input type="hidden" id="tool-id">
+                    
+                    <!-- TAB 1: Basic Info -->
+                    <div id="tf-basic" class="tool-tab-pane space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">اسم الأداة بالكامل *</label>
+                                <input type="text" id="tool-name" required placeholder="مثال: Vivado Design Suite" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">الاسم المختصر</label>
+                                <input type="text" id="tool-short-name" placeholder="مثال: Vivado" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف المختصر *</label>
+                            <input type="text" id="tool-short-desc" required placeholder="وصف سطر واحد يظهر في كروت العرض..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">الوصف التفصيلي والكامل</label>
+                            <textarea id="tool-full-desc" rows="4" placeholder="اكتب مراجعة مفصلة للأداة وما تقدمه للطلاب..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">نوع الأداة *</label>
+                                <select id="tool-type" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="Software">Software</option>
+                                    <option value="Website">Website</option>
+                                    <option value="Online Platform">Online Platform</option>
+                                    <option value="IDE">IDE</option>
+                                    <option value="Simulator">Simulator</option>
+                                    <option value="CAD Tool">CAD Tool</option>
+                                    <option value="AI Tool">AI Tool</option>
+                                    <option value="Documentation">Documentation</option>
+                                    <option value="Library">Library</option>
+                                    <option value="Framework">Framework</option>
+                                    <option value="Extension">Extension</option>
+                                    <option value="Plugin">Plugin</option>
+                                    <option value="Learning Platform">Learning Platform</option>
+                                    <option value="Community">Community</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">أهمية الاستخدام *</label>
+                                <select id="tool-importance" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="Required">Required (مطلوب)</option>
+                                    <option value="Recommended">Recommended (موصى به)</option>
+                                    <option value="Optional">Optional (اختياري)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">مستوى الخبرة المطلوبة *</label>
+                                <select id="tool-experience" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="Beginner">Beginner (مبتدئ)</option>
+                                    <option value="Intermediate">Intermediate (متوسط)</option>
+                                    <option value="Advanced">Advanced (متقدم)</option>
+                                    <option value="Professional">Professional (محترف)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">رابط شعار الأداة (Logo URL)</label>
+                                <input type="text" id="tool-logo-url" placeholder="مثال: https://imgur.com/image.png" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">رابط صورة Banner (اختياري)</label>
+                                <input type="text" id="tool-banner-url" placeholder="مثال: https://imgur.com/banner.png" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Content Linking -->
+                    <div id="tf-content" class="tool-tab-pane hidden space-y-4">
+                        <p class="text-xs text-gray-400 leading-relaxed"><i class="fas fa-info-circle text-teal-400 mr-1"></i> حدد المسارات، المراحل، والكورسات التي ترتبط بها هذه الأداة لكي تظهر تلقائياً في خريطة التعلم والتكامل مع المنهج:</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Tracks Checklist -->
+                            <div class="bg-black/30 border border-white/10 p-4 rounded-xl flex flex-col h-60">
+                                <label class="block text-xs font-bold text-gray-400 mb-2 border-b border-white/5 pb-1">المسارات المرتبطة (Tracks)</label>
+                                <div id="tc-tracks-list" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+                            </div>
+
+                            <!-- Phases Checklist -->
+                            <div class="bg-black/30 border border-white/10 p-4 rounded-xl flex flex-col h-60">
+                                <label class="block text-xs font-bold text-gray-400 mb-2 border-b border-white/5 pb-1">المراحل المرتبطة (Phases)</label>
+                                <div id="tc-phases-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 text-gray-500 text-xs py-4 text-center">أختر مساراً أولاً لتعبئة المراحل</div>
+                            </div>
+
+                            <!-- Courses Checklist -->
+                            <div class="bg-black/30 border border-white/10 p-4 rounded-xl flex flex-col h-60">
+                                <label class="block text-xs font-bold text-gray-400 mb-2 border-b border-white/5 pb-1">الكورسات المرتبطة (Courses)</label>
+                                <div id="tc-courses-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 text-gray-500 text-xs py-4 text-center">أختر مرحلة أولاً لتعبئة الكورسات</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Features & OS -->
+                    <div id="tf-features" class="tool-tab-pane hidden space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-2">أنظمة التشغيل المدعومة (تشديد متعدد) *</label>
+                            <div class="grid grid-cols-2 md:grid-cols-6 gap-2 bg-black/40 border border-white/10 p-4 rounded-xl">
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>Windows</span>
+                                    <input type="checkbox" name="tool-os" value="Windows" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>Linux</span>
+                                    <input type="checkbox" name="tool-os" value="Linux" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>macOS</span>
+                                    <input type="checkbox" name="tool-os" value="macOS" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>Web</span>
+                                    <input type="checkbox" name="tool-os" value="Web" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>Android</span>
+                                    <input type="checkbox" name="tool-os" value="Android" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                                <label class="flex items-center gap-2 justify-end cursor-pointer text-xs">
+                                    <span>iOS</span>
+                                    <input type="checkbox" name="tool-os" value="iOS" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1">قائمة المميزات والخصائص (Feature List)</label>
+                            <p class="text-[10px] text-gray-500 mb-1">اكتب كل ميزة في سطر منفصل. مثال: مجانية بالكامل، تدعم المحاكاة الرقمية.</p>
+                            <textarea id="tool-features" rows="3" placeholder="ميزة 1&#10;ميزة 2&#10;ميزة 3" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">الخصائص الإيجابية (Pros)</label>
+                                <p class="text-[10px] text-gray-500 mb-1">اكتب كل ميزة إيجابية في سطر منفصل</p>
+                                <textarea id="tool-pros" rows="3" placeholder="إيجابية 1&#10;إيجابية 2" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">العيوب والسلبيات (Cons)</label>
+                                <p class="text-[10px] text-gray-500 mb-1">اكتب كل عيب أو سلبية في سطر منفصل</p>
+                                <textarea id="tool-cons" rows="3" placeholder="عيب 1&#10;عيب 2" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Links & Downloads -->
+                    <div id="tf-links" class="tool-tab-pane hidden space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">الموقع الرسمي للأداة (Official Website)</label>
+                                <input type="text" id="tool-website" placeholder="https://example.com" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">رابط ملف التوثيق الرسمي (Documentation)</label>
+                                <input type="text" id="tool-doc-url" placeholder="https://docs.example.com" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="bg-black/30 border border-white/10 p-4 rounded-xl space-y-3">
+                            <label class="block text-xs font-bold text-gray-300 border-b border-white/5 pb-1">روابط التحميل لكل نظام تشغيل</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 mb-1">Windows Download Link</label>
+                                    <input type="text" id="tool-dl-win" placeholder="https://..." class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 mb-1">Linux Download Link</label>
+                                    <input type="text" id="tool-dl-linux" placeholder="https://..." class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 mb-1">macOS Download Link</label>
+                                    <input type="text" id="tool-dl-mac" placeholder="https://..." class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">مستودع الكود (GitHub Link)</label>
+                                <input type="text" id="tool-github" placeholder="https://github.com/..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">رابط مجتمع الأداة (Discord / Reddit)</label>
+                                <input type="text" id="tool-community" placeholder="https://discord.gg/..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">اسم منصة المجتمع</label>
+                                <input type="text" id="tool-community-platform" placeholder="مثال: Discord أو Reddit" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">روابط تعلم ودورات (Tutorials Links)</label>
+                                <p class="text-[10px] text-gray-500 mb-1">اكتب كل رابط في سطر منفصل</p>
+                                <textarea id="tool-tutorials" rows="2" placeholder="https://tutorial-1.com&#10;https://tutorial-2.com" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">روابط شروحات فيديو (YouTube Playlists)</label>
+                                <p class="text-[10px] text-gray-500 mb-1">اكتب كل رابط يوتيوب في سطر منفصل</p>
+                                <textarea id="tool-youtube" rows="2" placeholder="https://youtube.com/playlist?list=...&#10;https://youtube.com/playlist?list=..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="bg-black/30 border border-white/10 p-4 rounded-xl space-y-3">
+                            <label class="block text-xs font-bold text-gray-300 border-b border-white/5 pb-1">ربط الأداة ببدائلها في المنصة</label>
+                            <p class="text-[10px] text-gray-500 mb-1">حدد الأدوات التي تعتبر بدائل مباشرة لهذه الأداة:</p>
+                            <div id="tc-alternatives-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scroll pr-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: SEO & Publishing -->
+                    <div id="tf-seo" class="tool-tab-pane hidden space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">الرابط اللطيف (Slug) *</label>
+                                <input type="text" id="tool-slug" required placeholder="vivado-design-suite" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">ترتيب الظهور في القائمة</label>
+                                <input type="number" id="tool-order-index" value="0" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="bg-black/30 border border-white/10 p-4 rounded-xl space-y-4">
+                            <label class="block text-xs font-bold text-gray-300 border-b border-white/5 pb-1">محركات البحث والـ SEO</label>
+                            <div>
+                                <label class="block text-[10px] text-gray-400 mb-1">Meta Title (عنوان محرك البحث)</label>
+                                <input type="text" id="tool-meta-title" placeholder="لو تُرك فارغاً سيتم استخدام اسم الأداة..." class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-gray-400 mb-1">Meta Description (الوصف في محرك البحث)</label>
+                                <textarea id="tool-meta-desc" rows="2" placeholder="لو تُرك فارغاً سيتم استخدام الوصف المختصر..." class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-gray-400 mb-1">Keywords (الكلمات الدلالية - مفصولة بفاصلة)</label>
+                                <input type="text" id="tool-meta-keywords" placeholder="EDA, vivado, simulation, fpga" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">حالة الأداة ونشرها *</label>
+                                <select id="tool-status" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="Draft">Draft (مسودة غير معروضة)</option>
+                                    <option value="Published">Published (منشورة ومتاحة للجميع)</option>
+                                    <option value="Archived">Archived (مؤرشفة للمراجعة القديمة)</option>
+                                    <option value="Hidden">Hidden (مخفية وتظهر كروابط مباشرة فقط)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1">الوسوم (Tags)</label>
+                                <input type="text" id="tool-tags" placeholder="RTL, Simulation, ASIC, Verification (مفصولة بفاصلة)" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions Footer -->
+                    <div class="p-4 border-t border-white/10 flex gap-3 pt-6 bg-transparent shrink-0">
+                        <button type="button" onclick="window.closeToolModal()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all text-xs">إلغاء</button>
+                        <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all text-xs flex items-center justify-center gap-2"><i class="fas fa-save"></i> حفظ بيانات الأداة</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -3435,12 +3854,14 @@
     <div id="confirm-modal" class="fixed inset-0 bg-black/90 hidden z-[999] flex items-center justify-center p-4 backdrop-blur-sm"></div>
 
     <!-- Module Scripts Load -->
-    <script type="module" src="../js/admin-dash.js"></script>
-    <script type="module" src="../js/content-mgmt.js"></script>
-    <script type="module" src="../js/member-requests.js"></script>
-    <script type="module" src="../js/team-mgmt.js"></script>
-    <script type="module" src="../js/users-mgmt.js"></script>
-    <script type="module" src="../js/project-audit.js"></script>
+    <script type="module" src="../js/admin-dash.js?v=2.0"></script>
+    <script type="module" src="../js/content-mgmt.js?v=2.0"></script>
+    <script type="module" src="../js/member-requests.js?v=2.0"></script>
+    <script type="module" src="../js/team-mgmt.js?v=2.0"></script>
+    <script type="module" src="../js/users-mgmt.js?v=2.0"></script>
+    <script type="module" src="../js/project-audit.js?v=2.0"></script>
+    <script type="module" src="../js/tools-mgmt.js?v=2.0"></script>
+    <script type="module" src="../../js/tools-drawer.js?v=2.0"></script>
 
 </body>
 </html>

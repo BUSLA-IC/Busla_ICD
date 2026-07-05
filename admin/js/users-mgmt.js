@@ -10,6 +10,7 @@ let allEnrollments = [];
 let selectedUser = null;
 let selectedUserRole = 'student'; // 'student' or 'leader'
 let currentCategory = 'student'; // 'student' or 'leader' (tab switcher)
+let adminRoles = []; // Store list of administrative roles from database
 
 // Global LMS Data cache for calculations
 let globalCourses = [];
@@ -85,12 +86,13 @@ window.initUsersMgmt = async () => {
     try {
         // Load global static/course data once if empty
         if (globalCourses.length === 0) {
-            const [cRes, pRes, mRes, tRes, teamsRes] = await Promise.all([
+            const [cRes, pRes, mRes, tRes, teamsRes, adminRolesRes] = await Promise.all([
                 supabase.from('courses').select('*'),
                 supabase.from('phases').select('*'),
                 supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
                 supabase.from('tracks').select('*'),
-                supabase.from('teams').select('*')
+                supabase.from('teams').select('*'),
+                supabase.from('admin_roles').select('name')
             ]);
             
             globalCourses = cRes.data || [];
@@ -98,6 +100,7 @@ window.initUsersMgmt = async () => {
             globalMaterials = mRes.data || [];
             globalTracks = tRes.data || [];
             globalTeams = teamsRes.data || [];
+            adminRoles = (adminRolesRes.data || []).map(r => String(r.name).toLowerCase().trim());
         }
 
         await window.fetchUsersData();
@@ -123,9 +126,18 @@ window.fetchUsersData = async () => {
         if (profilesRes.error) throw profilesRes.error;
         if (enrollmentsRes.error) throw enrollmentsRes.error;
 
-        allUsers = profilesRes.data || [];
+        const rawProfiles = profilesRes.data || [];
         allEnrollments = enrollmentsRes.data || [];
         globalTeams = teamsRes.data || [];
+
+        // Exclude administrative users
+        const knownAdminRoles = ['owner', 'master admin', 'admin', 'content admin', 'review admin', 'team admin', 'content manager', 'review manager', 'team manager', 'leader supervisor', 'team reviewer', 'project reviewer', 'support'];
+        allUsers = rawProfiles.filter(p => {
+            const role = String(p.role || '').toLowerCase().trim();
+            if (adminRoles.includes(role)) return false;
+            if (knownAdminRoles.includes(role)) return false;
+            return true;
+        });
 
         // Refresh stats cards
         updateStatsCards();
@@ -153,18 +165,39 @@ function updateStatsCards() {
         return r === 'leader' || r === 'suspended_leader';
     }).length;
 
-    const totalPending = allUsers.filter(u => u.role === 'pending').length;
-    const totalSuspended = allUsers.filter(u => String(u.role).startsWith('suspended')).length;
+    const activeStudents = allUsers.filter(u => u.role === 'student').length;
+    const activeLeaders = allUsers.filter(u => u.role === 'leader').length;
+
+    const studentsNoTeam = allUsers.filter(u => {
+        const r = String(u.role).toLowerCase();
+        return (r === 'student' || r === 'suspended_student') && !u.team_id;
+    }).length;
+
+    const leadersWithTeam = allUsers.filter(u => {
+        const r = String(u.role).toLowerCase();
+        const isLeader = r === 'leader' || r === 'suspended_leader';
+        return isLeader && globalTeams.some(t => t.leader_id === u.id);
+    }).length;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const newUsers = allUsers.filter(u => u.created_at && new Date(u.created_at) >= sevenDaysAgo).length;
 
     const sStudents = document.getElementById('stat-mgmt-students');
     const sLeaders = document.getElementById('stat-mgmt-leaders');
-    const sPending = document.getElementById('stat-mgmt-pending');
-    const sSuspended = document.getElementById('stat-mgmt-suspended');
+    const sActiveStudents = document.getElementById('stat-mgmt-active-students');
+    const sActiveLeaders = document.getElementById('stat-mgmt-active-leaders');
+    const sStudentsNoTeam = document.getElementById('stat-mgmt-students-no-team');
+    const sLeadersWithTeam = document.getElementById('stat-mgmt-leaders-with-team');
+    const sNewUsers = document.getElementById('stat-mgmt-new-users');
 
     if (sStudents) sStudents.innerText = totalStudents;
     if (sLeaders) sLeaders.innerText = totalLeaders;
-    if (sPending) sPending.innerText = totalPending;
-    if (sSuspended) sSuspended.innerText = totalSuspended;
+    if (sActiveStudents) sActiveStudents.innerText = activeStudents;
+    if (sActiveLeaders) sActiveLeaders.innerText = activeLeaders;
+    if (sStudentsNoTeam) sStudentsNoTeam.innerText = studentsNoTeam;
+    if (sLeadersWithTeam) sLeadersWithTeam.innerText = leadersWithTeam;
+    if (sNewUsers) sNewUsers.innerText = newUsers;
 }
 
 // Populate dropdown filters dynamically
@@ -258,8 +291,8 @@ window.filterUsers = () => {
             const isStudentType = role === 'student' || role === 'suspended_student' || role === 'pending' || role === 'suspended';
             if (!isStudentType) return false;
         } else {
-            // Leaders are leaders, suspended leaders, admins, or owners
-            const isLeaderType = role === 'leader' || role === 'suspended_leader' || role === 'admin' || role === 'owner';
+            // Leaders are leaders or suspended leaders (exclude admin and owner)
+            const isLeaderType = role === 'leader' || role === 'suspended_leader';
             if (!isLeaderType) return false;
         }
 

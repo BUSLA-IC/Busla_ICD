@@ -86,7 +86,13 @@ async function initDashboard(uid) {
         adminProfile = profile;
         const roleLower = (adminProfile.role || '').toLowerCase().trim();
 
-        if (!ADMIN_ROLES_LIST.includes(roleLower)) {
+        // Check dynamic database admin roles
+        const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+        const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+        
+        const isAuthorizedAdmin = ADMIN_ROLES_LIST.includes(roleLower) || dbAdminRoles.includes(roleLower);
+
+        if (!isAuthorizedAdmin) {
             showToast("غير مصرح لك بالدخول إلى لوحة التحكم", "error");
             setTimeout(() => window.location.href = "../../pages/auth.html", 2000);
             return;
@@ -222,8 +228,10 @@ async function loadAllData() {
         });
 
         // Filter administrators from profiles
+        const dbAdminRolesList = (rolesRes.data || []).map(r => String(r.name).toLowerCase().trim());
         allAdmins = (profilesRes.data || []).filter(p => {
-            return ADMIN_ROLES_LIST.includes((p.role || '').toLowerCase().trim());
+            const r = String(p.role || '').toLowerCase().trim();
+            return ADMIN_ROLES_LIST.includes(r) || dbAdminRolesList.includes(r);
         });
 
         // Update count badges
@@ -1415,6 +1423,8 @@ function loadModuleData(moduleId) {
         if (typeof window.initUsersMgmt === 'function') window.initUsersMgmt();
     } else if (moduleId === 'project-audit') {
         if (typeof window.initProjectAudit === 'function') window.initProjectAudit();
+    } else if (moduleId === 'tools-mgmt') {
+        if (typeof window.initToolsMgmt === 'function') window.initToolsMgmt();
     } else if (moduleId === 'learning-roadmap') {
         initInteractiveRoadmap('admin');
     }

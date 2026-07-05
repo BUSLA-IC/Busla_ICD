@@ -420,6 +420,13 @@ function renderTable() {
             previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
         }
 
+        let previewQuizOrProjectBtn = '';
+        if (cmCurrentLevel === 'quizzes') {
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all" title="معاينة الاختبار"><i class="fas fa-eye text-xs"></i></button>`;
+        } else if (cmCurrentLevel === 'projects') {
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all" title="معاينة المشروع"><i class="fas fa-eye text-xs"></i></button>`;
+        }
+
         let reorderBtn = '';
         if (cmCurrentLevel === 'courses') {
             reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
@@ -445,6 +452,7 @@ function renderTable() {
                         ${drillDownBtn}
                         ${reorderBtn}
                         ${previewBtn}
+                        ${previewQuizOrProjectBtn}
                         <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all" title="تعديل"><i class="fas fa-pen text-xs"></i></button>
                         <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all" title="حذف"><i class="fas fa-trash text-xs"></i></button>
                     </div>
@@ -2501,6 +2509,10 @@ window.cmPreviewTableRow = function(contentId, videoId) {
             modal.remove();
         }
     };
+};
+
+window.cmPreviewItem = function(type, id) {
+    window.open(`../../pages/course-player.html?preview=true&type=${type}&id=${id}`, '_blank');
 };
 
 window.cmOpenReorderModal = async function(courseId, courseTitle) {

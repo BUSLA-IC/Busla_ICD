@@ -262,6 +262,16 @@
             <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">ترتيبك في الفريق</p>
             <div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-black text-white" id="team-rank-display">--</span><span class="text-sm text-gray-500" id="team-total-members">/ --</span></div>
         </div>
+
+        <!-- 🛠️ Recommended Tools Card -->
+        <div id="course-recommended-tools-card" class="hidden flex flex-col bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 shrink-0">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-toolbox text-teal-400 text-xs"></i> <span>الأدوات الموصى بها</span>
+            </h4>
+            <div id="course-recommended-tools-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1">
+                <!-- Populated dynamically in JS -->
+            </div>
+        </div>
     </aside>
 
     <div id="confirm-modal" class="fixed inset-0 z- hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -278,6 +288,7 @@
     </div>
 
     <script type="module" src="../js/course-player.js"></script>
+    <script type="module" src="../js/tools-drawer.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
