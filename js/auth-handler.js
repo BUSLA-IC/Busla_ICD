@@ -83,7 +83,7 @@ export async function loginUser(email, password) {
                 id: user.id,
                 email: acceptedApp.email,
                 full_name: acceptedApp.full_name,
-                role: 'admin', // 👑 الترقية الإجبارية هنا
+                role: acceptedApp.role || 'admin', // 👑 الترقية الإجبارية بالدور المخصص
                 university: acceptedApp.university,
                 faculty: acceptedApp.faculty,
                 department: acceptedApp.department,
@@ -91,6 +91,15 @@ export async function loginUser(email, password) {
                 academic_year: acceptedApp.academic_year,
                 track: acceptedApp.track
             });
+
+            // إدراج الصلاحيات المخصصة إن وجدت لربطها بالحساب الجديد
+            if (acceptedApp.custom_permissions && acceptedApp.custom_permissions.length > 0) {
+                const insertRows = acceptedApp.custom_permissions.map(permId => ({
+                    admin_id: user.id,
+                    permission_id: permId
+                }));
+                await supabase.from('admin_permissions').upsert(insertRows, { onConflict: 'admin_id,permission_id' });
+            }
         } else {
             // 🎓 3. إذا كان طالباً عادياً: نسحب بياناته المخفية ونحدثها لكي لا تكون Null
             const meta = user.user_metadata;

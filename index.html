@@ -111,6 +111,7 @@
                 <a href="#roadmap" class="nav-link">المسار</a>
                 <a href="#experts" class="nav-link">الخبراء</a>
                 <a href="#tools" class="nav-link">الادوات</a>
+                <a href="#references" class="nav-link">المكتبة العلمية</a>
                 <a href="#courses" class="nav-link">الدورات</a>
             </div>
 
@@ -136,6 +137,7 @@
         <a href="#roadmap" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المسار</a>
         <a href="#experts" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الخبراء</a>
         <a href="#tools" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الأدوات</a>
+        <a href="#references" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المكتبة العلمية</a>
         <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2">الدورات</a>
         
         <div class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
@@ -383,6 +385,147 @@
             </div>
         </div>
 
+        <!-- Module: References & Research Library (المكتبة العلمية) -->
+        <div id="module-references" class="app-module hidden pt-24 pb-12 px-6">
+            <div class="container mx-auto">
+                <div class="mb-8 text-right flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-12 h-12 object-contain" alt="لوجو بوصلة">
+                        <div>
+                            <h2 class="text-3xl font-bold text-white mb-1">المكتبة العلمية والمراجع</h2>
+                            <p class="text-xs text-gray-400">كتب علمية، أوراق بحثية ومواصفات فنية مصنفة بعناية لدعم دراستك وتدريبك العملي</p>
+                        </div>  
+                    </div>
+                </div>
+
+                <!-- Mobile Filter Toggle Button -->
+                <button id="btn-toggle-ref-filters-mobile" class="lg:hidden w-full bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex items-center justify-between text-white font-bold transition-all shadow-md mb-4 text-right">
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-sliders-h text-teal-400"></i>
+                        <span>خيارات تصفية وبحث المراجع</span>
+                    </span>
+                    <i id="ref-filters-mobile-chevron" class="fas fa-chevron-down text-gray-400 transition-transform animate-pulse"></i>
+                </button>
+
+                <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+                    <!-- Filters Sidebar (3/10) -->
+                    <aside id="references-filters-sidebar" class="hidden lg:block lg:col-span-3 bg-b-surface border border-white/10 rounded-2xl p-5 space-y-6 text-right">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                            <button id="btn-clear-all-ref-filters" class="text-xs text-teal-400 hover:text-teal-300 font-bold transition-all">تهيئة الفلاتر</button>
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i class="fas fa-filter text-teal-500"></i> خيارات التصفية
+                            </h3>
+                        </div>
+
+                        <!-- Track Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
+                            <select id="flt-ref-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل المسارات</option>
+                            </select>
+                        </div>
+
+                        <!-- Reference Type Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">نوع المرجع</label>
+                            <select id="flt-ref-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل الأنواع</option>
+                            </select>
+                        </div>
+
+                        <!-- Level Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">مستوى الصعوبة</label>
+                            <select id="flt-ref-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل المستويات</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Professional">Professional</option>
+                            </select>
+                        </div>
+
+                        <!-- Importance Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">أهمية المرجع</label>
+                            <select id="flt-ref-importance" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل الأهمية</option>
+                                <option value="Required">Required</option>
+                                <option value="Recommended">Recommended</option>
+                                <option value="Optional">Optional</option>
+                                <option value="Advanced Reading">Advanced Reading</option>
+                            </select>
+                        </div>
+
+                        <!-- Language Filter -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400">اللغة</label>
+                            <select id="flt-ref-language" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                <option value="all">كل اللغات</option>
+                            </select>
+                        </div>
+
+                        <!-- Toggles -->
+                        <div class="space-y-3 pt-3 border-t border-white/5 flex flex-col items-stretch">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>متاح للقراءة مجاناً</span>
+                                <input type="checkbox" id="flt-ref-free" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>يحتوي على تحميل PDF</span>
+                                <input type="checkbox" id="flt-ref-pdf" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                                <span>يدعم القراءة المباشرة أونلاين</span>
+                                <input type="checkbox" id="flt-ref-online" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            </label>
+                        </div>
+                    </aside>
+
+                    <!-- Main Grid & Controls (7/10) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <!-- Toolbar Controls -->
+                        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface border border-white/10 p-4 rounded-xl gap-4">
+                            <!-- Search -->
+                            <div class="relative w-full md:w-80">
+                                <input type="text" id="references-search-input" placeholder="ابحث بالاسم، المؤلف، الوسوم، أو الملخص..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none text-right">
+                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                            </div>
+
+                            <!-- Show Count, Sorters & Views Toggles -->
+                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+                                <div class="text-xs text-gray-400">
+                                    المعروض: <span id="refs-showing-count" class="font-bold text-white">0</span> من <span id="refs-total-count" class="font-bold text-white">0</span>
+                                </div>
+                                <div class="relative w-44">
+                                    <select id="references-sort-selector" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
+                                        <option value="latest">الأحدث إضافتاً</option>
+                                        <option value="popularity">الأكثر مشاهدة (Views)</option>
+                                        <option value="title_asc">الترتيب: بالاسم أ-ي</option>
+                                        <option value="title_desc">الترتيب: بالاسم ي-أ</option>
+                                    </select>
+                                    <i class="fas fa-sort absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
+                                </div>
+                                <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
+                                    <button id="btn-refs-grid-view" class="px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10">
+                                        <i class="fas fa-th-large"></i>
+                                    </button>
+                                    <button id="btn-refs-list-view" class="px-3 py-2 text-gray-400 hover:text-white transition-all text-xs">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- References List Container -->
+                        <div id="references-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Populated dynamically from Supabase -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Module: Courses (الدورات) -->
         <div id="module-courses" class="app-module hidden pt-24 pb-12 px-6">
             <div class="container mx-auto">
@@ -430,6 +573,7 @@
                     <ul class="space-y-2 text-sm text-gray-400">
                         <li><a href="#roadmap" class="hover:text-b-primary transition">خريطة الطريق</a></li>
                         <li><a href="#experts" class="hover:text-b-primary transition">الخبراء</a></li>
+                        <li><a href="#module-references" class="hover:text-b-primary transition">المكتبة العلمية</a></li>
                     </ul>   
                 </div>
                 <div>
@@ -457,6 +601,7 @@
         import { supabase } from './js/supabase-config.js';
         import { initInteractiveRoadmap } from './js/roadmap-interactive.js';
         import './js/tools-drawer.js';
+        import './js/references-drawer.js';
 
         // Expose to window for inline onclick HTML bindings
         window.supabase = supabase;
@@ -466,11 +611,18 @@
         const APPS_SCRIPT_URL = CONFIG.APPS_SCRIPT_URL;
         const CACHE_KEY = 'busla_home_data_v1';
 
+        // References state
+        let publicReferencesList = [];
+        let refsViewMode = 'grid';
+        let tracksRefMap = {};
+
         document.addEventListener('DOMContentLoaded', () => {
             loadDataSmartly();
             initSPARouter();
             setupMobileMenu();
             setupMobileFilters();
+            setupReferencesMobileFilters();
+            loadPublicReferences();
         });
 
         function setupMobileMenu() {
@@ -864,6 +1016,7 @@
                 '#roadmap': 'module-roadmap',
                 '#experts': 'module-experts',
                 '#tools': 'module-tools',
+                '#references': 'module-references',
                 '#courses': 'module-courses'
             };
 
@@ -904,6 +1057,8 @@
                     loadPublicCourses();
                 } else if (hash === '#tools') {
                     loadPublicTools();
+                } else if (hash === '#references') {
+                    loadPublicReferences();
                 }
             }
 
@@ -1024,6 +1179,293 @@
                 filtered = filtered.filter(c => c.phases?.title === phaseVal);
             }
             renderPublicCoursesList(filtered);
+        }
+
+        // Toggle References Mobile Filters
+        function setupReferencesMobileFilters() {
+            const btn = document.getElementById('btn-toggle-ref-filters-mobile');
+            const sidebar = document.getElementById('references-filters-sidebar');
+            const icon = document.getElementById('ref-filters-mobile-chevron');
+            if (btn && sidebar) {
+                btn.addEventListener('click', () => {
+                    sidebar.classList.toggle('hidden');
+                    if (sidebar.classList.contains('hidden')) {
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            }
+        }
+
+        // References library logic
+        async function loadPublicReferences() {
+            const grid = document.getElementById('references-library-container');
+            if (!grid) return;
+            
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-20 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-4 text-teal-400"></i>
+                    <p class="font-bold">جاري تحميل المكتبة العلمية والمراجع...</p>
+                </div>
+            `;
+            
+            try {
+                const { data: refs, error } = await supabase
+                    .from('reference_library')
+                    .select('*')
+                    .eq('status', 'Published')
+                    .order('order_index', { ascending: true });
+                    
+                if (error) throw error;
+
+                const { data: tracksData } = await supabase.from('tracks').select('id, name').eq('is_active', true);
+                tracksRefMap = {};
+                if (tracksData) {
+                    tracksData.forEach(t => {
+                        tracksRefMap[t.id] = t.name;
+                    });
+                }
+
+                // Populate filters
+                const trackFilter = document.getElementById('flt-ref-track');
+                if (trackFilter && trackFilter.options.length <= 1 && tracksData) {
+                    tracksData.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        trackFilter.appendChild(opt);
+                    });
+                }
+
+                const typeFilter = document.getElementById('flt-ref-type');
+                if (typeFilter && typeFilter.options.length <= 1) {
+                    const types = [...new Set(refs.map(r => r.type).filter(Boolean))];
+                    types.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.textContent = t;
+                        typeFilter.appendChild(opt);
+                    });
+                }
+
+                const langFilter = document.getElementById('flt-ref-language');
+                if (langFilter && langFilter.options.length <= 1) {
+                    const langs = [...new Set(refs.map(r => r.language).filter(Boolean))];
+                    langs.forEach(l => {
+                        const opt = document.createElement('option');
+                        opt.value = l;
+                        opt.textContent = l;
+                        langFilter.appendChild(opt);
+                    });
+                }
+
+                publicReferencesList = refs;
+                filterReferences();
+                setupReferencesFiltersEvents();
+            } catch (err) {
+                console.error("Error loading references:", err);
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20 text-red-500 bg-red-500/5 rounded-xl border border-red-500/10">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p class="font-bold">تعذر تحميل المراجع العلمية حالياً.</p>
+                        <p class="text-xs text-gray-500 mt-1">يرجى المحاولة مجدداً في وقت لاحق.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function setupReferencesFiltersEvents() {
+            if (window.refsEventsBound) return;
+            window.refsEventsBound = true;
+
+            const inputs = [
+                'flt-ref-track', 'flt-ref-type', 'flt-ref-level', 
+                'flt-ref-importance', 'flt-ref-language', 
+                'flt-ref-free', 'flt-ref-pdf', 'flt-ref-online',
+                'references-search-input', 'references-sort-selector'
+            ];
+
+            inputs.forEach(id => {
+                document.getElementById(id)?.addEventListener('change', filterReferences);
+                document.getElementById(id)?.addEventListener('input', filterReferences);
+            });
+
+            const gridBtn = document.getElementById('btn-refs-grid-view');
+            const listBtn = document.getElementById('btn-refs-list-view');
+
+            gridBtn?.addEventListener('click', () => {
+                refsViewMode = 'grid';
+                gridBtn.classList.add('bg-teal-500/20', 'text-teal-400');
+                listBtn.classList.remove('bg-teal-500/20', 'text-teal-400');
+                filterReferences();
+            });
+
+            listBtn?.addEventListener('click', () => {
+                refsViewMode = 'list';
+                listBtn.classList.add('bg-teal-500/20', 'text-teal-400');
+                gridBtn.classList.remove('bg-teal-500/20', 'text-teal-400');
+                filterReferences();
+            });
+
+            document.getElementById('btn-clear-all-ref-filters')?.addEventListener('click', () => {
+                document.getElementById('flt-ref-track').value = 'all';
+                document.getElementById('flt-ref-type').value = 'all';
+                document.getElementById('flt-ref-level').value = 'all';
+                document.getElementById('flt-ref-importance').value = 'all';
+                document.getElementById('flt-ref-language').value = 'all';
+                document.getElementById('flt-ref-free').checked = false;
+                document.getElementById('flt-ref-pdf').checked = false;
+                document.getElementById('flt-ref-online').checked = false;
+                document.getElementById('references-search-input').value = '';
+                document.getElementById('references-sort-selector').value = 'latest';
+                filterReferences();
+            });
+        }
+
+        function filterReferences() {
+            const trackVal = document.getElementById('flt-ref-track')?.value || 'all';
+            const typeVal = document.getElementById('flt-ref-type')?.value || 'all';
+            const levelVal = document.getElementById('flt-ref-level')?.value || 'all';
+            const importanceVal = document.getElementById('flt-ref-importance')?.value || 'all';
+            const langVal = document.getElementById('flt-ref-language')?.value || 'all';
+            
+            const freeVal = document.getElementById('flt-ref-free')?.checked || false;
+            const pdfVal = document.getElementById('flt-ref-pdf')?.checked || false;
+            const onlineVal = document.getElementById('flt-ref-online')?.checked || false;
+
+            const searchVal = document.getElementById('references-search-input')?.value.toLowerCase().trim() || '';
+            const sortVal = document.getElementById('references-sort-selector')?.value || 'latest';
+
+            let filtered = [...publicReferencesList];
+
+            if (trackVal !== 'all') {
+                filtered = filtered.filter(r => r.track_ids && r.track_ids.includes(trackVal));
+            }
+            if (typeVal !== 'all') {
+                filtered = filtered.filter(r => r.type === typeVal);
+            }
+            if (levelVal !== 'all') {
+                filtered = filtered.filter(r => r.experience_level === levelVal);
+            }
+            if (importanceVal !== 'all') {
+                filtered = filtered.filter(r => r.importance === importanceVal);
+            }
+            if (langVal !== 'all') {
+                filtered = filtered.filter(r => r.language === langVal);
+            }
+            if (freeVal) {
+                filtered = filtered.filter(r => r.read_online_url || r.download_pdf_url);
+            }
+            if (pdfVal) {
+                filtered = filtered.filter(r => r.download_pdf_url);
+            }
+            if (onlineVal) {
+                filtered = filtered.filter(r => r.read_online_url);
+            }
+            if (searchVal) {
+                filtered = filtered.filter(r => 
+                    r.title.toLowerCase().includes(searchVal) ||
+                    (r.short_title && r.short_title.toLowerCase().includes(searchVal)) ||
+                    (r.author && r.author.toLowerCase().includes(searchVal)) ||
+                    (r.publisher && r.publisher.toLowerCase().includes(searchVal)) ||
+                    (r.abstract && r.abstract.toLowerCase().includes(searchVal)) ||
+                    (r.tags && r.tags.some(t => t.toLowerCase().includes(searchVal)))
+                );
+            }
+
+            if (sortVal === 'title_asc') {
+                filtered.sort((a, b) => a.title.localeCompare(b.title, 'ar'));
+            } else if (sortVal === 'title_desc') {
+                filtered.sort((a, b) => b.title.localeCompare(a.title, 'ar'));
+            } else if (sortVal === 'popularity') {
+                filtered.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+            } else if (sortVal === 'latest') {
+                filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+
+            const showCountEl = document.getElementById('refs-showing-count');
+            const totalCountEl = document.getElementById('refs-total-count');
+            if (showCountEl) showCountEl.textContent = filtered.length;
+            if (totalCountEl) totalCountEl.textContent = publicReferencesList.length;
+
+            renderPublicReferencesList(filtered);
+        }
+
+        function renderPublicReferencesList(refs) {
+            const container = document.getElementById('references-library-container');
+            if (!container) return;
+
+            if (refs.length === 0) {
+                container.className = 'col-span-full';
+                container.innerHTML = `
+                    <div class="text-center py-20 text-gray-500 bg-white/5 rounded-xl border border-white/5">
+                        <i class="fas fa-search text-3xl mb-4 text-gray-600"></i>
+                        <p class="font-bold">لم نجد أي مراجع علمية مطابقة لتصفيتك.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const defaultCover = 'assets/icons/BUSLA-icon.png';
+
+            if (refsViewMode === 'grid') {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+                container.innerHTML = refs.map(ref => {
+                    return `
+                        <div class="bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-5 flex flex-col justify-between h-full hover:-translate-y-1 transition-all duration-300 shadow-xl group text-right">
+                            <div>
+                                <div class="flex items-start gap-4 mb-4">
+                                    <div class="w-16 h-24 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow">
+                                        <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.src='${defaultCover}'">
+                                    </div>
+                                    <div class="text-right flex-1 min-w-0">
+                                        <span class="inline-block bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[9px] px-2 py-0.5 rounded font-bold uppercase mb-1.5">${ref.type}</span>
+                                        <h3 class="text-sm font-bold text-white leading-snug line-clamp-2 hover:text-teal-400 cursor-pointer" onclick="window.openReferenceDetailModal('${ref.id}')">${ref.title}</h3>
+                                        <p class="text-[10px] text-gray-500 mt-1 truncate">${ref.author || 'مؤلف غير معروف'} • ${ref.publication_year || '---'}</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-400 text-xs text-right leading-relaxed line-clamp-3 mb-4">${ref.short_description || ''}</p>
+                            </div>
+                            <div class="mt-auto pt-3 border-t border-white/5 flex items-center justify-between">
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-white/5 uppercase">${ref.experience_level}</span>
+                                <button onclick="window.openReferenceDetailModal('${ref.id}')" class="px-3.5 py-1.5 bg-teal-500/10 hover:bg-teal-500 hover:text-white border border-teal-500/20 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1">
+                                    <span>عرض وتصفح</span>
+                                    <i class="fas fa-chevron-left text-[8px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                container.className = 'flex flex-col gap-3';
+                container.innerHTML = refs.map(ref => {
+                    return `
+                        <div class="bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hover:-translate-y-0.5 transition-all duration-300 shadow-md text-right">
+                            <div class="flex items-center gap-4 w-full md:w-auto text-right">
+                                <div class="w-10 h-14 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                                    <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover shadow" onerror="this.src='${defaultCover}'">
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-bold text-white hover:text-teal-400 cursor-pointer" onclick="window.openReferenceDetailModal('${ref.id}')">${ref.title}</h3>
+                                    <p class="text-[10px] text-gray-500 mt-1">${ref.author || 'مؤلف غير معروف'} • ${ref.publication_year || '---'} • <span class="text-teal-500 font-bold">${ref.type}</span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end text-xs">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-gray-500 text-[9px]">المستوى والأهمية</span>
+                                    <span class="text-teal-400 font-bold">${ref.experience_level} • <span class="text-gray-400">${ref.importance}</span></span>
+                                </div>
+                                <button onclick="window.openReferenceDetailModal('${ref.id}')" class="px-4 py-2 bg-white/5 hover:bg-teal-500 hover:text-white border border-white/10 hover:border-teal-500 rounded-xl font-bold transition-all text-xs flex items-center gap-2">
+                                    <span>تصفح</span>
+                                    <i class="fas fa-chevron-left text-[9px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         window.viewCourseInRoadmap = function(courseId) {

@@ -10,6 +10,7 @@
     --color-video: #9CA3AF;        /* Gray */
     --color-quiz: #8B5CF6;         /* Purple */
     --color-project: #F97316;      /* Orange */
+    --color-document: #22D3EE;     /* Cyan for Documents */
     --color-locked: #4B5563;       /* Muted gray for locked */
     --bg-glass: rgba(17, 17, 17, 0.7);
     --border-glass: rgba(255, 255, 255, 0.08);
@@ -248,6 +249,17 @@
 .node-quiz:hover {
     box-shadow: 0 4px 22px rgba(139, 92, 246, 0.28);
     border-color: var(--color-quiz);
+}
+
+.node-document {
+    width: 240px;
+    border-left: 3px solid var(--color-document);
+    box-shadow: 0 3px 16px rgba(34, 211, 238, 0.08);
+    padding: 10px 14px;
+}
+.node-document:hover {
+    box-shadow: 0 4px 22px rgba(34, 211, 238, 0.25);
+    border-color: var(--color-document);
 }
 
 .node-project {

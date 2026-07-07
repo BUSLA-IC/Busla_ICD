@@ -193,19 +193,115 @@ window.openApplicantDetails = (id) => {
 };
 
 // 6. اتخاذ القرار وتحديث الداتابيز (محدثة لدعم الإيميلات)
+// 💡 دالة لبناء وعرض قائمة الصلاحيات ديناميكياً داخل نافذة القبول
+function renderAcceptancePermissions(roles, permissions, rolePermissions) {
+    const roleSelect = document.getElementById('accept-admin-role');
+    const accordion = document.getElementById('accept-perms-accordion');
+    
+    if (roleSelect) {
+        roleSelect.innerHTML = roles.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+    }
+
+    // بناء خريطة صلاحيات الأدوار (role_id -> Set of permission_id)
+    const rolePermissionsMap = {};
+    roles.forEach(r => rolePermissionsMap[r.id] = new Set());
+    rolePermissions.forEach(rp => {
+        if (rolePermissionsMap[rp.role_id]) {
+            rolePermissionsMap[rp.role_id].add(rp.permission_id);
+        }
+    });
+
+    // تصنيفات الصلاحيات المتاحة في المنصة
+    const categories = ['Dashboard', 'Users', 'Leaders', 'Teams', 'Content', 'Reviews', 'Notifications', 'Reports', 'Settings'];
+    
+    accordion.innerHTML = categories.map(cat => {
+        const catPerms = permissions.filter(p => p.category === cat && !p.id.includes(':track'));
+        if (catPerms.length === 0) return '';
+        
+        const permsHtml = catPerms.map(p => {
+            return `
+                <label class="flex items-start gap-2.5 p-2 bg-black/40 border border-white/5 rounded-lg cursor-pointer hover:border-teal-500/30 transition-all text-right">
+                    <input type="checkbox" data-accept-perm="${p.id}" class="mt-0.5 accent-teal-500 rounded">
+                    <div class="mr-2">
+                        <span class="text-xs font-bold text-gray-200 block">${p.name}</span>
+                        <span class="text-[9px] text-gray-400 block mt-0.5 leading-tight">${p.description || ''}</span>
+                    </div>
+                </label>
+            `;
+        }).join('');
+
+        return `
+            <div class="border border-white/10 rounded-xl bg-black/20 overflow-hidden">
+                <div class="w-full flex items-center justify-between p-3 bg-black/40 text-right font-bold text-xs text-gray-300">
+                    <span>${cat}</span>
+                </div>
+                <div class="p-3 space-y-2 bg-[#0c0c0c] grid grid-cols-1 gap-2">
+                    ${permsHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // عند تغيير الدور المختار، يتم تحديد الصلاحيات الافتراضية الخاصة به تلقائياً
+    if (roleSelect) {
+        roleSelect.onchange = () => {
+            const selectedRoleName = roleSelect.value;
+            const roleRecord = roles.find(r => r.name === selectedRoleName);
+            if (roleRecord && rolePermissionsMap[roleRecord.id]) {
+                const activePerms = rolePermissionsMap[roleRecord.id];
+                document.querySelectorAll('[data-accept-perm]').forEach(cb => {
+                    const permId = cb.getAttribute('data-accept-perm');
+                    cb.checked = activePerms.has(permId);
+                });
+            } else {
+                document.querySelectorAll('[data-accept-perm]').forEach(cb => cb.checked = false);
+            }
+        };
+        // تشغيلها للمرة الأولى بشكل افتراضي
+        roleSelect.onchange();
+    }
+}
+
 window.updateAppStatus = async (newStatus) => {
     const appId = document.getElementById('modal-current-app-id').value;
     const notes = document.getElementById('modal-internal-notes').value;
     if (!appId) return;
 
-    // 💡 إذا كان القرار "قبول"، نفتح نافذة إدخال رابط الجروب أولاً ولا نحفظ فوراً
+    // 💡 إذا كان القرار "قبول"، نفتح نافذة إدخال رابط الجروب والصلاحيات ولا نحفظ فوراً
     if (newStatus === 'accepted') {
         document.getElementById('accept-group-link').value = '';
         document.getElementById('accept-extra-note').value = '';
-        document.getElementById('accept-config-modal').classList.remove('hidden');
         
-        // تجهيز زر الإرسال داخل النافذة
-        document.getElementById('btn-confirm-accept').onclick = () => executeAcceptance(appId, notes);
+        try {
+            const acceptConfigModal = document.getElementById('accept-config-modal');
+            const confirmBtn = document.getElementById('btn-confirm-accept');
+            
+            // إظهار رسالة تحميل الصلاحيات
+            const accordion = document.getElementById('accept-perms-accordion');
+            if (accordion) accordion.innerHTML = `<div class="p-4 text-center text-teal-500"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الصلاحيات...</div>`;
+            
+            acceptConfigModal.classList.remove('hidden');
+            
+            // جلب الأدوار والصلاحيات من قاعدة البيانات مباشرة لتحديث القائمة
+            const [rolesRes, permsRes, rolePermsRes] = await Promise.all([
+                supabase.from('admin_roles').select('*').order('name'),
+                supabase.from('permissions').select('*'),
+                supabase.from('role_permissions').select('*')
+            ]);
+            
+            if (rolesRes.error) throw rolesRes.error;
+            if (permsRes.error) throw permsRes.error;
+            if (rolePermsRes.error) throw rolePermsRes.error;
+            
+            renderAcceptancePermissions(rolesRes.data || [], permsRes.data || [], rolePermsRes.data || []);
+            
+            // ربط زر الحفظ بالدالة المحدثة
+            confirmBtn.onclick = () => executeAcceptance(appId, notes);
+            
+        } catch (err) {
+            console.error("Error loading roles/permissions for acceptance:", err);
+            window.showToast("حدث خطأ أثناء تحميل الأدوار والصلاحيات: " + err.message, "error");
+        }
         return;
     }
 
@@ -221,6 +317,14 @@ async function executeAcceptance(appId, notes) {
 
     if (!groupLink) return window.showToast("يجب إدخال رابط الجروب!", "error");
 
+    const roleSelect = document.getElementById('accept-admin-role');
+    const selectedRole = roleSelect ? roleSelect.value : 'Admin';
+    
+    const selectedPermissions = [];
+    document.querySelectorAll('[data-accept-perm]:checked').forEach(cb => {
+        selectedPermissions.push(cb.getAttribute('data-accept-perm'));
+    });
+
     const originalHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     btn.disabled = true;
@@ -229,10 +333,13 @@ try {
         const app = applicationsData.find(a => a.id === appId);
         if (!app) throw new Error("بيانات المتقدم غير موجودة");
 
-        // 2. تحديث حالة الطلب في قاعدة البيانات
-        await executeStatusUpdate(appId, 'accepted', notes, false);
+        // 2. تحديث حالة الطلب في قاعدة البيانات مع حفظ الدور والصلاحيات المحددة
+        await executeStatusUpdate(appId, 'accepted', notes, false, selectedRole, selectedPermissions);
 
-        // 3. إرسال إيميل القبول عبر EmailJS
+        // 3. بناء رابط التفعيل الذكي ببريد المتقدم المسبق
+        const activationLink = `${window.location.origin}/pages/auth.html?email=${encodeURIComponent(app.email)}`;
+
+        // 4. إرسال إيميل القبول عبر EmailJS
         emailjs.init("ejz_KrYv1VtCu9DJq"); // ⚠️ نفس المفتاح العام السابق
         await emailjs.send(
             "service_xsjpfql", // ✅ تم وضع الخدمة الخاصة بك
@@ -242,6 +349,9 @@ try {
                 to_email: app.email,
                 track_name: app.track === 'content' ? 'Content Contributor' : app.track,
                 group_link: groupLink,
+                activation_link: activationLink,
+                signup_link: activationLink,
+                login_link: activationLink,
                 extra_note: extraNote ? extraNote : 'مرحباً بك في فريقنا!'
             }
         );
@@ -261,10 +371,19 @@ try {
 }
 
 // دالة التحديث الأساسية للداتابيز
-async function executeStatusUpdate(appId, newStatus, notes, showMsg = true) {
-    const { error } = await supabase.from('admin_applications').update({
-        application_status: newStatus, internal_notes: notes, reviewed_at: new Date()
-    }).eq('id', appId);
+async function executeStatusUpdate(appId, newStatus, notes, showMsg = true, role = null, customPermissions = null) {
+    const updatePayload = {
+        application_status: newStatus, 
+        internal_notes: notes, 
+        reviewed_at: new Date()
+    };
+
+    if (newStatus === 'accepted') {
+        updatePayload.role = role;
+        updatePayload.custom_permissions = customPermissions;
+    }
+
+    const { error } = await supabase.from('admin_applications').update(updatePayload).eq('id', appId);
 
     if (error) throw error;
     if (showMsg) {

@@ -16,7 +16,8 @@ const LEVELS = {
     course_materials: { pk: 'content_id', icon: 'fa-file-video text-red-500', title: 'title' },
     quizzes: { pk: 'quiz_id', icon: 'fa-clipboard-check text-yellow-500', title: 'title' },
     quiz_questions: { pk: 'id', icon: 'fa-question-circle text-orange-500', title: 'question_text' },
-    projects: { pk: 'id', icon: 'fa-laptop-code text-emerald-500', title: 'title' }
+    projects: { pk: 'id', icon: 'fa-laptop-code text-emerald-500', title: 'title' },
+    curriculum_documents: { pk: 'id', icon: 'fa-file-pdf text-cyan-500', title: 'title' }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -357,6 +358,9 @@ async function loadTableData() {
         } else if (cmCurrentLevel === 'projects') {
             thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">عنوان المشروع (Project)</th><th class="p-4 text-center">أقصى نقاط</th><th class="p-4 text-center">طريقة التسليم</th><th class="p-4 text-center">إجراءات</th></tr>`;
             query = supabase.from('projects').select('*').order('created_at', { ascending: false });
+        } else if (cmCurrentLevel === 'curriculum_documents') {
+            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">اسم المستند (Document)</th><th class="p-4 text-center">النوع</th><th class="p-4 text-center">الربط بالمنهج</th><th class="p-4 text-center">المصدر</th><th class="p-4 text-center">العرض</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            query = supabase.from('curriculum_documents').select('*').order('created_at', { ascending: false });
         }
 
         const { data, error } = await query;
@@ -409,6 +413,20 @@ function renderTable() {
         if (cmCurrentLevel === 'quizzes') middleColumn = `<td class="p-4 text-center text-xs font-mono text-yellow-500">${item.max_xp}</td><td class="p-4 text-center text-xs font-mono">${item.passing_score}</td>`;
         if (cmCurrentLevel === 'quiz_questions') middleColumn = `<td class="p-4 text-center text-xs text-orange-400 font-bold bg-white/5 rounded-lg border border-white/5">${item.quizzes?.title || 'بدون اختبار'}</td><td class="p-4 text-center text-xs font-bold text-green-500">${item.correct_answer}</td>`;
         if (cmCurrentLevel === 'projects') middleColumn = `<td class="p-4 text-center text-xs font-mono text-yellow-500">${item.max_points}</td><td class="p-4 text-center text-xs">${item.submission_method || '-'}</td>`;
+        if (cmCurrentLevel === 'curriculum_documents') {
+            let linkTarget = 'غير مرتبط';
+            if (item.lesson_id) linkTarget = `درس: ${item.lesson_id}`;
+            else if (item.course_id) linkTarget = `كورس: ${item.course_id}`;
+            else if (item.phase_id) linkTarget = `مرحلة: ${item.phase_id}`;
+            else if (item.track_id) linkTarget = `مسار: ${item.track_id}`;
+            
+            middleColumn = `
+                <td class="p-4 text-center text-xs font-bold text-gray-400 uppercase">${item.document_type || '-'}</td>
+                <td class="p-4 text-center text-xs text-cyan-400 font-bold bg-white/5 rounded-lg border border-white/5">${linkTarget}</td>
+                <td class="p-4 text-center text-xs text-gray-400 font-mono">${item.source_type || '-'}</td>
+                <td class="p-4 text-center text-xs text-purple-400 font-bold">${item.view_mode || 'embed'}</td>
+            `;
+        }
 
         let drillDownBtn = '';
         if (['tracks', 'phases', 'courses', 'quizzes'].includes(cmCurrentLevel)) {
@@ -983,6 +1001,108 @@ else if (cmCurrentLevel === 'quiz_questions') {
             </div>
         `;
     }
+    else if (cmCurrentLevel === 'curriculum_documents') {
+        html += `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right pb-10">
+                <!-- Basic Data -->
+                <div class="md:col-span-2 border-b border-white/5 pb-2"><h4 class="text-xs font-bold text-cyan-400">البيانات الأساسية</h4></div>
+                <div><label class="${labelStyle}">العنوان (الاسم) *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">الاسم المختصر</label><input type="text" id="f-short-title" value="${data?.short_title || ''}" class="${inputStyle}"></div>
+                <div class="md:col-span-2"><label class="${labelStyle}">الوصف</label><textarea id="f-desc" rows="2" class="${inputStyle}">${data?.description || ''}</textarea></div>
+                <div><label class="${labelStyle}">رابط صورة الغلاف (Cover URL)</label><input type="text" id="f-cover-url" value="${data?.cover_url || ''}" class="${inputStyle} dir-ltr"></div>
+                <div><label class="${labelStyle}">رابط المصغر (Thumbnail URL)</label><input type="text" id="f-thumbnail-url" value="${data?.thumbnail_url || ''}" class="${inputStyle} dir-ltr"></div>
+                
+                <!-- Document Type -->
+                <div>
+                    <label class="${labelStyle}">نوع الوثيقة *</label>
+                    <select id="f-doc-type" required class="${inputStyle}">
+                        <option value="PDF" ${data?.document_type === 'PDF'?'selected':''}>PDF</option>
+                        <option value="Book" ${data?.document_type === 'Book'?'selected':''}>Book</option>
+                        <option value="Notes" ${data?.document_type === 'Notes'?'selected':''}>Notes</option>
+                        <option value="Datasheet" ${data?.document_type === 'Datasheet'?'selected':''}>Datasheet</option>
+                        <option value="Research Paper" ${data?.document_type === 'Research Paper'?'selected':''}>Research Paper</option>
+                        <option value="Documentation" ${data?.document_type === 'Documentation'?'selected':''}>Documentation</option>
+                        <option value="Manual" ${data?.document_type === 'Manual'?'selected':''}>Manual</option>
+                        <option value="Whitepaper" ${data?.document_type === 'Whitepaper'?'selected':''}>Whitepaper</option>
+                        <option value="Specification" ${data?.document_type === 'Specification'?'selected':''}>Specification</option>
+                    </select>
+                </div>
+                
+                <!-- Importance -->
+                <div>
+                    <label class="${labelStyle}">الأهمية للطلاب *</label>
+                    <select id="f-importance" required class="${inputStyle}">
+                        <option value="Required" ${data?.importance === 'Required'?'selected':''}>إلزامي (Required)</option>
+                        <option value="Recommended" ${data?.importance === 'Recommended'?'selected':''}>موصى به (Recommended)</option>
+                        <option value="Optional" ${data?.importance === 'Optional'?'selected':''}>اختياري (Optional)</option>
+                    </select>
+                </div>
+
+                <!-- Linking -->
+                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">ربط الوثيقة بالمنهج (اختياري)</h4></div>
+                <div><label class="${labelStyle}">المسار المرتبط (Track)</label><select id="f-track-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}</select></div>
+                <div><label class="${labelStyle}">المرحلة المرتبطة (Phase)</label><select id="f-phase-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.phases.filter(p => !data?.track_id || p.track_id === data.track_id), 'phase_id', 'title', data?.phase_id)}</select></div>
+                <div><label class="${labelStyle}">الكورس المرتبط (Course)</label><select id="f-course-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.courses.filter(c => !data?.phase_id || c.phase_id === data.phase_id), 'course_id', 'title', data?.course_id)}</select></div>
+                <div><label class="${labelStyle}">الدرس المرتبط (Lesson/Content)</label><select id="f-lesson-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.contents.filter(c => !data?.course_id || c.course_id === data.course_id), 'content_id', 'title', data?.lesson_id)}</select></div>
+
+                <!-- Source & View Mode -->
+                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">المصدر وطريقة العرض</h4></div>
+                <div>
+                    <label class="${labelStyle}">المصدر *</label>
+                    <select id="f-source-type" required class="${inputStyle}">
+                        <option value="Direct URL" ${data?.source_type === 'Direct URL'?'selected':''}>رابط مباشر (Direct URL)</option>
+                        <option value="Google Drive" ${data?.source_type === 'Google Drive'?'selected':''}>Google Drive</option>
+                        <option value="OneDrive" ${data?.source_type === 'OneDrive'?'selected':''}>OneDrive</option>
+                        <option value="Dropbox" ${data?.source_type === 'Dropbox'?'selected':''}>Dropbox</option>
+                        <option value="GitHub" ${data?.source_type === 'GitHub'?'selected':''}>GitHub</option>
+                        <option value="AWS S3" ${data?.source_type === 'AWS S3'?'selected':''}>AWS S3</option>
+                        <option value="Supabase Storage" ${data?.source_type === 'Supabase Storage'?'selected':''}>Supabase Storage</option>
+                    </select>
+                </div>
+                <div><label class="${labelStyle}">رابط أو معرف الملف (Source URL / ID) *</label><input type="text" id="f-source-url" required value="${data?.source_url || ''}" class="${inputStyle} dir-ltr"></div>
+                <div>
+                    <label class="${labelStyle}">طريقة العرض *</label>
+                    <select id="f-view-mode" required class="${inputStyle}">
+                        <option value="embed" ${data?.view_mode === 'embed'?'selected':''}>تضمين داخل المنصة (Embed)</option>
+                        <option value="external" ${data?.view_mode === 'external'?'selected':''}>فتح نافذة خارجية (Open External)</option>
+                    </select>
+                </div>
+                <div><label class="${labelStyle}">الترتيب (Display Order)</label><input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}"></div>
+
+                <!-- Completion & Gamification -->
+                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">إعدادات الإكمال والـ Gamification</h4></div>
+                <div>
+                    <label class="${labelStyle}">شرط اعتبار المقال مقروءاً (Completion Trigger) *</label>
+                    <select id="f-completion-trigger" required class="${inputStyle}">
+                        <option value="mark_complete" ${data?.completion_trigger === 'mark_complete'?'selected':''}>الضغط على زر الإكمال (Mark as Complete)</option>
+                        <option value="open" ${data?.completion_trigger === 'open'?'selected':''}>بمجرد فتح الملف (Open)</option>
+                        <option value="pages" ${data?.completion_trigger === 'pages'?'selected':''}>قراءة عدد محدد من الصفحات (Pages Read)</option>
+                        <option value="last_page" ${data?.completion_trigger === 'last_page'?'selected':''}>الوصول لآخر صفحة (Last Page)</option>
+                        <option value="time" ${data?.completion_trigger === 'time'?'selected':''}>قضاء وقت محدد من الزمن (Time Spent)</option>
+                    </select>
+                </div>
+                <div><label class="${labelStyle}">عدد الصفحات المطلوب قراءتها (إن وجد)</label><input type="number" id="f-completion-pages" value="${data?.completion_pages_count || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">الوقت المطلوب بالثواني (إن وجد)</label><input type="number" id="f-completion-time" value="${data?.completion_time_seconds || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">الوقت المتوقع للقراءة بالدقائق (Estimated Reading Time)</label><input type="number" id="f-reading-time" value="${data?.estimated_reading_time || ''}" class="${inputStyle}"></div>
+                <div class="md:col-span-2 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-sm"></i></div>
+                    <div class="flex-1">
+                        <label class="${labelStyle} text-yellow-400/80">نقاط الـ XP عند الإكمال</label>
+                        <input type="number" id="f-base-xp" min="0" value="${data?.xp_reward ?? 10}" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold w-32">
+                    </div>
+                </div>
+
+                <!-- Permissions -->
+                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">إعدادات الصلاحيات والإتاحة</h4></div>
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/30 p-4 rounded-xl border border-white/5">
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-download" ${!data || data?.allow_download ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالتحميل</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-print" ${!data || data?.allow_print ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالطباعة</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-copy" ${!data || data?.allow_copy ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بنسخ النصوص</label>
+                </div>
+                <div class="md:col-span-2"><label class="${labelStyle}">إخفاء الملف تلقائياً بعد تاريخ (أو تركه فارغاً) (Expiry Date)</label><input type="datetime-local" id="f-expiry-date" value="${data?.available_until ? new Date(data.available_until).toISOString().slice(0, 16) : ''}" class="${inputStyle} dir-ltr"></div>
+            </div>
+        `;
+    }
 
     container.innerHTML = html;
     bindModalCascading(hData); // تفعيل الفلاتر المتسلسلة داخل المودال
@@ -990,31 +1110,43 @@ else if (cmCurrentLevel === 'quiz_questions') {
 
 // 💡 دالة الفلترة المتسلسلة الديناميكية داخل المودال
 function bindModalCascading(hData) {
-    const tSel = document.getElementById('modal-filter-track');
+    const tSel = document.getElementById('modal-filter-track') || document.getElementById('f-track-id');
     const pSel = document.getElementById('modal-filter-phase') || document.getElementById('f-phase-id');
     const cSel = document.getElementById('modal-filter-course') || document.getElementById('f-course-id') || document.getElementById('f-related');
-    const cntSel = document.getElementById('modal-filter-content') || document.getElementById('f-link-content');
+    const cntSel = document.getElementById('modal-filter-content') || document.getElementById('f-link-content') || document.getElementById('f-lesson-id');
     const qSel = document.getElementById('f-quiz-id');
 
     if(tSel) tSel.addEventListener('change', (e) => {
         const v = e.target.value;
-        if(pSel && pSel.id !== 'f-phase-id') pSel.innerHTML = '<option value="">-- الكل --</option>' + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
-        else if (pSel) pSel.innerHTML = '<option value="">-- اختر المرحلة --</option>' + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
-        if(pSel) pSel.dispatchEvent(new Event('change'));
+        const isFilter = e.target.id === 'modal-filter-track';
+        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>';
+        if(pSel) {
+            pSel.innerHTML = optDefault + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
+            pSel.value = "";
+            pSel.dispatchEvent(new Event('change'));
+        }
     });
 
     if(pSel) pSel.addEventListener('change', (e) => {
         const v = e.target.value;
-        if(cSel && cSel.id !== 'f-course-id' && cSel.id !== 'f-related') cSel.innerHTML = '<option value="">-- الكل --</option>' + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
-        else if (cSel) cSel.innerHTML = `<option value="">${cSel.id==='f-related'?'بدون ارتباط':'-- اختر الكورس --'}</option>` + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
-        if(cSel) cSel.dispatchEvent(new Event('change'));
+        const isFilter = e.target.id === 'modal-filter-phase';
+        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : (cSel && cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>');
+        if(cSel) {
+            cSel.innerHTML = optDefault + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
+            cSel.value = "";
+            cSel.dispatchEvent(new Event('change'));
+        }
     });
 
     if(cSel) cSel.addEventListener('change', (e) => {
         const v = e.target.value;
-        if(cntSel && cntSel.id !== 'f-link-content') cntSel.innerHTML = '<option value="">-- الكل --</option>' + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
-        else if (cntSel) cntSel.innerHTML = '<option value="">-- اختر الدرس للربط --</option>' + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
-        if(cntSel) cntSel.dispatchEvent(new Event('change'));
+        const isFilter = e.target.id === 'modal-filter-course' || cSel.id === 'f-related';
+        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>';
+        if(cntSel) {
+            cntSel.innerHTML = optDefault + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
+            cntSel.value = "";
+            cntSel.dispatchEvent(new Event('change'));
+        }
     });
 
     if(cntSel) cntSel.addEventListener('change', (e) => {
@@ -1045,6 +1177,34 @@ async function handleFormSubmit(e) {
         else if (cmCurrentLevel === 'quizzes') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, passing_score: parseInt(document.getElementById('f-pass').value) || 50, max_xp: parseInt(document.getElementById('f-max-xp').value) || 50, attempts_allowed: parseInt(document.getElementById('f-attempts').value) || 3, questions_to_show: document.getElementById('f-q-show').value ? parseInt(document.getElementById('f-q-show').value) : null }; }
         else if (cmCurrentLevel === 'quiz_questions') { payload = { quiz_id: document.getElementById('f-quiz-id').value, question_text: document.getElementById('f-q-text').value, option_a: document.getElementById('f-opt-a').value, option_b: document.getElementById('f-opt-b').value, option_c: document.getElementById('f-opt-c').value, option_d: document.getElementById('f-opt-d').value, correct_answer: document.getElementById('f-correct').value, hint: document.getElementById('f-hint').value }; }
         else if (cmCurrentLevel === 'projects') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value }; }
+        else if (cmCurrentLevel === 'curriculum_documents') {
+            payload = {
+                title: document.getElementById('f-title').value,
+                short_title: document.getElementById('f-short-title').value || null,
+                description: document.getElementById('f-desc').value || null,
+                cover_url: document.getElementById('f-cover-url').value || null,
+                thumbnail_url: document.getElementById('f-thumbnail-url').value || null,
+                document_type: document.getElementById('f-doc-type').value,
+                importance: document.getElementById('f-importance').value,
+                track_id: document.getElementById('f-track-id').value || null,
+                phase_id: document.getElementById('f-phase-id').value || null,
+                course_id: document.getElementById('f-course-id').value || null,
+                lesson_id: document.getElementById('f-lesson-id').value || null,
+                source_type: document.getElementById('f-source-type').value,
+                source_url: document.getElementById('f-source-url').value,
+                view_mode: document.getElementById('f-view-mode').value,
+                order_index: parseInt(document.getElementById('f-order').value) || 0,
+                completion_trigger: document.getElementById('f-completion-trigger').value,
+                completion_pages_count: document.getElementById('f-completion-pages').value ? parseInt(document.getElementById('f-completion-pages').value) : null,
+                completion_time_seconds: document.getElementById('f-completion-time').value ? parseInt(document.getElementById('f-completion-time').value) : null,
+                estimated_reading_time: document.getElementById('f-reading-time').value ? parseInt(document.getElementById('f-reading-time').value) : null,
+                xp_reward: parseInt(document.getElementById('f-base-xp').value) || 10,
+                allow_download: document.getElementById('f-allow-download').checked,
+                allow_print: document.getElementById('f-allow-print').checked,
+                allow_copy: document.getElementById('f-allow-copy').checked,
+                available_until: document.getElementById('f-expiry-date').value || null
+            };
+        }
 
         let insertedId = cmCurrentEditId;
 

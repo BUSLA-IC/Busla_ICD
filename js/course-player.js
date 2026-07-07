@@ -7,6 +7,26 @@ let courseId = null;
 let currentTaskId = null;
 let currentContent = null;
 
+// PDF.js State Variables
+let pdfDoc = null;
+let pdfPageNum = 1;
+let pdfZoom = 1.0;
+let pdfRotation = 0;
+let pdfScrollMode = 'vertical'; 
+let pdfIsDarkMode = false;
+let pdfActiveSearchMatches = [];
+let pdfCurrentSearchIndex = -1;
+let pdfReadingTimer = null;
+let pdfTimeSpent = 0;
+let pageRenderStatus = {};
+let pagesViewedSet = new Set();
+let pdfCache = {};
+window.awardXp = async (amount, reason) => {
+    if (typeof awardPoints === 'function') {
+        await awardPoints(amount, reason);
+    }
+};
+
 let courseData = null;
 let courseContents = [];
 let currentUserData = null;
@@ -137,6 +157,12 @@ function setupEventListeners() {
             if (icon) { icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
         }
     });
+
+    window.addEventListener('beforeunload', () => {
+        if (currentContent && currentContent.type === 'document') {
+            saveDocumentProgress(currentContent, false);
+        }
+    });
 }
 
 function closeAllMenus() {
@@ -252,24 +278,113 @@ async function initPlayer() {
             return;
         }
 
-        const { data: course, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).single();
-        if (courseErr) throw courseErr;
-        courseData = course;
+        let targetContentId = new URLSearchParams(window.location.search).get('content');
+
+        // Check if targetContentId is document-only mode
+        let isDocOnlyMode = false;
+        let docData = null;
+        if (targetContentId && targetContentId.startsWith('doc_')) {
+            const docId = targetContentId.replace('doc_', '');
+            const { data } = await supabase.from('curriculum_documents').select('*').eq('id', docId).maybeSingle();
+            if (data) {
+                docData = data;
+                if (!courseId) {
+                    isDocOnlyMode = true;
+                    courseId = data.course_id;
+                }
+            }
+        }
+
+        let course = null;
+        if (courseId) {
+            const { data: cData, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).single();
+            if (!courseErr) {
+                course = cData;
+                courseData = course;
+            }
+        }
+
+        if (!course && docData) {
+            course = { title: docData.title };
+            courseData = course;
+        }
 
         // Load recommended tools for this course
-        loadCourseRecommendedTools(courseId);
+        if (courseId) {
+            loadCourseRecommendedTools(courseId);
+        }
+        loadCourseSuggestedReferences(courseId, targetContentId);
         
         const courseTitleEl = document.getElementById('course-title');
-        if (courseTitleEl) courseTitleEl.innerText = course.title || "Course Player";
+        if (courseTitleEl && course) courseTitleEl.innerText = course.title || "Course Player";
 
-        const { data: materials, error: matErr } = await supabase
-            .from('course_materials')
-            .select('*')
-            .eq('course_id', courseId)
-            .order('order_index', { ascending: true });
-        
-        if (matErr) throw matErr;
-        courseContents = materials || [];
+        let materials = [];
+        if (courseId) {
+            const { data: mats, error: matErr } = await supabase
+                .from('course_materials')
+                .select('*')
+                .eq('course_id', courseId)
+                .order('order_index', { ascending: true });
+            
+            if (!matErr) materials = mats || [];
+        }
+        courseContents = materials;
+
+        // Fetch documents for the course
+        let documents = [];
+        if (courseId) {
+            const { data: docsData } = await supabase
+                .from('curriculum_documents')
+                .select('*')
+                .eq('course_id', courseId)
+                .order('order_index', { ascending: true });
+            documents = docsData || [];
+        }
+
+        if (isDocOnlyMode && docData && documents.findIndex(d => d.id === docData.id) === -1) {
+            documents.push(docData);
+        }
+
+        // Merge documents into courseContents
+        if (documents.length > 0) {
+            const docItems = documents.map(d => ({
+                content_id: `doc_${d.id}`,
+                course_id: courseId,
+                title: d.title,
+                type: 'document',
+                order_index: d.order_index || 0,
+                rawDoc: d
+            }));
+            
+            const lessonDocs = docItems.filter(d => d.rawDoc.lesson_id);
+            const courseDocs = docItems.filter(d => !d.rawDoc.lesson_id);
+            
+            let merged = [...courseContents];
+            
+            lessonDocs.forEach(docItem => {
+                const idx = merged.findIndex(m => m.content_id === docItem.rawDoc.lesson_id);
+                if (idx !== -1) {
+                    merged.splice(idx + 1, 0, docItem);
+                } else {
+                    courseDocs.push(docItem);
+                }
+            });
+            
+            courseDocs.sort((a, b) => a.order_index - b.order_index);
+            merged = [...merged, ...courseDocs];
+            
+            courseContents = merged;
+        }
+
+        if (isDocOnlyMode && courseContents.length === 0 && docData) {
+            courseContents = [{
+                content_id: `doc_${docData.id}`,
+                course_id: null,
+                title: docData.title,
+                type: 'document',
+                rawDoc: docData
+            }];
+        }
 
         const quizIds = courseContents.map(c => c.ref_quiz_id).filter(Boolean);
         const projectIds = courseContents.map(c => c.ref_project_id).filter(Boolean);
@@ -284,8 +399,6 @@ async function initPlayer() {
         }
 
         await ensureUserEnrolled();
-
-        let targetContentId = new URLSearchParams(window.location.search).get('content');
 
         if (!targetContentId && currentTaskId) {
             const { data: taskData } = await supabase
@@ -430,12 +543,10 @@ async function renderSidebar() {
     const container = document.getElementById('playlist-container') || document.getElementById('playlist-items');
     if (!container) return;
 
-    // Fetch completed videos & quizzes & projects
-// Fetch completed videos & quizzes & projects
-    const { data: completedVideos } = await supabase.from('completed_materials').select('material_id').eq('user_id', currentUserData.id).eq('course_id', courseId);
+    const { data: completedMats } = await supabase.from('completed_materials').select('material_id').eq('user_id', currentUserData.id);
     const { data: passedQuizzes } = await supabase.from('quiz_attempts').select('quiz_id').eq('user_id', currentUserData.id).eq('passed', true);
     const { data: submittedProjects } = await supabase.from('project_submissions').select('project_id').eq('user_id', currentUserData.id).in('status', ['graded', 'remarked']);
-    const completedVideoIds = (completedVideos || []).map(row => row.material_id);
+    const completedMaterialIds = (completedMats || []).map(row => row.material_id);
     const completedQuizIds = (passedQuizzes || []).map(row => row.quiz_id);
     const completedProjectIds = (submittedProjects || []).map(row => row.project_id);
 
@@ -492,15 +603,15 @@ async function renderSidebar() {
         }
 
         // =====================================
-        // 💡 2. رسم الدروس (Videos / Playable Sections)
+        // 💡 2. رسم الدروس أو المستندات
         // =====================================
-        const isVideoCompleted = completedVideoIds.includes(item.content_id);
+        const isCompleted = completedMaterialIds.includes(item.content_id);
         const isChild = currentSectionBody !== container; // لو هو جوه فولدر، نعطيه تنسيق الابن (Child)
         
-        renderSidebarItem(currentSectionBody, item, mainIndex, isVideoCompleted, isChild);
+        renderSidebarItem(currentSectionBody, item, mainIndex, isCompleted, isChild);
         
         totalItemsCount++;
-        if (isVideoCompleted) completedCount++;
+        if (isCompleted) completedCount++;
         mainIndex++;
 
         // =====================================
@@ -567,6 +678,7 @@ function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
     
     if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; typeLabel = "كويز"; }
     if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; typeLabel = "مشروع"; }
+    if (item.type === 'document') { icon = "fa-file-pdf"; typeColor = "text-cyan-400"; typeLabel = "مستند"; }
 
     const baseClasses = "flex items-center gap-3 p-3 cursor-pointer transition-all relative rounded-xl mb-1.5";
     const activeClasses = isActive 
@@ -631,14 +743,42 @@ async function loadContent(item) {
 
     if (!item) return;
 
-    // 💡 2. التعديل الهام هنا: حفظ تقدم الفيديو سواء كان video أو section
+    // Save previous document progress before switching
+    if (pdfReadingTimer) {
+        clearInterval(pdfReadingTimer);
+        pdfReadingTimer = null;
+    }
+    pageRenderStatus = {};
+
+    if (currentContent && currentContent.type === 'document') {
+        if (docSaveTimeout) clearTimeout(docSaveTimeout);
+        await saveDocumentProgress(currentContent, false);
+    }
+
     if (currentContent && (currentContent.type === 'video' || currentContent.type === 'section') && player && typeof player.getCurrentTime === 'function') {
         await saveVideoState(false);
+    }
+
+    // Always clean up player and clear intervals when switching content
+    if (player) {
+        if (typeof player.destroy === 'function') {
+            try { player.destroy(); } catch (e) { console.error("Error destroying player on switch:", e); }
+        }
+        player = null;
+    }
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    if (dbSaveInterval) {
+        clearInterval(dbSaveInterval);
+        dbSaveInterval = null;
     }
 
     currentContent = item;
     updateVideoHeader(item);
     recordTaskStart(item.content_id);
+    loadCourseSuggestedReferences(courseId, item.content_id);
 
     document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
     const progressPanel = document.getElementById('video-progress-panel');
@@ -660,6 +800,11 @@ async function loadContent(item) {
         if (progressPanel) progressPanel.classList.remove('hidden');
         
         loadVideo(item.video_id, 0, isCurrentContentCompleted, 1);
+        
+    } else if (item.type === 'document') {
+        document.getElementById('view-document')?.classList.remove('hidden');
+        if (progressPanel) progressPanel.classList.add('hidden');
+        initDocumentViewer(item);
         
     } else if (item.type === 'quiz') {
         document.getElementById('view-quiz')?.classList.remove('hidden');
@@ -1991,7 +2136,7 @@ async function markContentComplete(contentId, pointsEarned = 0, type = 'video') 
 
     try {
         // Only insert video materials to completed table
-if (item.type === 'video' || item.type === 'section') {
+        if (type === 'video' || type === 'section') {
             const { data: existing } = await supabase
                 .from('completed_materials')
                 .select('id')
@@ -2285,5 +2430,990 @@ async function loadCourseRecommendedTools(cId) {
         console.error("loadCourseRecommendedTools error:", err);
         card.classList.add('hidden');
         card.classList.remove('flex');
+    }
+}
+
+/**
+ * Fetches and renders suggested references for the current course or active lesson/content.
+ * @param {string} cId - Course ID
+ * @param {string} contentId - Content ID / Lesson ID (optional)
+ */
+async function loadCourseSuggestedReferences(cId, contentId = null) {
+    const card = document.getElementById('course-suggested-references-card');
+    const list = document.getElementById('course-suggested-references-list');
+    if (!card || !list) return;
+
+    if (!cId && !contentId) {
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('reference_library')
+            .select('*')
+            .eq('status', 'Published')
+            .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            card.classList.add('hidden');
+            card.classList.remove('flex');
+            return;
+        }
+
+        const filtered = data.filter(ref => {
+            const matchesCourse = cId && ref.course_ids && ref.course_ids.includes(String(cId));
+            const matchesLesson = contentId && ref.content_ids && ref.content_ids.includes(String(contentId));
+            return matchesCourse || matchesLesson;
+        });
+
+        if (filtered.length === 0) {
+            card.classList.add('hidden');
+            card.classList.remove('flex');
+            return;
+        }
+
+        card.classList.remove('hidden');
+        card.classList.add('flex');
+
+        const defaultCover = '../assets/icons/BUSLA-icon.png';
+        
+        list.innerHTML = filtered.map(ref => {
+            const impBadge = ref.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : ref.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
+            const importanceName = ref.importance === 'Required' ? 'مطلوب' : ref.importance === 'Recommended' ? 'مستحسن' : ref.importance === 'Advanced Reading' ? 'متقدم' : 'اختياري';
+            return `
+                <div onclick="if (typeof window.openReferenceDetailModal === 'function') { window.openReferenceDetailModal('${ref.id}'); } else { window.open('${ref.read_online_url || ref.download_pdf_url || '#'}', '_blank'); }" 
+                     class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-7 h-10 bg-white/5 rounded border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
+                            <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.src='${defaultCover}'">
+                        </div>
+                        <div class="text-right truncate">
+                            <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate" title="${ref.title}">${ref.title}</span>
+                            <span class="text-[8px] text-gray-500 block truncate mt-0.5">${ref.type} • ${ref.author || 'مؤلف غير معروف'}</span>
+                        </div>
+                    </div>
+                    <span class="text-[8px] border px-1.5 py-0.5 rounded font-black shrink-0 ${impBadge}">${importanceName}</span>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+    }
+}
+
+function resolveDocumentViewer(url) {
+    if (!url) return { mode: 'iframe', url: '' };
+    url = url.trim();
+
+    // 1. Google Drive
+    if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
+        const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
+        if (idMatch && idMatch[1]) {
+            return {
+                mode: 'iframe',
+                url: `https://drive.google.com/file/d/${idMatch[1]}/preview`
+            };
+        }
+    }
+
+    // 2. Dropbox
+    if (url.includes('dropbox.com')) {
+        let directUrl = url;
+        if (url.includes('?dl=0')) {
+            directUrl = url.replace('?dl=0', '?raw=1');
+        } else if (!url.includes('?')) {
+            directUrl = url + '?raw=1';
+        }
+        directUrl = directUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+        return {
+            mode: 'pdfjs',
+            url: directUrl
+        };
+    }
+
+    // 3. OneDrive
+    if (url.includes('onedrive.live.com') || url.includes('1drv.ms')) {
+        const residMatch = url.match(/resid=([-\w!]+)/);
+        const authkeyMatch = url.match(/authkey=([-\w!]+)/);
+        if (residMatch && residMatch[1]) {
+            let embedUrl = `https://onedrive.live.com/embed?resid=${residMatch[1]}`;
+            if (authkeyMatch && authkeyMatch[1]) {
+                embedUrl += `&authkey=${authkeyMatch[1]}`;
+            }
+            return {
+                mode: 'iframe',
+                url: embedUrl
+            };
+        }
+        return {
+            mode: 'iframe',
+            url: `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(url)}`
+        };
+    }
+
+    // 4. Supabase Storage / Direct PDF
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    const isDirectPdf = cleanUrl.endsWith('.pdf') || url.includes('/storage/v1/object/public/');
+    if (isDirectPdf) {
+        return {
+            mode: 'pdfjs',
+            url: url
+        };
+    }
+
+    // 5. Default fallback: try pdf.js
+    return {
+        mode: 'pdfjs',
+        url: url
+    };
+}
+
+function loadIframeFallback(embedUrl, item) {
+    const viewport = document.getElementById('pdf-viewport');
+    if (viewport) {
+        viewport.classList.remove('p-6', 'items-center');
+        viewport.classList.add('p-0');
+        viewport.innerHTML = `
+            <iframe src="${embedUrl}" class="w-full h-full border-0 bg-b-surface" allow="autoplay" style="display: block; width: 100%; height: 100%;"></iframe>
+        `;
+    }
+
+    // Hide PDF sidebar
+    document.getElementById('pdf-sidebar')?.classList.add('hidden');
+
+    // Keep toolbar visible but simplify it (hide zoom, scroll, search, page navigation)
+    const toolbar = document.getElementById('pdf-toolbar');
+    if (toolbar) {
+        toolbar.classList.remove('hidden');
+        document.getElementById('pdf-toggle-sidebar')?.parentElement?.classList.add('hidden');
+        document.getElementById('pdf-zoom-out')?.parentElement?.classList.add('hidden');
+        document.getElementById('pdf-search-btn')?.classList.add('hidden');
+    }
+
+    // Override read_pages/last_page trigger since we can't track pages inside an iframe
+    const docData = item.rawDoc;
+    if (docData) {
+        const trigger = docData.completion_trigger || 'mark_complete';
+        if (trigger === 'read_pages' || trigger === 'last_page') {
+            docData.completion_trigger = 'manual';
+        }
+    }
+
+    // Start timer and render completion button
+    startPdfReadingTimer(item);
+    renderPdfCompletionBtn(item);
+}
+
+
+// ==========================================
+// 12. PDF/DOCUMENT VIEWER IMPLEMENTATION
+// ==========================================
+async function initDocumentViewer(item) {
+    const docData = item.rawDoc;
+    if (!docData) return;
+
+    pdfDoc = null;
+    pdfPageNum = 1;
+    pdfZoom = 1.0;
+    pdfRotation = 0;
+    pdfScrollMode = 'vertical';
+    pdfActiveSearchMatches = [];
+    pdfCurrentSearchIndex = -1;
+    pdfTimeSpent = 0;
+    pagesViewedSet = new Set();
+    pagesViewedSet.add(1);
+
+    // Reset layout styles for viewport (remove full-width iframe layout if any)
+    const viewport = document.getElementById('pdf-viewport');
+    if (viewport) {
+        viewport.classList.add('p-6', 'items-center');
+        viewport.classList.remove('p-0');
+        viewport.innerHTML = `<div id="pdf-canvas-container" class="relative shadow-2xl flex flex-col items-center gap-6"></div>`;
+    }
+
+    // Reset toolbar and sidebar visibility
+    const toolbar = document.getElementById('pdf-toolbar');
+    if (toolbar) {
+        toolbar.classList.remove('hidden');
+        document.getElementById('pdf-toggle-sidebar')?.parentElement?.classList.remove('hidden');
+        document.getElementById('pdf-zoom-out')?.parentElement?.classList.remove('hidden');
+        document.getElementById('pdf-search-btn')?.classList.remove('hidden');
+    }
+    document.getElementById('pdf-sidebar')?.classList.add('hidden');
+    
+    updateVideoHeader({
+        title: docData.title,
+        Author: 'Busla Team',
+        base_xp: docData.xp_reward,
+        Note: docData.description
+    });
+
+    // Check if the URL is a Google Drive folder or set to external view mode
+    const isFolder = docData.source_url && (docData.source_url.includes('/folders/') || docData.source_url.includes('/drive/folders/'));
+    if (docData.view_mode === 'external' || isFolder) {
+        const container = document.getElementById('pdf-canvas-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-20 px-6 max-w-lg mx-auto bg-black/35 rounded-2xl border border-white/10 shadow-2xl flex flex-col items-center gap-6 mt-10 animate-fade-in font-sans">
+                    <div class="w-20 h-20 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center text-4xl">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-2">${docData.title}</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">${docData.description || 'هذا العنصر عبارة عن مجلد أو رابط خارجي لا يمكن عرضه مباشرة هنا. اضغط على الزر أدناه لفتحه في نافذة جديدة والبدء في القراءة.'}</p>
+                    </div>
+                    <a href="${docData.source_url}" target="_blank" id="btn-open-external-folder" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg flex items-center gap-2">
+                        <i class="fas fa-external-link-alt"></i> فتح المحتوى الخارجي
+                    </a>
+                </div>
+            `;
+            
+            const btnOpen = document.getElementById('btn-open-external-folder');
+            if (btnOpen) {
+                btnOpen.onclick = () => {
+                    saveDocumentProgress(item, true);
+                };
+            }
+        }
+        
+        document.getElementById('pdf-toolbar')?.classList.add('hidden');
+        renderPdfCompletionBtn(item);
+        return;
+    }
+
+    const allowDownload = docData.allow_download;
+    const allowPrint = docData.allow_print;
+    const allowCopy = docData.allow_copy;
+
+    const downloadBtn = document.getElementById('pdf-download');
+    const printBtn = document.getElementById('pdf-print');
+    
+    if (downloadBtn) {
+        if (allowDownload) {
+            downloadBtn.classList.remove('hidden');
+            downloadBtn.href = docData.source_url;
+        } else {
+            downloadBtn.classList.add('hidden');
+        }
+    }
+    if (printBtn) {
+        if (allowPrint) {
+            printBtn.classList.remove('hidden');
+        } else {
+            printBtn.classList.add('hidden');
+        }
+    }
+
+    if (viewport) {
+        if (!allowCopy) {
+            viewport.classList.add('select-none');
+            viewport.oncontextmenu = (e) => e.preventDefault();
+            viewport.oncopy = (e) => e.preventDefault();
+        } else {
+            viewport.classList.remove('select-none');
+            viewport.oncontextmenu = null;
+            viewport.oncopy = null;
+        }
+    }
+
+    let dbProgress = null;
+    try {
+        const { data } = await supabase
+            .from('document_progress')
+            .select('*')
+            .eq('user_id', currentUserData.id)
+            .eq('document_id', docData.id)
+            .maybeSingle();
+        dbProgress = data;
+    } catch(err) {
+        console.error("Error fetching doc progress:", err);
+    }
+
+    if (dbProgress) {
+        pdfPageNum = dbProgress.last_page || 1;
+        pdfTimeSpent = dbProgress.time_spent || 0;
+        isCurrentContentCompleted = dbProgress.completed || false;
+        pagesViewedSet.add(pdfPageNum);
+    } else {
+        isCurrentContentCompleted = false;
+    }
+
+    const container = document.getElementById('pdf-canvas-container');
+    if (container) {
+        container.innerHTML = `<div class="text-white text-center py-10 flex flex-col items-center gap-4">
+            <i class="fas fa-spinner fa-spin text-3xl text-teal-400"></i> جاري تحميل المستند...
+        </div>`;
+    }
+
+    const resolved = resolveDocumentViewer(docData.source_url);
+    if (resolved.mode === 'iframe') {
+        loadIframeFallback(resolved.url, item);
+    } else {
+        // Try to load cached document
+        const cacheEntry = pdfCache[docData.id];
+        if (cacheEntry) {
+            pdfDoc = cacheEntry.pdfDoc;
+            pagesViewedSet = cacheEntry.pagesViewedSet || new Set([1]);
+            pdfZoom = cacheEntry.pdfZoom || 1.0;
+            pdfRotation = cacheEntry.pdfRotation || 0;
+            pdfScrollMode = cacheEntry.pdfScrollMode || 'vertical';
+            pdfIsDarkMode = cacheEntry.pdfIsDarkMode || false;
+            
+            document.getElementById('pdf-page-count').innerText = pdfDoc.numPages;
+            const pageNumInput = document.getElementById('pdf-page-num');
+            if (pageNumInput) {
+                pageNumInput.max = pdfDoc.numPages;
+                pageNumInput.value = pdfPageNum;
+            }
+
+            await renderPdfPages();
+            await buildPdfThumbnails();
+            setupPdfControls(item);
+            startPdfReadingTimer(item);
+            renderPdfCompletionBtn(item);
+
+            if (pdfScrollMode === 'vertical' && pdfPageNum > 1) {
+                setTimeout(() => scrollToPage(pdfPageNum), 200);
+            }
+            return;
+        }
+
+        try {
+            const loadingTask = pdfjsLib.getDocument(resolved.url);
+            pdfDoc = await loadingTask.promise;
+            
+            // Save to cache
+            pdfCache[docData.id] = {
+                pdfDoc: pdfDoc,
+                pagesViewedSet: pagesViewedSet,
+                pdfZoom: pdfZoom,
+                pdfRotation: pdfRotation,
+                pdfScrollMode: pdfScrollMode,
+                pdfIsDarkMode: pdfIsDarkMode
+            };
+            
+            document.getElementById('pdf-page-count').innerText = pdfDoc.numPages;
+            const pageNumInput = document.getElementById('pdf-page-num');
+            if (pageNumInput) {
+                pageNumInput.max = pdfDoc.numPages;
+                pageNumInput.value = pdfPageNum;
+            }
+
+            await renderPdfPages();
+            await buildPdfThumbnails();
+            setupPdfControls(item);
+            startPdfReadingTimer(item);
+            renderPdfCompletionBtn(item);
+
+            if (pdfScrollMode === 'vertical' && pdfPageNum > 1) {
+                setTimeout(() => scrollToPage(pdfPageNum), 500);
+            }
+
+        } catch (err) {
+            console.error("Error loading PDF via pdf.js, attempting fallback to iframe embed:", err);
+            const fallbackUrl = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(docData.source_url)}`;
+            loadIframeFallback(fallbackUrl, item);
+        }
+    }
+}
+
+async function renderPdfPages() {
+    const container = document.getElementById('pdf-canvas-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const numPages = pdfDoc.numPages;
+
+    if (pdfScrollMode === 'vertical') {
+        for (let i = 1; i <= numPages; i++) {
+            const pageDiv = document.createElement('div');
+            pageDiv.id = `pdf-page-wrapper-${i}`;
+            pageDiv.className = 'pdf-page-wrapper relative border border-white/5 bg-black/20 rounded shadow-lg overflow-hidden my-3';
+            pageDiv.style.minHeight = '600px'; 
+            pageDiv.style.width = '100%';
+            pageDiv.style.maxWidth = '800px';
+            pageDiv.dataset.pageNum = i;
+            
+            pageDiv.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> صفحة ${i}</div>`;
+            container.appendChild(pageDiv);
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const pageNum = parseInt(entry.target.dataset.pageNum);
+                    if (!pageRenderStatus[pageNum]) {
+                        renderPageCanvas(pageNum);
+                    }
+                    
+                    pdfPageNum = pageNum;
+                    const pageNumInput = document.getElementById('pdf-page-num');
+                    if (pageNumInput) pageNumInput.value = pageNum;
+                    
+                    pagesViewedSet.add(pageNum);
+                    updateReadingProgress();
+                }
+            });
+        }, {
+            root: document.getElementById('pdf-viewport'),
+            rootMargin: '100px 0px 100px 0px',
+            threshold: 0.1
+        });
+
+        document.querySelectorAll('.pdf-page-wrapper').forEach(el => observer.observe(el));
+
+    } else {
+        const pageDiv = document.createElement('div');
+        pageDiv.id = `pdf-page-wrapper-${pdfPageNum}`;
+        pageDiv.className = 'pdf-page-wrapper relative border border-white/5 bg-black/20 rounded shadow-lg overflow-hidden';
+        pageDiv.style.minHeight = '600px';
+        pageDiv.style.width = '100%';
+        pageDiv.style.maxWidth = '800px';
+        pageDiv.dataset.pageNum = pdfPageNum;
+        container.appendChild(pageDiv);
+
+        pagesViewedSet.add(pdfPageNum);
+        await renderPageCanvas(pdfPageNum);
+    }
+}
+
+async function renderPageCanvas(pageNum) {
+    if (pageRenderStatus[pageNum] === 'rendering' || pageRenderStatus[pageNum] === 'done') return;
+    pageRenderStatus[pageNum] = 'rendering';
+
+    try {
+        const page = await pdfDoc.getPage(pageNum);
+        const wrapper = document.getElementById(`pdf-page-wrapper-${pageNum}`);
+        if (!wrapper) return;
+
+        wrapper.innerHTML = ''; 
+
+        const viewport = page.getViewport({ scale: pdfZoom, rotation: pdfRotation });
+
+        const canvas = document.createElement('canvas');
+        canvas.id = `pdf-canvas-${pageNum}`;
+        canvas.className = 'block mx-auto transition-transform duration-300';
+        
+        if (pdfIsDarkMode) {
+            canvas.style.filter = 'invert(0.9) hue-rotate(180deg)';
+        }
+
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        wrapper.style.width = `${viewport.width}px`;
+        wrapper.style.minHeight = `${viewport.height}px`;
+
+        wrapper.appendChild(canvas);
+
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
+        pageRenderStatus[pageNum] = 'done';
+    } catch (err) {
+        console.error(`Error rendering page ${pageNum}:`, err);
+        pageRenderStatus[pageNum] = 'error';
+    }
+}
+
+async function buildPdfThumbnails() {
+    const sidebar = document.getElementById('pdf-sidebar-content');
+    if (!sidebar) return;
+    sidebar.innerHTML = '';
+
+    const numPages = pdfDoc.numPages;
+    for (let i = 1; i <= numPages; i++) {
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'mb-4 p-2 border border-white/5 rounded hover:border-teal-500/50 cursor-pointer bg-black/20 text-center transition-all';
+        thumbDiv.onclick = () => scrollToPage(i);
+        
+        const label = document.createElement('div');
+        label.className = 'text-[10px] text-gray-500 mt-1';
+        label.innerText = `صفحة ${i}`;
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'w-24 h-32 object-contain mx-auto border border-white/10 rounded bg-white';
+        
+        pdfDoc.getPage(i).then(page => {
+            const viewport = page.getViewport({ scale: 0.15 });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            page.render({ canvasContext: ctx, viewport: viewport });
+        }).catch(err => console.error(err));
+
+        thumbDiv.appendChild(canvas);
+        thumbDiv.appendChild(label);
+        sidebar.appendChild(thumbDiv);
+    }
+}
+
+function scrollToPage(pageNum) {
+    pdfPageNum = pageNum;
+    const pageNumInput = document.getElementById('pdf-page-num');
+    if (pageNumInput) pageNumInput.value = pageNum;
+
+    pagesViewedSet.add(pageNum);
+
+    if (pdfScrollMode === 'vertical') {
+        const wrapper = document.getElementById(`pdf-page-wrapper-${pageNum}`);
+        if (wrapper) {
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    } else {
+        renderPdfPages();
+    }
+}
+
+function updateReadingProgress() {
+    const total = pdfDoc ? pdfDoc.numPages : 1;
+    const percent = Math.min(100, Math.round((pagesViewedSet.size / total) * 100));
+    
+    const pctEl = document.getElementById('pdf-reading-percent');
+    if (pctEl) pctEl.innerText = `${percent}%`;
+
+    debounceSaveProgress();
+}
+
+let docSaveTimeout = null;
+function debounceSaveProgress() {
+    if (docSaveTimeout) clearTimeout(docSaveTimeout);
+    docSaveTimeout = setTimeout(() => {
+        saveDocumentProgress(currentContent, false);
+    }, 2000);
+}
+
+function checkCompletionConditions(docData) {
+    if (!pdfDoc) return false;
+    const totalPages = pdfDoc.numPages;
+    const rawTrigger = docData.completion_trigger || 'read_pages';
+    const triggers = rawTrigger.split(',').map(t => t.trim().toLowerCase());
+    
+    // If 'open' is one of the triggers, it's completed immediately
+    if (triggers.includes('open')) {
+        return true;
+    }
+    
+    let conditionsMet = [];
+    
+    if (triggers.includes('last_page')) {
+        conditionsMet.push(pdfPageNum === totalPages);
+    }
+    
+    if (triggers.includes('pages') || triggers.includes('read_pages')) {
+        const reqPages = docData.completion_pages_count || Math.ceil(totalPages * 0.8);
+        conditionsMet.push(pagesViewedSet.size >= reqPages);
+    }
+    
+    if (triggers.includes('time') || triggers.includes('time_spent')) {
+        const reqSec = docData.completion_time_seconds || (docData.estimated_reading_time || 5) * 60;
+        conditionsMet.push(pdfTimeSpent >= reqSec);
+    }
+    
+    // If 'mark_complete' or 'manual' is in triggers, it requires manual button click
+    if (triggers.includes('mark_complete') || triggers.includes('manual')) {
+        return false;
+    }
+    
+    if (conditionsMet.length > 0) {
+        return conditionsMet.every(c => c === true);
+    }
+    
+    return false;
+}
+
+async function saveDocumentProgress(item, forceCompleted = false) {
+    if (isPreview) return;
+    const docData = item?.rawDoc;
+    if (!docData) return;
+
+    const totalPages = pdfDoc ? pdfDoc.numPages : 1;
+    const percent = Math.min(100, Math.round((pagesViewedSet.size / totalPages) * 100));
+
+    let completed = forceCompleted || isCurrentContentCompleted;
+    if (!completed) {
+        completed = checkCompletionConditions(docData);
+    }
+
+    try {
+        await supabase.from('document_progress').upsert({
+            user_id: currentUserData.id,
+            document_id: docData.id,
+            completed: completed,
+            completed_at: completed ? new Date().toISOString() : null,
+            reading_percent: percent,
+            last_page: pdfPageNum,
+            time_spent: pdfTimeSpent,
+            last_accessed_at: new Date().toISOString()
+        }, { onConflict: 'user_id,document_id' });
+
+        if (completed && !isCurrentContentCompleted) {
+            isCurrentContentCompleted = true;
+            
+            await supabase.from('completed_materials').upsert({
+                user_id: currentUserData.id,
+                material_id: item.content_id,
+                course_id: courseId,
+                completed_at: new Date().toISOString()
+            }, { onConflict: 'user_id,material_id' });
+
+            const xp = docData.xp_reward || 10;
+            await awardPoints(xp, `قراءة مستند: ${docData.title}`);
+
+            if (currentTaskId) {
+                await updateTaskStatus('completed');
+            }
+            
+            showToast("تهانينا! تم إكمال المستند والحصول على نقاط الـ XP!", "success");
+            renderSidebar();
+            renderPdfCompletionBtn(item);
+        }
+    } catch(err) {
+        console.error("Error saving document progress:", err);
+    }
+}
+
+function setupPdfControls(item) {
+    const zoomIn = document.getElementById('pdf-zoom-in');
+    if (zoomIn) {
+        zoomIn.onclick = () => {
+            pdfZoom = Math.min(3.0, pdfZoom + 0.2);
+            document.getElementById('pdf-zoom-val').innerText = `${Math.round(pdfZoom * 100)}%`;
+            pageRenderStatus = {}; 
+            renderPdfPages();
+        };
+    }
+
+    const zoomOut = document.getElementById('pdf-zoom-out');
+    if (zoomOut) {
+        zoomOut.onclick = () => {
+            pdfZoom = Math.max(0.5, pdfZoom - 0.2);
+            document.getElementById('pdf-zoom-val').innerText = `${Math.round(pdfZoom * 100)}%`;
+            pageRenderStatus = {}; 
+            renderPdfPages();
+        };
+    }
+
+    const fitWidth = document.getElementById('pdf-fit-width');
+    if (fitWidth) {
+        fitWidth.onclick = () => {
+            const viewportEl = document.getElementById('pdf-viewport');
+            if (viewportEl && pdfDoc) {
+                pdfDoc.getPage(1).then(page => {
+                    const originalViewport = page.getViewport({ scale: 1.0 });
+                    const containerWidth = viewportEl.clientWidth - 48; 
+                    pdfZoom = containerWidth / originalViewport.width;
+                    document.getElementById('pdf-zoom-val').innerText = `${Math.round(pdfZoom * 100)}%`;
+                    pageRenderStatus = {};
+                    renderPdfPages();
+                }).catch(err => console.error(err));
+            }
+        };
+    }
+
+    const rotate = document.getElementById('pdf-rotate');
+    if (rotate) {
+        rotate.onclick = () => {
+            pdfRotation = (pdfRotation + 90) % 360;
+            pageRenderStatus = {};
+            renderPdfPages();
+        };
+    }
+
+    const scrollMode = document.getElementById('pdf-scroll-mode');
+    if (scrollMode) {
+        scrollMode.onclick = () => {
+            pdfScrollMode = pdfScrollMode === 'vertical' ? 'horizontal' : 'vertical';
+            const icon = scrollMode.querySelector('i');
+            if (icon) {
+                if (pdfScrollMode === 'vertical') {
+                    icon.className = 'fas fa-arrows-up-down text-xs md:text-sm';
+                } else {
+                    icon.className = 'fas fa-arrows-left-right text-xs md:text-sm';
+                }
+            }
+            pageRenderStatus = {};
+            renderPdfPages();
+        };
+    }
+
+    const toggleSidebarBtn = document.getElementById('pdf-toggle-sidebar');
+    const sidebar = document.getElementById('pdf-sidebar');
+    if (toggleSidebarBtn && sidebar) {
+        toggleSidebarBtn.onclick = () => {
+            sidebar.classList.toggle('hidden');
+        };
+    }
+
+    const prevBtn = document.getElementById('pdf-prev-btn');
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (pdfPageNum > 1) {
+                scrollToPage(pdfPageNum - 1);
+            }
+        };
+    }
+
+    const nextBtn = document.getElementById('pdf-next-btn');
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            if (pdfDoc && pdfPageNum < pdfDoc.numPages) {
+                scrollToPage(pdfPageNum + 1);
+            }
+        };
+    }
+
+    const pageNumInput = document.getElementById('pdf-page-num');
+    if (pageNumInput) {
+        pageNumInput.onchange = () => {
+            let val = parseInt(pageNumInput.value);
+            if (pdfDoc && val >= 1 && val <= pdfDoc.numPages) {
+                scrollToPage(val);
+            } else {
+                pageNumInput.value = pdfPageNum;
+            }
+        };
+    }
+
+    const darkModeBtn = document.getElementById('pdf-dark-mode');
+    if (darkModeBtn) {
+        darkModeBtn.onclick = () => {
+            pdfIsDarkMode = !pdfIsDarkMode;
+            darkModeBtn.classList.toggle('text-yellow-400');
+            document.querySelectorAll('#pdf-canvas-container canvas').forEach(canvas => {
+                if (pdfIsDarkMode) {
+                    canvas.style.filter = 'invert(0.9) hue-rotate(180deg)';
+                } else {
+                    canvas.style.filter = '';
+                }
+            });
+        };
+    }
+
+    const openSourceBtn = document.getElementById('pdf-open-source');
+    if (openSourceBtn) {
+        openSourceBtn.href = item.rawDoc?.source_url || '#';
+    }
+
+    const fsBtn = document.getElementById('pdf-fullscreen');
+    if (fsBtn) {
+        fsBtn.onclick = () => {
+            const viewer = document.getElementById('view-document');
+            if (viewer) {
+                if (!document.fullscreenElement) {
+                    viewer.requestFullscreen().catch(err => {
+                        console.error("Error enabling fullscreen:", err);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        };
+    }
+
+    const searchBtn = document.getElementById('pdf-search-btn');
+    const searchBar = document.getElementById('pdf-search-bar');
+    if (searchBtn && searchBar) {
+        searchBtn.onclick = () => {
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                document.getElementById('pdf-search-input')?.focus();
+            }
+        };
+    }
+
+    const searchClose = document.getElementById('pdf-search-close');
+    if (searchClose && searchBar) {
+        searchClose.onclick = () => {
+            searchBar.classList.add('hidden');
+            clearSearchResults();
+        };
+    }
+
+    const searchInput = document.getElementById('pdf-search-input');
+    if (searchInput) {
+        searchInput.oninput = () => {
+            performPdfSearch(searchInput.value);
+        };
+    }
+
+    const searchPrev = document.getElementById('pdf-search-prev');
+    if (searchPrev) {
+        searchPrev.onclick = () => {
+            navigateSearchMatch(-1);
+        };
+    }
+
+    const searchNext = document.getElementById('pdf-search-next');
+    if (searchNext) {
+        searchNext.onclick = () => {
+            navigateSearchMatch(1);
+        };
+    }
+
+    const printBtn = document.getElementById('pdf-print');
+    if (printBtn) {
+        printBtn.onclick = () => {
+            const directUrl = resolveDocumentViewer(item.rawDoc.source_url).url;
+            const printWindow = window.open(directUrl, '_blank');
+            if (printWindow) {
+                printWindow.onload = () => {
+                    printWindow.print();
+                };
+            } else {
+                showToast("يرجى السماح بالنوافذ المنبثقة لطباعة الملف.", "warning");
+            }
+        };
+    }
+}
+
+async function performPdfSearch(query) {
+    if (!query || query.trim().length < 2) {
+        clearSearchResults();
+        return;
+    }
+    
+    pdfActiveSearchMatches = [];
+    pdfCurrentSearchIndex = -1;
+    
+    const resultsEl = document.getElementById('pdf-search-results');
+    if (resultsEl) resultsEl.innerText = 'جاري البحث...';
+
+    const cleanQuery = query.toLowerCase().trim();
+
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+        try {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ').toLowerCase();
+            
+            if (pageText.includes(cleanQuery)) {
+                let matchCount = 0;
+                let pos = pageText.indexOf(cleanQuery);
+                while (pos !== -1) {
+                    matchCount++;
+                    pos = pageText.indexOf(cleanQuery, pos + cleanQuery.length);
+                }
+                
+                pdfActiveSearchMatches.push({ pageNum: i, count: matchCount });
+            }
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    if (pdfActiveSearchMatches.length > 0) {
+        pdfCurrentSearchIndex = 0;
+        const totalMatches = pdfActiveSearchMatches.reduce((sum, m) => sum + m.count, 0);
+        if (resultsEl) resultsEl.innerText = `وجدت ${totalMatches} مطابقة في ${pdfActiveSearchMatches.length} صفحات`;
+        scrollToPage(pdfActiveSearchMatches[0].pageNum);
+    } else {
+        if (resultsEl) resultsEl.innerText = 'لا توجد نتائج';
+    }
+}
+
+function clearSearchResults() {
+    pdfActiveSearchMatches = [];
+    pdfCurrentSearchIndex = -1;
+    const resultsEl = document.getElementById('pdf-search-results');
+    if (resultsEl) resultsEl.innerText = '0 / 0';
+    const searchInput = document.getElementById('pdf-search-input');
+    if (searchInput) searchInput.value = '';
+}
+
+function navigateSearchMatch(direction) {
+    if (pdfActiveSearchMatches.length === 0) return;
+    pdfCurrentSearchIndex = (pdfCurrentSearchIndex + direction + pdfActiveSearchMatches.length) % pdfActiveSearchMatches.length;
+    
+    const currentMatch = pdfActiveSearchMatches[pdfCurrentSearchIndex];
+    scrollToPage(currentMatch.pageNum);
+    
+    const wrapper = document.getElementById(`pdf-page-wrapper-${currentMatch.pageNum}`);
+    if (wrapper) {
+        wrapper.classList.add('ring-4', 'ring-teal-500');
+        setTimeout(() => wrapper.classList.remove('ring-4', 'ring-teal-500'), 2000);
+    }
+}
+
+function startPdfReadingTimer(item) {
+    if (pdfReadingTimer) clearInterval(pdfReadingTimer);
+    
+    pdfReadingTimer = setInterval(() => {
+        pdfTimeSpent += 1;
+        
+        if (!isCurrentContentCompleted) {
+            renderPdfCompletionBtn(item);
+            
+            if (checkCompletionConditions(item.rawDoc)) {
+                saveDocumentProgress(item, false);
+            }
+        }
+        
+        if (pdfTimeSpent % 10 === 0) {
+            saveDocumentProgress(item, false);
+        }
+    }, 1000);
+}
+
+function renderPdfCompletionBtn(item) {
+    const container = document.getElementById('pdf-completion-btn-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (isCurrentContentCompleted) {
+        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> تم إكمال القراءة ✓</span>`;
+        return;
+    }
+
+    const docData = item.rawDoc;
+    if (!docData) return;
+
+    const rawTrigger = docData.completion_trigger || 'read_pages';
+    const triggers = rawTrigger.split(',').map(t => t.trim().toLowerCase());
+    
+    if (triggers.includes('open')) {
+        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> مكتمل عند الفتح ✓</span>`;
+    } else if (triggers.includes('mark_complete') || triggers.includes('manual')) {
+        const btn = document.createElement('button');
+        btn.className = 'bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5';
+        btn.innerHTML = `<i class="fas fa-check"></i> تحديد كمكتمل`;
+        btn.onclick = () => saveDocumentProgress(item, true);
+        container.appendChild(btn);
+    } else {
+        let textParts = [];
+        
+        if (triggers.includes('pages') || triggers.includes('read_pages')) {
+            const total = pdfDoc ? pdfDoc.numPages : 1;
+            const reqPages = docData.completion_pages_count || Math.ceil(total * 0.8);
+            textParts.push(`اقرأ ${reqPages} صفحات (تمت قراءة ${pagesViewedSet.size} صفحة)`);
+        }
+        
+        if (triggers.includes('last_page')) {
+            const total = pdfDoc ? pdfDoc.numPages : 1;
+            textParts.push(`الوصول للصفحة الأخيرة ${total} (أنت في ${pdfPageNum})`);
+        }
+        
+        if (triggers.includes('time') || triggers.includes('time_spent')) {
+            const reqSec = docData.completion_time_seconds || (docData.estimated_reading_time || 5) * 60;
+            const remaining = Math.max(0, reqSec - pdfTimeSpent);
+            if (remaining > 0) {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                textParts.push(`قراءة لـ ${minutes}:${seconds < 10 ? '0' : ''}${seconds} إضافية`);
+            } else {
+                textParts.push(`اكتمل زمن القراءة المطلوب!`);
+            }
+        }
+        
+        container.innerHTML = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/25 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-book-open"></i> ${textParts.join(' و ')}</span>`;
     }
 }

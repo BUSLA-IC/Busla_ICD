@@ -128,12 +128,12 @@ export const AuthService = {
                             .maybeSingle();
 
                         if (acceptedApp) {
-                            // ✅ إدراج كـ Admin بكامل بياناته من طلب التقديم
+                            // ✅ إدراج كـ Admin بكامل بياناته من طلب التقديم بالدور المحدد
                             await supabase.from('profiles').insert([{
                                 id: user.id,
                                 email: acceptedApp.email,
                                 full_name: acceptedApp.full_name,
-                                role: 'admin', // 👑 الترقية
+                                role: acceptedApp.role || 'admin', // 👑 الترقية
                                 university: acceptedApp.university,
                                 faculty: acceptedApp.faculty,
                                 department: acceptedApp.department,
@@ -141,6 +141,15 @@ export const AuthService = {
                                 academic_year: acceptedApp.academic_year,
                                 track: acceptedApp.track
                             }]);
+
+                            // إدراج الصلاحيات المخصصة إن وجدت لربطها بالحساب الجديد
+                            if (acceptedApp.custom_permissions && acceptedApp.custom_permissions.length > 0) {
+                                const insertRows = acceptedApp.custom_permissions.map(permId => ({
+                                    admin_id: user.id,
+                                    permission_id: permId
+                                }));
+                                await supabase.from('admin_permissions').upsert(insertRows, { onConflict: 'admin_id,permission_id' });
+                            }
                         } else {
                             // ❌ إدراج كـ Student عادي (إذا لم يكن في الطلبات المقبولة)
                             await supabase.from('profiles').insert([{

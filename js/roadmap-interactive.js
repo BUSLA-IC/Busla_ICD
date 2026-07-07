@@ -24,7 +24,8 @@ const ICONS = {
     course: 'fa-book-open',
     video: 'fa-play-circle',
     quiz: 'fa-clipboard-question',
-    project: 'fa-code-branch'
+    project: 'fa-code-branch',
+    document: 'fa-file-pdf'
 };
 
 /**
@@ -368,13 +369,14 @@ function hidePlaceholder() {
  */
 async function fetchGraphData(trackId) {
     try {
-        const [trackRes, phasesRes, coursesRes, materialsRes, quizzesRes, projectsRes] = await Promise.all([
+        const [trackRes, phasesRes, coursesRes, materialsRes, quizzesRes, projectsRes, documentsRes] = await Promise.all([
             supabase.from('tracks').select('*').eq('id', trackId).single(),
             supabase.from('phases').select('*').eq('track_id', trackId).order('order_index', { ascending: true }).order('created_at', { ascending: true }),
             supabase.from('courses').select('*').order('order_index', { ascending: true }),
             supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
             supabase.from('quizzes').select('*'),
-            supabase.from('projects').select('*')
+            supabase.from('projects').select('*'),
+            supabase.from('curriculum_documents').select('*').order('order_index', { ascending: true })
         ]);
 
         if (phasesRes.error) throw phasesRes.error;
@@ -393,7 +395,8 @@ async function fetchGraphData(trackId) {
             courses,
             materials,
             quizzes: quizzesRes.data || [],
-            projects: projectsRes.data || []
+            projects: projectsRes.data || [],
+            documents: documentsRes.data || []
         };
     } catch (e) {
         console.error("Error fetching graph data:", e);
@@ -477,85 +480,144 @@ function buildGraphStructure(data) {
             });
         }
 
-        // Materials of this course
+        // Materials and course-level documents of this course
         const courseMaterials = data.materials.filter(m => m.course_id === course.course_id);
+        const courseDocs = (data.documents || []).filter(d => d.course_id === course.course_id && !d.lesson_id);
+
+        const combinedItems = [
+            ...courseMaterials.map(m => ({ itemType: 'material', order: m.order_index || 0, data: m })),
+            ...courseDocs.map(d => ({ itemType: 'document', order: d.order_index || 0, data: d }))
+        ].sort((a, b) => a.order - b.order);
+
         let lastMatNodeId = courseNode.id;
         
-        courseMaterials.forEach((mat) => {
+        combinedItems.forEach((item) => {
             const isMatHidden = isCourseHidden || isCourseCollapsed;
             
-            // Subnodes (quizzes/projects linked to this material)
-            const subNodes = [];
-            if (mat.ref_quiz_id) {
-                const quizObj = data.quizzes.find(q => q.quiz_id === mat.ref_quiz_id);
-                if (quizObj) {
+            if (item.itemType === 'material') {
+                const mat = item.data;
+                
+                // Subnodes (quizzes/projects/documents linked to this material)
+                const subNodes = [];
+                if (mat.ref_quiz_id) {
+                    const quizObj = data.quizzes.find(q => q.quiz_id === mat.ref_quiz_id);
+                    if (quizObj) {
+                        subNodes.push({
+                            id: `quiz-${quizObj.quiz_id}`,
+                            dbId: quizObj.quiz_id,
+                            type: 'quiz',
+                            title: quizObj.title,
+                            description: quizObj.description,
+                            status: userProgress.passedQuizzes.has(quizObj.quiz_id) ? 'completed' : 'current',
+                            baseXp: quizObj.max_xp || 50,
+                            parentMaterialId: mat.content_id,
+                            courseId: course.course_id,
+                            isHidden: isMatHidden
+                        });
+                    }
+                }
+                if (mat.ref_project_id) {
+                    const projObj = data.projects.find(p => p.id === mat.ref_project_id);
+                    if (projObj) {
+                        subNodes.push({
+                            id: `project-${projObj.id}`,
+                            dbId: projObj.id,
+                            type: 'project',
+                            title: projObj.title,
+                            description: projObj.description,
+                            status: userProgress.completedProjects.has(projObj.id) ? 'completed' : 'current',
+                            baseXp: projObj.max_points || 100,
+                            parentMaterialId: mat.content_id,
+                            courseId: course.course_id,
+                            isHidden: isMatHidden
+                        });
+                    }
+                }
+                
+                // Add lesson-level documents
+                const linkedDocs = (data.documents || []).filter(d => d.lesson_id === mat.content_id);
+                linkedDocs.forEach(docObj => {
                     subNodes.push({
-                        id: `quiz-${quizObj.quiz_id}`,
-                        dbId: quizObj.quiz_id,
-                        type: 'quiz',
-                        title: quizObj.title,
-                        description: quizObj.description,
-                        status: userProgress.passedQuizzes.has(quizObj.quiz_id) ? 'completed' : 'current',
-                        baseXp: quizObj.max_xp || 50,
+                        id: `doc-${docObj.id}`,
+                        dbId: docObj.id,
+                        type: 'document',
+                        title: docObj.title,
+                        description: docObj.description,
+                        docType: docObj.document_type || 'PDF',
+                        status: userProgress.completedMats.has(`doc_${docObj.id}`) ? 'completed' : 'current',
+                        baseXp: docObj.xp_reward || 10,
                         parentMaterialId: mat.content_id,
                         courseId: course.course_id,
-                        isHidden: isMatHidden
+                        isHidden: isMatHidden,
+                        rawItem: docObj
                     });
-                }
-            }
-            if (mat.ref_project_id) {
-                const projObj = data.projects.find(p => p.id === mat.ref_project_id);
-                if (projObj) {
-                    subNodes.push({
-                        id: `project-${projObj.id}`,
-                        dbId: projObj.id,
-                        type: 'project',
-                        title: projObj.title,
-                        description: projObj.description,
-                        status: userProgress.completedProjects.has(projObj.id) ? 'completed' : 'current',
-                        baseXp: projObj.max_points || 100,
-                        parentMaterialId: mat.content_id,
-                        courseId: course.course_id,
-                        isHidden: isMatHidden
-                    });
-                }
-            }
-            
-            const matNode = {
-                id: `material-${mat.content_id}`,
-                dbId: mat.content_id,
-                courseId: course.course_id,
-                phaseId: course.phase_id,
-                type: mat.type || 'video',
-                title: mat.title,
-                duration: mat.duration ? formatDuration(mat.duration) : null,
-                baseXp: mat.base_xp || 10,
-                status: getMaterialStatus(mat),
-                difficulty: courseNode.difficulty,
-                author: mat.author || 'Busla Team',
-                rawItem: mat,
-                isCollapsed: false,
-                isHidden: isMatHidden,
-                subNodesCount: subNodes.length
-            };
-            computedNodes.push(matNode);
-
-            computedLinks.push({
-                from: lastMatNodeId,
-                to: matNode.id,
-                relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
-            });
-            
-            subNodes.forEach(subNode => {
-                computedNodes.push(subNode);
-                computedLinks.push({
-                    from: matNode.id,
-                    to: subNode.id,
-                    relationType: 'material-to-subnode'
                 });
-            });
-            
-            lastMatNodeId = matNode.id;
+                
+                const matNode = {
+                    id: `material-${mat.content_id}`,
+                    dbId: mat.content_id,
+                    courseId: course.course_id,
+                    phaseId: course.phase_id,
+                    type: mat.type || 'video',
+                    title: mat.title,
+                    duration: mat.duration ? formatDuration(mat.duration) : null,
+                    baseXp: mat.base_xp || 10,
+                    status: getMaterialStatus(mat),
+                    difficulty: courseNode.difficulty,
+                    author: mat.author || 'Busla Team',
+                    rawItem: mat,
+                    isCollapsed: false,
+                    isHidden: isMatHidden,
+                    subNodesCount: subNodes.length
+                };
+                computedNodes.push(matNode);
+
+                computedLinks.push({
+                    from: lastMatNodeId,
+                    to: matNode.id,
+                    relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
+                });
+                
+                subNodes.forEach(subNode => {
+                    computedNodes.push(subNode);
+                    computedLinks.push({
+                        from: matNode.id,
+                        to: subNode.id,
+                        relationType: 'material-to-subnode'
+                    });
+                });
+                
+                lastMatNodeId = matNode.id;
+            } else {
+                // Course-level Document
+                const doc = item.data;
+                const docNode = {
+                    id: `doc-${doc.id}`,
+                    dbId: doc.id,
+                    courseId: course.course_id,
+                    phaseId: course.phase_id,
+                    type: 'document',
+                    title: doc.title,
+                    duration: doc.estimated_reading_time ? `${doc.estimated_reading_time} دقيقة` : null,
+                    baseXp: doc.xp_reward || 10,
+                    status: userProgress.completedMats.has(`doc_${doc.id}`) ? 'completed' : 'current',
+                    difficulty: courseNode.difficulty,
+                    author: 'Busla Team',
+                    rawItem: doc,
+                    isCollapsed: false,
+                    isHidden: isMatHidden,
+                    subNodesCount: 0
+                };
+                computedNodes.push(docNode);
+
+                computedLinks.push({
+                    from: lastMatNodeId,
+                    to: docNode.id,
+                    relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
+                });
+
+                lastMatNodeId = docNode.id;
+            }
         });
 
         // Recursively add related courses
@@ -587,15 +649,41 @@ function buildGraphStructure(data) {
 
         lastPhaseNodeId = phaseNode.id;
 
-        // Loop main courses (no related_with)
+        // Get courses and documents in this phase (not inside courses)
         const phaseCourses = data.courses.filter(c => c.phase_id === phase.phase_id && !c.related_with);
-        phaseCourses.forEach((course) => {
-            addCourseAndSubtree(course, isPhaseCollapsed);
+        const phaseDocs = (data.documents || []).filter(d => d.phase_id === phase.phase_id && !d.course_id);
+        
+        // Merge and sort them
+        const phaseItems = [
+            ...phaseCourses.map(c => ({ itemType: 'course', order: c.order_index || 0, data: c })),
+            ...phaseDocs.map(d => ({ itemType: 'document', order: d.order_index || 0, data: d }))
+        ].sort((a, b) => a.order - b.order);
+        
+        phaseItems.forEach(item => {
+            if (item.itemType === 'course') {
+                addCourseAndSubtree(item.data, isPhaseCollapsed);
+            } else {
+                // Add Phase-level Document Node
+                const docNodeId = `doc-${item.data.id}`;
+                const docNode = {
+                    id: docNodeId,
+                    dbId: item.data.id,
+                    type: 'document',
+                    title: item.data.title,
+                    description: item.data.description,
+                    docType: item.data.document_type || 'PDF',
+                    baseXp: item.data.xp_reward || 10,
+                    status: userProgress.completedMats.has(`doc_${item.data.id}`) ? 'completed' : 'current',
+                    isHidden: isPhaseCollapsed,
+                    rawItem: item.data
+                };
+                computedNodes.push(docNode);
+            }
         });
     });
 
-    // 5. Build the main vertical backbone connecting visible track, phase, and course nodes in sequence
-    const visibleMainNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase' || (n.type === 'course' && !n.relatedWith)) && !n.isHidden);
+    // 5. Build the main vertical backbone connecting visible track, phase, course, and document nodes in sequence
+    const visibleMainNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase' || (n.type === 'course' && !n.relatedWith) || n.type === 'document') && !n.isHidden);
     for (let i = 0; i < visibleMainNodes.length - 1; i++) {
         computedLinks.push({
             from: visibleMainNodes[i].id,
@@ -965,6 +1053,29 @@ function getNodeInnerHtml(node) {
                 <div><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
                 <div><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
                 <div><i class="fas fa-code-branch text-orange-400 ml-0.5"></i> ${node.projectsCount}</div>
+            </div>
+        `;
+    }
+
+    if (node.type === 'document') {
+        const docLabel = 'مستند تعليمي';
+        const docColor = 'text-cyan-400';
+        const docBg    = 'bg-cyan-500/10';
+        const docBorder= 'border-cyan-500/25';
+
+        return `
+            <div class="flex items-center gap-2.5">
+                <div class="flex-shrink-0 w-9 h-9 rounded-xl ${docBg} flex items-center justify-center border ${docBorder} ${docColor} leading-none">
+                    <i class="fas ${icon} text-sm leading-none"></i>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center justify-between gap-1 mb-0.5">
+                        <span class="text-[8px] font-bold uppercase tracking-wider ${docColor}">${docLabel} (${node.docType || node.rawItem?.document_type || 'PDF'})</span>
+                        ${statusBadge}
+                    </div>
+                    <p class="font-semibold text-white text-xs leading-relaxed line-clamp-2 text-right pb-0.5">${node.title}</p>
+                    ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : node.rawItem?.estimated_reading_time ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.rawItem.estimated_reading_time} دقيقة</span>` : ''}
+                </div>
             </div>
         `;
     }
@@ -1648,7 +1759,8 @@ export function renderNodeDetailsPanel(node) {
         course: 'bg-green-500/10 text-green-400 border-green-500/20',
         video: 'bg-gray-500/10 text-gray-300 border-gray-500/20',
         quiz: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-        project: 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+        project: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+        document: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
     };
     const typeNames = {
         track: 'مسار تعليمي',
@@ -1656,7 +1768,8 @@ export function renderNodeDetailsPanel(node) {
         course: 'كورس تعليمي',
         video: 'درس فيديو',
         quiz: 'اختبار تقييمي',
-        project: 'مشروع عملي'
+        project: 'مشروع عملي',
+        document: 'مستند / PDF'
     };
     const colorClass = typeColors[node.type] || 'bg-gray-500/10 text-gray-400';
     const typeName = typeNames[node.type] || node.type;
@@ -2030,6 +2143,81 @@ export function renderNodeDetailsPanel(node) {
             `;
         }
     }
+    else if (node.type === 'document') {
+        const doc = node.rawItem || {};
+        const isRead = userProgress.completedMats.has(`doc_${node.dbId}`);
+        const coverImg = doc.cover_url || '';
+        
+        bodyHtml = `
+            <!-- Document Details Banner -->
+            <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl bg-black/60 flex items-center justify-center">
+                ${coverImg ? `<img src="${coverImg}" class="w-full h-full object-cover" onerror="this.src='../assets/images/1.jpg'">` : `
+                    <div class="text-center">
+                        <i class="fas fa-file-pdf text-6xl text-red-500 mb-2"></i>
+                        <div class="text-xs text-gray-500 font-mono">${doc.document_type || 'PDF'}</div>
+                    </div>
+                `}
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+            </div>
+
+            <h2 class="text-xl font-bold text-white leading-tight mb-4 text-right">${node.title}</h2>
+            <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${doc.description || 'لا يوجد وصف تفصيلي مضاف لهذا المستند.'}</p>
+            
+            <div class="grid grid-cols-2 gap-2 text-xs mb-6 font-sans">
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="far fa-clock"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">وقت القراءة المقدر</span>
+                        <span class="text-white font-bold block">${doc.estimated_reading_time || 'مرن'} دقيقة</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-orange-500/15 text-orange-400 flex items-center justify-center text-sm"><i class="fas fa-fire"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">النقاط المكتسبة</span>
+                        <span class="text-white font-bold block">${node.baseXp || doc.xp_reward || 10} XP</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center text-sm"><i class="fas fa-bookmark"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الأهمية</span>
+                        <span class="text-white font-bold block">${doc.importance || 'Optional'}</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-green-500/15 text-green-400 flex items-center justify-center text-sm"><i class="fas fa-check-circle"></i></div>
+                    <div class="min-w-0 text-right">
+                        <span class="text-[9px] text-gray-500 block">الحالة</span>
+                        <span class="text-white font-bold block">${isRead ? 'تمت القراءة بنجاح ✓' : 'لم يقرأ بعد'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (currentRole === 'student' || currentRole === 'leader') {
+            if (doc.view_mode === 'external') {
+                actionButtonsHtml += `
+                    <a href="${doc.source_url}" target="_blank" onclick="window.cmMarkDocRead('${doc.id}', ${doc.xp_reward || 10})" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-external-link-alt"></i> فتح المستند الخارجي
+                    </a>
+                `;
+            } else {
+                let cId = node.courseId || doc.course_id || '';
+                actionButtonsHtml += `
+                    <a href="course-player.html?id=${cId}&content=doc_${node.dbId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-book-open"></i> قراءة المستند
+                    </a>
+                `;
+            }
+        } else {
+            actionButtonsHtml += `
+                <a href="pages/auth.html?mode=signup" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-user-plus"></i> سجل لفتح المستند
+                </a>
+            `;
+        }
+    }
     else if (node.type === 'video') {
         const mat = node.rawItem || {};
         const isWatched = userProgress.completedMats.has(node.dbId);
@@ -2256,10 +2444,92 @@ export function renderNodeDetailsPanel(node) {
             ${bodyHtml}
             ${actionButtonsHtml ? `<div class="border-t border-white/5 pt-4 mt-6 flex gap-3">${actionButtonsHtml}</div>` : ''}
             <div id="roadmap-node-tools-container" class="mt-6 border-t border-white/5 pt-4 hidden"></div>
+            <div id="roadmap-node-references-container" class="mt-6 border-t border-white/5 pt-4 hidden"></div>
         </div>
     `;
 
     loadRoadmapNodeTools(node);
+    loadRoadmapNodeReferences(node);
+}
+
+/**
+ * Queries Supabase and displays published suggested references for the current node (track, phase, course, or lesson)
+ * @param {Object} node 
+ */
+async function loadRoadmapNodeReferences(node) {
+    const el = document.getElementById('roadmap-node-references-container');
+    if (!el) return;
+
+    let column = '';
+    let val = null;
+
+    if (node.type === 'track') {
+        column = 'track_ids';
+        val = node.dbId;
+    } else if (node.type === 'phase') {
+        column = 'phase_ids';
+        val = String(node.dbId);
+    } else if (node.type === 'course') {
+        column = 'course_ids';
+        val = String(node.dbId);
+    } else if (node.type === 'video' || node.type === 'quiz' || node.type === 'project') {
+        column = 'content_ids';
+        val = String(node.dbId);
+    }
+
+    if (!column || !val) {
+        el.classList.add('hidden');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('reference_library')
+            .select('*')
+            .contains(column, [val])
+            .eq('status', 'Published')
+            .order('order_index', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            el.classList.add('hidden');
+            return;
+        }
+
+        el.classList.remove('hidden');
+        el.innerHTML = `
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2 justify-end">
+                <i class="fas fa-book text-teal-400 text-xs"></i> المراجع العلمية المقترحة
+            </h4>
+            <div class="space-y-2">
+                ${data.map(ref => {
+                    const impBadge = ref.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : ref.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
+                    const importanceName = ref.importance === 'Required' ? 'مطلوب' : ref.importance === 'Recommended' ? 'مستحسن' : ref.importance === 'Advanced Reading' ? 'متقدم' : 'اختياري';
+                    const defaultCover = '../assets/icons/BUSLA-icon.png';
+                    
+                    return `
+                        <div onclick="if (typeof window.openReferenceDetailModal === 'function') { window.openReferenceDetailModal('${ref.id}'); } else { window.open('${ref.read_online_url || ref.download_pdf_url || '#'}', '_blank'); }" 
+                             class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-10 bg-white/5 rounded border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
+                                    <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.src='${defaultCover}'">
+                                </div>
+                                <div class="text-right min-w-0">
+                                    <span class="text-white font-bold block group-hover:text-teal-400 transition-colors truncate max-w-[140px]" title="${ref.title}">${ref.title}</span>
+                                    <span class="text-[9px] text-gray-500 block mt-0.5 truncate max-w-[140px]">${ref.type} • ${ref.author || 'مؤلف غير معروف'}</span>
+                                </div>
+                            </div>
+                            <span class="text-[9px] border px-2 py-0.5 rounded font-black shrink-0 ${impBadge}">${importanceName}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error("loadRoadmapNodeReferences error:", err);
+        el.classList.add('hidden');
+    }
 }
 
 /**
@@ -2907,5 +3177,44 @@ window.selectInteractiveRoadmapNode = (type, dbId) => {
             window.switchTab('roadmap');
         }
         selectNode(node);
+    }
+};
+
+window.cmMarkDocRead = async (docId, xpReward) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        await supabase.from('document_progress').upsert({
+            user_id: user.id,
+            document_id: docId,
+            completed: true,
+            completed_at: new Date().toISOString(),
+            reading_percent: 100,
+            last_page: 1,
+            last_accessed_at: new Date().toISOString()
+        }, { onConflict: 'user_id,document_id' });
+        
+        const { data: docData } = await supabase.from('curriculum_documents').select('course_id').eq('id', docId).single();
+        const courseId = docData?.course_id || null;
+        
+        await supabase.from('completed_materials').upsert({
+            user_id: user.id,
+            material_id: `doc_${docId}`,
+            course_id: courseId,
+            completed_at: new Date().toISOString()
+        }, { onConflict: 'user_id,material_id' });
+        
+        if (xpReward && typeof window.awardXp === 'function') {
+            await window.awardXp(xpReward, `قراءة مستند خارجي: ${docId}`);
+        }
+        
+        if (typeof window.showToast === 'function') {
+            window.showToast("تم تسجيل قراءة المستند والحصول على نقاط الـ XP!", "success");
+        } else {
+            alert("تم تسجيل قراءة المستند والحصول على نقاط الـ XP!");
+        }
+    } catch(err) {
+        console.error("cmMarkDocRead error:", err);
     }
 };

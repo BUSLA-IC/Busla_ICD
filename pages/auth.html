@@ -434,6 +434,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             trackSelect.innerHTML = '<option value="" disabled selected>لا توجد مسارات متاحة حالياً</option>';
         }
     }
+
+    // 💡 التحقق من وجود إيميل في رابط التفعيل وتعبئته تلقائياً وتحويل التبويب لـ "حساب جديد"
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    if (emailParam) {
+        switchAuthMode('signup');
+        const signupEmailInput = document.getElementById('signup-email');
+        if (signupEmailInput) {
+            signupEmailInput.value = emailParam;
+        }
+    }
 });
 
 // دالة الترقية التلقائية للأعضاء المقبولين
@@ -571,9 +582,18 @@ try {
 
             // بعد الترقية، نقرأ الرتبة لنوجهه للوحة الصحيحة
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-            const role = profile ? (profile.role).toLowerCase() : 'student';
+            const role = profile ? (profile.role).toLowerCase().trim() : 'student';
             
-            if (role === 'owner' || role === 'admin') {
+            // جلب الأدوار الإضافية من الداتابيز للتحقق ديناميكياً
+            const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+            const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+            
+            const staticAdminRoles = [
+                'owner', 'admin', 'master admin', 'leader supervisor', 
+                'content manager', 'team reviewer', 'project reviewer', 'support'
+            ];
+            
+            if (staticAdminRoles.includes(role) || dbAdminRoles.includes(role)) {
                 window.location.href = "../admin/html/admin-dash.html"; 
             } else if (role === 'leader') {
                 window.location.href = "leader-dash.html";

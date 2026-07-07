@@ -236,6 +236,108 @@
             </div>
         </div>
 
+        <!-- PDF/Document Viewer -->
+        <div id="view-document" class="content-view hidden flex-1 min-h-0 h-full flex flex-col bg-b-surface border border-white/10 rounded-2xl overflow-hidden relative">
+            <!-- PDF Viewer Controls Bar -->
+            <div id="pdf-toolbar" class="relative z-30 bg-black/60 border-b border-white/10 p-3 flex flex-wrap items-center justify-between gap-3 select-none">
+                <div class="flex items-center gap-2">
+                    <button id="pdf-toggle-sidebar" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الفهرس / الصفحات">
+                        <i class="fas fa-bars text-xs md:text-sm"></i>
+                    </button>
+                    <button id="pdf-prev-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة السابقة">
+                        <i class="fas fa-chevron-right text-xs md:text-sm"></i>
+                    </button>
+                    <div class="flex items-center gap-1 text-sm font-mono">
+                        <input type="number" id="pdf-page-num" min="1" value="1" class="w-12 bg-black border border-white/15 rounded text-center py-1 text-white text-xs outline-none">
+                        <span class="text-gray-500">/</span>
+                        <span id="pdf-page-count" class="text-gray-400">1</span>
+                    </div>
+                    <button id="pdf-next-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة التالية">
+                        <i class="fas fa-chevron-left text-xs md:text-sm"></i>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="pdf-zoom-out" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تصغير">
+                        <i class="fas fa-magnifying-glass-minus text-xs md:text-sm"></i>
+                    </button>
+                    <span id="pdf-zoom-val" class="text-xs font-mono text-gray-300 w-12 text-center">100%</span>
+                    <button id="pdf-zoom-in" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تكبير">
+                        <i class="fas fa-magnifying-glass-plus text-xs md:text-sm"></i>
+                    </button>
+                    <button id="pdf-fit-width" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="ملاءمة العرض">
+                        ملاءمة العرض
+                    </button>
+                    <button id="pdf-rotate" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تدوير الصفحة">
+                        <i class="fas fa-rotate text-xs md:text-sm"></i>
+                    </button>
+                    <button id="pdf-scroll-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تبديل وضع التمرير">
+                        <i class="fas fa-arrows-up-down text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">تمرير</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="pdf-search-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="بحث داخل النص">
+                        <i class="fas fa-search text-xs md:text-sm"></i>
+                    </button>
+                    <button id="pdf-dark-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الوضع الداكن">
+                        <i class="fas fa-moon text-xs md:text-sm"></i>
+                    </button>
+                    <a id="pdf-download" href="#" download target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="تحميل">
+                        <i class="fas fa-download text-xs md:text-sm"></i>
+                    </a>
+                    <button id="pdf-print" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="طباعة">
+                        <i class="fas fa-print text-xs md:text-sm"></i>
+                    </button>
+                    <a id="pdf-open-source" href="#" target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="فتح المصدر الأصلي">
+                        <i class="fas fa-external-link-alt text-xs md:text-sm"></i>
+                    </a>
+                    <button id="pdf-fullscreen" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="ملء الشاشة">
+                        <i class="fas fa-expand text-xs md:text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Overlay -->
+            <div id="pdf-search-bar" class="relative z-20 bg-black/80 border-b border-white/10 p-2 flex items-center justify-between gap-2 hidden">
+                <div class="flex items-center gap-2 flex-1">
+                    <input type="text" id="pdf-search-input" placeholder="اكتب للبحث داخل الـ PDF..." class="w-full max-w-md bg-black/60 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white outline-none">
+                    <span id="pdf-search-results" class="text-xs text-gray-500 font-mono">0 / 0</span>
+                    <button id="pdf-search-prev" class="text-gray-400 hover:text-white p-1 rounded bg-white/5"><i class="fas fa-chevron-up text-xs"></i></button>
+                    <button id="pdf-search-next" class="text-gray-400 hover:text-white p-1 rounded bg-white/5"><i class="fas fa-chevron-down text-xs"></i></button>
+                </div>
+                <button id="pdf-search-close" class="text-gray-400 hover:text-red-400 p-1.5"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Main Workspace (Sidebar + Canvas scroll area) -->
+            <div class="flex-1 flex min-h-0 relative">
+                <!-- Collapsible Sidebar (Thumbnails / TOC / Bookmarks) -->
+                <div id="pdf-sidebar" class="w-64 bg-black/40 border-l border-white/10 flex flex-col shrink-0 hidden">
+                    <div class="flex border-b border-white/10 text-xs text-center">
+                        <button id="pdf-tab-thumbs" class="flex-1 py-3 border-b-2 border-b-primary font-bold text-white">مصغرات</button>
+                        <button id="pdf-tab-toc" class="flex-1 py-3 border-b-2 border-transparent font-bold text-gray-400 hover:text-white">الفهرس</button>
+                    </div>
+                    <div id="pdf-sidebar-content" class="flex-1 overflow-y-auto p-3 custom-scroll">
+                    </div>
+                </div>
+
+                <!-- Canvas Container -->
+                <div id="pdf-viewport" class="flex-1 overflow-auto bg-[#1e1e1e] p-6 relative flex flex-col items-center select-none" style="scroll-behavior: smooth;">
+                    <div id="pdf-canvas-container" class="relative shadow-2xl flex flex-col items-center gap-6">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Completion Indicator / Manual Completion Button -->
+            <div id="pdf-footer-actions" class="relative z-30 bg-black/60 border-t border-white/10 p-3 flex justify-between items-center">
+                <div class="text-xs text-gray-400">
+                    <span>التقدم: </span><span id="pdf-reading-percent" class="font-bold text-teal-400">0%</span>
+                </div>
+                <div id="pdf-completion-btn-container">
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <aside class="hidden xl:flex w-72 bg-b-surface border-r border-white/10 flex-col p-6 gap-6 z-20 shrink-0 overflow-y-auto custom-scroll">
@@ -272,6 +374,16 @@
                 <!-- Populated dynamically in JS -->
             </div>
         </div>
+
+        <!-- 📚 Suggested References Card -->
+        <div id="course-suggested-references-card" class="hidden flex flex-col bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 shrink-0">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-book text-teal-400 text-xs"></i> <span>المراجع العلمية المقترحة</span>
+            </h4>
+            <div id="course-suggested-references-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1">
+                <!-- Populated dynamically in JS -->
+            </div>
+        </div>
     </aside>
 
     <div id="confirm-modal" class="fixed inset-0 z- hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -287,8 +399,13 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <script type="module" src="../js/course-player.js"></script>
     <script type="module" src="../js/tools-drawer.js"></script>
+    <script type="module" src="../js/references-drawer.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

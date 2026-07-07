@@ -1425,6 +1425,8 @@ function loadModuleData(moduleId) {
         if (typeof window.initProjectAudit === 'function') window.initProjectAudit();
     } else if (moduleId === 'tools-mgmt') {
         if (typeof window.initToolsMgmt === 'function') window.initToolsMgmt();
+    } else if (moduleId === 'references-mgmt') {
+        if (typeof window.initReferencesMgmt === 'function') window.initReferencesMgmt();
     } else if (moduleId === 'learning-roadmap') {
         initInteractiveRoadmap('admin');
     }
