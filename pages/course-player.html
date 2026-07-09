@@ -238,11 +238,68 @@
 
         <!-- PDF/Document Viewer -->
         <div id="view-document" class="content-view hidden flex-1 min-h-0 h-full flex flex-col bg-b-surface border border-white/10 rounded-2xl overflow-hidden relative">
+            <!-- Document Header (Matches video-header style) -->
+            <div id="document-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
+                <div class="flex items-start gap-3 w-full lg:w-auto flex-1">
+                    <div class="flex lg:hidden items-center gap-2 shrink-0 mt-1">
+                        <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-1 space-y-2 md:space-y-3">
+                        <div class="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm font-medium">
+
+                            <span id="doc-header-type-badge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-full">نوع المستند</span>
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <i class="fas fa-user-tie"></i>
+                                <span id="doc-header-author">المؤلف / المصدر</span>
+                            </div>
+                            <div id="doc-header-points-badge" class="hidden flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full animate-pulse">
+                                <i class="fas fa-star text-[10px] md:text-xs"></i>
+                                <span class="font-bold font-mono" id="doc-header-points-text">0</span>
+                                <span class="text-[10px] uppercase tracking-wider">XP</span>
+                            </div>
+                            <div id="doc-header-status-badge" class="flex items-center gap-1.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 px-3 py-1 rounded-full">
+                                <i class="fas fa-circle-notch text-[10px]"></i>
+                                <span id="doc-header-status-text">جاهز للقراءة</span>
+                            </div>
+                            <div id="doc-header-meta-badge" class="flex items-center gap-3 bg-white/5 text-gray-400 border border-white/15 px-3 py-1 rounded-full font-mono text-xs">
+                                <span id="doc-header-pages-count"><i class="fas fa-file-lines mr-1"></i> -- صفحة</span>
+                                <span id="doc-header-file-size" class="hidden"><i class="fas fa-weight-hanging mr-1"></i> -- ميجابايت</span>
+                            </div>
+                        </div>
+                        <h1 id="doc-header-title" class="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight tracking-wide drop-shadow-md">
+                            عنوان المستند
+                        </h1>
+                    </div>
+                </div>
+
+                <div id="doc-header-note-container" class="hidden w-full lg:w-1/3 bg-blue-500/5 border-r-4 border-blue-500 rounded-l-xl p-3 md:p-4 relative overflow-hidden group hover:bg-blue-500/10 transition-colors">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-500/20 p-2 rounded-lg text-blue-400 mt-1">
+                            <i class="fas fa-info-circle text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-blue-400 font-bold text-xs uppercase mb-1 tracking-widest">الوصف</h4>
+                            <p id="doc-header-note-text" class="text-xs md:text-sm text-gray-200 leading-relaxed font-light"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- PDF Viewer Controls Bar -->
             <div id="pdf-toolbar" class="relative z-30 bg-black/60 border-b border-white/10 p-3 flex flex-wrap items-center justify-between gap-3 select-none">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
                     <button id="pdf-toggle-sidebar" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الفهرس / الصفحات">
                         <i class="fas fa-bars text-xs md:text-sm"></i>
+                    </button>
+                    <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
+                    <button id="pdf-first-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة الأولى">
+                        <i class="fas fa-angles-right text-xs md:text-sm"></i>
                     </button>
                     <button id="pdf-prev-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة السابقة">
                         <i class="fas fa-chevron-right text-xs md:text-sm"></i>
@@ -255,24 +312,40 @@
                     <button id="pdf-next-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة التالية">
                         <i class="fas fa-chevron-left text-xs md:text-sm"></i>
                     </button>
+                    <button id="pdf-last-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة الأخيرة">
+                        <i class="fas fa-angles-left text-xs md:text-sm"></i>
+                    </button>
                 </div>
                 
                 <div class="flex items-center gap-2">
                     <button id="pdf-zoom-out" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تصغير">
                         <i class="fas fa-magnifying-glass-minus text-xs md:text-sm"></i>
                     </button>
-                    <span id="pdf-zoom-val" class="text-xs font-mono text-gray-300 w-12 text-center">100%</span>
+                    <button id="pdf-zoom-reset" class="text-xs font-mono text-gray-300 w-14 text-center hover:text-white hover:bg-white/5 py-1 rounded" title="إعادة تعيين 100%">
+                        <span id="pdf-zoom-val">100%</span>
+                    </button>
                     <button id="pdf-zoom-in" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تكبير">
                         <i class="fas fa-magnifying-glass-plus text-xs md:text-sm"></i>
                     </button>
+                    <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
                     <button id="pdf-fit-width" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="ملاءمة العرض">
                         ملاءمة العرض
+                    </button>
+                    <button id="pdf-fit-page" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="ملاءمة الصفحة">
+                        ملاءمة الصفحة
                     </button>
                     <button id="pdf-rotate" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تدوير الصفحة">
                         <i class="fas fa-rotate text-xs md:text-sm"></i>
                     </button>
                     <button id="pdf-scroll-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تبديل وضع التمرير">
                         <i class="fas fa-arrows-up-down text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">تمرير</span>
+                    </button>
+                    <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
+                    <button id="pdf-auto-scroll" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تشغيل التمرير التلقائي">
+                        <i class="fas fa-play text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">تمرير تلقائي</span>
+                    </button>
+                    <button id="pdf-auto-scroll-speed" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-[10px] font-bold hidden" title="سرعة التمرير التلقائي">
+                        1x
                     </button>
                 </div>
 
@@ -401,7 +474,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        try {
+            const workerCode = "importScripts('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js');";
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+        } catch (e) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
     </script>
     <script type="module" src="../js/course-player.js"></script>
     <script type="module" src="../js/tools-drawer.js"></script>
