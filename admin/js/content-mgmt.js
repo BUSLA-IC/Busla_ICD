@@ -338,28 +338,81 @@ async function loadTableData() {
     try {
         let query;
         if (cmCurrentLevel === 'tracks') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">اسم المسار (Track)</th><th class="p-4 text-center">التاريخ</th><th class="p-4 text-center">الحالة</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[280px]">اسم المسار (Track)</th>
+                <th class="p-4 text-center min-w-[150px]">تاريخ الإنشاء</th>
+                <th class="p-4 text-center min-w-[120px]">الحالة</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('tracks').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'phases') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">المرحلة (Phase)</th><th class="p-4 text-center">المسار المرتبط</th><th class="p-4 text-center">الحالة</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[280px]">المرحلة (Phase)</th>
+                <th class="p-4 text-center min-w-[260px]">المسار المرتبط</th>
+                <th class="p-4 text-center min-w-[120px]">الحالة</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('phases').select('*, tracks(name)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'courses') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">الكورس (Course)</th><th class="p-4 text-center">المرحلة المرتبطة</th><th class="p-4 text-center">النوع</th><th class="p-4 text-center">الحالة</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[320px]">الكورس (Course)</th>
+                <th class="p-4 text-center min-w-[280px]">المرحلة المرتبطة</th>
+                <th class="p-4 text-center min-w-[140px]">النوع</th>
+                <th class="p-4 text-center min-w-[120px]">الحالة</th>
+                <th class="p-4 text-center min-w-[200px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('courses').select('*, phases(title)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'course_materials') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">المحتوى (Content)</th><th class="p-4 text-center">الكورس المرتبط</th><th class="p-4 text-center">النوع</th><th class="p-4 text-center">الترتيب</th><th class="p-4 text-center">الحالة</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[300px]">المحتوى (Content)</th>
+                <th class="p-4 text-center min-w-[260px]">الكورس المرتبط</th>
+                <th class="p-4 text-center min-w-[130px]">النوع</th>
+                <th class="p-4 text-center min-w-[100px]">الترتيب</th>
+                <th class="p-4 text-center min-w-[120px]">الحالة</th>
+                <th class="p-4 text-center min-w-[200px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('course_materials').select('*, courses(title)').order('order_index', { ascending: true });
         } else if (cmCurrentLevel === 'quizzes') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">عنوان الاختبار (Quiz)</th><th class="p-4 text-center">أقصى نقاط</th><th class="p-4 text-center">درجة النجاح</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[300px]">عنوان الاختبار (Quiz)</th>
+                <th class="p-4 text-center min-w-[130px]">النقاط (XP)</th>
+                <th class="p-4 text-center min-w-[130px]">درجة النجاح</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('quizzes').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'quiz_questions') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">السؤال (Question)</th><th class="p-4 text-center">الاختبار المرتبط</th><th class="p-4 text-center">الإجابة الصحيحة</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[320px]">السؤال (Question)</th>
+                <th class="p-4 text-center min-w-[260px]">الاختبار المرتبط</th>
+                <th class="p-4 text-center min-w-[130px]">الإجابة الصحيحة</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('quiz_questions').select('*, quizzes(title)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'projects') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">عنوان المشروع (Project)</th><th class="p-4 text-center">أقصى نقاط</th><th class="p-4 text-center">طريقة التسليم</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[300px]">عنوان المشروع (Project)</th>
+                <th class="p-4 text-center min-w-[130px]">النقاط (XP)</th>
+                <th class="p-4 text-center min-w-[150px]">طريقة التسليم</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('projects').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'curriculum_documents') {
-            thead.innerHTML = `<tr><th class="p-4 w-10">#</th><th class="p-4">اسم المستند (Document)</th><th class="p-4 text-center">النوع</th><th class="p-4 text-center">الربط بالمنهج</th><th class="p-4 text-center">المصدر</th><th class="p-4 text-center">العرض</th><th class="p-4 text-center">إجراءات</th></tr>`;
+            thead.innerHTML = `<tr>
+                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
+                <th class="p-4 text-right min-w-[300px]">اسم المستند (Document)</th>
+                <th class="p-4 text-center min-w-[130px]">النوع</th>
+                <th class="p-4 text-center min-w-[240px]">الربط بالمنهج</th>
+                <th class="p-4 text-center min-w-[140px]">المصدر</th>
+                <th class="p-4 text-center min-w-[120px]">العرض</th>
+                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+            </tr>`;
             query = supabase.from('curriculum_documents').select('*').order('created_at', { ascending: false });
         }
 
@@ -388,6 +441,20 @@ async function loadTableData() {
     }
 }
 
+function renderTypeBadge(type) {
+    if (!type) return '<span class="text-gray-500 text-xs font-mono">-</span>';
+    const t = String(type).toLowerCase();
+    if (t === 'youtube') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fab fa-youtube text-[12px]"></i> YouTube</span>';
+    if (t === 'custom') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/25 text-purple-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-sliders-h text-[11px]"></i> Custom</span>';
+    if (t === 'video') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 border border-teal-500/25 text-teal-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-play text-[10px]"></i> Video</span>';
+    if (t === 'quiz') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-question-circle text-[11px]"></i> Quiz</span>';
+    if (t === 'project') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-laptop-code text-[11px]"></i> Project</span>';
+    if (t === 'section') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-500/10 border border-white/10 text-gray-300 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-folder text-[11px]"></i> Section</span>';
+    if (t === 'pdf') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-file-pdf text-[11px]"></i> PDF</span>';
+    if (t === 'book') return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold tracking-wide uppercase shadow-sm"><i class="fas fa-book text-[11px]"></i> Book</span>';
+    return `<span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs font-bold uppercase shadow-sm">${type}</span>`;
+}
+
 function renderTable() {
     const tbody = document.getElementById('cm-table-body');
     if (filteredData.length === 0) {
@@ -403,17 +470,81 @@ function renderTable() {
         const icon = LEVELS[cmCurrentLevel].icon;
         
         const isActive = item.hasOwnProperty('is_active') ? item.is_active : item.status;
-        const statusHtml = isActive === undefined ? '-' : isActive ? '<span class="bg-green-500/10 border border-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold">مفعل</span>' : '<span class="bg-red-500/10 border border-red-500/20 text-red-400 px-2 py-1 rounded text-xs font-bold">معطل</span>';
+        const statusHtml = isActive === undefined 
+            ? '-' 
+            : isActive 
+                ? '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> مفعل</span>' 
+                : '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> معطل</span>';
 
         let middleColumn = '';
-        if (cmCurrentLevel === 'tracks') middleColumn = `<td class="p-4 text-center text-xs font-mono text-gray-500">${new Date(item.created_at).toLocaleDateString()}</td><td class="p-4 text-center">${statusHtml}</td>`;
-        if (cmCurrentLevel === 'phases') middleColumn = `<td class="p-4 text-center text-xs text-purple-400 font-bold bg-white/5 rounded-lg border border-white/5">${item.tracks?.name || 'بدون مسار'}</td><td class="p-4 text-center">${statusHtml}</td>`;
-        if (cmCurrentLevel === 'courses') middleColumn = `<td class="p-4 text-center text-xs text-blue-400 font-bold bg-white/5 rounded-lg border border-white/5">${item.phases?.title || 'بدون مرحلة'}</td><td class="p-4 text-center text-xs font-bold text-gray-400 uppercase">${item.type || '-'}</td><td class="p-4 text-center">${statusHtml}</td>`;
-        if (cmCurrentLevel === 'course_materials') middleColumn = `<td class="p-4 text-center text-xs text-red-400 font-bold bg-white/5 rounded-lg border border-white/5">${item.courses?.title || 'بدون كورس'}</td><td class="p-4 text-center text-xs font-bold text-gray-400 uppercase">${item.type}</td><td class="p-4 text-center font-mono text-yellow-500">${item.order_index || 0}</td><td class="p-4 text-center">${statusHtml}</td>`;
-        if (cmCurrentLevel === 'quizzes') middleColumn = `<td class="p-4 text-center text-xs font-mono text-yellow-500">${item.max_xp}</td><td class="p-4 text-center text-xs font-mono">${item.passing_score}</td>`;
-        if (cmCurrentLevel === 'quiz_questions') middleColumn = `<td class="p-4 text-center text-xs text-orange-400 font-bold bg-white/5 rounded-lg border border-white/5">${item.quizzes?.title || 'بدون اختبار'}</td><td class="p-4 text-center text-xs font-bold text-green-500">${item.correct_answer}</td>`;
-        if (cmCurrentLevel === 'projects') middleColumn = `<td class="p-4 text-center text-xs font-mono text-yellow-500">${item.max_points}</td><td class="p-4 text-center text-xs">${item.submission_method || '-'}</td>`;
-        if (cmCurrentLevel === 'curriculum_documents') {
+        if (cmCurrentLevel === 'tracks') {
+            middleColumn = `
+                <td class="p-4 text-center text-xs font-mono text-gray-400">${new Date(item.created_at).toLocaleDateString()}</td>
+                <td class="p-4 text-center">${statusHtml}</td>
+            `;
+        }
+        else if (cmCurrentLevel === 'phases') {
+            middleColumn = `
+                <td class="p-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-purple-500/15 transition-colors">
+                        <i class="fas fa-layer-group text-[11px] opacity-70 shrink-0"></i>
+                        <span dir="auto" class="break-words">${item.tracks?.name || 'بدون مسار'}</span>
+                    </span>
+                </td>
+                <td class="p-4 text-center">${statusHtml}</td>
+            `;
+        }
+        else if (cmCurrentLevel === 'courses') {
+            middleColumn = `
+                <td class="p-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-blue-500/15 transition-colors">
+                        <i class="fas fa-sitemap text-[11px] opacity-70 shrink-0"></i>
+                        <span dir="auto" class="break-words">${item.phases?.title || 'بدون مرحلة'}</span>
+                    </span>
+                </td>
+                <td class="p-4 text-center">${renderTypeBadge(item.type)}</td>
+                <td class="p-4 text-center">${statusHtml}</td>
+            `;
+        }
+        else if (cmCurrentLevel === 'course_materials') {
+            middleColumn = `
+                <td class="p-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-red-500/15 transition-colors">
+                        <i class="fas fa-book-reader text-[11px] opacity-70 shrink-0"></i>
+                        <span dir="auto" class="break-words">${item.courses?.title || 'بدون كورس'}</span>
+                    </span>
+                </td>
+                <td class="p-4 text-center">${renderTypeBadge(item.type)}</td>
+                <td class="p-4 text-center">
+                    <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20 inline-block shadow-sm">${item.order_index || 0}</span>
+                </td>
+                <td class="p-4 text-center">${statusHtml}</td>
+            `;
+        }
+        else if (cmCurrentLevel === 'quizzes') {
+            middleColumn = `
+                <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span></td>
+                <td class="p-4 text-center"><span class="text-xs font-mono text-gray-300 font-bold">${item.passing_score || 50}%</span></td>
+            `;
+        }
+        else if (cmCurrentLevel === 'quiz_questions') {
+            middleColumn = `
+                <td class="p-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-orange-500/15 transition-colors">
+                        <i class="fas fa-question text-[11px] opacity-70 shrink-0"></i>
+                        <span dir="auto" class="break-words">${item.quizzes?.title || 'بدون اختبار'}</span>
+                    </span>
+                </td>
+                <td class="p-4 text-center"><span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase font-mono tracking-wider">خيار (${item.correct_answer})</span></td>
+            `;
+        }
+        else if (cmCurrentLevel === 'projects') {
+            middleColumn = `
+                <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span></td>
+                <td class="p-4 text-center text-xs font-mono text-gray-400">${item.submission_method || '-'}</td>
+            `;
+        }
+        else if (cmCurrentLevel === 'curriculum_documents') {
             let linkTarget = 'غير مرتبط';
             if (item.lesson_id) linkTarget = `درس: ${item.lesson_id}`;
             else if (item.course_id) linkTarget = `كورس: ${item.course_id}`;
@@ -421,58 +552,71 @@ function renderTable() {
             else if (item.track_id) linkTarget = `مسار: ${item.track_id}`;
             
             middleColumn = `
-                <td class="p-4 text-center text-xs font-bold text-gray-400 uppercase">${item.document_type || '-'}</td>
-                <td class="p-4 text-center text-xs text-cyan-400 font-bold bg-white/5 rounded-lg border border-white/5">${linkTarget}</td>
+                <td class="p-4 text-center">${renderTypeBadge(item.document_type || 'PDF')}</td>
+                <td class="p-4 text-center">
+                    <span class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold leading-snug text-center shadow-sm">
+                        <i class="fas fa-link text-[10px] opacity-70"></i>
+                        <span dir="auto" class="break-words">${linkTarget}</span>
+                    </span>
+                </td>
                 <td class="p-4 text-center text-xs text-gray-400 font-mono">${item.source_type || '-'}</td>
-                <td class="p-4 text-center text-xs text-purple-400 font-bold">${item.view_mode || 'embed'}</td>
+                <td class="p-4 text-center text-xs text-purple-400 font-bold uppercase">${item.view_mode || 'embed'}</td>
             `;
         }
 
         let drillDownBtn = '';
         if (['tracks', 'phases', 'courses', 'quizzes'].includes(cmCurrentLevel)) {
-            drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-xs"></i></button>`;
+            drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-xs"></i></button>`;
         }
 
         let previewBtn = '';
         if (cmCurrentLevel === 'course_materials' && item.type === 'video' && item.video_id) {
-            previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
+            previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all shadow-sm" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
         }
 
         let previewQuizOrProjectBtn = '';
         if (cmCurrentLevel === 'quizzes') {
-            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all" title="معاينة الاختبار"><i class="fas fa-eye text-xs"></i></button>`;
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all shadow-sm" title="معاينة الاختبار"><i class="fas fa-eye text-xs"></i></button>`;
         } else if (cmCurrentLevel === 'projects') {
-            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all" title="معاينة المشروع"><i class="fas fa-eye text-xs"></i></button>`;
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="معاينة المشروع"><i class="fas fa-eye text-xs"></i></button>`;
         }
 
         let reorderBtn = '';
         if (cmCurrentLevel === 'courses') {
-            reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
+            reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
         } else if (cmCurrentLevel === 'phases') {
-            reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب الكورسات داخل هذه المرحلة"><i class="fas fa-sort text-xs"></i></button>`;
+            reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب الكورسات داخل هذه المرحلة"><i class="fas fa-sort text-xs"></i></button>`;
         } else if (cmCurrentLevel === 'tracks') {
-            reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all" title="إعادة ترتيب المراحل داخل هذا المسار"><i class="fas fa-sort text-xs"></i></button>`;
+            reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المراحل داخل هذا المسار"><i class="fas fa-sort text-xs"></i></button>`;
         }
 
         return `
-            <tr class="hover:bg-white/5 transition-colors border-b border-white/5 group">
-                <td class="p-4 text-center text-gray-500">${index + 1}</td>
+            <tr class="hover:bg-white/[0.04] transition-colors border-b border-white/5 group">
+                <td class="p-4 text-center text-gray-500 font-mono text-xs">${index + 1}</td>
                 <td class="p-4">
-                    <div class="flex flex-col">
-                        <span class="font-bold text-white text-sm truncate max-w-xs"><i class="fas ${icon} mr-2 opacity-70"></i> ${title}</span>
-                        <span class="text-[10px] font-mono text-gray-500 mt-1">ID: ${id}</span>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-b-primary text-sm mt-0.5 group-hover:scale-105 transition-transform">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="font-bold text-white text-sm leading-snug break-words group-hover:text-b-primary transition-colors line-clamp-2" dir="auto" title="${title}">${title}</span>
+                            <span class="text-[10px] font-mono text-gray-500 mt-1 flex items-center gap-1.5">
+                                <span class="text-gray-600 font-bold uppercase tracking-wider">ID:</span>
+                                <span class="text-gray-400 font-mono select-all bg-black/40 px-1.5 py-0.5 rounded border border-white/5">${id}</span>
+                            </span>
+                        </div>
                     </div>
                 </td>
                 ${middleColumn}
                 <td class="p-4 text-center">
-                    <div class="flex items-center justify-center gap-2">
-                        <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all" title="عرض التفاصيل"><i class="fas fa-info-circle text-xs"></i></button>
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="عرض التفاصيل"><i class="fas fa-info-circle text-xs"></i></button>
                         ${drillDownBtn}
                         ${reorderBtn}
                         ${previewBtn}
                         ${previewQuizOrProjectBtn}
-                        <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all" title="تعديل"><i class="fas fa-pen text-xs"></i></button>
-                        <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all" title="حذف"><i class="fas fa-trash text-xs"></i></button>
+                        <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="تعديل"><i class="fas fa-pen text-xs"></i></button>
+                        <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="حذف"><i class="fas fa-trash text-xs"></i></button>
                     </div>
                 </td>
             </tr>
@@ -795,13 +939,24 @@ window.cmShowInfo = (id) => {
 function ensureDetailsModalExists() {
     if (!document.getElementById('cm-details-modal')) {
         document.body.insertAdjacentHTML('beforeend', `
-            <div id="cm-details-modal" class="fixed inset-0 z-[400] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
-                <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
-                    <div class="p-5 border-b border-white/10 bg-gradient-to-r from-indigo-900/40 to-b-surface flex justify-between items-center shrink-0">
-                        <h3 class="text-xl font-bold text-white"><i class="fas fa-info-circle text-indigo-400 mr-2"></i> بطاقة التفاصيل (Record Details)</h3>
-                        <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5"><i class="fas fa-times"></i></button>
+            <div id="cm-details-modal" class="fixed inset-0 z-[400] hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 lg:p-8 transition-opacity">
+                <div class="bg-b-surface border border-white/10 rounded-3xl w-full max-w-5xl xl:max-w-6xl shadow-2xl flex flex-col overflow-hidden max-h-[92vh]">
+                    <div class="px-6 py-5 border-b border-white/10 bg-gradient-to-r from-indigo-900/40 to-b-surface flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">بطاقة التفاصيل (Record Details)</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">عرض تفصيلي لجميع البيانات المرتبطة بالسجل</p>
+                            </div>
+                        </div>
+                        <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i class="fas fa-times text-base"></i></button>
                     </div>
-                    <div id="cm-details-content" class="p-6 overflow-y-auto custom-scroll flex-1 bg-[url('../assets/patterns/circuit.png')] bg-opacity-5"></div>
+                    <div id="cm-details-content" class="p-6 md:p-8 overflow-y-auto custom-scroll flex-1 bg-[url('../assets/patterns/circuit.png')] bg-opacity-5 text-right"></div>
+                    <div class="p-4 sm:p-5 border-t border-white/10 flex justify-end shrink-0 bg-b-surface">
+                        <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">إغلاق النافذة</button>
+                    </div>
                 </div>
             </div>
         `);
@@ -823,12 +978,12 @@ window.cmCloseModal = () => document.getElementById('cm-crud-modal').classList.a
 
 async function generateFormFields(data = null) {
     const container = document.getElementById('cm-form-fields');
-    container.innerHTML = '<div class="text-center py-4 text-gray-400"><i class="fas fa-spinner fa-spin text-xl mb-2"></i><br>جاري التجهيز...</div>';
+    container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-3xl mb-3 text-b-primary"></i><br><span class="text-sm font-medium">جاري تجهيز حقول النموذج والبيانات...</span></div>';
     
-    const hData = await fetchHierarchyData(); // الاعتماد على الذاكرة لسرعة خيالية
+    const hData = await fetchHierarchyData(); // الاعتماد على الذاكرة لسرعة فائقة
     let html = '';
-    const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-b-primary outline-none transition-colors dir-rtl text-right";
-    const labelStyle = "text-xs text-gray-400 mb-1 font-bold block dir-rtl text-right";
+    const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-b-primary outline-none transition-all dir-rtl text-right focus:bg-black/80";
+    const labelStyle = "text-xs text-gray-300 mb-1.5 font-bold block dir-rtl text-right";
     
     // دالة مساعدة لإنشاء الخيارات (تتجاهل السجلات ذات المعرفات الفارغة)
     const buildOpts = (items, valKey, textKey, selectedVal) => items.filter(i => i && i[valKey] !== undefined && i[valKey] !== null && String(i[valKey]).trim() !== '').map(i => `<option value="${i[valKey]}" ${String(i[valKey]) === String(selectedVal) ? 'selected' : ''}>${i[textKey]}</option>`).join('');
@@ -844,175 +999,493 @@ async function generateFormFields(data = null) {
 
     if (cmCurrentLevel === 'tracks') {
         html += `
-            <div class="grid gap-4 dir-rtl text-right">
-                <div><label class="${labelStyle}">اسم المسار (Track Name) *</label><input type="text" id="f-name" required value="${data?.name || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الوصف (Description)</label><textarea id="f-desc" rows="3" class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div class="flex items-center gap-3 bg-black/30 p-4 rounded-xl border border-white/5"><input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-4 h-4 rounded text-b-primary bg-black border-white/20"><label class="text-sm font-bold text-white cursor-pointer">مفعل للطلاب</label></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 dir-rtl text-right">
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">اسم المسار التعليمي (Track Name) *</label>
+                    <input type="text" id="f-name" required value="${data?.name || ''}" placeholder="مثال: Digital IC Design & Verification" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">الوصف التفصيلي (Description)</label>
+                    <textarea id="f-desc" rows="4" placeholder="اكتب نبذة شاملة عن المسار وأهدافه والجمهور المستهدف..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div class="md:col-span-2 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                    <div>
+                        <span class="text-sm font-bold text-white block">حالة التفعيل للطلاب</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">إتاحة هذا المسار التعليمي وظهوره في لوحة الطلاب والمناهج</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-b-primary bg-black border-white/20 focus:ring-b-primary">
+                    </label>
+                </div>
             </div>
         `;
     } 
     else if (cmCurrentLevel === 'phases') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right">
-                <div><label class="${labelStyle}">معرف المرحلة (تلقائي)</label><input type="text" id="f-phase-id" readonly value="${data?.phase_id || generateSystemID('ph')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed"></div>
-                <div><label class="${labelStyle}">المسار التابع له (Track) *</label><select id="f-track-id" required class="${inputStyle}"><option value="" disabled ${!data ? 'selected' : ''}>-- اختر المسار --</option>${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}</select></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">عنوان المرحلة *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الوصف</label><textarea id="f-desc" rows="2" class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div><label class="${labelStyle}">رابط الصورة (Image URL)</label><input type="text" id="f-img-url" value="${data?.image_url || ''}" class="${inputStyle} dir-ltr"></div>
-                <div><label class="${labelStyle}">المدة الزمنية (مثال: شهرين)</label><input type="text" id="f-module-time" value="${data?.['Module Time'] || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">المتطلبات السابقة</label><textarea id="f-prereq" rows="2" class="${inputStyle}">${data?.prerequisites || ''}</textarea></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">ماذا ستتعلم؟</label><textarea id="f-will-learn" rows="2" class="${inputStyle}">${data?.will_learn || ''}</textarea></div>
-                <div class="md:col-span-2 flex items-center gap-3 bg-black/30 p-4 rounded-xl border border-white/5"><input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-4 h-4 rounded text-purple-500"><label class="text-sm font-bold text-white cursor-pointer">مفعل للطلاب</label></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+                <!-- Hierarchy Card -->
+                <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center gap-2 text-purple-400 font-bold text-sm">
+                        <i class="fas fa-layer-group"></i>
+                        <span>المسار التابع له والمُعرف</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="${labelStyle}">المسار التابع له (Track) *</label>
+                            <select id="f-track-id" required class="${inputStyle}">
+                                <option value="" disabled ${!data ? 'selected' : ''}>-- اختر المسار التعليمي --</option>
+                                ${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">معرف المرحلة (تلقائي)</label>
+                            <input type="text" id="f-phase-id" readonly value="${data?.phase_id || generateSystemID('ph')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">عنوان المرحلة التعليمية *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: المرحلة الأولى - الأساسيات الرقمية والتصميم المنطقي" class="${inputStyle}">
+                </div>
+                <div>
+                    <label class="${labelStyle}">المدة الزمنية التقديرية</label>
+                    <input type="text" id="f-module-time" value="${data?.['Module Time'] || ''}" placeholder="مثال: 8 أسابيع / شهرين" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">رابط صورة المرحلة (Image URL)</label>
+                    <input type="text" id="f-img-url" value="${data?.image_url || ''}" placeholder="https://example.com/phase-cover.jpg" class="${inputStyle} dir-ltr">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">الوصف التفصيلي للمرحلة</label>
+                    <textarea id="f-desc" rows="3" placeholder="وصف محتوى وأهداف هذه المرحلة التعليمية بالتفصيل..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="${labelStyle}">المتطلبات السابقة (Prerequisites)</label>
+                        <textarea id="f-prereq" rows="3" placeholder="المعارف والمهارات المطلوبة من الطالب قبل الالتحاق بهذه المرحلة..." class="${inputStyle}">${data?.prerequisites || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="${labelStyle}">ماذا ستتعلم في هذه المرحلة؟ (What You'll Learn)</label>
+                        <textarea id="f-will-learn" rows="3" placeholder="المهارات والمخرجات التعليمية التي سيكتسبها الطالب..." class="${inputStyle}">${data?.will_learn || ''}</textarea>
+                    </div>
+                </div>
+                <div class="md:col-span-3 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5">
+                    <div>
+                        <span class="text-sm font-bold text-white block">تفعيل المرحلة للطلاب</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">ظهور المرحلة للطلاب في خارطة الطريق التعليمية للمسار</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-purple-500 bg-black border-white/20">
+                    </label>
+                </div>
             </div>
         `;
     }
     else if (cmCurrentLevel === 'courses') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right">
-                <div class="md:col-span-2 p-3 bg-white/5 border border-white/10 rounded-xl mb-1 flex flex-col md:flex-row gap-3">
-                    <div class="flex-1"><label class="${labelStyle}">تصفية المسار (لتسهيل الاختيار)</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- كل المسارات --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
-                    <div class="flex-1"><label class="${labelStyle}">المرحلة (Phase) *</label><select id="f-phase-id" required class="${inputStyle} border-b-primary/50"><option value="">-- اختر المرحلة --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+                <!-- Hierarchy Placement Card -->
+                <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div class="flex items-center gap-2 text-b-primary font-bold text-sm">
+                            <i class="fas fa-sitemap"></i>
+                            <span>تحديد موقع الكورس داخل المنهج (Curriculum Placement)</span>
+                        </div>
+                        <span class="text-xs text-gray-400">حدد المسار لتصفية المراحل التعليمية</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="${labelStyle}">تصفية بالمسار (Track)</label>
+                            <select id="modal-filter-track" class="${inputStyle}">
+                                <option value="">-- كل المسارات --</option>
+                                ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">المرحلة التابع لها (Phase) *</label>
+                            <select id="f-phase-id" required class="${inputStyle} border-b-primary/50">
+                                <option value="">-- اختر المرحلة --</option>
+                                ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">معرف الكورس (تلقائي)</label>
+                            <input type="text" id="f-course-id" readonly value="${data?.course_id || generateSystemID('cr')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
+                        </div>
+                    </div>
                 </div>
-                <div><label class="${labelStyle}">معرف الكورس (تلقائي)</label><input type="text" id="f-course-id" readonly value="${data?.course_id || generateSystemID('cr')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed"></div>
-                <div><label class="${labelStyle}">عنوان الكورس *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">النوع</label><select id="f-type" class="${inputStyle}"><option value="youtube" ${data?.type === 'youtube' ? 'selected' : ''}>يوتيوب</option><option value="custom" ${data?.type === 'custom' ? 'selected' : ''}>مخصص</option></select></div>
-                <div><label class="${labelStyle}">كورس مرتبط بـ (اختياري)</label><select id="f-related" class="${inputStyle}"><option value="">بدون ارتباط</option>${buildOpts(hData.courses, 'course_id', 'title', data?.related_with)}</select></div>
-                <div><label class="${labelStyle}">رابط قائمة اليوتيوب (Playlist ID)</label><input type="text" id="f-playlist" value="${data?.playlist_id || ''}" class="${inputStyle} dir-ltr"></div>
-                <div><label class="${labelStyle}">رابط الصورة (Image URL)</label><input type="text" id="f-img-url" value="${data?.image_url || ''}" class="${inputStyle} dir-ltr"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الوصف</label><textarea id="f-desc" rows="2" class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div class="md:col-span-2 flex flex-col gap-3 bg-black/30 p-4 rounded-xl border border-white/5">
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-4 h-4 rounded text-blue-500"> مفعل للطلاب</label>
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-auto-sync" ${!data || data?.auto_sync ? 'checked' : ''} class="w-4 h-4 rounded text-blue-500"> مزامنة تلقائية مع يوتيوب</label>
+
+                <!-- Course Core Info -->
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">عنوان الكورس *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: Digital IC Design: Front-end to Back-end" class="${inputStyle}">
+                </div>
+                <div>
+                    <label class="${labelStyle}">نوع الكورس</label>
+                    <select id="f-type" class="${inputStyle}">
+                        <option value="youtube" ${data?.type === 'youtube' ? 'selected' : ''}>يوتيوب (YouTube)</option>
+                        <option value="custom" ${data?.type === 'custom' ? 'selected' : ''}>مخصص (Custom)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">كورس مرتبط بـ (اختياري)</label>
+                    <select id="f-related" class="${inputStyle}">
+                        <option value="">بدون ارتباط</option>
+                        ${buildOpts(hData.courses, 'course_id', 'title', data?.related_with)}
+                    </select>
+                </div>
+                <div>
+                    <label class="${labelStyle}">معرف قائمة اليوتيوب (Playlist ID)</label>
+                    <input type="text" id="f-playlist" value="${data?.playlist_id || ''}" placeholder="PL..." class="${inputStyle} dir-ltr">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">رابط صورة غلاف الكورس (Image URL)</label>
+                    <input type="text" id="f-img-url" value="${data?.image_url || ''}" placeholder="https://example.com/course-thumbnail.jpg" class="${inputStyle} dir-ltr">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">الوصف التفصيلي للكورس</label>
+                    <textarea id="f-desc" rows="3" placeholder="اكتب نبذة واضحة عن محتوى هذا الكورس وموضوعاته..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center justify-between bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <div>
+                            <span class="text-sm font-bold text-white block">مفعل للطلاب مباشرة</span>
+                            <span class="text-xs text-gray-400">إتاحة الكورس للطلاب في لوحة التعلم</span>
+                        </div>
+                        <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-blue-500 bg-black border-white/20">
+                    </div>
+                    <div class="flex items-center justify-between bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <div>
+                            <span class="text-sm font-bold text-white block">مزامنة تلقائية مع يوتيوب</span>
+                            <span class="text-xs text-gray-400">تحديث الفيديوهات والدروس تلقائياً</span>
+                        </div>
+                        <input type="checkbox" id="f-auto-sync" ${!data || data?.auto_sync ? 'checked' : ''} class="w-5 h-5 rounded text-blue-500 bg-black border-white/20">
+                    </div>
                 </div>
             </div>
         `;
     }
     else if (cmCurrentLevel === 'course_materials') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right">
-                <div class="md:col-span-2 p-3 bg-white/5 border border-white/10 rounded-xl mb-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div><label class="${labelStyle}">المسار (للفلترة)</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
-                    <div><label class="${labelStyle}">المرحلة (للفلترة)</label><select id="modal-filter-phase" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
-                    <div><label class="${labelStyle}">الكورس التابع له *</label><select id="f-course-id" required class="${inputStyle} border-b-primary/50"><option value="">-- اختر الكورس --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+                <!-- Hierarchy Selection Card -->
+                <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                        <div class="flex items-center gap-2 text-b-primary font-bold text-sm">
+                            <i class="fas fa-sitemap"></i>
+                            <span>تحديد الكورس التابع له الدرس (Course Selection & Hierarchy)</span>
+                        </div>
+                        <span class="text-xs text-gray-400">اختر المسار والمرحلة لفلترة قائمة الكورسات</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="${labelStyle}">المسار (للفلترة)</label>
+                            <select id="modal-filter-track" class="${inputStyle}">
+                                <option value="">-- كل المسارات --</option>
+                                ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">المرحلة (للفلترة)</label>
+                            <select id="modal-filter-phase" class="${inputStyle}">
+                                <option value="">-- كل المراحل --</option>
+                                ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">الكورس التابع له *</label>
+                            <select id="f-course-id" required class="${inputStyle} border-b-primary/50">
+                                <option value="">-- اختر الكورس التابع له --</option>
+                                ${buildOpts(hData.courses, 'course_id', 'title', initCourse)}
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div><label class="${labelStyle}">معرف المحتوى (تلقائي)</label><input type="text" id="f-content-id" readonly value="${data?.content_id || generateSystemID('cnt')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed"></div>
-                <div><label class="${labelStyle}">عنوان المحتوى (الدرس) *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">النوع *</label><select id="f-type" required class="${inputStyle}"><option value="video" ${data?.type==='video'?'selected':''}>فيديو (Video)</option><option value="section" ${data?.type==='section'?'selected':''}>قسم فرعي (Section)</option><option value="quiz" ${data?.type==='quiz'?'selected':''}>اختبار (Quiz)</option><option value="project" ${data?.type==='project'?'selected':''}>مشروع (Project)</option></select></div>
-                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                    <div class="sm:col-span-2">
-                        <label class="${labelStyle}">رابط الفيديو أو معرف اليوتيوب (Video URL / ID)</label>
-                        <input type="text" id="f-video-id" placeholder="مثال: dQw4w9WgXcQ أو رابط يوتيوب أو جوجل درايف أو رابط مباشر" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
+
+                <!-- Lesson Main Info -->
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="md:col-span-3">
+                        <label class="${labelStyle}">معرف المحتوى (تلقائي)</label>
+                        <input type="text" id="f-content-id" readonly value="${data?.content_id || generateSystemID('cnt')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
+                    </div>
+                    <div class="md:col-span-6">
+                        <label class="${labelStyle}">عنوان المحتوى (الدرس) *</label>
+                        <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: مقدمة إلى التصميم الرقمي وشرائح السيليكون" class="${inputStyle}">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="${labelStyle}">نوع المحتوى *</label>
+                        <select id="f-type" required class="${inputStyle}">
+                            <option value="video" ${data?.type==='video'?'selected':''}>فيديو (Video)</option>
+                            <option value="section" ${data?.type==='section'?'selected':''}>قسم فرعي (Section)</option>
+                            <option value="quiz" ${data?.type==='quiz'?'selected':''}>اختبار (Quiz)</option>
+                            <option value="project" ${data?.type==='project'?'selected':''}>مشروع (Project)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Video URL & Live Preview -->
+                <div class="md:col-span-3 bg-black/30 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                        <i class="fab fa-youtube"></i>
+                        <span>رابط الفيديو أو مصدر المحتوى التعليمي</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div class="md:col-span-9">
+                            <label class="${labelStyle}">رابط الفيديو أو معرف اليوتيوب (Video URL / ID)</label>
+                            <input type="text" id="f-video-id" placeholder="مثال: dQw4w9WgXcQ أو رابط يوتيوب أو جوجل درايف أو رابط فيديو مباشر" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
+                        </div>
+                        <div class="md:col-span-3">
+                            <button type="button" onclick="window.previewAdminVideo()" class="w-full bg-b-primary/10 hover:bg-b-primary/20 border border-b-primary/30 text-b-primary font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm">
+                                <i class="fas fa-play-circle text-base"></i>
+                                <span>معاينة الفيديو</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="admin-video-preview-wrapper" class="hidden bg-black/80 border border-white/10 rounded-2xl p-4 transition-all duration-300">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-bold text-gray-300 flex items-center gap-2"><i class="fas fa-tv text-teal-400"></i> شاشة المعاينة الفورية</span>
+                            <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-400 hover:text-red-400 text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">إغلاق المعاينة <i class="fas fa-times ml-1"></i></button>
+                        </div>
+                        <div id="admin-video-preview-content" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-white/10 shadow-inner"></div>
+                    </div>
+                </div>
+
+                <!-- Order, Duration & XP -->
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="${labelStyle}">ترتيب العرض (Index Order)</label>
+                        <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
                     </div>
                     <div>
-                        <button type="button" onclick="window.previewAdminVideo()" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2">
-                            <i class="fas fa-play-circle text-teal-400"></i>
-                            <span>معاينة الفيديو</span>
-                        </button>
+                        <label class="${labelStyle}">المدة بالدقائق (Duration in Minutes)</label>
+                        <input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}">
+                    </div>
+                    <div>
+                        <label class="${labelStyle} text-yellow-400/90 flex items-center gap-1.5"><i class="fas fa-star text-yellow-400 text-xs"></i> النقاط المكتسبة (XP)</label>
+                        <input type="number" id="f-base-xp" min="0" value="${data?.base_xp ?? 10}" placeholder="10" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold">
                     </div>
                 </div>
-                <div id="admin-video-preview-wrapper" class="md:col-span-2 hidden bg-black/50 border border-white/5 rounded-2xl p-4 transition-all duration-300">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-gray-400">شاشة المعاينة</span>
-                        <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">إغلاق المعاينة <i class="fas fa-times ml-1"></i></button>
+
+                <!-- Related Quiz & Project -->
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="${labelStyle}">اختبار مرتبط بالدرس (اختياري)</label>
+                        <select id="f-ref-quiz" class="${inputStyle}">
+                            <option value="">-- بدون اختبار --</option>
+                            ${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.ref_quiz_id)}
+                        </select>
                     </div>
-                    <div id="admin-video-preview-content" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-white/10">
-                        <!-- Preview player injected here -->
+                    <div>
+                        <label class="${labelStyle}">مشروع مرتبط بالدرس (اختياري)</label>
+                        <select id="f-ref-project" class="${inputStyle}">
+                            <option value="">-- بدون مشروع --</option>
+                            ${buildOpts(hData.projects, 'id', 'title', data?.ref_project_id)}
+                        </select>
                     </div>
                 </div>
-                <div><label class="${labelStyle}">ترتيب العرض (Index)</label><input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">المدة بالدقائق (Duration in Minutes)</label><input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}"></div>
-                <div class="md:col-span-2 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-sm"></i></div>
-                    <div class="flex-1">
-                        <label class="${labelStyle} text-yellow-400/80">النقاط المكتسبة عند إكمال هذا المحتوى (XP)</label>
-                        <input type="number" id="f-base-xp" min="0" value="${data?.base_xp ?? 10}" placeholder="10" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold w-32">
+
+                <!-- Active Toggle -->
+                <div class="md:col-span-3 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5">
+                    <div>
+                        <span class="text-sm font-bold text-white block">تفعيل المحتوى للطلاب مباشرة</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">ظهور هذا الدرس مباشرة للطلاب داخل مشغل الكورس</span>
                     </div>
-                    <span class="text-xs text-gray-500">نقطة XP تُضاف لرصيد الطالب عند الإكمال</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="f-status" ${!data || data?.status ? 'checked' : ''} class="w-5 h-5 rounded text-b-primary bg-black border-white/20">
+                    </label>
                 </div>
-                <div><label class="${labelStyle}">اختبار مرتبط (اختياري)</label><select id="f-ref-quiz" class="${inputStyle}"><option value="">-- بدون اختبار --</option>${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.ref_quiz_id)}</select></div>
-                <div><label class="${labelStyle}">مشروع مرتبط (اختياري)</label><select id="f-ref-project" class="${inputStyle}"><option value="">-- بدون مشروع --</option>${buildOpts(hData.projects, 'id', 'title', data?.ref_project_id)}</select></div>
-                <div class="md:col-span-2 flex items-center gap-3 bg-black/30 p-4 rounded-xl border border-white/5"><input type="checkbox" id="f-status" ${!data || data?.status ? 'checked' : ''} class="w-4 h-4 rounded text-red-500"><label class="text-sm font-bold text-white cursor-pointer">مفعل للطلاب</label></div>
             </div>
         `;
     }
     else if (cmCurrentLevel === 'quizzes' || cmCurrentLevel === 'projects') {
-        // حقول الكويز أو المشروع
         let coreFields = '';
         if (cmCurrentLevel === 'quizzes') {
             coreFields = `
-                <div class="md:col-span-2"><label class="${labelStyle}">عنوان الاختبار *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الوصف</label><textarea id="f-desc" rows="2" class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div><label class="${labelStyle}">نسبة النجاح المطلوبة (%)</label><input type="number" id="f-pass" value="${data?.passing_score || 50}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">النقاط المكتسبة (XP)</label><input type="number" id="f-max-xp" value="${data?.max_xp || 50}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">عدد المحاولات المسموحة</label><input type="number" id="f-attempts" value="${data?.attempts_allowed || 3}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">عدد الأسئلة المعروضة للطالب</label><input type="number" id="f-q-show" value="${data?.questions_to_show || ''}" placeholder="اتركه فارغاً لعرض الكل" class="${inputStyle}"></div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">عنوان الاختبار *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: اختبار تقييم الفهم - أساسيات المعالجات" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">الوصف والتعليمات</label>
+                    <textarea id="f-desc" rows="3" placeholder="وصف موجز لموضوع الاختبار وتعليمات الإجابة..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div>
+                    <label class="${labelStyle}">نسبة النجاح المطلوبة (%)</label>
+                    <input type="number" id="f-pass" value="${data?.passing_score || 50}" class="${inputStyle}">
+                </div>
+                <div>
+                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs ml-1"></i> النقاط المكتسبة (XP)</label>
+                    <input type="number" id="f-max-xp" value="${data?.max_xp || 50}" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
+                </div>
+                <div>
+                    <label class="${labelStyle}">عدد المحاولات المسموحة</label>
+                    <input type="number" id="f-attempts" value="${data?.attempts_allowed || 3}" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">عدد الأسئلة المعروضة للطالب عشوائياً</label>
+                    <input type="number" id="f-q-show" value="${data?.questions_to_show || ''}" placeholder="اتركه فارغاً لعرض جميع الأسئلة المسجلة في بنك الأسئلة" class="${inputStyle}">
+                </div>
             `;
         } else {
             coreFields = `
-                <div class="md:col-span-2"><label class="${labelStyle}">عنوان المشروع *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الوصف والمتطلبات *</label><textarea id="f-desc" rows="3" required class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">رابط التفاصيل (اختياري)</label><input type="text" id="f-req-url" value="${data?.requirements_url || ''}" class="${inputStyle} dir-ltr"></div>
-                <div><label class="${labelStyle}">النقاط المكتسبة (XP)</label><input type="number" id="f-max-pts" value="${data?.max_points || 100}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">طريقة التسليم</label><input type="text" id="f-method" value="${data?.submission_method || 'github_link'}" class="${inputStyle} dir-ltr"></div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">عنوان المشروع *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: مشروع تصميم معالج RISC-V مبسط" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">الوصف والمتطلبات الفنية *</label>
+                    <textarea id="f-desc" rows="4" required placeholder="المتطلبات التقنية ومعايير التقييم وطريقة العمل..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">رابط المستندات أو ملفات البدء (اختياري)</label>
+                    <input type="text" id="f-req-url" value="${data?.requirements_url || ''}" placeholder="https://github.com/... أو Google Drive" class="${inputStyle} dir-ltr">
+                </div>
+                <div>
+                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs ml-1"></i> النقاط المكتسبة (XP)</label>
+                    <input type="number" id="f-max-pts" value="${data?.max_points || 100}" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">طريقة التسليم المقبولة</label>
+                    <input type="text" id="f-method" value="${data?.submission_method || 'github_link'}" placeholder="مثال: github_link أو zip_file أو pull_request" class="${inputStyle} dir-ltr">
+                </div>
             `;
         }
 
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
                 ${coreFields}
-                <div class="md:col-span-2 mt-4 p-4 bg-purple-900/10 border border-purple-500/20 rounded-xl">
-                    <h4 class="text-purple-400 font-bold text-sm mb-3"><i class="fas fa-link mr-2"></i> تعيين مباشر لدرس/محتوى (اختياري لتوفير الوقت)</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label class="${labelStyle}">تصفية المسار</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
-                        <div><label class="${labelStyle}">تصفية المرحلة</label><select id="modal-filter-phase" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
-                        <div><label class="${labelStyle}">تصفية الكورس</label><select id="modal-filter-course" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
-                        <div><label class="${labelStyle}">المحتوى الهدف (الدرس)</label><select id="f-link-content" class="${inputStyle} border-purple-500/50"><option value="">-- اختر الدرس للربط --</option>${buildOpts(hData.contents, 'content_id', 'title', '')}</select></div>
+                <div class="md:col-span-3 mt-3 p-5 bg-purple-900/10 border border-purple-500/20 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-purple-500/10 pb-3">
+                        <h4 class="text-purple-400 font-bold text-sm flex items-center gap-2">
+                            <i class="fas fa-link"></i> تعيين مباشر لدرس / محتوى تعليمي (اختياري لتوفير الوقت)
+                        </h4>
+                        <span class="text-xs text-gray-400">تصفية سريعة للربط المباشر مع درس في الكورس</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="${labelStyle}">تصفية المسار</label>
+                            <select id="modal-filter-track" class="${inputStyle}">
+                                <option value="">-- كل المسارات --</option>
+                                ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">تصفية المرحلة</label>
+                            <select id="modal-filter-phase" class="${inputStyle}">
+                                <option value="">-- كل المراحل --</option>
+                                ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">تصفية الكورس</label>
+                            <select id="modal-filter-course" class="${inputStyle}">
+                                <option value="">-- كل الكورسات --</option>
+                                ${buildOpts(hData.courses, 'course_id', 'title', initCourse)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${labelStyle}">المحتوى الهدف (الدرس)</label>
+                            <select id="f-link-content" class="${inputStyle} border-purple-500/50">
+                                <option value="">-- اختر الدرس للربط --</option>
+                                ${buildOpts(hData.contents, 'content_id', 'title', '')}
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
     }
-else if (cmCurrentLevel === 'quiz_questions') {
+    else if (cmCurrentLevel === 'quiz_questions') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right pb-32">
-                <div class="md:col-span-2 p-3 bg-white/5 border border-white/10 rounded-xl mb-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                    <div><label class="${labelStyle}">تصفية بالمسار</label><select id="modal-filter-track" class="${inputStyle} py-1.5"><option value="">-- الكل --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
-                    <div><label class="${labelStyle}">تصفية بالمرحلة</label><select id="modal-filter-phase" class="${inputStyle} py-1.5"><option value="">-- الكل --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
-                    <div><label class="${labelStyle}">تصفية بالكورس</label><select id="modal-filter-course" class="${inputStyle} py-1.5"><option value="">-- الكل --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
-                    <div><label class="${labelStyle}">الدرس المرتبط (إن وجد)</label><select id="modal-filter-content" class="${inputStyle} py-1.5"><option value="">-- الكل --</option>${buildOpts(hData.contents, 'content_id', 'title', initContent)}</select></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 dir-rtl text-right pb-10">
+                <!-- Cascading Filter Bar -->
+                <div class="md:col-span-2 p-4 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3">
+                    <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                        <i class="fas fa-filter"></i> فلاتر تصفية الاختبارات
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div><label class="${labelStyle}">تصفية بالمسار</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- كل المسارات --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
+                        <div><label class="${labelStyle}">تصفية بالمرحلة</label><select id="modal-filter-phase" class="${inputStyle}"><option value="">-- كل المراحل --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
+                        <div><label class="${labelStyle}">تصفية بالكورس</label><select id="modal-filter-course" class="${inputStyle}"><option value="">-- كل الكورسات --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
+                        <div><label class="${labelStyle}">الدرس المرتبط</label><select id="modal-filter-content" class="${inputStyle}"><option value="">-- كل الدروس --</option>${buildOpts(hData.contents, 'content_id', 'title', initContent)}</select></div>
+                    </div>
                 </div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الاختبار التابع له (Quiz) *</label><select id="f-quiz-id" required class="${inputStyle} border-b-primary/50"><option value="" disabled ${!data ? 'selected' : ''}>-- اختر الاختبار --</option>${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.quiz_id)}</select></div>
                 
-                <div class="md:col-span-2"><label class="${labelStyle}">نص السؤال *</label><textarea id="f-q-text" rows="2" required class="${inputStyle}">${data?.question_text || ''}</textarea></div>
-                <div><label class="${labelStyle}">الخيار أ (A) *</label><input type="text" id="f-opt-a" required value="${data?.option_a || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الخيار ب (B) *</label><input type="text" id="f-opt-b" required value="${data?.option_b || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الخيار ج (C)</label><input type="text" id="f-opt-c" value="${data?.option_c || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الخيار د (D)</label><input type="text" id="f-opt-d" value="${data?.option_d || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-1">
-                    <label class="${labelStyle}">الإجابة الصحيحة *</label>
-                    <select id="f-correct" required class="${inputStyle}">
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">الاختبار التابع له (Quiz) *</label>
+                    <select id="f-quiz-id" required class="${inputStyle} border-b-primary/50">
+                        <option value="" disabled ${!data ? 'selected' : ''}>-- اختر الاختبار التابع له --</option>
+                        ${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.quiz_id)}
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">نص السؤال *</label>
+                    <textarea id="f-q-text" rows="3" required placeholder="أدخل صيغة السؤال بوضوح تام..." class="${inputStyle}">${data?.question_text || ''}</textarea>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="${labelStyle} text-blue-400 font-bold">الخيار أ (Option A) *</label>
+                    <input type="text" id="f-opt-a" required value="${data?.option_a || ''}" class="${inputStyle}">
+                </div>
+                <div class="space-y-1">
+                    <label class="${labelStyle} text-green-400 font-bold">الخيار ب (Option B) *</label>
+                    <input type="text" id="f-opt-b" required value="${data?.option_b || ''}" class="${inputStyle}">
+                </div>
+                <div class="space-y-1">
+                    <label class="${labelStyle} text-amber-400 font-bold">الخيار ج (Option C)</label>
+                    <input type="text" id="f-opt-c" value="${data?.option_c || ''}" class="${inputStyle}">
+                </div>
+                <div class="space-y-1">
+                    <label class="${labelStyle} text-red-400 font-bold">الخيار د (Option D)</label>
+                    <input type="text" id="f-opt-d" value="${data?.option_d || ''}" class="${inputStyle}">
+                </div>
+                
+                <div>
+                    <label class="${labelStyle} text-b-primary font-bold">الإجابة الصحيحة *</label>
+                    <select id="f-correct" required class="${inputStyle} border-b-primary">
                         <option value="A" ${data?.correct_answer === 'A' ? 'selected' : ''}>الخيار أ (A)</option>
                         <option value="B" ${data?.correct_answer === 'B' ? 'selected' : ''}>الخيار ب (B)</option>
                         <option value="C" ${data?.correct_answer === 'C' ? 'selected' : ''}>الخيار ج (C)</option>
                         <option value="D" ${data?.correct_answer === 'D' ? 'selected' : ''}>الخيار د (D)</option>
                     </select>
                 </div>
-                <div class="md:col-span-1"><label class="${labelStyle}">تلميح للسؤال (Hint) - اختياري</label><textarea id="f-hint" rows="1" class="${inputStyle}">${data?.hint || ''}</textarea></div>
+                <div>
+                    <label class="${labelStyle}">تلميح للسؤال (Hint) - اختياري</label>
+                    <textarea id="f-hint" rows="1" placeholder="تلميح يظهر للطالب عند الحاجة..." class="${inputStyle}">${data?.hint || ''}</textarea>
+                </div>
             </div>
         `;
     }
     else if (cmCurrentLevel === 'curriculum_documents') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto custom-scroll pl-2 dir-rtl text-right pb-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right pb-10">
                 <!-- Basic Data -->
-                <div class="md:col-span-2 border-b border-white/5 pb-2"><h4 class="text-xs font-bold text-cyan-400">البيانات الأساسية</h4></div>
-                <div><label class="${labelStyle}">العنوان (الاسم) *</label><input type="text" id="f-title" required value="${data?.title || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الاسم المختصر</label><input type="text" id="f-short-title" value="${data?.short_title || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2"><label class="${labelStyle}">الوصف</label><textarea id="f-desc" rows="2" class="${inputStyle}">${data?.description || ''}</textarea></div>
-                <div><label class="${labelStyle}">رابط صورة الغلاف (Cover URL)</label><input type="text" id="f-cover-url" value="${data?.cover_url || ''}" class="${inputStyle} dir-ltr"></div>
-                <div><label class="${labelStyle}">رابط المصغر (Thumbnail URL)</label><input type="text" id="f-thumbnail-url" value="${data?.thumbnail_url || ''}" class="${inputStyle} dir-ltr"></div>
-                
-                <!-- Document Type -->
+                <div class="md:col-span-3 border-b border-white/10 pb-2">
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-file-alt"></i> البيانات الأساسية للوثيقة أو المرجع</h4>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">العنوان الكامل للوثيقة / الكتاب *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: كتاب تصميم الدوائر الرقمية المتكاملة - Digital Integrated Circuits" class="${inputStyle}">
+                </div>
+                <div>
+                    <label class="${labelStyle}">الاسم المختصر</label>
+                    <input type="text" id="f-short-title" value="${data?.short_title || ''}" placeholder="مثال: مرجع ASIC" class="${inputStyle}">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="${labelStyle}">الوصف ومحتوى الوثيقة</label>
+                    <textarea id="f-desc" rows="3" placeholder="وصف موجز لمحتويات الملف أو الكتاب..." class="${inputStyle}">${data?.description || ''}</textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="${labelStyle}">رابط صورة الغلاف (Cover URL)</label>
+                    <input type="text" id="f-cover-url" value="${data?.cover_url || ''}" placeholder="https://..." class="${inputStyle} dir-ltr">
+                </div>
+                <div>
+                    <label class="${labelStyle}">رابط المصغر (Thumbnail URL)</label>
+                    <input type="text" id="f-thumbnail-url" value="${data?.thumbnail_url || ''}" placeholder="https://..." class="${inputStyle} dir-ltr">
+                </div>
                 <div>
                     <label class="${labelStyle}">نوع الوثيقة *</label>
                     <select id="f-doc-type" required class="${inputStyle}">
@@ -1027,8 +1500,6 @@ else if (cmCurrentLevel === 'quiz_questions') {
                         <option value="Specification" ${data?.document_type === 'Specification'?'selected':''}>Specification</option>
                     </select>
                 </div>
-                
-                <!-- Importance -->
                 <div>
                     <label class="${labelStyle}">الأهمية للطلاب *</label>
                     <select id="f-importance" required class="${inputStyle}">
@@ -1037,16 +1508,24 @@ else if (cmCurrentLevel === 'quiz_questions') {
                         <option value="Optional" ${data?.importance === 'Optional'?'selected':''}>اختياري (Optional)</option>
                     </select>
                 </div>
+                <div>
+                    <label class="${labelStyle}">ترتيب العرض (Display Order)</label>
+                    <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
+                </div>
 
                 <!-- Linking -->
-                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">ربط الوثيقة بالمنهج (اختياري)</h4></div>
+                <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-link"></i> ربط الوثيقة بالمنهج التعليمي (اختياري)</h4>
+                </div>
                 <div><label class="${labelStyle}">المسار المرتبط (Track)</label><select id="f-track-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}</select></div>
                 <div><label class="${labelStyle}">المرحلة المرتبطة (Phase)</label><select id="f-phase-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.phases.filter(p => !data?.track_id || p.track_id === data.track_id), 'phase_id', 'title', data?.phase_id)}</select></div>
                 <div><label class="${labelStyle}">الكورس المرتبط (Course)</label><select id="f-course-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.courses.filter(c => !data?.phase_id || c.phase_id === data.phase_id), 'course_id', 'title', data?.course_id)}</select></div>
-                <div><label class="${labelStyle}">الدرس المرتبط (Lesson/Content)</label><select id="f-lesson-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.contents.filter(c => !data?.course_id || c.course_id === data.course_id), 'content_id', 'title', data?.lesson_id)}</select></div>
+                <div class="md:col-span-3"><label class="${labelStyle}">الدرس المرتبط (Lesson/Content)</label><select id="f-lesson-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.contents.filter(c => !data?.course_id || c.course_id === data.course_id), 'content_id', 'title', data?.lesson_id)}</select></div>
 
                 <!-- Source & View Mode -->
-                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">المصدر وطريقة العرض</h4></div>
+                <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-cloud"></i> المصدر وطريقة العرض</h4>
+                </div>
                 <div>
                     <label class="${labelStyle}">المصدر *</label>
                     <select id="f-source-type" required class="${inputStyle}">
@@ -1059,7 +1538,7 @@ else if (cmCurrentLevel === 'quiz_questions') {
                         <option value="Supabase Storage" ${data?.source_type === 'Supabase Storage'?'selected':''}>Supabase Storage</option>
                     </select>
                 </div>
-                <div><label class="${labelStyle}">رابط أو معرف الملف (Source URL / ID) *</label><input type="text" id="f-source-url" required value="${data?.source_url || ''}" class="${inputStyle} dir-ltr"></div>
+                <div class="md:col-span-2"><label class="${labelStyle}">رابط أو معرف الملف (Source URL / ID) *</label><input type="text" id="f-source-url" required value="${data?.source_url || ''}" placeholder="https://... أو معرف الملف" class="${inputStyle} dir-ltr"></div>
                 <div>
                     <label class="${labelStyle}">طريقة العرض *</label>
                     <select id="f-view-mode" required class="${inputStyle}">
@@ -1067,11 +1546,7 @@ else if (cmCurrentLevel === 'quiz_questions') {
                         <option value="external" ${data?.view_mode === 'external'?'selected':''}>فتح نافذة خارجية (Open External)</option>
                     </select>
                 </div>
-                <div><label class="${labelStyle}">الترتيب (Display Order)</label><input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}"></div>
-
-                <!-- Completion & Gamification -->
-                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">إعدادات الإكمال والـ Gamification</h4></div>
-                <div>
+                <div class="md:col-span-2">
                     <label class="${labelStyle}">شرط اعتبار المقال مقروءاً (Completion Trigger) *</label>
                     <select id="f-completion-trigger" required class="${inputStyle}">
                         <option value="mark_complete" ${data?.completion_trigger === 'mark_complete'?'selected':''}>الضغط على زر الإكمال (Mark as Complete)</option>
@@ -1081,25 +1556,38 @@ else if (cmCurrentLevel === 'quiz_questions') {
                         <option value="time" ${data?.completion_trigger === 'time'?'selected':''}>قضاء وقت محدد من الزمن (Time Spent)</option>
                     </select>
                 </div>
+
+                <!-- Gamification -->
+                <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
+                    <h4 class="text-sm font-bold text-yellow-400 flex items-center gap-2"><i class="fas fa-star"></i> إعدادات الإكمال والـ XP</h4>
+                </div>
                 <div><label class="${labelStyle}">عدد الصفحات المطلوب قراءتها (إن وجد)</label><input type="number" id="f-completion-pages" value="${data?.completion_pages_count || ''}" class="${inputStyle}"></div>
                 <div><label class="${labelStyle}">الوقت المطلوب بالثواني (إن وجد)</label><input type="number" id="f-completion-time" value="${data?.completion_time_seconds || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الوقت المتوقع للقراءة بالدقائق (Estimated Reading Time)</label><input type="number" id="f-reading-time" value="${data?.estimated_reading_time || ''}" class="${inputStyle}"></div>
-                <div class="md:col-span-2 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-sm"></i></div>
-                    <div class="flex-1">
-                        <label class="${labelStyle} text-yellow-400/80">نقاط الـ XP عند الإكمال</label>
-                        <input type="number" id="f-base-xp" min="0" value="${data?.xp_reward ?? 10}" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold w-32">
+                <div><label class="${labelStyle}">الوقت المتوقع للقراءة بالدقائق</label><input type="number" id="f-reading-time" value="${data?.estimated_reading_time || ''}" class="${inputStyle}"></div>
+                <div class="md:col-span-3 p-5 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-base"></i></div>
+                        <div>
+                            <span class="text-sm font-bold text-white block">نقاط الـ XP المكتسبة عند إكمال القراءة</span>
+                            <span class="text-xs text-gray-400 mt-0.5 block">تُضاف مباشرة لرصيد الطالب عند تحقيق شرط الإكمال</span>
+                        </div>
                     </div>
+                    <input type="number" id="f-base-xp" min="0" value="${data?.xp_reward ?? 10}" class="${inputStyle} border-yellow-500/40 focus:border-yellow-500 text-yellow-400 font-bold w-32 text-center text-base">
                 </div>
 
                 <!-- Permissions -->
-                <div class="md:col-span-2 border-b border-white/5 pb-2 pt-2"><h4 class="text-xs font-bold text-cyan-400">إعدادات الصلاحيات والإتاحة</h4></div>
-                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/30 p-4 rounded-xl border border-white/5">
+                <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-shield-alt"></i> الصلاحيات وتاريخ الصلاحية</h4>
+                </div>
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
                     <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-download" ${!data || data?.allow_download ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالتحميل</label>
                     <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-print" ${!data || data?.allow_print ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالطباعة</label>
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-copy" ${!data || data?.allow_copy ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بنسخ النصوص</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-copy" ${!data || data?.allow_copy ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالنسخ</label>
                 </div>
-                <div class="md:col-span-2"><label class="${labelStyle}">إخفاء الملف تلقائياً بعد تاريخ (أو تركه فارغاً) (Expiry Date)</label><input type="datetime-local" id="f-expiry-date" value="${data?.available_until ? new Date(data.available_until).toISOString().slice(0, 16) : ''}" class="${inputStyle} dir-ltr"></div>
+                <div>
+                    <label class="${labelStyle}">إخفاء الملف تلقائياً بعد تاريخ</label>
+                    <input type="datetime-local" id="f-expiry-date" value="${data?.available_until ? new Date(data.available_until).toISOString().slice(0, 16) : ''}" class="${inputStyle} dir-ltr">
+                </div>
             </div>
         `;
     }
@@ -1817,7 +2305,7 @@ window.ytImportEngine = {
             ytImportEngine.state.videos = allItems.map((item, i) => {
                 const vId = item.contentDetails.videoId;
                 const snippet = item.snippet;
-                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../assets/icons/BUSLA-icon.png';
+                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../../assets/icons/BUSLA-icon.png';
                 const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
                 return { id: `vid_${Date.now()}_${i}`, videoId: vId, title: snippet.title, duration: durationsMap[vId] || 0, thumbnail: thumb, order_index: i + 1, type: 'video', is_excluded: isDeleted, base_xp: 10 };
             });
@@ -2033,7 +2521,7 @@ const coursePayload = {
 // 🔍 SMART SEARCHABLE SELECT ENGINE
 // ==========================================
 window.initSearchableSelects = () => {
-const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 select, #quiz-ai-review-container select, #project-ai-review-container select');
+    const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 select, #quiz-ai-review-container select, #project-ai-review-container select');
     selects.forEach(select => {
         // تجاهل القوائم التي تم تحويلها مسبقاً
         if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-ui')) return;
@@ -2053,30 +2541,34 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
 
         // الزر الذي يظهر للمستخدم
         const trigger = document.createElement('div');
-        trigger.className = 'w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-b-primary outline-none transition-colors cursor-pointer flex justify-between items-center shadow-inner';
+        trigger.className = 'w-full bg-black/60 border border-white/10 hover:border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:border-b-primary outline-none transition-all cursor-pointer flex justify-between items-center gap-2 shadow-inner';
         
         const textSpan = document.createElement('span');
-        textSpan.className = 'truncate pl-2';
+        textSpan.setAttribute('dir', 'auto');
+        textSpan.style.unicodeBidi = 'plaintext';
+        textSpan.style.textAlign = 'start';
+        textSpan.className = 'flex-1 min-w-0 truncate text-start';
+        
         const icon = document.createElement('i');
-        icon.className = 'fas fa-chevron-down text-gray-500 text-xs shrink-0';
+        icon.className = 'fas fa-chevron-down text-gray-400 text-xs shrink-0 transition-transform duration-200';
 
         trigger.appendChild(textSpan);
         trigger.appendChild(icon);
 
         // القائمة المنسدلة وشريط البحث
         const dropdown = document.createElement('div');
-        dropdown.className = 'absolute z-[999] w-full bg-[#111111] border border-white/10 rounded-xl mt-1 hidden shadow-2xl flex flex-col max-h-60 overflow-hidden';
+        dropdown.className = 'absolute z-[999] right-0 min-w-full w-max max-w-[min(90vw,560px)] bg-[#121212] border border-white/15 rounded-2xl mt-1.5 hidden shadow-2xl flex flex-col max-h-72 overflow-hidden backdrop-blur-xl animate-fade-in';
 
         const searchWrap = document.createElement('div');
-        searchWrap.className = 'p-2 border-b border-white/5 bg-[#1a1a1a]';
+        searchWrap.className = 'p-2.5 border-b border-white/10 bg-[#1a1a1a] shrink-0';
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'اكتب للبحث والفلتـرة...';
-        searchInput.className = 'w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-b-primary dir-rtl';
+        searchInput.placeholder = '🔍 ابحث بالاسم أو المعرف...';
+        searchInput.className = 'w-full bg-black/80 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-b-primary dir-rtl text-right placeholder-gray-500';
         searchWrap.appendChild(searchInput);
 
         const optionsContainer = document.createElement('div');
-        optionsContainer.className = 'overflow-y-auto custom-scroll p-1 flex-1';
+        optionsContainer.className = 'overflow-y-auto custom-scroll p-1.5 flex-1 divide-y divide-white/[0.03]';
 
         dropdown.appendChild(searchWrap);
         dropdown.appendChild(optionsContainer);
@@ -2089,21 +2581,48 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
         // دالة تحديث الواجهة عند تغير القائمة الأصلية (مثال: الفلترة الهرمية)
         const updateUI = () => {
             const selectedOpt = select.options[select.selectedIndex];
-            textSpan.innerText = selectedOpt ? selectedOpt.text : 'اختر...';
-            textSpan.className = selectedOpt && selectedOpt.value === "" ? 'text-gray-500 truncate pl-2' : 'text-white font-bold truncate pl-2';
+            const currentText = selectedOpt ? selectedOpt.text : 'اختر...';
+            textSpan.innerText = currentText;
+            textSpan.title = currentText;
+            trigger.title = currentText;
+            
+            if (selectedOpt && selectedOpt.value === "") {
+                textSpan.className = 'text-gray-500 flex-1 min-w-0 truncate text-start text-xs sm:text-sm';
+            } else {
+                textSpan.className = 'text-white font-bold flex-1 min-w-0 truncate text-start text-xs sm:text-sm';
+            }
             
             optionsContainer.innerHTML = '';
             Array.from(select.options).forEach((opt) => {
-                if(opt.disabled && opt.value === "") return; // تجاهل الـ Placeholder
+                if (opt.disabled && opt.value === "") return; // تجاهل الـ Placeholder
                 const div = document.createElement('div');
-                div.className = 'px-3 py-2 text-sm text-gray-300 hover:bg-b-primary/20 hover:text-white cursor-pointer rounded-lg transition-colors truncate mb-0.5';
-                if (opt.selected) div.classList.add('bg-b-primary/30', 'text-b-primary', 'font-bold', 'border', 'border-b-primary/30');
-                div.innerText = opt.text;
+                div.className = 'px-3.5 py-2.5 text-xs sm:text-sm text-gray-300 hover:bg-b-primary/20 hover:text-white cursor-pointer rounded-xl transition-all whitespace-normal break-words leading-relaxed mb-1 border border-transparent flex items-center justify-between gap-2';
+                div.setAttribute('dir', 'auto');
+                div.style.unicodeBidi = 'plaintext';
+                div.style.textAlign = 'start';
+                div.title = opt.text;
+                
+                const optSpan = document.createElement('span');
+                optSpan.className = 'flex-1 text-start';
+                optSpan.setAttribute('dir', 'auto');
+                optSpan.style.unicodeBidi = 'plaintext';
+                optSpan.style.textAlign = 'start';
+                optSpan.innerText = opt.text;
+                div.appendChild(optSpan);
+
+                if (opt.selected) {
+                    div.classList.add('bg-b-primary/25', 'text-b-primary', 'font-bold', 'border-b-primary/30');
+                    const checkIcon = document.createElement('i');
+                    checkIcon.className = 'fas fa-check text-xs text-b-primary shrink-0';
+                    div.appendChild(checkIcon);
+                }
+
                 div.onclick = (e) => {
                     e.stopPropagation();
                     select.value = opt.value;
                     select.dispatchEvent(new Event('change')); // إطلاق حدث التغيير لتفعيل الفلترة المتسلسلة
                     dropdown.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
                     updateUI();
                 };
                 optionsContainer.appendChild(div);
@@ -2115,7 +2634,7 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
             const term = e.target.value.toLowerCase();
             Array.from(optionsContainer.children).forEach(item => {
                 const text = item.innerText.toLowerCase();
-                item.style.display = text.includes(term) ? 'block' : 'none';
+                item.style.display = text.includes(term) ? 'flex' : 'none';
             });
         });
 
@@ -2123,10 +2642,18 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             document.querySelectorAll('.custom-select-ui .absolute').forEach(d => {
-                if (d !== dropdown) d.classList.add('hidden'); // إغلاق القوائم الأخرى
+                if (d !== dropdown) {
+                    d.classList.add('hidden');
+                    const parentTrigger = d.previousElementSibling;
+                    if (parentTrigger) {
+                        const prevIcon = parentTrigger.querySelector('i');
+                        if (prevIcon) prevIcon.style.transform = 'rotate(0deg)';
+                    }
+                }
             });
-            dropdown.classList.toggle('hidden');
-            if (!dropdown.classList.contains('hidden')) {
+            const isHidden = dropdown.classList.toggle('hidden');
+            icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+            if (!isHidden) {
                 searchInput.value = '';
                 searchInput.dispatchEvent(new Event('input')); 
                 searchInput.focus(); // نقل المؤشر فوراً لشريط البحث
@@ -2135,7 +2662,10 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
 
         // إغلاق القائمة عند الضغط خارجها
         document.addEventListener('click', (e) => {
-            if (!ui.contains(e.target)) dropdown.classList.add('hidden');
+            if (!ui.contains(e.target)) {
+                dropdown.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
         });
 
         // مراقبة القائمة الأصلية للتحديث التلقائي

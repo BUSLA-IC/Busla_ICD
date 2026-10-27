@@ -143,7 +143,7 @@
         <!-- Admin Profile Info & Logout -->
         <div class="p-4 border-t border-white/10 bg-black/40">
             <div class="flex items-center gap-3 mb-4 px-2">
-                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-10 h-10 rounded-full border border-white/10 object-cover">
+                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-10 h-10 rounded-full border border-white/10 object-cover">
                 <div class="flex-1 min-w-0">
                     <p id="admin-user-name" class="text-sm font-bold text-white truncate">جاري التحميل...</p>
                     <div class="flex items-center gap-1.5 mt-0.5">
@@ -670,8 +670,8 @@
             </div>
 
             <div class="flex-1 overflow-y-auto custom-scroll p-6 relative">
-                <div id="cm-view-grid" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
-                    <table class="w-full text-right text-sm">
+                <div id="cm-view-grid" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto custom-scroll">
+                    <table class="w-full text-right text-sm min-w-[950px]">
                         <thead id="cm-table-head" class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider"></thead>
                         <tbody id="cm-table-body" class="divide-y divide-white/5">
                             <tr><td colspan="10" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>
@@ -2504,7 +2504,7 @@
                     <!-- Drawer Header -->
                     <div class="p-6 border-b border-white/10 bg-black/40 flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <img id="drawer-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-14 h-14 rounded-full border border-teal-500/20 object-cover">
+                            <img id="drawer-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-14 h-14 rounded-full border border-teal-500/20 object-cover">
                             <div>
                                 <h2 id="drawer-admin-name" class="text-xl font-black text-white">---</h2>
                                 <p id="drawer-admin-email" class="text-xs text-gray-400 mt-1">---</p>
@@ -2990,30 +2990,48 @@
     </div>
 
     <!-- Content Management CRUD Modals -->
-    <div id="cm-crud-modal" class="fixed inset-0 z-[300] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden transform scale-100 transition-transform">
-            <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                <h3 id="cm-modal-title" class="text-xl font-bold text-white">إضافة عنصر جديد</h3>
-                <button onclick="window.cmCloseModal()" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
+    <div id="cm-crud-modal" class="fixed inset-0 z-[300] hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 lg:p-8 transition-opacity">
+        <div class="bg-b-surface border border-white/10 rounded-3xl w-full max-w-5xl xl:max-w-6xl shadow-2xl flex flex-col overflow-hidden max-h-[92vh] transform scale-100 transition-transform">
+            <div class="px-6 py-4 sm:py-5 border-b border-white/10 bg-white/[0.03] flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-b-primary/10 border border-b-primary/20 text-b-primary flex items-center justify-center text-lg">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <h3 id="cm-modal-title" class="text-xl font-bold text-white">إضافة سجل جديد</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">إدارة وتعديل بيانات المنهج والمحتوى التعليمي</p>
+                    </div>
+                </div>
+                <button onclick="window.cmCloseModal()" class="text-gray-400 hover:text-red-400 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-base"></i>
+                </button>
             </div>
-            <form id="cm-crud-form" novalidate class="p-6 space-y-4 text-right">
-                <div id="cm-form-fields" class="space-y-4"></div>
-                <div class="pt-4 border-t border-white/10 flex gap-3">
-                    <button type="button" onclick="window.cmCloseModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold">إلغاء</button>
-                    <button type="submit" id="cm-btn-save" class="flex-1 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold flex justify-center items-center gap-2 shadow-lg"><i class="fas fa-save"></i> حفظ البيانات</button>
+            <form id="cm-crud-form" novalidate class="flex flex-col flex-1 overflow-hidden min-h-0 text-right">
+                <div id="cm-form-fields" class="p-5 sm:p-7 md:p-8 overflow-y-auto custom-scroll flex-1 space-y-6"></div>
+                <div class="p-4 sm:p-5 border-t border-white/10 bg-black/40 flex justify-end gap-3 shrink-0">
+                    <button type="button" onclick="window.cmCloseModal()" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/5">إلغاء</button>
+                    <button type="submit" id="cm-btn-save" class="px-8 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold flex justify-center items-center gap-2 shadow-lg shadow-teal-900/30 transition-all"><i class="fas fa-save"></i> حفظ البيانات</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="cm-details-modal" class="fixed inset-0 z-[300] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden transform scale-100 transition-transform max-h-[90vh]">
-            <div class="p-5 border-b border-white/10 bg-gradient-to-r from-blue-900/40 to-b-surface flex justify-between items-center shrink-0">
-                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-info-circle text-blue-400"></i> تفاصيل السجل</h3>
-                <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+    <div id="cm-details-modal" class="fixed inset-0 z-[300] hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 lg:p-8 transition-opacity">
+        <div class="bg-b-surface border border-white/10 rounded-3xl w-full max-w-5xl xl:max-w-6xl shadow-2xl flex flex-col overflow-hidden max-h-[92vh] transform scale-100 transition-transform">
+            <div class="px-6 py-5 border-b border-white/10 bg-gradient-to-r from-blue-900/40 to-b-surface flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">تفاصيل السجل</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">عرض كافة البيانات والحقول المسجلة في قاعدة البيانات</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i class="fas fa-times text-base"></i></button>
             </div>
-            <div id="cm-details-content" class="p-6 overflow-y-auto custom-scroll flex-1 bg-black/20 text-right"></div>
-            <div class="p-4 border-t border-white/10 flex justify-end shrink-0 bg-b-surface">
+            <div id="cm-details-content" class="p-6 md:p-8 overflow-y-auto custom-scroll flex-1 bg-black/20 text-right"></div>
+            <div class="p-4 sm:p-5 border-t border-white/10 flex justify-end shrink-0 bg-b-surface">
                 <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">إغلاق النافذة</button>
             </div>
         </div>
@@ -3028,7 +3046,7 @@
             <div class="p-5 border-b border-white/10 bg-black/40 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
-                        <img id="modal-team-req-logo-preview" src="" class="w-full h-full object-cover" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                        <img id="modal-team-req-logo-preview" src="" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                     </div>
                     <div>
                         <h3 id="modal-team-req-name" class="text-xl font-bold text-white">جاري التحميل...</h3>
@@ -3098,7 +3116,7 @@
         <!-- Header -->
         <div class="p-5 border-b border-white/10 bg-black/40 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
-                <img id="ud-header-avatar" src="" class="w-12 h-12 rounded-full border border-white/10 object-cover bg-black" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                <img id="ud-header-avatar" src="" class="w-12 h-12 rounded-full border border-white/10 object-cover bg-black" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                 <div>
                     <h3 id="ud-header-name" class="text-xl font-bold text-white">جاري التحميل...</h3>
                     <p id="ud-header-email" class="text-xs text-gray-400 font-mono">---</p>
@@ -3306,7 +3324,7 @@
                 <div id="ud-pane-team" class="ud-pane hidden space-y-6">
                     <div class="bg-black/50 border border-white/5 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="flex items-center gap-4">
-                            <img id="ud-team-logo" src="" class="w-16 h-16 rounded-2xl border border-white/10 object-cover bg-black" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                            <img id="ud-team-logo" src="" class="w-16 h-16 rounded-2xl border border-white/10 object-cover bg-black" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                             <div>
                                 <h3 id="ud-team-name" class="text-xl font-bold text-white">---</h3>
                                 <p class="text-xs text-gray-400 mt-1">القائد: <span id="ud-team-leader" class="text-teal-400 font-bold">--</span> | عدد الأعضاء: <span id="ud-team-members-count" class="text-white font-bold">0</span></p>
@@ -4344,6 +4362,9 @@
     <!-- Core Toast & Confirm Modal -->
     <div id="toast-container" class="fixed top-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
     <div id="confirm-modal" class="fixed inset-0 bg-black/90 hidden z-[999] flex items-center justify-center p-4 backdrop-blur-sm"></div>
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- Module Scripts Load -->
     <script type="module" src="../js/admin-dash.js?v=2.0"></script>

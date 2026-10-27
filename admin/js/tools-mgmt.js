@@ -157,7 +157,7 @@ function renderToolsTable(tools) {
             <tr class="hover:bg-white/5 transition-all">
                 <td class="p-4 text-center">
                     <div class="w-10 h-10 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center text-2xl overflow-hidden mx-auto shrink-0">
-                        <img src="${tool.logo_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                        <img src="${tool.logo_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                     </div>
                 </td>
                 <td class="p-4 font-bold text-white">
@@ -219,7 +219,7 @@ function renderToolsGrid(tools) {
                     
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-12 h-12 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center text-3xl overflow-hidden shrink-0">
-                            <img src="${tool.logo_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                            <img src="${tool.logo_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                         </div>
                         <div class="text-right">
                             <h3 class="text-base font-bold text-white leading-tight hover:text-teal-400 cursor-pointer" onclick="window.editTool('${tool.id}')">${tool.name}</h3>

@@ -1,5 +1,12 @@
 import { supabase } from './supabase-config.js';
 
+function getAssetPrefix() {
+    const loc = window.location.pathname;
+    if (loc.includes('/admin/html/')) return '../../';
+    if (loc.includes('/pages/') || loc.includes('/admin/')) return '../';
+    return './';
+}
+
 // Global variables for canvas state
 let zoomLevel = 1.0;
 let offsetX = 0;
@@ -1338,7 +1345,7 @@ function buildInfoPanelHTML(node) {
         }
         if (node.rawItem?.thumbnail_url) {
             html += `<div class="mt-2 rounded-lg overflow-hidden border border-white/10">
-                <img src="${node.rawItem.thumbnail_url}" class="w-full h-24 object-cover" onerror="this.style.display='none'">
+                <img src="${node.rawItem.thumbnail_url}" class="w-full h-24 object-cover" onerror="this.onerror=null; this.style.display='none'">
             </div>`;
         }
     }
@@ -2040,11 +2047,12 @@ export function renderNodeDetailsPanel(node) {
             isPlanActive = window.currentTeam.courses_plan.includes(String(node.dbId));
         }
 
+        const assetPrefix = getAssetPrefix();
         bodyHtml = `
             <!-- Banner Image -->
             <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl">
-                <img src="${course.image_url ? course.image_url : '../assets/images/1.jpg'}" 
-                     class="w-full h-full object-cover" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                <img src="${course.image_url ? course.image_url : (assetPrefix + 'assets/images/1.jpg')}" 
+                     class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${assetPrefix}assets/icons/BUSLA-icon.png'">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                 ${isPlanActive ? `<span class="absolute top-4 right-4 bg-teal-500/95 backdrop-blur text-white text-[9px] px-2.5 py-1 rounded-lg font-black tracking-widest border border-white/20 uppercase"><i class="fas fa-unlock ml-1"></i> مفعل</span>` : ''}
             </div>
@@ -2147,11 +2155,12 @@ export function renderNodeDetailsPanel(node) {
         const doc = node.rawItem || {};
         const isRead = userProgress.completedMats.has(`doc_${node.dbId}`);
         const coverImg = doc.cover_url || '';
+        const assetPrefix = getAssetPrefix();
         
         bodyHtml = `
             <!-- Document Details Banner -->
             <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl bg-black/60 flex items-center justify-center">
-                ${coverImg ? `<img src="${coverImg}" class="w-full h-full object-cover" onerror="this.src='../assets/images/1.jpg'">` : `
+                ${coverImg ? `<img src="${coverImg}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${assetPrefix}assets/images/1.jpg'">` : `
                     <div class="text-center">
                         <i class="fas fa-file-pdf text-6xl text-red-500 mb-2"></i>
                         <div class="text-xs text-gray-500 font-mono">${doc.document_type || 'PDF'}</div>
@@ -2222,12 +2231,13 @@ export function renderNodeDetailsPanel(node) {
         const mat = node.rawItem || {};
         const isWatched = userProgress.completedMats.has(node.dbId);
         const youtubeId = mat.video_id || '';
-        const thumbUrl = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : '../assets/images/1.jpg';
+        const assetPrefix = getAssetPrefix();
+        const thumbUrl = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : `${assetPrefix}assets/images/1.jpg`;
 
         bodyHtml = `
             <!-- Video Thumbnail -->
             <div class="relative w-full h-44 shrink-0 rounded-2xl overflow-hidden mb-5 border border-white/10 shadow-2xl">
-                <img src="${thumbUrl}" class="w-full h-full object-cover" onerror="this.src='../assets/images/1.jpg'">
+                <img src="${thumbUrl}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${assetPrefix}assets/images/1.jpg'">
                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <div class="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center text-xl shadow-2xl border border-white/20"><i class="fas fa-play ml-1"></i></div>
                 </div>
@@ -2506,14 +2516,15 @@ async function loadRoadmapNodeReferences(node) {
                 ${data.map(ref => {
                     const impBadge = ref.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : ref.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
                     const importanceName = ref.importance === 'Required' ? 'مطلوب' : ref.importance === 'Recommended' ? 'مستحسن' : ref.importance === 'Advanced Reading' ? 'متقدم' : 'اختياري';
-                    const defaultCover = '../assets/icons/BUSLA-icon.png';
+                    const assetPrefix = getAssetPrefix();
+                    const defaultCover = `${assetPrefix}assets/icons/BUSLA-icon.png`;
                     
                     return `
                         <div onclick="if (typeof window.openReferenceDetailModal === 'function') { window.openReferenceDetailModal('${ref.id}'); } else { window.open('${ref.read_online_url || ref.download_pdf_url || '#'}', '_blank'); }" 
                              class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-10 bg-white/5 rounded border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
-                                    <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.src='${defaultCover}'">
+                                    <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${defaultCover}'">
                                 </div>
                                 <div class="text-right min-w-0">
                                     <span class="text-white font-bold block group-hover:text-teal-400 transition-colors truncate max-w-[140px]" title="${ref.title}">${ref.title}</span>
@@ -2587,12 +2598,14 @@ async function loadRoadmapNodeTools(node) {
                 ${data.map(tool => {
                     const impBadge = tool.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : tool.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
                     const importanceName = tool.importance === 'Required' ? 'مطلوب' : tool.importance === 'Recommended' ? 'مستحسن' : 'اختياري';
+                    const assetPrefix = getAssetPrefix();
+                    const defaultIcon = `${assetPrefix}assets/icons/BUSLA-icon.png`;
                     return `
                         <div onclick="if (typeof window.openToolDetailDrawer === 'function') { window.openToolDetailDrawer('${tool.id}'); } else { window.open('${tool.official_website || '#'}', '_blank'); }" 
                              class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                                    <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-1" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                                    <img src="${tool.logo_url || defaultIcon}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='${defaultIcon}'">
                                 </div>
                                 <div class="text-right">
                                     <span class="text-white font-bold block group-hover:text-teal-400 transition-colors">${tool.name}</span>

@@ -1121,7 +1121,7 @@ async function renderSquad() {
                 <div class="hidden md:flex items-center justify-center w-14 text-3xl font-black text-white/5 font-mono">#${index + 1}</div>
                 <div class="relative mb-4 md:mb-0 md:ml-8 flex-shrink-0">
                     <div class="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[${rankData.stage_color}] to-transparent relative">
-                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
                     </div>
                     <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-[${rankData.stage_color}] shadow-lg z-10">
                         <img src="../assets/user-badge/lv${rankData.level}.png" class="w-10 h-10 object-contain">

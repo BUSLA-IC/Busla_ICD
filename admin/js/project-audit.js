@@ -492,7 +492,7 @@ function renderPendingReviewTable(data) {
         return `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                     <div>
                         <div class="font-bold text-white text-sm">${studentName}</div>
                         <div class="text-[10px] text-gray-500">${sub.user?.university || ''}</div>
@@ -568,7 +568,7 @@ function renderLeaderReviewsTable(data) {
         return `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                     <div>
                         <div class="font-bold text-white text-sm">${studentName}</div>
                         <div class="text-[10px] text-gray-500">${sub.user?.university || ''}</div>

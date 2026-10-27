@@ -2555,7 +2555,7 @@ async function loadCourseRecommendedTools(cId) {
                      class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="w-7 h-7 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                            <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-0.5" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
                         </div>
                         <div class="text-right truncate">
                             <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate">${tool.name}</span>
@@ -2629,7 +2629,7 @@ async function loadCourseSuggestedReferences(cId, contentId = null) {
                      class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="w-7 h-10 bg-white/5 rounded border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
-                            <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.src='${defaultCover}'">
+                            <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${defaultCover}'">
                         </div>
                         <div class="text-right truncate">
                             <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate" title="${ref.title}">${ref.title}</span>

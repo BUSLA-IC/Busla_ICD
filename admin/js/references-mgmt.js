@@ -188,7 +188,7 @@ function renderReferencesTable(refs) {
             <tr class="hover:bg-white/5 transition-all">
                 <td class="p-4 text-center">
                     <div class="w-10 h-14 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden mx-auto shrink-0 shadow">
-                        <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                        <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                     </div>
                 </td>
                 <td class="p-4 font-bold text-white max-w-[200px]">
@@ -251,7 +251,7 @@ function renderReferencesGrid(refs) {
                     
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-12 h-16 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
-                            <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.src='../../assets/icons/BUSLA-icon.png'">
+                            <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
                         </div>
                         <div class="text-right flex-1 min-w-0">
                             <h3 class="text-base font-bold text-white leading-tight hover:text-teal-400 cursor-pointer block truncate" onclick="window.editReference('${ref.id}')">${ref.title}</h3>

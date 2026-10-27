@@ -1330,7 +1330,7 @@ async function renderSquad() {
                 memberRow.innerHTML = `
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
-                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
                         </div>
                         <div>
                             <h4 class="font-bold text-sm text-white flex items-center gap-2">
