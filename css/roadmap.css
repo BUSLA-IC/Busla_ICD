@@ -54,6 +54,9 @@
     border-radius: 16px;
     border: 1px solid var(--border-glass);
     box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .roadmap-viewport:active {
@@ -62,11 +65,14 @@
 
 .roadmap-canvas {
     position: absolute;
-    width: 3000px; /* Large space for graph rendering */
+    left: 0 !important;
+    top: 0 !important;
+    right: auto !important;
+    width: 3000px; /* Virtual space for graph rendering */
     height: 3000px;
-    transform-origin: 0 0;
+    transform-origin: 0 0 !important;
     will-change: transform;
-    direction: rtl !important;
+    direction: ltr !important; /* CRITICAL: Mathematical coordinates must be strictly LTR */
     text-align: right;
 }
 

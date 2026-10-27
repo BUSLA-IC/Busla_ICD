@@ -193,7 +193,6 @@
                 
                 <div id="quiz-questions-container" class="space-y-8"></div>
                 <div id="quiz-result-area" class="hidden mt-8 p-6 bg-black/40 rounded-xl border border-white/10 text-center"></div>
-                <button id="btn-submit-quiz" class="mt-8 w-full bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-all">تسليم الإجابات</button>
             </div>
         </div>
 
@@ -459,18 +458,7 @@
         </div>
     </aside>
 
-    <div id="confirm-modal" class="fixed inset-0 z- hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-b-surface border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl transform scale-100 transition-all">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-exclamation-triangle text-3xl text-yellow-500"></i></div>
-                <h3 class="text-xl font-bold text-white mb-2">تأكيد الإجراء</h3><p id="confirm-msg" class="text-gray-400 text-sm">هل أنت متأكد من هذا الإجراء؟</p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/5">إلغاء</button>
-                <button id="btn-confirm-yes" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all shadow-lg shadow-red-900/20">نعم، متابعة</button>
-            </div>
-        </div>
-    </div>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>

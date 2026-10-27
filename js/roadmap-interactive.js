@@ -30,9 +30,11 @@ let userProgress = { completedMats: new Set(), passedQuizzes: new Set(), complet
 let currentRole = 'student';
 // Nodes that have been EXPLICITLY EXPANDED by the user.
 // Default state = collapsed. Add an ID here to mark it as open.
+let expandedPhases = new Set();
 let expandedNodes = new Set();
 let expandedRelated = new Set();
 let currentGraphData = null;
+let cameraAnimFrame = null;
 
 // Standard icons for different node types
 const ICONS = {
@@ -249,6 +251,7 @@ function bindViewportEvents() {
  */
 async function handleTrackChange() {
     currentGraphData = null;
+    expandedPhases.clear();
     expandedNodes.clear(); // reset expanded state when switching track
     expandedRelated.clear();
     await renderInteractiveRoadmapTree();
@@ -648,7 +651,7 @@ function buildGraphStructure(data) {
     // 2. Loop Phases
     data.phases.forEach((phase, phaseIdx) => {
         const phaseNodeId = `phase-${phase.phase_id}`;
-        const isPhaseCollapsed = false;
+        const isPhaseCollapsed = !expandedPhases.has(phaseNodeId);
         const phaseNode = {
             id: phaseNodeId,
             dbId: phase.phase_id,
@@ -961,10 +964,10 @@ function renderHtmlNodes() {
 
         nodeEl.innerHTML = collapseBtn + infoBtn + getNodeInnerHtml(node);
 
-        // Click = select node (details panel / admin modal)
+        // Click = smart drill-down & camera focus
         nodeEl.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectNode(node);
+            handleRoadmapNodeClick(node);
         });
 
         container.appendChild(nodeEl);
@@ -972,16 +975,17 @@ function renderHtmlNodes() {
 
     // Expose global toggle functions
     window._roadmapToggleCollapse = function(nodeId) {
-        if (expandedNodes.has(nodeId)) {
-            expandedNodes.delete(nodeId); // collapse it
-        } else {
-            expandedNodes.add(nodeId);    // expand it
+        const targetNode = computedNodes.find(n => n.id === nodeId);
+        if (targetNode) {
+            handleRoadmapNodeClick(targetNode);
         }
-        buildGraphStructure(currentGraphData);
-        calculateGraphLayout();
-        renderHtmlNodes();
-        renderSvgLines();
-        requestAnimationFrame(updateMinimap);
+    };
+
+    window._roadmapTogglePhaseCollapse = function(phaseId) {
+        const phaseNode = computedNodes.find(n => n.id === phaseId);
+        if (phaseNode) {
+            handleRoadmapNodeClick(phaseNode);
+        }
     };
 
     window._roadmapToggleRelatedCollapse = function(nodeId) {
@@ -994,8 +998,84 @@ function renderHtmlNodes() {
         calculateGraphLayout();
         renderHtmlNodes();
         renderSvgLines();
+        const targetNode = computedNodes.find(n => n.id === nodeId);
+        if (targetNode) smartFocusOnNodes([targetNode]);
         requestAnimationFrame(updateMinimap);
     };
+}
+
+/**
+ * Smart Drill-Down click handler on nodes
+ */
+function handleRoadmapNodeClick(node) {
+    if (node.type === 'phase') {
+        const willExpand = !expandedPhases.has(node.id);
+        if (willExpand) {
+            expandedPhases.add(node.id);
+        } else {
+            expandedPhases.delete(node.id);
+        }
+
+        selectNode(node, false);
+
+        buildGraphStructure(currentGraphData);
+        calculateGraphLayout();
+        renderHtmlNodes();
+        renderSvgLines();
+
+        requestAnimationFrame(() => {
+            if (willExpand) {
+                // Focus camera on Phase + revealed courses
+                const family = computedNodes.filter(n => !n.isHidden && (n.id === node.id || n.phaseId === node.dbId));
+                smartFocusOnNodes(family);
+            } else {
+                const refreshed = computedNodes.find(n => n.id === node.id) || node;
+                smartFocusOnNodes([refreshed]);
+            }
+            updateMinimap();
+        });
+        return;
+    }
+
+    if (node.type === 'course') {
+        const willExpand = !expandedNodes.has(node.id);
+
+        // Ensure parent phase is open
+        if (node.phaseId) {
+            expandedPhases.add(`phase-${node.phaseId}`);
+        }
+
+        if (willExpand) {
+            expandedNodes.add(node.id);
+        } else {
+            expandedNodes.delete(node.id);
+        }
+
+        selectNode(node, false);
+
+        buildGraphStructure(currentGraphData);
+        calculateGraphLayout();
+        renderHtmlNodes();
+        renderSvgLines();
+
+        requestAnimationFrame(() => {
+            if (willExpand) {
+                // Smart Focus: Center camera on Course + all its materials
+                const family = computedNodes.filter(n => !n.isHidden && (n.id === node.id || n.courseId === node.dbId));
+                smartFocusOnNodes(family);
+            } else {
+                const refreshed = computedNodes.find(n => n.id === node.id) || node;
+                smartFocusOnNodes([refreshed]);
+            }
+            updateMinimap();
+        });
+        return;
+    }
+
+    // Material or Track: Select and focus camera smoothly
+    selectNode(node, false);
+    const refreshed = computedNodes.find(n => n.id === node.id) || node;
+    smartFocusOnNodes([refreshed]);
 }
 
 /**
@@ -1033,6 +1113,11 @@ function getNodeInnerHtml(node) {
     }
 
     if (node.type === 'phase') {
+        const isCollapsed = node.isCollapsed;
+        const toggleIcon = isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up';
+        const toggleText = isCollapsed ? `عرض الكورسات (${node.coursesCount})` : 'إخفاء الكورسات';
+        const toggleBg = isCollapsed ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25' : 'bg-white/10 text-white border-white/20 hover:bg-white/20';
+
         return `
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 leading-none">
@@ -1044,8 +1129,11 @@ function getNodeInnerHtml(node) {
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
-                <span>الوقت: ${node.time || 'مرن'}</span>
-                <span>كورس: ${node.coursesCount}</span>
+                <button onclick="event.stopPropagation(); window._roadmapTogglePhaseCollapse('${node.id}')"
+                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-bold ${toggleBg} cursor-pointer transition-all hover:scale-105 active:scale-95">
+                    <span>${toggleText}</span>
+                    <i class="fas ${toggleIcon} text-[8px]"></i>
+                </button>
             </div>
         `;
     }
@@ -1057,9 +1145,21 @@ function getNodeInnerHtml(node) {
             isPlanActive = window.currentTeam.courses_plan.includes(String(node.dbId));
         }
 
+        const isCollapsed = node.isCollapsed;
+        const totalItems = (node.videosCount || 0) + (node.quizzesCount || 0) + (node.projectsCount || 0);
+
         return `
             <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">كورس</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">كورس</span>
+                    ${totalItems > 0 ? `
+                        <button onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
+                                class="inline-flex items-center gap-1 text-[8px] px-1.5 h-5 rounded font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${isCollapsed ? 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/15' : 'bg-green-500/20 text-green-300 border border-green-500/30'}">
+                            <i class="fas ${isCollapsed ? 'fa-folder' : 'fa-folder-open'}"></i>
+                            ${isCollapsed ? 'المحتوى' : 'مفتوح'}
+                        </button>
+                    ` : ''}
+                </div>
                 <div class="flex items-center">
                     ${isPlanActive ? `<span class="inline-flex items-center justify-center bg-teal-500/10 text-teal-400 text-[9px] px-1.5 h-5 rounded border border-teal-500/25 ml-2 font-bold leading-none"><i class="fas fa-unlock ml-1"></i> مفعل</span>` : ''}
                     ${statusBadge}
@@ -1067,9 +1167,9 @@ function getNodeInnerHtml(node) {
             </div>
             <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-2.5 leading-relaxed pb-1">${node.title}</h4>
             <div class="grid grid-cols-3 gap-1.5 text-[9px] text-gray-400 border-t border-white/5 pt-2 text-center">
-                <div><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
-                <div><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
-                <div><i class="fas fa-code-branch text-orange-400 ml-0.5"></i> ${node.projectsCount}</div>
+                <div class="${node.videosCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
+                <div class="${node.quizzesCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
+                <div class="${node.projectsCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-code-branch text-orange-400 ml-0.5"></i> ${node.projectsCount}</div>
             </div>
         `;
     }
@@ -1502,7 +1602,7 @@ function getRoadmapBounds(padding = 50) {
 }
 
 /** Centers the graph viewport on the bounds of the tree without altering zoom */
-function centerGraph() {
+function centerGraphBounds() {
     const viewport = document.getElementById('roadmap-viewport');
     if (!viewport || computedNodes.length === 0) return;
 
@@ -1698,10 +1798,7 @@ function _rmDownload(blob, filename) {
 // ── Standard select node action & Unified Details Panel ──
 // ============================================================
 
-/**
- * Standard select node click action
- */
-function selectNode(node) {
+function selectNode(node, autoPan = true) {
     // Remove previous selection states
     document.querySelectorAll('.roadmap-node').forEach(el => el.classList.remove('node-active-selection'));
     document.querySelectorAll('.roadmap-link').forEach(el => el.classList.remove('highlighted-link'));
@@ -1718,8 +1815,10 @@ function selectNode(node) {
     // Update details side panel
     renderNodeDetailsPanel(node);
 
-    // Pan camera smoothly to center this node
-    panToNode(node);
+    // Pan camera smoothly to center this node if requested
+    if (autoPan) {
+        panToNode(node);
+    }
 }
 
 /**
@@ -2648,9 +2747,19 @@ window.closeRoadmapDetailsPanel = function() {
 window.selectRoadmapNodeById = (nodeId) => {
     const node = computedNodes.find(n => n.id === nodeId);
     if (node) {
+        let changed = false;
+
+        // Ensure phase is expanded if this node is inside a phase
+        if (node.phaseId) {
+            const phaseId = `phase-${node.phaseId}`;
+            if (!expandedPhases.has(phaseId)) {
+                expandedPhases.add(phaseId);
+                changed = true;
+            }
+        }
+
         // Expand parent chain first if the node is hidden!
         let temp = node;
-        let changed = false;
         while (temp.parentCourseId) {
             const parentId = `course-${temp.parentCourseId}`;
             if (!expandedRelated.has(parentId)) {
@@ -2663,16 +2772,17 @@ window.selectRoadmapNodeById = (nodeId) => {
         }
         
         // If it's a material, make sure its parent course is expanded!
-        if (node.type === 'video' || node.type === 'quiz' || node.type === 'project' || node.type === 'material') {
-            const courseNodeId = `course-${node.courseId}`;
-            if (!expandedNodes.has(courseNodeId)) {
-                expandedNodes.add(courseNodeId);
-                changed = true;
+        if (node.type === 'video' || node.type === 'quiz' || node.type === 'project' || node.type === 'material' || node.type === 'document') {
+            if (node.courseId) {
+                const courseNodeId = `course-${node.courseId}`;
+                if (!expandedNodes.has(courseNodeId)) {
+                    expandedNodes.add(courseNodeId);
+                    changed = true;
+                }
             }
         }
         
         if (changed) {
-            // Re-layout and re-render to make the node visible
             buildGraphStructure(currentGraphData);
             calculateGraphLayout();
             renderHtmlNodes();
@@ -2680,8 +2790,19 @@ window.selectRoadmapNodeById = (nodeId) => {
             requestAnimationFrame(updateMinimap);
         }
         
-        // Select and pan to node
-        selectNode(node);
+        // Select node and smart focus
+        selectNode(node, false);
+        requestAnimationFrame(() => {
+            if (node.type === 'course') {
+                const family = computedNodes.filter(n => !n.isHidden && (n.id === node.id || n.courseId === node.dbId));
+                smartFocusOnNodes(family);
+            } else if (node.type === 'phase') {
+                const family = computedNodes.filter(n => !n.isHidden && (n.id === node.id || n.phaseId === node.dbId));
+                smartFocusOnNodes(family);
+            } else {
+                smartFocusOnNodes([node]);
+            }
+        });
     }
 };
 
@@ -2718,65 +2839,70 @@ window.cmDeleteRoadmapNode = (type, dbId) => {
 };
 
 /**
- * Smooth pan view to target node coordinate
+ * Cancels any active camera animation frame
  */
-function panToNode(node) {
-    const viewport = document.getElementById('roadmap-viewport');
-    if (!viewport) return;
-
-    const vw = viewport.clientWidth;
-    const vh = viewport.clientHeight;
-
-    // Calculate translation offset centering node
-    offsetX = vw / 2 - node.x * zoomLevel;
-    offsetY = vh / 2 - node.y * zoomLevel;
-
-    updateCanvasTransform();
+function cancelCameraAnimation() {
+    if (cameraAnimFrame) {
+        cancelAnimationFrame(cameraAnimFrame);
+        cameraAnimFrame = null;
+    }
 }
 
 /**
- * Adjust Zoom Scale
+ * Smoothly animates camera to target offsets and zoom with cubic easing
  */
-/**
- * Adjust Zoom Scale
- */
-function adjustZoom(delta) {
-    const oldZoom = zoomLevel;
-    zoomLevel += delta;
-    zoomLevel = Math.max(0.15, Math.min(3.0, zoomLevel)); // extended boundary cap
+function animateCameraTo(targetOffsetX, targetOffsetY, targetZoom, duration = 380) {
+    cancelCameraAnimation();
 
-    const viewport = document.getElementById('roadmap-viewport');
-    if (viewport) {
-        const vw = viewport.clientWidth;
-        const vh = viewport.clientHeight;
+    const startOffsetX = offsetX;
+    const startOffsetY = offsetY;
+    const startZoom = zoomLevel;
+    const startTime = performance.now();
 
-        // Offset panning shift to zoom relative to center
-        offsetX = vw / 2 - ((vw / 2 - offsetX) / oldZoom) * zoomLevel;
-        offsetY = vh / 2 - ((vh / 2 - offsetY) / oldZoom) * zoomLevel;
+    function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-    updateCanvasTransform();
+    function step(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = easeInOutCubic(progress);
+
+        zoomLevel = startZoom + (targetZoom - startZoom) * ease;
+        offsetX = startOffsetX + (targetOffsetX - startOffsetX) * ease;
+        offsetY = startOffsetY + (targetOffsetY - startOffsetY) * ease;
+
+        updateCanvasTransform();
+
+        if (progress < 1) {
+            cameraAnimFrame = requestAnimationFrame(step);
+        } else {
+            cameraAnimFrame = null;
+            clampOffsets();
+            updateCanvasTransform();
+        }
+    }
+
+    cameraAnimFrame = requestAnimationFrame(step);
 }
 
 /**
- * Fits entire roadmap tree perfectly in view dimensions, centered.
- * node.x = LEFT EDGE, node.y = CENTER; uses full card widths for bounds.
+ * Prevents graph from ever disappearing off-screen.
+ * Clamps translation offsets within visible bounds.
  */
-function fitRoadmapToScreen() {
+function clampOffsets() {
     const viewport = document.getElementById('roadmap-viewport');
-    const canvas   = document.getElementById('roadmap-canvas');
-    if (!viewport || !canvas || computedNodes.length === 0) return;
+    if (!viewport || computedNodes.length === 0) return;
 
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
     if (vw === 0 || vh === 0) return;
 
-    // Full card widths (node.x is left-edge, so right-edge = node.x + CW)
-    const CW = { track: 320, phase: 300, course: 260, material: 240 };
-    const HH = { track: 44,  phase: 35,  course: 46,  material: 32  };
-
     const visibleNodes = computedNodes.filter(n => !n.isHidden && n.x !== undefined && n.y !== undefined);
     if (visibleNodes.length === 0) return;
+
+    const CW = { track: 320, phase: 300, course: 260, material: 240 };
+    const HH = { track: 48, phase: 36, course: 52, material: 37 };
 
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
@@ -2784,41 +2910,151 @@ function fitRoadmapToScreen() {
     visibleNodes.forEach(node => {
         const hw = (CW[node.type] || 260) / 2;
         const hh = HH[node.type] || 40;
-        if (node.x - hw < minX) minX = node.x - hw;     // left  edge
-        if (node.x + hw > maxX) maxX = node.x + hw;     // right edge
-        if (node.y - hh < minY) minY = node.y - hh;     // top   edge
-        if (node.y + hh > maxY) maxY = node.y + hh;     // bottom edge
+        if (node.x - hw < minX) minX = node.x - hw;
+        if (node.x + hw > maxX) maxX = node.x + hw;
+        if (node.y - hh < minY) minY = node.y - hh;
+        if (node.y + hh > maxY) maxY = node.y + hh;
     });
 
-    const graphW = maxX - minX;
-    const graphH = maxY - minY;
-    if (graphW <= 0 || graphH <= 0) return;
+    const marginX = Math.min(vw * 0.35, 180);
+    const marginY = Math.min(vh * 0.35, 180);
 
-    // Fit zoom so the entire tree is visible with comfortable margin
-    const MARGIN = 60;
-    zoomLevel = Math.max(0.15, Math.min(0.85,
-        Math.min((vw - MARGIN * 2) / graphW, (vh - MARGIN * 2) / graphH)
-    ));
+    const minOffsetX = marginX - maxX * zoomLevel;
+    const maxOffsetX = (vw - marginX) - minX * zoomLevel;
+    const minOffsetY = marginY - maxY * zoomLevel;
+    const maxOffsetY = (vh - marginY) - minY * zoomLevel;
 
-    // True center of the tree content (canvas coordinates)
-    const graphCenterX = (minX + maxX) / 2;
-    const graphCenterY = (minY + maxY) / 2;
+    if (minOffsetX <= maxOffsetX) {
+        offsetX = Math.max(minOffsetX, Math.min(maxOffsetX, offsetX));
+    } else {
+        offsetX = vw / 2 - ((minX + maxX) / 2) * zoomLevel;
+    }
 
-    // Map that center to the viewport center
-    offsetX = vw / 2 - graphCenterX * zoomLevel;
-    offsetY = vh / 2 - graphCenterY * zoomLevel;
+    if (minOffsetY <= maxOffsetY) {
+        offsetY = Math.max(minOffsetY, Math.min(maxOffsetY, offsetY));
+    } else {
+        offsetY = vh / 2 - ((minY + maxY) / 2) * zoomLevel;
+    }
+}
 
-    updateCanvasTransform();
+/**
+ * Smart Focus: Smoothly frames target node(s) in the center of the viewport
+ */
+function smartFocusOnNodes(nodes, customMargin = 60) {
+    const viewport = document.getElementById('roadmap-viewport');
+    if (!viewport) return;
+
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    if (vw === 0 || vh === 0) return;
+
+    const targetNodes = Array.isArray(nodes) ? nodes.filter(n => n && !n.isHidden && n.x !== undefined) : [nodes].filter(Boolean);
+    if (targetNodes.length === 0) return;
+
+    const CW = { track: 320, phase: 300, course: 260, material: 240 };
+    const HH = { track: 48, phase: 36, course: 52, material: 37 };
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    targetNodes.forEach(node => {
+        const hw = (CW[node.type] || 260) / 2;
+        const hh = HH[node.type] || 40;
+        if (node.x - hw < minX) minX = node.x - hw;
+        if (node.x + hw > maxX) maxX = node.x + hw;
+        if (node.y - hh < minY) minY = node.y - hh;
+        if (node.y + hh > maxY) maxY = node.y + hh;
+    });
+
+    const contentW = Math.max(10, maxX - minX);
+    const contentH = Math.max(10, maxY - minY);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    let targetZoom = zoomLevel;
+    if (targetNodes.length === 1) {
+        // Single card: comfortable, clear zoom level
+        targetZoom = Math.max(0.85, Math.min(1.1, zoomLevel));
+    } else {
+        // Multi-card group: fit with margin
+        const availW = Math.max(150, vw - customMargin * 2);
+        const availH = Math.max(150, vh - customMargin * 2);
+        const fitScale = Math.min(availW / contentW, availH / contentH);
+        targetZoom = Math.max(0.35, Math.min(1.05, fitScale));
+    }
+
+    const targetOffsetX = vw / 2 - centerX * targetZoom;
+    const targetOffsetY = vh / 2 - centerY * targetZoom;
+
+    animateCameraTo(targetOffsetX, targetOffsetY, targetZoom, 420);
+}
+
+/**
+ * Smooth pan view to target node coordinate
+ */
+function panToNode(node) {
+    if (!node) return;
+    smartFocusOnNodes([node]);
+}
+
+/**
+ * Adjust Zoom Scale smoothly from buttons
+ */
+function adjustZoom(delta) {
+    cancelCameraAnimation();
+    const viewport = document.getElementById('roadmap-viewport');
+    if (!viewport) return;
+
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const centerX = vw / 2;
+    const centerY = vh / 2;
+
+    const oldZoom = zoomLevel;
+    const newZoom = Math.max(0.2, Math.min(2.5, zoomLevel + delta));
+    if (newZoom === oldZoom) return;
+
+    const worldX = (centerX - offsetX) / oldZoom;
+    const worldY = (centerY - offsetY) / oldZoom;
+
+    animateCameraTo(centerX - worldX * newZoom, centerY - worldY * newZoom, newZoom, 220);
+}
+
+/**
+ * Fits entire roadmap tree in viewport dimensions, centered.
+ */
+function fitRoadmapToScreen() {
+    const visibleNodes = computedNodes.filter(n => !n.isHidden && n.x !== undefined && n.y !== undefined);
+    if (visibleNodes.length === 0) return;
+    smartFocusOnNodes(visibleNodes, 60);
+}
+
+/**
+ * Centers the graph on active node or entire graph
+ */
+function centerGraph() {
+    if (activeNode && !activeNode.isHidden) {
+        if (activeNode.type === 'course') {
+            const family = computedNodes.filter(n => !n.isHidden && (n.id === activeNode.id || n.courseId === activeNode.dbId));
+            smartFocusOnNodes(family);
+            return;
+        } else if (activeNode.type === 'phase') {
+            const family = computedNodes.filter(n => !n.isHidden && (n.id === activeNode.id || n.phaseId === activeNode.dbId));
+            smartFocusOnNodes(family);
+            return;
+        } else {
+            smartFocusOnNodes([activeNode]);
+            return;
+        }
+    }
+    fitRoadmapToScreen();
 }
 
 /**
  * Resets Zoom and Panning offsets
  */
 function resetRoadmapView() {
-    zoomLevel = 1.0;
-    offsetX = 0;
-    offsetY = 0;
-    updateCanvasTransform();
+    fitRoadmapToScreen();
 }
 
 /**
@@ -2828,13 +3064,15 @@ function startPanning(e) {
     // Left click (0) or Middle click (1) only
     if (e.button !== 0 && e.button !== 1) return;
 
+    cancelCameraAnimation();
+
     if (e.button === 1) {
         e.preventDefault(); // prevent auto scroll on middle mouse click
     }
 
-    // Don't initiate pan on left click if click target is inside a node and spacebar is NOT held down
+    // Don't initiate pan on left click if click target is inside a node or control and spacebar is NOT held down
     if (e.button === 0 && !spacePressed) {
-        if (e.target.closest('.roadmap-node') || e.target.closest('.roadmap-controls') || e.target.closest('.roadmap-minimap')) return;
+        if (e.target.closest('.roadmap-node') || e.target.closest('.roadmap-controls') || e.target.closest('.roadmap-minimap') || e.target.closest('.roadmap-toolbar')) return;
     }
 
     const canvas = document.getElementById('roadmap-canvas');
@@ -2852,6 +3090,7 @@ function panCanvas(e) {
     if (!isDragging) return;
     offsetX = e.clientX - startX;
     offsetY = e.clientY - startY;
+    clampOffsets();
     updateCanvasTransform();
 }
 
@@ -2862,90 +3101,120 @@ function stopPanning() {
 }
 
 /**
- * Zoom on mousewheel
+ * Zoom on mousewheel with true focal point under cursor
  */
 function handleMouseWheel(e) {
     e.preventDefault();
-    
-    // Smooth scroll wheel delta
-    const zoomDelta = e.deltaY < 0 ? 0.08 : -0.08;
-    
-    const oldZoom = zoomLevel;
-    zoomLevel += zoomDelta;
-    zoomLevel = Math.max(0.15, Math.min(3.0, zoomLevel)); // extended clamp bounds
+    cancelCameraAnimation();
 
     const viewport = document.getElementById('roadmap-viewport');
+    if (!viewport) return;
     const rect = viewport.getBoundingClientRect();
     const cursorX = e.clientX - rect.left;
     const cursorY = e.clientY - rect.top;
 
-    offsetX = cursorX - ((cursorX - offsetX) / oldZoom) * zoomLevel;
-    offsetY = cursorY - ((cursorY - offsetY) / oldZoom) * zoomLevel;
+    const factor = e.deltaY < 0 ? 1.12 : 0.89;
+    const newZoom = Math.max(0.2, Math.min(2.5, zoomLevel * factor));
+    if (newZoom === zoomLevel) return;
 
+    const worldX = (cursorX - offsetX) / zoomLevel;
+    const worldY = (cursorY - offsetY) / zoomLevel;
+
+    zoomLevel = newZoom;
+    offsetX = cursorX - worldX * zoomLevel;
+    offsetY = cursorY - worldY * zoomLevel;
+
+    clampOffsets();
     updateCanvasTransform();
 }
 
-// ── Touch interaction event handlers (Tablet Pinch & Drag) ──
-let initialPinchDist = 0;
-let initialZoom = 1.0;
-let pinchMidX = 0;
-let pinchMidY = 0;
-let isTouchPanning = false;
+// ── Touch interaction event handlers (Mobile & Tablet Drag / Pinch) ──
+let touchMode = 'none'; // 'none' | 'pan' | 'pinch'
+let lastTouchX = 0, lastTouchY = 0;
+let lastPinchDist = 0;
 
 function handleTouchStart(e) {
+    cancelCameraAnimation();
+    const canvas = document.getElementById('roadmap-canvas');
+    if (canvas) canvas.style.transition = 'none';
+
     if (e.touches.length === 1) {
-        // Single finger pan
-        const touch = e.touches[0];
-        isTouchPanning = true;
-        startX = touch.clientX - offsetX;
-        startY = touch.clientY - offsetY;
-        const canvas = document.getElementById('roadmap-canvas');
-        if (canvas) canvas.style.transition = 'none';
+        touchMode = 'pan';
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
     } else if (e.touches.length === 2) {
-        // Two finger pinch zoom
-        isTouchPanning = false;
+        touchMode = 'pinch';
         const t1 = e.touches[0];
         const t2 = e.touches[1];
-        initialPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        initialZoom = zoomLevel;
-        pinchMidX = (t1.clientX + t2.clientX) / 2;
-        pinchMidY = (t1.clientY + t2.clientY) / 2;
+        lastPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        lastTouchX = (t1.clientX + t2.clientX) / 2;
+        lastTouchY = (t1.clientY + t2.clientY) / 2;
     }
 }
 
 function handleTouchMove(e) {
-    if (e.touches.length === 1 && isTouchPanning) {
-        e.preventDefault(); // prevent background page scroll
+    const viewport = document.getElementById('roadmap-viewport');
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+
+    if (touchMode === 'pan' && e.touches.length === 1) {
+        e.preventDefault();
         const touch = e.touches[0];
-        offsetX = touch.clientX - startX;
-        offsetY = touch.clientY - startY;
+        const dx = touch.clientX - lastTouchX;
+        const dy = touch.clientY - lastTouchY;
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+
+        offsetX += dx;
+        offsetY += dy;
+        clampOffsets();
         updateCanvasTransform();
-    } else if (e.touches.length === 2) {
-        e.preventDefault(); // prevent browser native pinch-to-zoom
+    } else if (touchMode === 'pinch' && e.touches.length === 2) {
+        e.preventDefault();
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-        if (initialPinchDist > 0) {
-            const scale = currentDist / initialPinchDist;
-            const oldZoom = zoomLevel;
-            zoomLevel = Math.max(0.15, Math.min(3.0, initialZoom * scale));
+        const currentMidX = (t1.clientX + t2.clientX) / 2;
+        const currentMidY = (t1.clientY + t2.clientY) / 2;
 
-            const viewport = document.getElementById('roadmap-viewport');
-            const rect = viewport.getBoundingClientRect();
-            const midX = pinchMidX - rect.left;
-            const midY = pinchMidY - rect.top;
+        if (lastPinchDist > 0 && currentDist > 0) {
+            const factor = currentDist / lastPinchDist;
+            const newZoom = Math.max(0.2, Math.min(2.5, zoomLevel * factor));
 
-            offsetX = midX - ((midX - offsetX) / oldZoom) * zoomLevel;
-            offsetY = midY - ((midY - offsetY) / oldZoom) * zoomLevel;
+            const focalX = currentMidX - rect.left;
+            const focalY = currentMidY - rect.top;
 
+            const worldX = (focalX - offsetX) / zoomLevel;
+            const worldY = (focalY - offsetY) / zoomLevel;
+
+            zoomLevel = newZoom;
+            offsetX = focalX - worldX * zoomLevel;
+            offsetY = focalY - worldY * zoomLevel;
+
+            const panDx = currentMidX - lastTouchX;
+            const panDy = currentMidY - lastTouchY;
+            offsetX += panDx;
+            offsetY += panDy;
+
+            lastPinchDist = currentDist;
+            lastTouchX = currentMidX;
+            lastTouchY = currentMidY;
+
+            clampOffsets();
             updateCanvasTransform();
         }
     }
 }
 
 function handleTouchEnd(e) {
-    isTouchPanning = false;
-    initialPinchDist = 0;
+    if (e.touches.length === 1) {
+        touchMode = 'pan';
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+    } else if (e.touches.length === 0) {
+        touchMode = 'none';
+        lastPinchDist = 0;
+    }
 }
 
 // ── Global spacebar panning event binding ──
@@ -3085,11 +3354,11 @@ function handleRoadmapSearch(e) {
     // Search nodes
     const matched = computedNodes.find(n => n.title.toLowerCase().includes(query) || (n.description && n.description.toLowerCase().includes(query)));
     if (matched) {
-        const nodeEl = document.getElementById(`node-node-${matched.id}`);
-        if (nodeEl) nodeEl.classList.add('node-search-highlight');
-        
-        // Center camera viewport smoothly on the matching node
-        selectNode(matched);
+        window.selectRoadmapNodeById(matched.id);
+        setTimeout(() => {
+            const nodeEl = document.getElementById(`node-${matched.id}`);
+            if (nodeEl) nodeEl.classList.add('node-search-highlight');
+        }, 100);
     }
 }
 
@@ -3101,7 +3370,7 @@ function filterNodes() {
     const difficultyVal = document.getElementById('roadmap-filter-difficulty').value;
 
     computedNodes.forEach(node => {
-        const nodeEl = document.getElementById(`node-node-${node.id}`);
+        const nodeEl = document.getElementById(`node-${node.id}`);
         if (!nodeEl) return;
 
         let statusMatch = true;

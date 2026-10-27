@@ -79,11 +79,11 @@
         
         const modal = document.getElementById('custom-alert-modal');
         const card = document.getElementById('custom-alert-card');
-        const titleEl = document.getElementById('custom-alert-title');
-        const msgEl = document.getElementById('custom-alert-message');
-        const okBtn = document.getElementById('btn-alert-ok');
-
         if (!modal || !card) return;
+
+        const titleEl = card.querySelector('#custom-alert-title') || document.getElementById('custom-alert-title');
+        const msgEl = card.querySelector('#custom-alert-message') || document.getElementById('custom-alert-message');
+        const okBtn = card.querySelector('#btn-alert-ok') || card.querySelector('button');
 
         titleEl.textContent = title || "تنبيه";
         msgEl.innerHTML = (message || "").replace(/\n/g, '<br>');
@@ -129,15 +129,15 @@
 
         const modal = document.getElementById('custom-confirm-modal');
         const card = document.getElementById('custom-confirm-card');
-        const titleEl = document.getElementById('confirm-title');
-        const msgEl = document.getElementById('confirm-message');
-        const yesBtn = document.getElementById('btn-confirm-yes');
-        const noBtn = document.getElementById('btn-confirm-no');
-        const glowEl = document.getElementById('confirm-glow');
-        const iconBgEl = document.getElementById('confirm-icon-bg');
-        const iconEl = document.getElementById('confirm-icon');
-
         if (!modal || !card) return;
+
+        const titleEl = card.querySelector('#confirm-title') || document.getElementById('confirm-title');
+        const msgEl = card.querySelector('#confirm-message') || document.getElementById('confirm-message');
+        const yesBtn = card.querySelector('#btn-confirm-yes') || card.querySelector('button:first-of-type');
+        const noBtn = card.querySelector('#btn-confirm-no') || card.querySelector('button:last-of-type');
+        const glowEl = card.querySelector('#confirm-glow') || document.getElementById('confirm-glow');
+        const iconBgEl = card.querySelector('#confirm-icon-bg') || document.getElementById('confirm-icon-bg');
+        const iconEl = card.querySelector('#confirm-icon') || document.getElementById('confirm-icon');
 
         // Apply styles based on dialog type (danger, warning, info/success)
         if (type === 'info' || type === 'success') {

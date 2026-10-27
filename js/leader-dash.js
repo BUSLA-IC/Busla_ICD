@@ -697,6 +697,23 @@ async function renderTeamOverview(tasks) {
             const canDelete = (!task.stats || task.stats.started_count === 0);
             const taskId = task.id || task.task_id;
 
+            const hasCourse = task.course_id && String(task.course_id).trim() !== '' && task.course_id !== 'null' && task.course_id !== 'undefined';
+            const openBtn = hasCourse ? `
+                <a href="course-player.html?id=${encodeURIComponent(task.course_id)}${task.content_id && task.content_id !== 'null' && task.content_id !== 'undefined' ? `&content=${encodeURIComponent(task.content_id)}` : ''}&task_id=${encodeURIComponent(taskId)}" 
+                   onclick="event.stopPropagation();"
+                   class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
+                   title="Open Task">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                </a>
+            ` : `
+                <button type="button"
+                   onclick="event.stopPropagation(); window.openUnifiedTaskModal('${taskId}')"
+                   class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all"
+                   title="View Details">
+                    <i class="fas fa-eye text-xs"></i>
+                </button>
+            `;
+
             html += `
                 <div class="bg-black/40 border border-white/5 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all shadow-sm ${opacityClass}">
                     
@@ -728,12 +745,7 @@ async function renderTeamOverview(tasks) {
                         </div>
                         `}
                         
-                        <a href="course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${taskId}" 
-                           onclick="event.stopPropagation();"
-                           class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
-                           title="Open Task">
-                            <i class="fas fa-external-link-alt text-xs"></i>
-                        </a>
+                        ${openBtn}
                     </div>
                 </div>
             `;
@@ -2877,9 +2889,17 @@ function updateModalContent(task, details, type) {
     document.getElementById('modal-details-grid').innerHTML = gridHtml;
 
     const btn = document.getElementById('modal-action-btn');
-    btn.href = `course-player.html?id=${task.course_id}&content=${task.content_id}&task_id=${task.task_id}`;
-    btn.innerHTML = `<i class="fas ${style.btnIcon}"></i> <span>${style.btnText}</span>`;
-    btn.className = `flex-1 py-3.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 transition-all shadow-lg text-white ${style.btnColor} hover:-translate-y-0.5`;
+    if (btn) {
+        const hasCourse = task.course_id && String(task.course_id).trim() !== '' && task.course_id !== 'null' && task.course_id !== 'undefined';
+        if (hasCourse) {
+            btn.classList.remove('hidden');
+            btn.href = `course-player.html?id=${encodeURIComponent(task.course_id)}${task.content_id && task.content_id !== 'null' && task.content_id !== 'undefined' ? `&content=${encodeURIComponent(task.content_id)}` : ''}&task_id=${encodeURIComponent(task.task_id || task.id)}`;
+            btn.innerHTML = `<i class="fas ${style.btnIcon}"></i> <span>${style.btnText}</span>`;
+            btn.className = `flex-1 py-3.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 transition-all shadow-lg text-white ${style.btnColor} hover:-translate-y-0.5`;
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
 }
 
 window.closeModal = (id) => document.getElementById(id).classList.add('hidden');

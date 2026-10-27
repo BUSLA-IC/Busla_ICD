@@ -69,6 +69,14 @@ let previewAttempts = [];
 let previewActiveState = null;
 let previewProjectSubmission = null;
 
+// Helper to clean query params
+function cleanParam(val) {
+    if (!val) return null;
+    const s = String(val).trim();
+    if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return null;
+    return s;
+}
+
 // ==========================================
 // 2. INITIALIZATION & SETUP
 // ==========================================
@@ -80,17 +88,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     isPreview = urlParams.get('preview') === 'true' || urlParams.get('mode') === 'preview';
     
     if (isPreview) {
-        previewType = urlParams.get('type');
-        previewItemId = urlParams.get('id');
+        previewType = cleanParam(urlParams.get('type'));
+        previewItemId = cleanParam(urlParams.get('id'));
         courseId = null;
         currentTaskId = null;
     } else {
-        courseId = urlParams.get('id');
-        currentTaskId = urlParams.get('task_id');
+        courseId = cleanParam(urlParams.get('id'));
+        currentTaskId = cleanParam(urlParams.get('task_id'));
     }
 
-    if (!courseId && !isPreview) {
-        showToast("Course ID is missing!", "error");
+    // Attempt to resolve courseId from team_tasks if task_id was supplied but id was missing or literal 'null'
+    if (!courseId && currentTaskId) {
+        try {
+            const { data: tData } = await supabase
+                .from('team_tasks')
+                .select('course_id, content_id')
+                .eq('id', currentTaskId)
+                .maybeSingle();
+
+            if (tData) {
+                const resolvedCourseId = cleanParam(tData.course_id);
+                if (resolvedCourseId) {
+                    courseId = resolvedCourseId;
+                }
+            }
+        } catch (err) {
+            console.warn("Could not resolve course from task:", err);
+        }
+    }
+
+    const rawContent = cleanParam(urlParams.get('content'));
+    const isDocMode = rawContent && rawContent.startsWith('doc_');
+
+    if (!courseId && !isPreview && !isDocMode) {
+        showToast("المهمة أو الكورس غير محدد بشكل صحيح", "warning");
         setTimeout(() => window.location.href = "student-dash.html", 2000);
         return;
     }
@@ -361,7 +392,7 @@ async function initPlayer() {
             return;
         }
 
-        let targetContentId = new URLSearchParams(window.location.search).get('content');
+        let targetContentId = cleanParam(new URLSearchParams(window.location.search).get('content'));
 
         // Check if targetContentId is document-only mode
         let isDocOnlyMode = false;
@@ -373,15 +404,15 @@ async function initPlayer() {
                 docData = data;
                 if (!courseId) {
                     isDocOnlyMode = true;
-                    courseId = data.course_id;
+                    courseId = cleanParam(data.course_id);
                 }
             }
         }
 
         let course = null;
         if (courseId) {
-            const { data: cData, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).single();
-            if (!courseErr) {
+            const { data: cData, error: courseErr } = await supabase.from('courses').select('*').eq('course_id', courseId).maybeSingle();
+            if (!courseErr && cData) {
                 course = cData;
                 courseData = course;
             }
@@ -392,11 +423,19 @@ async function initPlayer() {
             courseData = course;
         }
 
+        if (!course && !isPreview) {
+            showToast("لم يتم العثور على الكورس المطلوب", "error");
+            setTimeout(() => window.location.href = "student-dash.html", 2000);
+            return;
+        }
+
         // Load recommended tools for this course
         if (courseId) {
             loadCourseRecommendedTools(courseId);
         }
-        loadCourseSuggestedReferences(courseId, targetContentId);
+        if (courseId || targetContentId) {
+            loadCourseSuggestedReferences(courseId, targetContentId);
+        }
         
         const courseTitleEl = document.getElementById('course-title');
         if (courseTitleEl && course) courseTitleEl.innerText = course.title || "Course Player";
@@ -492,8 +531,11 @@ async function initPlayer() {
                 .eq('id', currentTaskId)
                 .maybeSingle();
 
-            if (taskData && taskData.content_id) {
-                targetContentId = taskData.content_id;
+            if (taskData) {
+                const cId = cleanParam(taskData.content_id);
+                if (cId) {
+                    targetContentId = cId;
+                }
             }
         }
 
@@ -559,6 +601,7 @@ async function initPlayer() {
 }
 
 async function ensureUserEnrolled() {
+    if (!courseId || courseId === 'null' || courseId === 'undefined' || !currentUserData?.id) return;
     try {
         const { data: enrollment } = await supabase
             .from('enrollments')
@@ -1118,12 +1161,14 @@ function loadVideo(videoId, startSeconds = 0, isCompleted = false, savedSpeed = 
             'disablekb': isCompleted ? 0 : 1,
             'rel': 0,
             'modestbranding': 1,
-            'origin': window.location.origin,
             'enablejsapi': 1,
             'cc_load_policy': 1,
             'playsinline': 1,
             'start': Math.floor(startSeconds)
         };
+        if (window.location.origin && window.location.origin !== 'null') {
+            playerVars.origin = window.location.origin;
+        }
 
         currentPlayerControlsState = desiredControlsState;
         try {
@@ -1642,8 +1687,8 @@ function renderCurrentQuestion() {
         <div class="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
             <button onclick="window.prevQuestion()" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-50" ${currentQuizState.currentIndex === 0 ? 'disabled' : ''}>Previous</button>
             ${currentQuizState.currentIndex === total - 1 ? 
-                `<button onclick="window.submitQuiz()" class="px-8 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg">Submit Answers</button>` : 
-                `<button onclick="window.nextQuestion()" class="px-6 py-2 rounded-lg bg-b-primary hover:bg-teal-600 text-white font-bold">Next Question</button>`
+                `<button type="button" id="btn-submit-quiz-action" onclick="window.submitQuiz()" class="px-8 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105"><i class="fas fa-paper-plane"></i> <span>تسليم الإجابات (Submit Answers)</span></button>` : 
+                `<button type="button" onclick="window.nextQuestion()" class="px-6 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all">Next Question <i class="fas fa-chevron-left text-xs mr-1"></i></button>`
             }
         </div>
     `;
@@ -1692,75 +1737,91 @@ window.prevQuestion = () => {
 };
 
 window.submitQuiz = async () => {
-    if (Object.keys(currentQuizState.userAnswers).length < currentQuizState.questions.length) {
-        return showToast("Please answer all questions before submitting.", "warning");
+    const totalQuestions = (currentQuizState.questions || []).length;
+    if (totalQuestions === 0) return;
+
+    if (Object.keys(currentQuizState.userAnswers).length < totalQuestions) {
+        return showToast("يرجى الإجابة على جميع الأسئلة قبل التسليم.", "warning");
     }
 
     window.showCustomConfirm(
-        "Submit Quiz",
-        "Are you sure you want to submit your answers?",
+        "تسليم الاختبار (Submit Quiz)",
+        "هل أنت متأكد من رغبتك في تسليم الإجابات وإنهاء الاختبار؟",
         async () => {
-
-        const container = document.getElementById('quiz-questions-container');
-        container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Grading...</p></div>';
-
-        let correctCount = 0;
-        currentQuizState.questions.forEach(q => {
-            if (currentQuizState.userAnswers[q.id] === q.correct_answer.toLowerCase()) correctCount++;
-        });
-
-        const totalQuestions = currentQuizState.questions.length;
-        const scorePercent = Math.round((correctCount / totalQuestions) * 100);
-        const passingScoreLimit = currentQuizState.metaData.passing_score || 50;
-        const passed = scorePercent >= passingScoreLimit;
-        const xpEarned = passed ? Math.round((scorePercent / 100) * (currentQuizState.metaData.max_xp || 50)) : 0;
-
-        try {
-            if (isPreview) {
-                previewAttempts.unshift({
-                    quiz_id: currentQuizState.metaData.quiz_id,
-                    score: scorePercent,
-                    passed: passed,
-                    answers: JSON.parse(JSON.stringify(currentQuizState.userAnswers)),
-                    submitted_at: new Date().toISOString()
-                });
-                previewActiveState = null;
-
-                if (passed) {
-                    showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP (Preview)`, "success");
-                } else {
-                    showToast(`Failed. Score: ${scorePercent}% (Preview)`, "error");
-                }
-            } else {
-                await supabase.from('quiz_attempts').insert([{
-                    user_id: currentUserData.id,
-                    quiz_id: currentQuizState.metaData.quiz_id,
-                    score: scorePercent,
-                    passed: passed,
-                    answers: currentQuizState.userAnswers 
-                }]);
-
-                await supabase.from('active_quiz_states')
-                    .delete()
-                    .eq('quiz_id', currentQuizState.metaData.quiz_id)
-                    .eq('user_id', currentUserData.id);
-
-                if (passed) {
-                    await markContentComplete(currentContent.content_id, xpEarned, 'quiz');
-                    showToast(`Passed! (${scorePercent}%) Earned ${xpEarned} XP`, "success");
-                } else {
-                    showToast(`Failed. Score: ${scorePercent}%`, "error");
-                }
+            const container = document.getElementById('quiz-questions-container');
+            if (container) {
+                container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p class="font-bold text-lg">جاري التصحيح وحفظ النتيجة...</p></div>';
             }
 
-            loadQuizViewer(currentQuizState.metaData.quiz_id);
+            try {
+                let correctCount = 0;
+                currentQuizState.questions.forEach(q => {
+                    const userAns = String(currentQuizState.userAnswers[q.id] || '').trim().toLowerCase();
+                    const correctAns = String(q.correct_answer || '').trim().toLowerCase();
+                    if (userAns && userAns === correctAns) correctCount++;
+                });
 
-        } catch (e) {
-            console.error(e);
-            showToast("Error saving result", "error");
-            loadQuizViewer(currentQuizState.metaData.quiz_id);
-        }
-    });
+                const scorePercent = Math.round((correctCount / totalQuestions) * 100);
+                const passingScoreLimit = currentQuizState.metaData?.passing_score || 50;
+                const passed = scorePercent >= passingScoreLimit;
+                const xpEarned = passed ? Math.round((scorePercent / 100) * (currentQuizState.metaData?.max_xp || 50)) : 0;
+                const attemptNum = (currentQuizState.allAttempts ? currentQuizState.allAttempts.length : 0) + 1;
+
+                if (isPreview) {
+                    previewAttempts.unshift({
+                        quiz_id: currentQuizState.metaData.quiz_id,
+                        score: scorePercent,
+                        passed: passed,
+                        answers: JSON.parse(JSON.stringify(currentQuizState.userAnswers)),
+                        submitted_at: new Date().toISOString()
+                    });
+                    previewActiveState = null;
+
+                    if (passed) {
+                        showToast(`مبروك! اجتزت الاختبار بنسبة ${scorePercent}% وحصلت على ${xpEarned} XP (معاينة)`, "success");
+                    } else {
+                        showToast(`للأسف لم تجتز الاختبار. النتيجة: ${scorePercent}% (معاينة)`, "error");
+                    }
+                } else {
+                    const { error: insertErr } = await supabase.from('quiz_attempts').insert([{
+                        user_id: currentUserData.id,
+                        quiz_id: currentQuizState.metaData.quiz_id,
+                        score: scorePercent,
+                        passed: passed,
+                        attempt_number: attemptNum,
+                        answers: currentQuizState.userAnswers 
+                    }]);
+
+                    if (insertErr) {
+                        console.error("quiz_attempts insert error:", insertErr);
+                        throw insertErr;
+                    }
+
+                    await supabase.from('active_quiz_states')
+                        .delete()
+                        .eq('quiz_id', currentQuizState.metaData.quiz_id)
+                        .eq('user_id', currentUserData.id);
+
+                    if (passed) {
+                        const targetContentId = currentContent?.content_id || `quiz_${currentQuizState.metaData.quiz_id}`;
+                        await markContentComplete(targetContentId, xpEarned, 'quiz');
+                        showToast(`مبروك! اجتزت الاختبار بنسبة ${scorePercent}% وحصلت على ${xpEarned} XP`, "success");
+                    } else {
+                        showToast(`للأسف لم تجتز الاختبار. النتيجة: ${scorePercent}%`, "error");
+                    }
+                }
+
+                await loadQuizViewer(currentQuizState.metaData.quiz_id);
+
+            } catch (e) {
+                console.error("Quiz submission error:", e);
+                showToast("حدث خطأ أثناء حفظ النتيجة: " + (e.message || "Unknown error"), "error");
+                await loadQuizViewer(currentQuizState.metaData.quiz_id);
+            }
+        },
+        null,
+        'warning'
+    );
 };
 
 window.showQuizReview = async (attemptIndex = 0) => {
