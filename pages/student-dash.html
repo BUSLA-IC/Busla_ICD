@@ -3,8 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leader Dashboard | Busla</title>
+    <title>Student Dashboard | Busla</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <meta name="theme-color" content="#006A67">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="بوصلة">
+    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/custom-dialogs.js"></script>
@@ -157,6 +163,9 @@
             <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
                 <i class="fas fa-trophy w-4 md:w-auto text-center"></i> <span>ساحة المنافسة</span>
             </button>
+            <button onclick="window.openQuickCheatsheets()" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-teal-400/90 hover:text-teal-300 hover:bg-teal-500/10 border border-transparent hover:border-teal-500/20 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-terminal w-4 md:w-auto text-center text-teal-400"></i> <span>الأوامر السريعة (Offline)</span>
+            </button>
             <button id="open-settings-btn" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
                 <i class="fas fa-cog w-4 md:w-auto text-center"></i> <span>إعدادات الحساب</span>
             </button>
@@ -203,59 +212,65 @@
 
             <!-- 2. Controls Cluster (Desktop: Left Side (order-2) | Mobile: Top Pinned Row (order-1)) -->
             <div class="order-1 md:order-2 flex items-center justify-between md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                <!-- Mobile Only: Hamburger menu button -->
-                <div class="flex items-center gap-2 md:hidden">
-                    <button onclick="toggleSidebar()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 transition-all shrink-0">
-                        <i class="fas fa-bars text-xs sm:text-sm"></i>
-                    </button>
-                    <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold">
-                        <span class="text-b-primary">BUSLA</span>
-                    </div>
-                </div>
+                <!-- Mobile Only: Clean Hamburger Button (No cramped text) -->
+                <button onclick="toggleSidebar()" class="md:hidden w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0">
+                    <i class="fas fa-bars text-sm"></i>
+                </button>
 
                 <!-- Controls: Search, Notifications, Points, Main Site Dropdown -->
-                <div class="flex items-center gap-1.5 sm:gap-2.5 md:gap-3">
-                    <!-- Omni-Search Trigger Button -->
-                    <button onclick="window.openOmniSearch()" class="flex items-center gap-1.5 sm:gap-2 md:gap-2 px-2 sm:px-3 md:px-3 py-1.5 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group" title="البحث الشامل (Ctrl + K)">
-                        <i class="fas fa-search text-teal-400 text-xs group-hover:scale-110 transition-transform"></i>
+                <div class="flex items-center gap-2 md:gap-3">
+                    <!-- Omni-Search Trigger Button (Compact icon on Mobile, Full on Desktop) -->
+                    <button onclick="window.openOmniSearch()" class="w-9 h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
+                        <i class="fas fa-search text-teal-400 text-xs md:text-sm group-hover:scale-110 transition-transform"></i>
                         <span class="hidden md:inline font-medium">بحث...</span>
                         <kbd class="hidden lg:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
                     </button>
 
+                    <!-- Quick Cheatsheets Trigger Button (Offline references) -->
+                    <button onclick="window.openQuickCheatsheets()" class="w-9 h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-white border border-teal-500/30 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="الأوامر والمسودات السريعة (Offline)">
+                        <i class="fas fa-terminal text-teal-400 text-xs md:text-sm group-hover:scale-110 transition-transform"></i>
+                        <span class="hidden md:inline font-medium">أوامر سريعة</span>
+                    </button>
+
                     <!-- Notifications button -->
-                    <button onclick="switchTab('announcements')" class="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:bg-white/10 transition-all cursor-pointer shrink-0">
-                        <i class="fas fa-bell text-xs sm:text-sm md:text-base"></i>
+                    <button onclick="switchTab('announcements')" class="relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:bg-white/10 transition-all cursor-pointer shrink-0">
+                        <i class="fas fa-bell text-xs md:text-base"></i>
                         <span id="global-notif-badge" class="absolute -top-1 -right-1 md:-top-1.5 md:-right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
                     </button>
 
-                    <!-- Points: Team -->
-                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-3 bg-black/40 md:bg-black/30 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-xl border border-white/5">
-                        <div class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">
-                            <i class="fas fa-trophy text-[9px] sm:text-xs md:text-sm"></i>
+                    <!-- Stats Pill (Unified single container on Mobile | Separate cards on Desktop) -->
+                    <div class="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 gap-2 md:bg-transparent md:border-0 md:p-0 md:gap-3">
+                        <!-- Points: Team -->
+                        <div class="flex items-center gap-1.5 md:gap-3 md:bg-black/30 md:px-4 md:py-2 md:rounded-xl md:border md:border-white/5">
+                            <div class="w-4 h-4 md:w-8 md:h-8 rounded-full bg-yellow-500/15 flex items-center justify-center text-yellow-500 shrink-0">
+                                <i class="fas fa-trophy text-[9px] md:text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-gray-500 uppercase tracking-widest hidden md:block">نقاط الفريق</p>
+                                <p id="stat-team-score" class="font-bold text-white font-mono text-xs md:text-base leading-none">0</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-[8px] md:text-[9px] text-gray-500 uppercase tracking-widest hidden sm:block">نقاط الفريق</p>
-                            <p id="stat-team-score" class="font-bold text-white font-mono text-xs sm:text-sm md:text-base leading-tight">0</p>
+
+                        <span class="w-px h-3.5 bg-white/15 md:hidden"></span>
+
+                        <!-- Points: My -->
+                        <div class="flex items-center gap-1.5 md:gap-3 md:bg-b-primary/10 md:px-4 md:py-2 md:rounded-xl md:border md:border-b-primary/20">
+                            <div class="w-4 h-4 md:w-8 md:h-8 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
+                                <i class="fas fa-star text-[9px] md:text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[9px] text-b-primary uppercase tracking-widest hidden md:block">نقاطي</p>
+                                <p id="my-points" class="font-bold text-white font-mono text-xs md:text-base leading-none">0</p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Points: My -->
-                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-3 bg-b-primary/10 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-xl border border-b-primary/20">
-                        <div class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
-                            <i class="fas fa-star text-[9px] sm:text-xs md:text-sm"></i>
-                        </div>
-                        <div>
-                            <p class="text-[8px] md:text-[9px] text-b-primary uppercase tracking-widest hidden sm:block">نقاطي</p>
-                            <p id="my-points" class="font-bold text-white font-mono text-xs sm:text-sm md:text-base leading-tight">0</p>
-                        </div>
-                    </div>
-
-                    <!-- Main Site Dropdown -->
-                    <div class="relative" id="main-site-nav-dropdown">
-                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
-                            <i class="fas fa-compass text-teal-400 text-xs sm:text-sm"></i>
-                            <span class="hidden sm:inline">المنصة الرئيسية</span>
-                            <i class="fas fa-chevron-down text-[9px] md:text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+                    <!-- Main Site Dropdown (Desktop Only - Mobile accesses site links via Sidebar) -->
+                    <div class="relative hidden md:block" id="main-site-nav-dropdown">
+                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
+                            <i class="fas fa-compass text-teal-400 text-sm"></i>
+                            <span>المنصة الرئيسية</span>
+                            <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
                         </button>
                         <!-- Dropdown Menu -->
                         <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
@@ -858,16 +873,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- Page Footer (Inside Main) -->
-        <footer class="mt-auto pt-6 pb-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-3 w-full shrink-0">
-            <div class="flex items-center gap-2">
-                <img src="../assets/icons/BUSLA-icon.png" class="w-5 h-5 rounded-full opacity-60 grayscale hover:grayscale-0 transition-all">
-                <span class="font-bold text-gray-400">BUSLA LMS &copy; 2026</span>
-                <span class="hidden sm:inline">|</span>
-                <span class="hidden sm:inline">منصة إدارة الفرق التعليمية</span>
-            </div>
-        </footer>
     </main>
 
     <div id="panel-overlay" onclick="closeCreatePostPanel()" class="fixed inset-0 bg-black/80 z-[200] hidden backdrop-blur-sm transition-opacity"></div>
@@ -1565,8 +1570,18 @@
     </div>
 
     <div id="toast-container" class="fixed bottom-6 left-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+    <footer class="fixed bottom-2.5 end-10 z-20 pointer-events-none select-none flex items-center gap-2 text-xs md:text-sm text-gray-500/80">
+        <div class="flex items-center gap-2">
+            <img src="../assets/icons/BUSLA-icon.png" class="w-5 h-5 rounded-full opacity-50 grayscale hover:grayscale-0 transition-all">
+            <span class="font-bold text-gray-400">BUSLA LMS &copy; 2026</span>
+            <span class="hidden md:inline opacity-60">|</span>
+            <span class="hidden md:inline">منصة إدارة الفرق التعليمية</span>
+        </div>
+    </footer>
     <script type="module" src="../js/student-dash.js"></script>
     <script type="module" src="../js/omni-search.js"></script>
+    <script type="module" src="../js/quick-cheatsheets.js"></script>
+    <script type="module" src="../js/pwa-handler.js"></script>
     <script>
     function toggleMainSiteDropdown(e) {
         if (e) e.stopPropagation();

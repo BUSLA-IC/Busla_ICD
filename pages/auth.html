@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوصلة | بوابتك لاحتراف Digital IC Design</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <meta name="theme-color" content="#006A67">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="بوصلة">
+    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/custom-dialogs.js"></script>
@@ -75,7 +81,9 @@
         select.input-glow option { background-color: #000; color: #fff; }
         .gradient-text {
             background: linear-gradient(135deg, #22C45D 0%, #006A67 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         @keyframes pulse-bg { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 1; transform: scale(1.1); } }
     </style>
@@ -736,5 +744,6 @@ try {
     });
 
 </script>
+<script type="module" src="../js/pwa-handler.js"></script>
 </body>
 </html>

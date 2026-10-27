@@ -172,6 +172,78 @@
                 subtitle: 'إنشاء فريق دراسي لمشاريع التخرج أو الدراسة المشتركة',
                 url: `${pathPrefix}pages/create-team.html`,
                 tags: ['تكوين فريق', 'انشاء فريق', 'create team', 'فرق', 'team']
+            },
+            {
+                id: 'cs-all',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'أوامر سريعة',
+                badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+                icon: 'fas fa-terminal',
+                title: 'المراجع السريعة وأوامر الـ EDA (Offline Cheatsheets)',
+                subtitle: 'أوامر Linux, TCL, Verilog, STA, Git بنقرة نسخ واحدة وتعمل بدون إنترنت',
+                cheatsheetCategory: 'all',
+                tags: ['اوامر', 'أوامر', 'مسودات', 'cheatsheet', 'cheatsheets', 'linux', 'tcl', 'verilog', 'sta', 'git', 'eda']
+            },
+            {
+                id: 'cs-linux',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'Linux EDA',
+                badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                icon: 'fab fa-linux',
+                title: 'مسودة أوامر Linux لمهندسي الدوائر الرقمية',
+                subtitle: 'أوامر البحث grep/find وعمليات الخلفية nohup وإدارة تراخيص الـ EDA',
+                cheatsheetCategory: 'linux',
+                tags: ['linux', 'لينكس', 'grep', 'find', 'nohup', 'kill', 'server', 'eda']
+            },
+            {
+                id: 'cs-tcl',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'TCL EDA',
+                badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                icon: 'fas fa-code',
+                title: 'مسودة أوامر TCL لبرامج الـ Synthesis والـ SDC',
+                subtitle: 'أوامر Synopsys Design Compiler و Vivado وقيود التوقيت SDC',
+                cheatsheetCategory: 'tcl',
+                tags: ['tcl', 'synthesis', 'design compiler', 'vivado', 'sdc', 'create_clock', 'report_timing']
+            },
+            {
+                id: 'cs-verilog',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'Verilog RTL',
+                badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+                icon: 'fas fa-microchip',
+                title: 'قواعد ومسودات كود Verilog & SystemVerilog',
+                subtitle: 'قواعد always_ff و always_comb وهيكل 3-Process FSM ومزامنة الساعات CDC',
+                cheatsheetCategory: 'verilog',
+                tags: ['verilog', 'systemverilog', 'fsm', 'always_ff', 'always_comb', 'cdc', 'rtl']
+            },
+            {
+                id: 'cs-sta',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'STA Timing',
+                badgeClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                icon: 'fas fa-stopwatch',
+                title: 'معادلات التحليل الزمني الثابت (STA & Timing Slack)',
+                subtitle: 'معادلات Setup/Hold Slack والـ False Paths ومسارات Multicycle',
+                cheatsheetCategory: 'sta',
+                tags: ['sta', 'timing', 'slack', 'setup', 'hold', 'false_path', 'skew', 'jitter']
+            },
+            {
+                id: 'cs-git',
+                type: 'cheatsheet',
+                category: 'ref',
+                badgeText: 'Git Hardware',
+                badgeClass: 'bg-red-500/20 text-red-400 border-red-500/30',
+                icon: 'fab fa-git-alt',
+                title: 'أوامر Git للفرق الهندسية ومشاريع الـ Tapeout',
+                subtitle: 'إدارة وحدات الـ IP Submodules وتوثيق إصدارات الـ Tapeout Tags وتجاهل ملفات المحاكاة',
+                cheatsheetCategory: 'git',
+                tags: ['git', 'tapeout', 'submodule', 'tag', 'ip', 'release', 'gitignore']
             }
         ];
     }
@@ -728,6 +800,16 @@
                 window.openToolDetailDrawer(item.toolId);
             } else {
                 window.location.href = `${pathPrefix}index.html#tools`;
+            }
+            return;
+        }
+
+        if (item.type === 'cheatsheet') {
+            // Open Quick Cheatsheets drawer with specific category
+            if (typeof window.openQuickCheatsheets === 'function') {
+                window.openQuickCheatsheets(item.cheatsheetCategory || 'all');
+            } else {
+                window.location.href = `${pathPrefix}index.html#references`;
             }
             return;
         }

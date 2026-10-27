@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busla Course Player</title>
     <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <link rel="manifest" href="../manifest.webmanifest">
+    <meta name="theme-color" content="#006A67">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="بوصلة">
+    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/custom-dialogs.js"></script>
@@ -98,6 +104,10 @@
                                 <i class="fas fa-search text-teal-400 text-[10px]"></i>
                                 <span class="hidden sm:inline">بحث</span>
                                 <kbd class="hidden md:inline-block text-[9px] font-mono text-gray-500">Ctrl K</kbd>
+                            </button>
+                            <button onclick="window.openQuickCheatsheets()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-white border border-teal-500/30 text-xs transition-colors cursor-pointer" title="المراجع السريعة وأوامر الـ EDA">
+                                <i class="fas fa-terminal text-teal-400 text-[10px]"></i>
+                                <span class="hidden sm:inline">مراجع وأوامر سريعة</span>
                             </button>
                         </div>
                         <h1 id="header-video-title" class="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight tracking-wide drop-shadow-md">
@@ -479,6 +489,8 @@
     <script type="module" src="../js/tools-drawer.js"></script>
     <script type="module" src="../js/references-drawer.js"></script>
     <script type="module" src="../js/omni-search.js"></script>
+    <script type="module" src="../js/quick-cheatsheets.js"></script>
+    <script type="module" src="../js/pwa-handler.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

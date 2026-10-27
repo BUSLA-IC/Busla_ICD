@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوصلة | بوابتك لاحتراف Digital IC Design</title>
     <link rel="icon" type="image/jpg" href="assets/icons/BUSLA-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#006A67">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="بوصلة">
+    <link rel="apple-touch-icon" href="assets/icons/BUSLA-icon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/custom-dialogs.js"></script>
@@ -123,6 +129,12 @@
                     <kbd class="text-[9px] bg-black/50 px-1.5 py-0.5 rounded border border-white/10 font-mono text-gray-400">Ctrl K</kbd>
                 </button>
 
+                <!-- Quick Cheatsheets Trigger Button -->
+                <button onclick="window.openQuickCheatsheets()" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-white border border-teal-500/30 transition-all text-xs cursor-pointer group" title="الأوامر والمسودات السريعة (Offline)">
+                    <i class="fas fa-terminal text-xs text-teal-400 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">أوامر سريعة</span>
+                </button>
+
                 <div id="nav-auth-section" class="flex items-center gap-4">
                     <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white font-semibold transition-colors text-sm hidden sm:block">
                         تسجيل دخول
@@ -153,7 +165,10 @@
         <a href="#experts" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الخبراء</a>
         <a href="#tools" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الأدوات</a>
         <a href="#references" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المكتبة العلمية</a>
-        <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2">الدورات</a>
+        <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الدورات</a>
+        <button onclick="window.openQuickCheatsheets(); document.getElementById('mobile-menu').classList.add('hidden');" class="mobile-nav-link text-teal-400 hover:text-teal-300 py-2 flex items-center justify-center gap-2">
+            <i class="fas fa-terminal text-xs"></i> <span>الأوامر السريعة (Offline)</span>
+        </button>
         
         <div id="mobile-auth-section" class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
             <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white py-2 text-sm">تسجيل دخول</a>
@@ -411,6 +426,11 @@
                             <p class="text-xs text-gray-400">كتب علمية، أوراق بحثية ومواصفات فنية مصنفة بعناية لدعم دراستك وتدريبك العملي</p>
                         </div>  
                     </div>
+                    <button onclick="window.openQuickCheatsheets()" class="px-4 py-2.5 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-300 hover:text-white border border-teal-500/40 rounded-xl font-bold transition-all text-xs flex items-center gap-2.5 shadow-lg group cursor-pointer" title="فتح المراجع السريعة والأوامر أوفلاين">
+                        <i class="fas fa-terminal text-teal-400 group-hover:rotate-12 transition-transform"></i>
+                        <span>المراجع السريعة وأوامر الـ EDA</span>
+                        <span class="text-[10px] bg-teal-500/20 px-1.5 py-0.5 rounded border border-teal-500/30 font-mono">Cheatsheets</span>
+                    </button>
                 </div>
 
                 <!-- Mobile Filter Toggle Button -->
@@ -618,6 +638,8 @@
         import './js/tools-drawer.js';
         import './js/references-drawer.js';
         import './js/omni-search.js';
+        import './js/pwa-handler.js';
+        import './js/quick-cheatsheets.js';
 
         // Expose to window for inline onclick HTML bindings
         window.supabase = supabase;

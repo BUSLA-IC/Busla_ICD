@@ -16,7 +16,9 @@ const PRECACHE_ASSETS = [
     './assets/icons/BUSLA-icon.png',
     './assets/icons/1.png',
     './js/custom-dialogs.js',
-    './js/omni-search.js'
+    './js/omni-search.js',
+    './js/quick-cheatsheets.js',
+    './js/pwa-handler.js'
 ];
 
 // Domains and endpoints that must NEVER be intercepted by the cache (Always fresh from network)
