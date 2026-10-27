@@ -7,6 +7,16 @@ function getAssetPrefix() {
     return './';
 }
 
+function extractYouTubeId(urlOrId) {
+    if (!urlOrId || typeof urlOrId !== 'string') return '';
+    const str = urlOrId.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(str)) {
+        return str;
+    }
+    const match = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    return (match && match[1]) ? match[1] : '';
+}
+
 // Global variables for canvas state
 let zoomLevel = 1.0;
 let offsetX = 0;
@@ -1352,7 +1362,9 @@ function buildInfoPanelHTML(node) {
 
     if (node.type === 'video') {
         const raw = node.rawItem || {};
-        html += row('الرابط', raw.url ? `<a href="${raw.url}" target="_blank" class="text-cyan-400 hover:underline">رابط ↗</a>` : '—');
+        const ytId = extractYouTubeId(raw.video_id);
+        const vidUrl = raw.url || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : '');
+        html += row('الرابط', vidUrl ? `<a href="${vidUrl}" target="_blank" class="text-cyan-400 hover:underline">رابط ↗</a>` : '—');
         html += row('المدة', node.duration);
         html += row('المؤلف', node.author);
         html += row('الترتيب', raw.order_index ?? '—');
@@ -2230,9 +2242,11 @@ export function renderNodeDetailsPanel(node) {
     else if (node.type === 'video') {
         const mat = node.rawItem || {};
         const isWatched = userProgress.completedMats.has(node.dbId);
-        const youtubeId = mat.video_id || '';
+        const rawVideo = mat.video_id || mat.url || mat.link || '';
+        const youtubeId = extractYouTubeId(rawVideo);
         const assetPrefix = getAssetPrefix();
-        const thumbUrl = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : `${assetPrefix}assets/images/1.jpg`;
+        const thumbUrl = mat.thumbnail_url 
+            || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : `${assetPrefix}assets/images/1.jpg`);
 
         bodyHtml = `
             <!-- Video Thumbnail -->
@@ -2285,8 +2299,10 @@ export function renderNodeDetailsPanel(node) {
                 </a>
             `;
         } else if (currentRole === 'guest') {
-            const extUrl = youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : 'pages/auth.html?mode=signup';
-            const buttonLabel = youtubeId ? 'مشاهدة الدرس على يوتيوب ↗' : 'سجل لمشاهدة الدروس';
+            const extUrl = youtubeId 
+                ? `https://www.youtube.com/watch?v=${youtubeId}` 
+                : (rawVideo && rawVideo.startsWith('http') ? rawVideo : 'pages/auth.html?mode=signup');
+            const buttonLabel = (youtubeId || (rawVideo && rawVideo.startsWith('http'))) ? 'مشاهدة الدرس على يوتيوب ↗' : 'سجل لمشاهدة الدروس';
             actionButtonsHtml += `
                 <a href="${extUrl}" target="_blank" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fab fa-youtube"></i> ${buttonLabel}

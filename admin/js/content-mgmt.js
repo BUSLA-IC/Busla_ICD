@@ -3159,79 +3159,477 @@ window.projectAiEngine = {
     }
 };
 
-window.previewAdminVideo = function() {
-    const videoInput = document.getElementById('f-video-id');
-    const previewWrapper = document.getElementById('admin-video-preview-wrapper');
-    const previewContent = document.getElementById('admin-video-preview-content');
+// ==========================================
+// 🎬 SMART VIDEO METADATA & DURATION ENGINE
+// ==========================================
 
-    if (!videoInput || !previewWrapper || !previewContent) return;
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
-    const source = videoInput.value.trim();
-    if (!source) {
-        window.showToast("برجاء إدخال رابط أو معرف الفيديو أولاً!", "error");
+function extractYouTubeId(source) {
+    if (!source) return null;
+    const str = source.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+    const match = str.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+    if (match && match[1]) return match[1];
+    return null;
+}
+
+function parseISO8601Duration(isoDuration) {
+    if (!isoDuration) return 0;
+    const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return 0;
+    const h = parseInt(match[1] || 0, 10);
+    const m = parseInt(match[2] || 0, 10);
+    const s = parseInt(match[3] || 0, 10);
+    return (h * 3600) + (m * 60) + s;
+}
+
+function formatDurationArabic(seconds) {
+    const s = Math.round(seconds);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const parts = [];
+    if (h > 0) parts.push(`${h} ${h === 1 ? 'ساعة' : (h === 2 ? 'ساعتان' : (h <= 10 ? 'ساعات' : 'ساعة'))}`);
+    if (m > 0) parts.push(`${m} ${m === 1 ? 'دقيقة' : (m === 2 ? 'دقيقتان' : (m <= 10 ? 'دقائق' : 'دقيقة'))}`);
+    if (sec > 0 && h === 0) parts.push(`${sec} ثانية`);
+    return parts.join(' و ') || 'أقل من دقيقة';
+}
+
+function formatMinutesValue(seconds) {
+    if (!seconds || seconds <= 0) return 0;
+    const mins = +(seconds / 60).toFixed(1);
+    return (mins % 1 === 0) ? String(mins) : mins.toFixed(1);
+}
+
+function ensureYouTubeIframeApi(callback) {
+    if (window.YT && window.YT.Player) {
+        if (callback) callback();
         return;
     }
+    const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
+    if (!existing) {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+    }
+    const checkInterval = setInterval(() => {
+        if (window.YT && window.YT.Player) {
+            clearInterval(checkInterval);
+            if (callback) callback();
+        }
+    }, 100);
+    setTimeout(() => clearInterval(checkInterval), 5000);
+}
 
-    // 1. Detect source type
-    let type = 'youtube';
-    let embedUrl = '';
+async function fetchVideoMetadata(source) {
+    if (!source || !source.trim()) return null;
+    const cleanSource = source.trim();
 
-    // Google Drive
-    if (source.includes('drive.google.com') || source.includes('drive.usercontent.google.com')) {
-        const idMatch = source.match(/\/d\/([-\w]{25,})/) || source.match(/id=([-\w]{25,})/);
-        if (idMatch && idMatch[1]) {
-            type = 'drive';
-            embedUrl = `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+    // 1. YouTube
+    const ytId = extractYouTubeId(cleanSource);
+    if (ytId) {
+        let meta = {
+            type: 'youtube',
+            videoId: ytId,
+            title: '',
+            channelTitle: '',
+            durationSec: 0,
+            thumbnail: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
+            embedUrl: `https://www.youtube.com/embed/${ytId}?enablejsapi=1`
+        };
+
+        // Try YouTube Data API v3
+        try {
+            const apiRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${ytId}&key=${YOUTUBE_API_KEY}`);
+            if (apiRes.ok) {
+                const apiData = await apiRes.json();
+                if (apiData.items && apiData.items.length > 0) {
+                    const item = apiData.items[0];
+                    meta.title = item.snippet?.title || '';
+                    meta.channelTitle = item.snippet?.channelTitle || '';
+                    meta.durationSec = parseISO8601Duration(item.contentDetails?.duration);
+                    if (item.snippet?.thumbnails?.high?.url) {
+                        meta.thumbnail = item.snippet.thumbnails.high.url;
+                    }
+                    return meta;
+                }
+            }
+        } catch (apiErr) {
+            console.warn("YouTube Data API fetch failed or restricted:", apiErr);
+        }
+
+        // Fallback: YouTube oEmbed for Title & Author
+        try {
+            const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`);
+            if (oembedRes.ok) {
+                const oembedData = await oembedRes.json();
+                meta.title = oembedData.title || meta.title;
+                meta.channelTitle = oembedData.author_name || meta.channelTitle;
+                if (oembedData.thumbnail_url) meta.thumbnail = oembedData.thumbnail_url;
+            }
+        } catch (oembedErr) {
+            console.warn("YouTube oEmbed fetch failed:", oembedErr);
+        }
+
+        return meta;
+    }
+
+    // 2. Direct Video (mp4, webm, etc.)
+    if (cleanSource.match(/\.(mp4|webm|ogg|m4v)(\?.*)?$/i) || cleanSource.startsWith('blob:')) {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.src = cleanSource;
+            video.onloadedmetadata = () => {
+                const dur = Math.round(video.duration || 0);
+                resolve({
+                    type: 'direct',
+                    videoId: cleanSource,
+                    title: cleanSource.split('/').pop().split('?')[0] || 'فيديو مباشر',
+                    channelTitle: 'فيديو مباشر',
+                    durationSec: dur,
+                    thumbnail: '',
+                    embedUrl: cleanSource
+                });
+            };
+            video.onerror = () => {
+                resolve({
+                    type: 'direct',
+                    videoId: cleanSource,
+                    title: '',
+                    channelTitle: '',
+                    durationSec: 0,
+                    thumbnail: '',
+                    embedUrl: cleanSource
+                });
+            };
+            setTimeout(() => {
+                resolve({
+                    type: 'direct',
+                    videoId: cleanSource,
+                    title: '',
+                    channelTitle: '',
+                    durationSec: 0,
+                    thumbnail: '',
+                    embedUrl: cleanSource
+                });
+            }, 3000);
+        });
+    }
+
+    // 3. Google Drive
+    if (cleanSource.includes('drive.google.com') || cleanSource.includes('drive.usercontent.google.com')) {
+        const idMatch = cleanSource.match(/\/d\/([-\w]{25,})/) || cleanSource.match(/id=([-\w]{25,})/);
+        return {
+            type: 'drive',
+            videoId: idMatch ? idMatch[1] : cleanSource,
+            title: '',
+            channelTitle: 'Google Drive',
+            durationSec: 0,
+            thumbnail: '',
+            embedUrl: idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : cleanSource
+        };
+    }
+
+    return null;
+}
+
+function applyVideoMetadataToForm(meta, notify = true) {
+    if (!meta) return;
+
+    const durInput = document.getElementById('f-duration');
+    const titleInput = document.getElementById('f-title');
+    const badgeEl = document.getElementById('admin-video-meta-badge');
+    const detailsEl = document.getElementById('admin-video-preview-details');
+
+    // 1. Duration in Minutes
+    if (durInput && meta.durationSec > 0) {
+        const minVal = formatMinutesValue(meta.durationSec);
+        durInput.value = minVal;
+        
+        // Highlight animation
+        durInput.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-500/10');
+        setTimeout(() => durInput.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-500/10'), 2500);
+    }
+
+    // 2. Title Auto-population
+    let titleUpdated = false;
+    if (titleInput && meta.title) {
+        if (!titleInput.value || !titleInput.value.trim()) {
+            titleInput.value = meta.title;
+            titleUpdated = true;
+            titleInput.classList.add('ring-2', 'ring-cyan-500', 'bg-cyan-500/10');
+            setTimeout(() => titleInput.classList.remove('ring-2', 'ring-cyan-500', 'bg-cyan-500/10'), 2500);
         }
     }
-    // YouTube URL
-    else if (source.includes('youtube.com') || source.includes('youtu.be')) {
-        type = 'youtube';
-        let ytId = source;
-        if (ytId.includes('v=')) ytId = ytId.split('v=')[1];
-        if (ytId.includes('&')) ytId = ytId.split('&')[0];
-        if (ytId.includes('youtu.be/')) ytId = ytId.split('youtu.be/')[1];
-        if (ytId.includes('embed/')) ytId = ytId.split('embed/')[1];
-        if (ytId.includes('?')) ytId = ytId.split('?')[0];
-        embedUrl = `https://www.youtube.com/embed/${ytId.trim()}`;
-    }
-    // YouTube ID (11 chars)
-    else if (/^[-\w]{11}$/.test(source)) {
-        type = 'youtube';
-        embedUrl = `https://www.youtube.com/embed/${source}`;
-    }
-    // Direct/Other Link
-    else if (source.startsWith('http://') || source.startsWith('https://')) {
-        type = 'direct';
-        embedUrl = source;
-    }
-    // Fallback: assume YouTube ID
-    else {
-        type = 'youtube';
-        embedUrl = `https://www.youtube.com/embed/${source}`;
+
+    // 3. Clean video ID in input if YouTube
+    const videoInput = document.getElementById('f-video-id');
+    if (videoInput && meta.type === 'youtube' && meta.videoId) {
+        if (videoInput.value.trim() !== meta.videoId && videoInput.value.includes('http')) {
+            videoInput.value = meta.videoId;
+        }
     }
 
-    // 2. Render appropriate preview player
-    previewContent.innerHTML = '';
+    // 4. Update Badge below URL input
+    if (badgeEl) {
+        badgeEl.classList.remove('hidden');
+        badgeEl.className = 'text-xs py-2.5 px-4 rounded-xl border transition-all duration-300 bg-teal-500/10 border-teal-500/30 text-teal-300 flex flex-wrap items-center justify-between gap-3';
+        
+        const durText = meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'جاري فحص المدة...';
+        const minsText = meta.durationSec > 0 ? `(${formatMinutesValue(meta.durationSec)} دقيقة)` : '';
+        const titleText = meta.title ? `<strong class="text-white">${escapeHtml(meta.title)}</strong>` : 'فيديو تعليمي';
+        const authorText = meta.channelTitle ? `<span class="text-gray-400">(${escapeHtml(meta.channelTitle)})</span>` : '';
+
+        let badgeHtml = `
+            <div class="flex items-center gap-2 flex-wrap">
+                <i class="fas fa-check-circle text-teal-400"></i>
+                <span>تم جلب البيانات: ${titleText} ${authorText}</span>
+                <span class="text-yellow-400 font-bold mr-2"><i class="fas fa-stopwatch ml-1"></i> ${durText} ${minsText}</span>
+            </div>
+        `;
+
+        if (titleInput && meta.title && !titleUpdated && titleInput.value.trim() !== meta.title) {
+            badgeHtml += `
+                <button type="button" id="btn-use-video-title" class="text-[11px] bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 px-2.5 py-1 rounded-lg border border-teal-500/40 transition-colors">
+                    اعتماد هذا العنوان للدرس ↩
+                </button>
+            `;
+        }
+
+        badgeEl.innerHTML = badgeHtml;
+
+        const useTitleBtn = document.getElementById('btn-use-video-title');
+        if (useTitleBtn) {
+            useTitleBtn.onclick = () => {
+                if (titleInput) {
+                    titleInput.value = meta.title;
+                    titleInput.classList.add('ring-2', 'ring-cyan-500', 'bg-cyan-500/10');
+                    setTimeout(() => titleInput.classList.remove('ring-2', 'ring-cyan-500', 'bg-cyan-500/10'), 2500);
+                    window.showToast("تم اعتماد عنوان الفيديو بنجاح", "success");
+                    useTitleBtn.remove();
+                }
+            };
+        }
+    }
+
+    // 5. Update Preview Details under the player
+    if (detailsEl) {
+        detailsEl.classList.remove('hidden');
+        detailsEl.innerHTML = `
+            <div class="flex items-center justify-between text-gray-300">
+                <span class="font-bold text-white"><i class="fab fa-youtube text-red-500 ml-1"></i> ${escapeHtml(meta.title || 'فيديو يوتيوب')}</span>
+                <span class="text-teal-400 font-mono text-xs"><i class="fas fa-clock ml-1"></i> ${meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'جاري الفحص...'}</span>
+            </div>
+            ${meta.channelTitle ? `<p class="text-[11px] text-gray-400 flex items-center gap-1"><i class="fas fa-user-circle"></i> القناة / المصدر: ${escapeHtml(meta.channelTitle)}</p>` : ''}
+        `;
+    }
+
+    if (notify) {
+        if (meta.durationSec > 0) {
+            window.showToast(`✓ تم جلب مدة الفيديو: ${formatMinutesValue(meta.durationSec)} دقيقة (${formatDurationArabic(meta.durationSec)})`, "success");
+        } else if (meta.title) {
+            window.showToast(`✓ تم استخراج بيانات الفيديو: ${meta.title}`, "info");
+        }
+    }
+}
+
+let currentYtAdminPlayer = null;
+
+function renderVideoPreview(meta) {
+    const previewWrapper = document.getElementById('admin-video-preview-wrapper');
+    const previewContent = document.getElementById('admin-video-preview-content');
+    if (!previewWrapper || !previewContent) return;
+
     previewWrapper.classList.remove('hidden');
+    previewContent.innerHTML = '';
 
-    if (type === 'youtube' || type === 'drive') {
-        const iframe = document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.className = 'w-full h-full border-0';
-        iframe.setAttribute('allow', 'autoplay; encrypted-media');
-        iframe.setAttribute('allowfullscreen', '');
-        previewContent.appendChild(iframe);
-    } else if (type === 'direct') {
+    if (meta.type === 'youtube') {
+        const playerContainer = document.createElement('div');
+        playerContainer.id = 'admin-yt-preview-iframe';
+        playerContainer.className = 'w-full h-full';
+        previewContent.appendChild(playerContainer);
+
+        ensureYouTubeIframeApi(() => {
+            if (window.YT && window.YT.Player) {
+                try {
+                    if (currentYtAdminPlayer && typeof currentYtAdminPlayer.destroy === 'function') {
+                        currentYtAdminPlayer.destroy();
+                    }
+                    currentYtAdminPlayer = new window.YT.Player('admin-yt-preview-iframe', {
+                        videoId: meta.videoId,
+                        playerVars: {
+                            autoplay: 0,
+                            modestbranding: 1,
+                            rel: 0
+                        },
+                        events: {
+                            onReady: (e) => {
+                                const dur = e.target.getDuration();
+                                if (dur && dur > 0 && (!meta.durationSec || meta.durationSec === 0)) {
+                                    meta.durationSec = dur;
+                                    applyVideoMetadataToForm(meta, false);
+                                }
+                                if (e.target.getVideoData) {
+                                    const vData = e.target.getVideoData();
+                                    if (vData && vData.title && !meta.title) {
+                                        meta.title = vData.title;
+                                        applyVideoMetadataToForm(meta, false);
+                                    }
+                                }
+                            },
+                            onStateChange: (e) => {
+                                const dur = e.target.getDuration();
+                                if (dur && dur > 0 && (!meta.durationSec || meta.durationSec === 0)) {
+                                    meta.durationSec = dur;
+                                    applyVideoMetadataToForm(meta, false);
+                                }
+                            }
+                        }
+                    });
+                    return;
+                } catch (ytErr) {
+                    console.warn("Could not init YT.Player:", ytErr);
+                }
+            }
+        });
+
+        // Fallback standard iframe immediately if YT API is taking time or failed
+        setTimeout(() => {
+            if (!currentYtAdminPlayer && previewContent.querySelector('#admin-yt-preview-iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.src = meta.embedUrl;
+                iframe.className = 'w-full h-full border-0';
+                iframe.setAttribute('allow', 'autoplay; encrypted-media');
+                iframe.setAttribute('allowfullscreen', '');
+                previewContent.innerHTML = '';
+                previewContent.appendChild(iframe);
+            }
+        }, 1500);
+
+    } else if (meta.type === 'direct') {
         const video = document.createElement('video');
-        video.src = embedUrl;
+        video.src = meta.embedUrl;
         video.controls = true;
         video.className = 'w-full h-full object-contain';
+        video.onloadedmetadata = () => {
+            if (video.duration && (!meta.durationSec || meta.durationSec === 0)) {
+                meta.durationSec = Math.round(video.duration);
+                applyVideoMetadataToForm(meta, false);
+            }
+        };
         previewContent.appendChild(video);
+    } else if (meta.type === 'drive') {
+        const iframe = document.createElement('iframe');
+        iframe.src = meta.embedUrl;
+        iframe.className = 'w-full h-full border-0';
+        iframe.setAttribute('allow', 'autoplay');
+        iframe.setAttribute('allowfullscreen', '');
+        previewContent.appendChild(iframe);
     } else {
         previewContent.innerHTML = `<p class="text-gray-400 text-sm">عذراً، لم نتمكن من تحديد نوع الرابط للمعاينة.</p>`;
     }
+}
+
+window.fetchAndPreviewAdminVideo = async function(isManual = false, showPreview = true) {
+    const videoInput = document.getElementById('f-video-id');
+    const previewWrapper = document.getElementById('admin-video-preview-wrapper');
+    const previewContent = document.getElementById('admin-video-preview-content');
+    const badgeEl = document.getElementById('admin-video-meta-badge');
+    const fetchBtn = document.getElementById('btn-fetch-video-meta');
+
+    if (!videoInput) return;
+    const source = videoInput.value.trim();
+    if (!source) {
+        if (isManual) window.showToast("برجاء إدخال رابط أو معرف الفيديو أولاً!", "warning");
+        return;
+    }
+
+    if (fetchBtn) {
+        fetchBtn.disabled = true;
+        fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الجلب...</span>';
+    }
+
+    if (badgeEl) {
+        badgeEl.classList.remove('hidden');
+        badgeEl.className = 'text-xs py-2 px-3 rounded-xl border bg-cyan-500/10 border-cyan-500/20 text-cyan-300 flex items-center gap-2';
+        badgeEl.innerHTML = '<i class="fas fa-spinner fa-spin text-cyan-400"></i> <span>جاري فحص الرابط واستخراج المدة والبيانات عبر الـ API...</span>';
+    }
+
+    try {
+        const meta = await fetchVideoMetadata(source);
+        if (meta) {
+            applyVideoMetadataToForm(meta, isManual);
+            
+            if (showPreview && previewWrapper && previewContent) {
+                renderVideoPreview(meta);
+            }
+        } else {
+            if (isManual) window.showToast("لم نتمكن من تحليل هذا الرابط، يمكنك إدخال المدة يدوياً.", "info");
+            if (showPreview && previewWrapper && previewContent) {
+                previewContent.innerHTML = '';
+                previewWrapper.classList.remove('hidden');
+                const iframe = document.createElement('iframe');
+                iframe.src = source.startsWith('http') ? source : `https://www.youtube.com/embed/${source}`;
+                iframe.className = 'w-full h-full border-0';
+                iframe.setAttribute('allow', 'autoplay; encrypted-media');
+                iframe.setAttribute('allowfullscreen', '');
+                previewContent.appendChild(iframe);
+            }
+        }
+    } catch (err) {
+        console.error("Error in fetchAndPreviewAdminVideo:", err);
+        if (isManual) window.showToast("حدث خطأ أثناء جلب بيانات الفيديو: " + err.message, "error");
+    } finally {
+        if (fetchBtn) {
+            fetchBtn.disabled = false;
+            fetchBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>جلب المدة</span>';
+        }
+    }
 };
+
+window.previewAdminVideo = function() {
+    window.fetchAndPreviewAdminVideo(true, true);
+};
+
+function bindVideoMetadataAutoFetch() {
+    const videoInput = document.getElementById('f-video-id');
+    if (!videoInput) return;
+
+    let debounceTimer = null;
+    const triggerFetch = () => {
+        const val = videoInput.value.trim();
+        if (!val) return;
+        window.fetchAndPreviewAdminVideo(false, false);
+    };
+
+    videoInput.addEventListener('paste', () => {
+        setTimeout(() => triggerFetch(), 150);
+    });
+
+    videoInput.addEventListener('change', () => {
+        triggerFetch();
+    });
+
+    videoInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const val = videoInput.value.trim();
+            if (val.length >= 11 && (val.includes('youtu') || /^[-\w]{11}$/.test(val))) {
+                triggerFetch();
+            }
+        }, 800);
+    });
+}
 
 window.cmPreviewTableRow = function(contentId, videoId) {
     const source = videoId.trim();
