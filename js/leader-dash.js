@@ -170,6 +170,7 @@ async function initDashboard(uid) {
         // Initialize JSON fields
         if (!currentTeam.courses_plan) currentTeam.courses_plan = [];
         if (!currentTeam.requests) currentTeam.requests = [];
+        window.currentTeam = currentTeam;
 
         // Fetch team tasks
         const { data: tasksData, error: tasksError } = await supabase
@@ -311,6 +312,7 @@ allData.courses = rawCourses.map(course => {
         })); 
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(allData));
+        window.allData = allData;
         console.log("✅ Data mapped successfully!", allData);
 
     } catch (error) {
@@ -327,6 +329,7 @@ function loadFromCache() {
         try {
             console.log("Loading from Cache...");
             allData = JSON.parse(cached);
+            window.allData = allData;
             
             lookupData = { projects: {}, quizzes: {}, videos: {}, contents: [] }; 
             if (allData.projects) allData.projects.forEach(p => lookupData.projects[String(p.id)] = p);
@@ -524,6 +527,7 @@ function renderOverview() {
     renderTeamOverview(tasks);
     renderActiveCourses(activeIds);
 }
+window.renderOverview = renderOverview;
 
 function renderActiveCourses(activeIds) {
     const container = document.getElementById('active-courses-container');
@@ -531,31 +535,57 @@ function renderActiveCourses(activeIds) {
     
     container.innerHTML = '';
 
-    if (!activeIds || activeIds.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed"><p>No active courses.</p></div>`;
+    // Filter to only valid courses that actually exist in allData.courses
+    const validCourses = (activeIds || []).map(courseId => {
+        const courseData = (allData.courses || []).find(c => String(c.id) === String(courseId) || String(c.course_id) === String(courseId));
+        return courseData ? { ...courseData, originalCourseId: courseId } : null;
+    }).filter(Boolean);
+
+    if (validCourses.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 px-4 bg-white/5 rounded-2xl border border-white/10 border-dashed">
+                <div class="w-10 h-10 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-book-open text-base"></i>
+                </div>
+                <p class="text-gray-300 font-bold text-xs mb-1">لا توجد كورسات مفعّلة حالياً</p>
+                <p class="text-gray-500 text-[11px] mb-3">فعّل الكورسات من شجرة المنهج لتظهر هنا وتتمكن من تعيين المهام منها.</p>
+                <button onclick="window.switchTab('roadmap')" class="bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs px-3 py-1.5 rounded-xl font-bold transition-all inline-flex items-center gap-1.5">
+                    <i class="fas fa-sitemap"></i> استكشاف الشجرة والتفعيل
+                </button>
+            </div>
+        `;
         return;
     }
 
-    activeIds.forEach(courseId => {
-        const courseData = allData.courses.find(c => String(c.id) === String(courseId));
-        const title = courseData ? courseData.title : "Selected Course";
+    validCourses.forEach(courseData => {
+        const courseId = courseData.course_id || courseData.id || courseData.originalCourseId;
+        const title = courseData.title || "كورس بدون عنوان";
         let img = resolveImageUrl(courseData?.image_url, 'course');
 
         const html = `
-            <a href="course-player.html?id=${courseId}" 
-               class="block bg-b-surface border border-white/10 rounded-xl overflow-hidden hover:border-purple-500/50 transition-all group relative mb-4">
+            <div class="bg-b-surface border border-white/10 rounded-xl overflow-hidden hover:border-teal-500/50 transition-all group relative mb-4 shadow-lg">
                 <div class="h-28 overflow-hidden relative">
-                    <img src="${img}" alt="${title}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500">
+                    <img src="${img}" alt="${title}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-b-surface via-transparent to-transparent"></div>
+                    <span class="absolute top-2 right-2 bg-teal-500/95 text-white text-[9px] font-bold px-2 py-0.5 rounded-md border border-white/20 shadow-md">
+                        <i class="fas fa-unlock ml-1"></i> مفعّل للفريق
+                    </span>
                 </div>
                 <div class="p-4 relative -mt-6">
-                    <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white shadow-lg border-2 border-b-surface mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-lg border-2 border-b-surface mb-2">
                         <i class="fas fa-book-open text-sm"></i>
                     </div>
-                    <h4 class="font-bold text-white text-base mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">${title}</h4>
-                    <span class="text-xs text-gray-400">Click to Continue ←</span>
+                    <h4 class="font-bold text-white text-sm mb-2 group-hover:text-teal-400 transition-colors line-clamp-1">${title}</h4>
+                    <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
+                        <button onclick="window.goToCourseAssignments('${courseId}')" class="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-teal-500/20">
+                            <i class="fas fa-tasks text-[11px]"></i> تعيين مهام
+                        </button>
+                        <a href="course-player.html?id=${courseId}" class="bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-1 border border-white/10">
+                            <i class="fas fa-play text-[10px]"></i> فتح
+                        </a>
+                    </div>
                 </div>
-            </a>
+            </div>
         `;
         container.innerHTML += html;
     });
@@ -673,6 +703,21 @@ async function renderTeamOverview(tasks) {
         }
 
         let html = '';
+        const overdueTasks = displayTasks.filter(t => t.isOverdue);
+        if (overdueTasks.length > 0) {
+            html += `
+                <div class="flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 mb-3">
+                    <span class="text-xs text-red-300 font-bold flex items-center gap-1.5">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                        يوجد ${overdueTasks.length} مهام سابقة متأخرة
+                    </span>
+                    <button onclick="window.clearOverdueTasks()" class="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5">
+                        <i class="fas fa-trash-alt text-[10px]"></i> مسح المهام السابقة
+                    </button>
+                </div>
+            `;
+        }
+
         displayTasks.forEach(task => {
             // UI configuration based on type
             let typeConfig = { icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'Video' };
@@ -693,9 +738,8 @@ async function renderTeamOverview(tasks) {
                 statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> Active</span>`;
             }
 
-            // Check if task can be deleted (Lock if students started it)
-            const canDelete = (!task.stats || task.stats.started_count === 0);
             const taskId = task.id || task.task_id;
+            const hasStarted = task.stats && (task.stats.started_count > 0 || task.stats.completed_count > 0);
 
             const hasCourse = task.course_id && String(task.course_id).trim() !== '' && task.course_id !== 'null' && task.course_id !== 'undefined';
             const openBtn = hasCourse ? `
@@ -733,17 +777,11 @@ async function renderTeamOverview(tasks) {
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0 border-r border-white/10 pr-4 mr-2">
-                        ${canDelete ? `
                         <button onclick="event.stopPropagation(); window.unassignTask('${taskId}')" 
                                 class="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all"
-                                title="Delete Task">
+                                title="${hasStarted ? 'حذف المهمة (تنبيه: بدأها بعض الطلاب)' : 'حذف المهمة'}">
                             <i class="fas fa-trash text-xs"></i>
                         </button>
-                        ` : `
-                        <div class="w-8 h-8 flex items-center justify-center text-gray-600 cursor-help" title="Locked (Started by students)">
-                            <i class="fas fa-lock text-xs"></i>
-                        </div>
-                        `}
                         
                         ${openBtn}
                     </div>
@@ -761,7 +799,7 @@ async function renderTeamOverview(tasks) {
 
 
 window.openUnifiedTaskModal = (taskId) => {
-    const task = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
+    const task = (currentTeam?.weekly_tasks || []).find(t => t.task_id === taskId || t.id === taskId);
     if (!task) {
         console.error("Task not found:", taskId);
         return;
@@ -786,39 +824,36 @@ window.openUnifiedTaskModal = (taskId) => {
     updateModalContent(task, details || task, type);
 };
 
-// Delete assigned task with safety checks
+// Delete assigned task with safety checks & confirmation
 window.unassignTask = (taskId) => {
     // 1. Find task in local state
     const task = (window.allTeamTasks || currentTeam?.weekly_tasks || []).find(t => t.id === taskId || t.task_id === taskId);
     
     if (!task) {
-        showToast("Task not found.", "error");
+        showToast("المهمة غير موجودة.", "error");
         return;
     }
 
-    // 2. Prevent deleting past tasks
     const currentWeek = getCurrentWeekCycle();
-    if (task.week_id && task.week_id !== currentWeek.id) {
-        showToast("Cannot delete past tasks.", "error");
-        return;
-    }
+    const isPastTask = task.week_id && task.week_id !== currentWeek.id;
+    const isStarted = task.stats && (task.stats.started_count > 0 || task.stats.completed_count > 0);
 
-    // 3. Prevent deleting if started
-    if (task.stats && (task.stats.started_count > 0 || task.stats.completed_count > 0)) {
-        showToast("Cannot delete: Students have already started.", "error");
-        return;
+    // Dynamic warning message
+    let confirmMessage = `هل أنت متأكد من حذف المهمة "${task.title || ''}"؟`;
+    if (isStarted && isPastTask) {
+        confirmMessage = `تنبيه: هذه مهمة من دورة سابقة وبدأها بعض الطلاب بالفعل (${task.stats.started_count || 1}). هل أنت متأكد من حذفها نهائياً من سجل الفريق؟`;
+    } else if (isStarted) {
+        confirmMessage = `تنبيه: بدأ بعض أعضاء الفريق في هذه المهمة بالفعل. هل أنت متأكد من حذفها؟`;
+    } else if (isPastTask) {
+        confirmMessage = `هذه المهمة من دورة سابقة (متأخرة). هل تريد حذفها من سجل الفريق؟`;
     }
-
-    // 4. Confirmation and Deletion
-    const confirmMessage = "Are you sure you want to delete this task?";
     
     const performDeletion = async () => {
         try {
-            // Fix: Changed table name from 'weekly_tasks' to 'team_tasks'
             const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
             if (error) throw error;
             
-            showToast("Task deleted successfully.", "success");
+            showToast("تم حذف المهمة بنجاح.", "success");
             
             // Update local state
             if (window.allTeamTasks) {
@@ -832,14 +867,58 @@ window.unassignTask = (taskId) => {
             if (typeof renderTeamOverview === 'function') {
                 renderTeamOverview(window.allTeamTasks || currentTeam.weekly_tasks);
             }
+            if (typeof renderAssignments === 'function') {
+                renderAssignments();
+            }
             
         } catch (err) {
             console.error("Delete Task Error:", err);
-            showToast("Failed to delete task.", "error");
+            showToast("فشل حذف المهمة: " + (err.message || ''), "error");
         }
     };
 
     window.showCustomConfirm("تأكيد الحذف", confirmMessage, performDeletion);
+};
+
+// Batch delete all overdue / past tasks for the team
+window.clearOverdueTasks = async () => {
+    const currentWeek = getCurrentWeekCycle();
+    const overdueTasks = (currentTeam?.weekly_tasks || []).filter(t => {
+        const taskDate = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
+        return (taskDate < currentWeek.start && t.week_id !== currentWeek.id) || !t.content_id;
+    });
+
+    if (overdueTasks.length === 0) {
+        showToast("لا توجد مهام متأخرة لحذفها.", "info");
+        return;
+    }
+
+    const ids = overdueTasks.map(t => t.id || t.task_id);
+    window.showCustomConfirm(
+        "مسح المهام السابقة والمتأخرة",
+        `هل أنت متأكد من رغبتك في حذف ${overdueTasks.length} من المهام السابقة المتأخرة نهائياً من سجل الفريق؟`,
+        async () => {
+            try {
+                const { error } = await supabase.from('team_tasks').delete().in('id', ids);
+                if (error) throw error;
+
+                showToast(`تم مسح ${ids.length} مهمة بنجاح.`, "success");
+                
+                if (window.allTeamTasks) {
+                    window.allTeamTasks = window.allTeamTasks.filter(t => !ids.includes(t.id) && !ids.includes(t.task_id));
+                }
+                if (currentTeam && currentTeam.weekly_tasks) {
+                    currentTeam.weekly_tasks = currentTeam.weekly_tasks.filter(t => !ids.includes(t.id) && !ids.includes(t.task_id));
+                }
+                
+                renderTeamOverview(window.allTeamTasks || currentTeam.weekly_tasks);
+                if (typeof renderAssignments === 'function') renderAssignments();
+            } catch (err) {
+                console.error("Clear overdue error:", err);
+                showToast("فشل مسح المهام: " + (err.message || ''), "error");
+            }
+        }
+    );
 };
 
 
@@ -967,93 +1046,180 @@ window.showDetails = (type, id, parentTitle = "") => {
 };
 
 window.toggleActivate = async (id, isChecked) => {
-    if(!currentTeam.courses_plan) currentTeam.courses_plan = [];
+    if (!currentTeam) return;
+    if (!currentTeam.courses_plan) currentTeam.courses_plan = [];
     
+    const idStr = String(id);
     if (isChecked) {
-        if (!currentTeam.courses_plan.includes(id)) currentTeam.courses_plan.push(id);
+        if (!currentTeam.courses_plan.map(String).includes(idStr)) {
+            currentTeam.courses_plan.push(idStr);
+        }
     } else {
-        currentTeam.courses_plan = currentTeam.courses_plan.filter(x => x !== id);
+        currentTeam.courses_plan = currentTeam.courses_plan.filter(x => String(x) !== idStr);
     }
+    window.currentTeam = currentTeam;
 
-    renderRoadmapTree();
+    // Refresh views immediately
+    if (typeof window.refreshRoadmapCourseNodes === 'function') {
+        window.refreshRoadmapCourseNodes();
+    }
+    if (typeof window.refreshRoadmapNodeDetails === 'function') {
+        window.refreshRoadmapNodeDetails();
+    }
     renderOverview();
     renderAssignments();
     
     const detailBtn = document.getElementById('course-toggle-btn');
-    if(detailBtn) detailBtn.checked = isChecked;
+    if (detailBtn) detailBtn.checked = isChecked;
 
     try {
         const { error } = await supabase
             .from('teams')
             .update({ courses_plan: currentTeam.courses_plan })
-            .eq('id', currentTeam.team_id);
+            .eq('id', currentTeam.team_id || currentTeam.id);
 
         if (error) throw error;
 
         if (isChecked) {
-            showToast("Activated", "success");
+            showToast("تم تفعيل الكورس للفريق بنجاح", "success");
         } else {
-            showToast("Deactivated", "info");
+            showToast("تم إلغاء تفعيل الكورس للفريق", "info");
         }
     } catch (e) {
         console.error("Sync Error:", e);
-        showToast("Sync Error: " + e.message, "error");
+        showToast("خطأ في مزامنة التفعيل: " + e.message, "error");
     }
 };
 
+window.leaderToggleCourseActivation = async (id, isChecked) => {
+    await window.toggleActivate(id, isChecked);
+};
+
+window.goToCourseAssignments = async (courseId) => {
+    if (!courseId) return;
+    const cIdStr = String(courseId);
+
+    // 1. Ensure the course is active for the team
+    if (currentTeam) {
+        if (!currentTeam.courses_plan) currentTeam.courses_plan = [];
+        if (!currentTeam.courses_plan.map(String).includes(cIdStr)) {
+            await window.toggleActivate(cIdStr, true);
+        }
+    }
+
+    // 2. Switch to assignments tab
+    if (typeof window.switchTab === 'function') {
+        window.switchTab('assignments');
+    }
+
+    // 3. Render assignments list
+    renderAssignments();
+
+    // 4. Select this course and load its content
+    setTimeout(() => {
+        window.loadAssignContent(cIdStr);
+        const card = document.getElementById(`course-card-${cIdStr}`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 120);
+};
 
 // ==========================================
 // 7. TASK ASSIGNMENTS & PUBLISHING
 // ==========================================
 function renderAssignments() {
     const list = document.getElementById('assign-courses-list');
-    const activeIds = currentTeam.courses_plan || [];
+    if (!list) return;
+
+    const activeIds = currentTeam?.courses_plan || [];
     
     if (activeIds.length === 0) {
-        list.innerHTML = `<p class="text-center text-gray-500 text-xs py-10">Activate courses from roadmap first.</p>`;
+        list.innerHTML = `
+            <div class="text-center py-12 px-4 bg-white/5 rounded-2xl border border-white/10 border-dashed">
+                <div class="w-12 h-12 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-sitemap text-xl"></i>
+                </div>
+                <h4 class="text-white font-bold text-sm mb-1">لا توجد كورسات مفعّلة حالياً</h4>
+                <p class="text-gray-400 text-xs leading-relaxed mb-4">فعّل الكورسات من شجرة المنهج لتظهر هنا وتتمكن من تحديد ونشر المهام الأسبوعية للفريق.</p>
+                <button onclick="window.switchTab('roadmap')" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold transition-all inline-flex items-center gap-2 shadow-lg shadow-teal-500/20">
+                    <i class="fas fa-map-signs"></i> الانتقال لشجرة المنهج وتفعيل كورس
+                </button>
+            </div>
+        `;
         return;
     }
 
-    const activeItems = allData.courses.filter(c => activeIds.includes(String(c.id)));
+    const activeItems = (allData.courses || []).filter(c => 
+        activeIds.map(String).includes(String(c.id)) || 
+        activeIds.map(String).includes(String(c.course_id))
+    );
     
+    if (activeItems.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-10 px-4 text-gray-500 text-xs">
+                <p>لم يتم العثور على بيانات الكورسات المفعّلة.</p>
+            </div>
+        `;
+        return;
+    }
+
     list.innerHTML = activeItems.map(item => {
         const stats = [];
-        if(item.real_video_count) stats.push(`${item.real_video_count} Videos`);
+        if (item.real_video_count) stats.push(`${item.real_video_count} درس`);
         const subInfo = stats.length > 0 ? stats.join(' • ') : (item.module_time || '');
-        const itemId = String(item.id);
+        const itemId = String(item.id || item.course_id);
 
         return `
         <div id="course-card-${itemId}" onclick="window.loadAssignContent('${itemId}')" 
-             class="course-card bg-white/5 p-3 rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 hover:border-b-primary transition-all group mb-2 relative overflow-hidden">
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-b-primary opacity-0 transition-opacity active-indicator"></div>
+             class="course-card bg-white/5 p-3.5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 hover:border-teal-500/50 transition-all group mb-2.5 relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-teal-400 opacity-0 transition-opacity active-indicator"></div>
             <div class="min-w-0">
-                <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-sm text-white truncate max-w-[80%]">${item.title}</h4>
-                    <span class="text-[9px] text-gray-500 bg-black/20 px-2 rounded border border-white/5 uppercase">${item.type || 'Course'}</span>
+                <div class="flex justify-between items-start gap-2">
+                    <h4 class="font-bold text-sm text-white group-hover:text-teal-400 transition-colors truncate max-w-[80%]">${item.title}</h4>
+                    <span class="text-[9px] text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded uppercase font-bold">مفعّل</span>
                 </div>
-                ${subInfo ? `<p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1"><i class="far fa-clock"></i> ${subInfo}</p>` : ''}
+                ${subInfo ? `<p class="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1.5"><i class="far fa-clock text-teal-400"></i> ${subInfo}</p>` : ''}
             </div>
         </div>
     `}).join('');
 }
+window.renderAssignments = renderAssignments;
 
 window.loadAssignContent = async (cid) => {
     selectedAssignCourse = cid;
     
     document.querySelectorAll('.course-card').forEach(el => {
-        el.classList.remove('bg-white/10', 'border-b-primary');
+        el.classList.remove('bg-white/10', 'border-teal-500/50');
         el.querySelector('.active-indicator')?.classList.add('opacity-0');
     });
     const activeCard = document.getElementById(`course-card-${cid}`);
-    if(activeCard) {
-        activeCard.classList.add('bg-white/10', 'border-b-primary');
+    if (activeCard) {
+        activeCard.classList.add('bg-white/10', 'border-teal-500/50');
         activeCard.querySelector('.active-indicator')?.classList.remove('opacity-0');
     }
 
     const cont = document.getElementById('assign-content-list');
-    cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;
+    if (!cont) return;
+    cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-teal-400 text-2xl"></i><p class="text-xs text-gray-400 mt-2">جاري تحميل محتوى الكورس...</p></div>`;
     
-    const courseContents = (lookupData.contents || []).filter(c => String(c.course_id) === String(cid));
+    let courseContents = (lookupData.contents || allData.rawContents || []).filter(c => String(c.course_id) === String(cid));
+    if (courseContents.length === 0) {
+        try {
+            const { data } = await supabase.from('course_materials').select('*').eq('course_id', cid).order('order_index', { ascending: true });
+            if (data && data.length > 0) {
+                courseContents = data.map(c => ({
+                    ...c,
+                    id: c.content_id,
+                    content_id: c.content_id,
+                    author: c['Author'],
+                    note: c['Note']
+                }));
+            }
+        } catch(e) {
+            console.error("Fallback materials fetch error:", e);
+        }
+    }
     courseContents.sort((a,b) => (a.order_index || 0) - (b.order_index || 0));
 
     const currentTasks = currentTeam.weekly_tasks || [];
@@ -1194,40 +1360,10 @@ window.publishSelectedTasks = async function() {
     }
 };
 
-window.deleteTask = function(taskId, taskWeekId) {
-    window.showCustomConfirm(
-        "حذف المهمة من السجل",
-        "Are you sure? This task will be removed from team records.",
-        async () => {
-        const currentWeek = getCurrentWeekCycle();
-        if (taskWeekId !== currentWeek.id) {
-            showToast("Cannot delete past tasks (Archived).", "error");
-            return;
-        }
-
-        try {
-            const taskToDelete = currentTeam.weekly_tasks.find(t => t.task_id === taskId);
-            if (taskToDelete && taskToDelete.stats && taskToDelete.stats.started_count > 0) {
-                 showToast("Cannot delete: Students already started.", "error");
-                 return;
-            }
-
-            const { error } = await supabase
-                .from('team_tasks')
-                .delete()
-                .eq('id', taskId);
-
-            if (error) throw error;
-
-            currentTeam.weekly_tasks = currentTeam.weekly_tasks.filter(t => t.task_id !== taskId);
-            showToast("Task deleted", "success");
-            renderOverview(); 
-
-        } catch (error) {
-            console.error("Error deleting task:", error);
-            showToast("Delete failed: " + error.message, "error");
-        }
-    });
+window.deleteTask = function(taskId) {
+    if (typeof window.unassignTask === 'function') {
+        window.unassignTask(taskId);
+    }
 };
 
 window.submitCustomTask = async () => {
@@ -2499,6 +2635,15 @@ window.openTaskDetailsModal = async (taskId) => {
     const modal = document.getElementById('task-details-modal');
     if(!modal) return;
     modal.classList.remove('hidden');
+
+    const actionBtn = document.getElementById('td-modal-action-btn');
+    if (actionBtn) {
+        actionBtn.innerHTML = '<i id="td-modal-action-icon" class="fas fa-times text-lg"></i>';
+        actionBtn.onclick = (e) => {
+            e?.preventDefault();
+            window.closeTaskDetailsModal();
+        };
+    }
     
     const list = document.getElementById('td-members-list');
     list.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>`;

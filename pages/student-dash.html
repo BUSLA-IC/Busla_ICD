@@ -879,7 +879,7 @@ main {
     </div>
 </div>
 
-    <div id="task-details-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="task-details-modal" onclick="if(event.target === this) closeTaskDetailsModal()" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl relative my-8 flex flex-col max-h-[90vh] transform transition-all">
             <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-black to-b-surface rounded-t-2xl shrink-0">
                 <div>
@@ -888,7 +888,7 @@ main {
                     </h3>
                     <p id="td-modal-subtitle" class="text-xs font-mono text-gray-400 mt-1 uppercase tracking-widest bg-white/5 inline-block px-2 py-0.5 rounded border border-white/5">...</p>
                 </div>
-                <button id="td-modal-action-btn" class="text-gray-400 hover:text-white transition-colors w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 shadow-sm">
+                <button id="td-modal-action-btn" onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white transition-colors w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 shadow-sm">
                     <i id="td-modal-action-icon" class="fas fa-times text-lg"></i>
                 </button>
             </div>
@@ -915,6 +915,10 @@ main {
                     </h4>
                     <div id="td-members-list" class="space-y-2"></div>
                 </div>
+            </div>
+
+            <div class="p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
+                <button onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white text-sm transition-colors">إغلاق النافذة</button>
             </div>
         </div>
     </div>
@@ -1459,7 +1463,17 @@ main {
         }
 
         // Global Modal Control Functions
-        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
+        window.closeTaskDetailsModal = () => document.getElementById('task-details-modal')?.classList.add('hidden');
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.closeTaskDetailsModal();
+                if (window.closeWeekModal) window.closeWeekModal();
+                window.closeModal('unified-task-modal');
+                window.closeModal('broadcast-modal');
+            }
+        });
     </script>
 </body>
 </html>

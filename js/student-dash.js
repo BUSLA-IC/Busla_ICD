@@ -784,14 +784,20 @@ function renderActiveCourses(activeIds) {
     
     container.innerHTML = '';
 
-    if (!activeIds || activeIds.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed"><p>No active courses.</p></div>`;
+    // Filter to only valid courses that actually exist in allData.courses
+    const validCourses = (activeIds || []).map(courseId => {
+        const courseData = (allData.courses || []).find(c => String(c.id) === String(courseId) || String(c.course_id) === String(courseId));
+        return courseData ? { ...courseData, originalCourseId: courseId } : null;
+    }).filter(Boolean);
+
+    if (validCourses.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed"><p>لا توجد كورسات مفعّلة حالياً.</p></div>`;
         return;
     }
 
-    activeIds.forEach(courseId => {
-        const courseData = allData.courses.find(c => String(c.id) === String(courseId));
-        const title = courseData ? courseData.title : "Selected Course";
+    validCourses.forEach(courseData => {
+        const courseId = courseData.course_id || courseData.id || courseData.originalCourseId;
+        const title = courseData.title || "كورس بدون عنوان";
         let img = resolveImageUrl(courseData?.image_url, 'course');
 
         const html = `
@@ -806,7 +812,7 @@ function renderActiveCourses(activeIds) {
                         <i class="fas fa-book-open text-sm"></i>
                     </div>
                     <h4 class="font-bold text-white text-base mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">${title}</h4>
-                    <span class="text-xs text-gray-400">Click to Continue ←</span>
+                    <span class="text-xs text-gray-400">انقر للمتابعة ←</span>
                 </div>
             </a>
         `;

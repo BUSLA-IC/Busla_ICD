@@ -897,8 +897,8 @@ function renderHtmlNodes() {
         let typeClass = `node-${node.type}`;
         let lockedClass = (node.status === 'locked' && currentRole === 'student') ? 'node-locked' : '';
         let collapsedClass = node.isCollapsed ? 'node-collapsed' : '';
-
-        nodeEl.className = `roadmap-node ${typeClass} ${lockedClass} ${collapsedClass}`;
+        let activeClass = (activeNode && activeNode.id === node.id) ? 'node-active-selection' : '';
+        nodeEl.className = `roadmap-node ${typeClass} ${lockedClass} ${collapsedClass} ${activeClass}`.trim();
         nodeEl.style.left = `${node.x}px`;
         nodeEl.style.top = `${node.y}px`;
 
@@ -1142,11 +1142,23 @@ function getNodeInnerHtml(node) {
         // Leader activation indicator check
         let isPlanActive = false;
         if (window.currentTeam && Array.isArray(window.currentTeam.courses_plan)) {
-            isPlanActive = window.currentTeam.courses_plan.includes(String(node.dbId));
+            isPlanActive = window.currentTeam.courses_plan.map(String).includes(String(node.dbId));
         }
 
         const isCollapsed = node.isCollapsed;
         const totalItems = (node.videosCount || 0) + (node.quizzesCount || 0) + (node.projectsCount || 0);
+
+        let leaderToggleBtn = '';
+        if (currentRole === 'leader') {
+            leaderToggleBtn = `
+                <button onclick="event.stopPropagation(); window.leaderToggleCourseActivation('${node.dbId}', ${!isPlanActive})"
+                        title="${isPlanActive ? 'إلغاء تفعيل الكورس للفريق' : 'تفعيل الكورس للفريق'}"
+                        class="inline-flex items-center gap-1 text-[9px] px-2 h-5 rounded font-bold transition-all hover:scale-105 active:scale-95 ${isPlanActive ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-teal-500/20 hover:text-teal-300 hover:border-teal-500/30'}">
+                    <i class="fas ${isPlanActive ? 'fa-unlock' : 'fa-lock'} text-[8px]"></i>
+                    <span>${isPlanActive ? 'مفعّل' : 'تفعيل'}</span>
+                </button>
+            `;
+        }
 
         return `
             <div class="flex items-center justify-between gap-2 mb-2">
@@ -1160,8 +1172,8 @@ function getNodeInnerHtml(node) {
                         </button>
                     ` : ''}
                 </div>
-                <div class="flex items-center">
-                    ${isPlanActive ? `<span class="inline-flex items-center justify-center bg-teal-500/10 text-teal-400 text-[9px] px-1.5 h-5 rounded border border-teal-500/25 ml-2 font-bold leading-none"><i class="fas fa-unlock ml-1"></i> مفعل</span>` : ''}
+                <div class="flex items-center gap-1">
+                    ${leaderToggleBtn}
                     ${statusBadge}
                 </div>
             </div>
@@ -2155,7 +2167,50 @@ export function renderNodeDetailsPanel(node) {
         // Check if course plan is active
         let isPlanActive = false;
         if (window.currentTeam && Array.isArray(window.currentTeam.courses_plan)) {
-            isPlanActive = window.currentTeam.courses_plan.includes(String(node.dbId));
+            isPlanActive = window.currentTeam.courses_plan.map(String).includes(String(node.dbId));
+        }
+
+        let leaderBoxHtml = '';
+        if (currentRole === 'leader') {
+            leaderBoxHtml = `
+                <!-- Leader Team Course Management Section -->
+                <div class="bg-gradient-to-r from-teal-500/15 via-emerald-500/10 to-transparent border border-teal-500/30 p-4 rounded-2xl mb-6 text-right shadow-lg">
+                    <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-teal-500/20">
+                        <span class="text-xs font-bold text-teal-300 flex items-center gap-2">
+                            <i class="fas fa-users-cog text-sm"></i> إدارة الكورس للفريق
+                        </span>
+                        <span class="text-[10px] px-2.5 py-0.5 rounded-full font-black ${isPlanActive ? 'bg-teal-500/25 text-teal-300 border border-teal-500/40 shadow-sm' : 'bg-gray-500/20 text-gray-400 border border-white/10'}">
+                            ${isPlanActive ? '<i class="fas fa-check-circle ml-1"></i> مفعّل للفريق' : 'غير مفعّل'}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed mb-4">
+                        ${isPlanActive 
+                            ? 'هذا الكورس مفعّل حالياً لفريقك ويظهر في لوحة الكورسات النشطة وقائمة تعيين المهام.' 
+                            : 'فعّل هذا الكورس ليتاح لأعضاء فريقك وتتمكن من تحديد ونشر المهام الأسبوعية منه.'}
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${isPlanActive ? `
+                            <button onclick="window.leaderToggleCourseActivation('${node.dbId}', false)"
+                                    class="w-full bg-red-500/15 hover:bg-red-500/25 text-red-300 hover:text-white border border-red-500/30 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                                <i class="fas fa-lock"></i> إلغاء تفعيل الكورس
+                            </button>
+                            <button onclick="window.goToCourseAssignments('${node.dbId}')"
+                                    class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2 text-xs">
+                                <i class="fas fa-tasks"></i> تعيين مهام للفريق
+                            </button>
+                        ` : `
+                            <button onclick="window.leaderToggleCourseActivation('${node.dbId}', true)"
+                                    class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2 text-xs">
+                                <i class="fas fa-unlock"></i> تفعيل الكورس للفريق
+                            </button>
+                            <button onclick="window.goToCourseAssignments('${node.dbId}')"
+                                    class="w-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                                <i class="fas fa-tasks text-teal-400"></i> تفعيل وتعيين مهام
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
         }
 
         const assetPrefix = getAssetPrefix();
@@ -2171,6 +2226,8 @@ export function renderNodeDetailsPanel(node) {
             <h2 class="text-2xl font-black text-white leading-tight font-heading mb-4 text-right">${node.title}</h2>
             <p class="text-sm text-gray-300 leading-relaxed text-right mb-6">${node.description || 'لا يوجد وصف مضاف حالياً لهذا الكورس.'}</p>
             
+            ${leaderBoxHtml}
+
             <div class="grid grid-cols-2 gap-2 text-xs mb-6">
                 <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm"><i class="fas fa-chalkboard-teacher"></i></div>
@@ -2252,6 +2309,13 @@ export function renderNodeDetailsPanel(node) {
                     <i class="fas fa-play"></i> فتح الكورس والتعلم
                 </a>
             `;
+            if (currentRole === 'leader') {
+                actionButtonsHtml += `
+                    <button onclick="window.goToCourseAssignments('${node.dbId}')" class="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-tasks"></i> تعيين مهام للفريق
+                    </button>
+                `;
+            }
         } else if (currentRole === 'guest') {
             const extUrl = course.playlist_url || 'pages/auth.html?mode=signup';
             const buttonLabel = course.playlist_url ? 'مشاهدة الدورة على يوتيوب ↗' : 'سجل للتعلم مجاناً';
@@ -2397,6 +2461,13 @@ export function renderNodeDetailsPanel(node) {
                     <i class="fas fa-play"></i> تشغيل الفيديو المباشر
                 </a>
             `;
+            if (currentRole === 'leader' && node.courseId) {
+                actionButtonsHtml += `
+                    <button onclick="window.goToCourseAssignments('${node.courseId}')" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm border border-white/20">
+                        <i class="fas fa-tasks text-teal-400"></i> تعيين مهام من الكورس
+                    </button>
+                `;
+            }
         } else if (currentRole === 'guest') {
             const extUrl = youtubeId 
                 ? `https://www.youtube.com/watch?v=${youtubeId}` 
@@ -2459,6 +2530,13 @@ export function renderNodeDetailsPanel(node) {
                     <i class="fas fa-pencil-alt"></i> ابدأ الاختبار الآن
                 </a>
             `;
+            if (currentRole === 'leader' && node.courseId) {
+                actionButtonsHtml += `
+                    <button onclick="window.goToCourseAssignments('${node.courseId}')" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm border border-white/20">
+                        <i class="fas fa-tasks text-teal-400"></i> تعيين مهام من الكورس
+                    </button>
+                `;
+            }
         } else if (currentRole === 'guest') {
             actionButtonsHtml += `
                 <a href="pages/auth.html?mode=signup" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
@@ -2538,6 +2616,13 @@ export function renderNodeDetailsPanel(node) {
                     <i class="fas fa-upload"></i> تسليم المشروع العملي
                 </a>
             `;
+            if (currentRole === 'leader' && node.courseId) {
+                actionButtonsHtml += `
+                    <button onclick="window.goToCourseAssignments('${node.courseId}')" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm border border-white/20">
+                        <i class="fas fa-tasks text-teal-400"></i> تعيين مهام من الكورس
+                    </button>
+                `;
+            }
         } else if (currentRole === 'guest') {
             actionButtonsHtml += `
                 <a href="pages/auth.html?mode=signup" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
@@ -2743,6 +2828,73 @@ async function loadRoadmapNodeTools(node) {
 window.closeRoadmapDetailsPanel = function() {
     renderNodeDetailsPanel(null);
 };
+
+window.refreshRoadmapNodeDetails = function() {
+    if (activeNode) {
+        renderNodeDetailsPanel(activeNode);
+    }
+};
+
+window.refreshRoadmapCourseNodes = function() {
+    computedNodes.forEach(node => {
+        if (node.type === 'course') {
+            const nodeEl = document.getElementById(`node-${node.id}`);
+            if (nodeEl) {
+                let collapseBtn = '';
+                const hasMaterials = currentGraphData && currentGraphData.materials.some(m => m.course_id === node.dbId);
+                const hasRelated = currentGraphData && currentGraphData.courses.some(c => c.related_with === node.dbId);
+                if (hasMaterials) {
+                    const icon = node.isCollapsed ? 'fa-list' : 'fa-chevron-right';
+                    const tip = node.isCollapsed ? 'عرض الدروس والمحتويات' : 'إخفاء الدروس والمحتويات';
+                    const color = node.isCollapsed ? '#9ca3af' : 'var(--color-course)';
+                    const bg = node.isCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(34,196,93,0.15)';
+                    const border = node.isCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(34,196,93,0.3)';
+                    collapseBtn += `
+                        <button class="roadmap-collapse-btn" data-node-id="${node.id}" title="${tip}" onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
+                            style="position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;
+                                   background:${bg};border:${border};
+                                   display:flex;align-items:center;justify-content:center;cursor:pointer;
+                                   color:${color};font-size:9px;z-index:10;transition:all 0.2s">
+                            <i class="fas ${icon}"></i>
+                        </button>`;
+                }
+                if (hasRelated) {
+                    const icon = node.isRelatedCollapsed ? 'fa-sitemap' : 'fa-chevron-left';
+                    const tip = node.isRelatedCollapsed ? 'عرض الكورسات المرتبطة' : 'إخفاء الكورسات المرتبطة';
+                    const color = node.isRelatedCollapsed ? '#9ca3af' : 'var(--color-track)';
+                    const bg = node.isRelatedCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(0,245,255,0.15)';
+                    const border = node.isRelatedCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,245,255,0.3)';
+                    collapseBtn += `
+                        <button class="roadmap-collapse-related-btn" data-node-id="${node.id}" title="${tip}" onclick="event.stopPropagation(); window._roadmapToggleRelatedCollapse('${node.id}')"
+                            style="position:absolute;top:6px;left:30px;width:20px;height:20px;border-radius:50%;
+                                   background:${bg};border:${border};
+                                   display:flex;align-items:center;justify-content:center;cursor:pointer;
+                                   color:${color};font-size:9px;z-index:10;transition:all 0.2s">
+                            <i class="fas ${icon}"></i>
+                        </button>`;
+                }
+                const infoBtn = `
+                    <button class="rm-info-btn" title="عرض التفاصيل"
+                            onclick="event.stopPropagation(); window._rmShowInfo('${node.id}')"
+                            style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
+                                   background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
+                                   display:flex;align-items:center;justify-content:center;cursor:pointer;
+                                   color:#9ca3af;font-size:9px;z-index:10;transition:all 0.2s">
+                        <i class="fas fa-circle-info"></i>
+                    </button>`;
+                nodeEl.innerHTML = collapseBtn + infoBtn + getNodeInnerHtml(node);
+            }
+        }
+    });
+};
+
+if (!window.leaderToggleCourseActivation) {
+    window.leaderToggleCourseActivation = async (courseId, isChecked) => {
+        if (typeof window.toggleActivate === 'function') {
+            await window.toggleActivate(courseId, isChecked);
+        }
+    };
+}
 
 window.selectRoadmapNodeById = (nodeId) => {
     const node = computedNodes.find(n => n.id === nodeId);
