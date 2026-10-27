@@ -195,6 +195,14 @@
         window.showCustomConfirm("تأكيد الإجراء", message, callback, null, 'danger');
     };
 
+    // Support confirmAction (Promise-based confirm)
+    window.confirmAction = function (message, title = "تأكيد الإجراء", type = 'danger') {
+        if (typeof window.showCustomConfirm === 'function') {
+            return window.showCustomConfirm(title, message, null, null, type);
+        }
+        return Promise.resolve(window.confirm ? window.confirm(message) : true);
+    };
+
     // Disable synchronous window.confirm with alert reminder
     window.confirm = function (message) {
         console.warn("Native confirm() is disabled on this platform. Message was: ", message);

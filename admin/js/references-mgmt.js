@@ -719,8 +719,9 @@ async function duplicateReference(refId) {
     const ref = allReferences.find(r => r.id === refId);
     if (!ref) return;
 
-    const confirm = window.confirmDialog || window.confirm;
-    const isApproved = confirm ? await window.confirmAction(`هل ترغب في إنشاء نسخة مكررة من المرجع "${ref.title}"؟`) : true;
+    const isApproved = window.showCustomConfirm
+        ? await window.showCustomConfirm("تكرار المرجع", `هل ترغب في إنشاء نسخة مكررة من المرجع "${ref.title}"؟`, null, null, 'info')
+        : (window.confirmAction ? await window.confirmAction(`هل ترغب في إنشاء نسخة مكررة من المرجع "${ref.title}"؟`, "تكرار المرجع", 'info') : true);
     if (!isApproved) return;
 
     // Clone ref fields
@@ -772,7 +773,9 @@ async function deleteReference(refId) {
     const ref = allReferences.find(r => r.id === refId);
     if (!ref) return;
 
-    const isApproved = await window.confirmAction(`⚠️ تحذير: هل أنت متأكد من رغبتك في حذف المرجع "${ref.title}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`);
+    const isApproved = window.showCustomConfirm
+        ? await window.showCustomConfirm("حذف المرجع", `⚠️ تحذير: هل أنت متأكد من رغبتك في حذف المرجع "${ref.title}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, null, null, 'danger')
+        : (window.confirmAction ? await window.confirmAction(`⚠️ تحذير: هل أنت متأكد من رغبتك في حذف المرجع "${ref.title}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, "حذف المرجع", 'danger') : true);
     if (!isApproved) return;
 
     try {

@@ -830,8 +830,8 @@ async function generateFormFields(data = null) {
     const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-b-primary outline-none transition-colors dir-rtl text-right";
     const labelStyle = "text-xs text-gray-400 mb-1 font-bold block dir-rtl text-right";
     
-    // دالة مساعدة لإنشاء الخيارات
-    const buildOpts = (items, valKey, textKey, selectedVal) => items.map(i => `<option value="${i[valKey]}" ${String(i[valKey]) === String(selectedVal) ? 'selected' : ''}>${i[textKey]}</option>`).join('');
+    // دالة مساعدة لإنشاء الخيارات (تتجاهل السجلات ذات المعرفات الفارغة)
+    const buildOpts = (items, valKey, textKey, selectedVal) => items.filter(i => i && i[valKey] !== undefined && i[valKey] !== null && String(i[valKey]).trim() !== '').map(i => `<option value="${i[valKey]}" ${String(i[valKey]) === String(selectedVal) ? 'selected' : ''}>${i[textKey]}</option>`).join('');
 
     // --- اكتشاف المسار العكسي (لتسهيل التعديل) ---
     let initTrack = '', initPhase = '', initCourse = '', initContent = '';
@@ -1119,9 +1119,11 @@ function bindModalCascading(hData) {
     if(tSel) tSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-track';
-        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>';
+        const optDefault = pSel && pSel.id === 'f-phase-id' 
+            ? '<option value="">-- اختر المرحلة --</option>' 
+            : (isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>');
         if(pSel) {
-            pSel.innerHTML = optDefault + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
+            pSel.innerHTML = optDefault + hData.phases.filter(x => x.phase_id && (!v || String(x.track_id) === String(v))).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
             pSel.value = "";
             pSel.dispatchEvent(new Event('change'));
         }
@@ -1130,9 +1132,11 @@ function bindModalCascading(hData) {
     if(pSel) pSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-phase';
-        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : (cSel && cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>');
+        const optDefault = cSel && cSel.id === 'f-course-id'
+            ? '<option value="">-- اختر الكورس --</option>'
+            : (isFilter ? '<option value="">-- الكل --</option>' : (cSel && cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>'));
         if(cSel) {
-            cSel.innerHTML = optDefault + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
+            cSel.innerHTML = optDefault + hData.courses.filter(x => x.course_id && (!v || String(x.phase_id) === String(v))).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
             cSel.value = "";
             cSel.dispatchEvent(new Event('change'));
         }
@@ -1163,6 +1167,17 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('cm-btn-save');
     const originalText = btn.innerHTML;
+
+    // التحقق المسبق من الحقول الإجبارية وإظهار تنبيه لطيف إذا كان هناك حقل ناقص
+    const reqFields = Array.from(document.querySelectorAll('#cm-form-fields [required]'));
+    for (const f of reqFields) {
+        if (!f.value || !f.value.trim()) {
+            const label = f.closest('div')?.querySelector('label')?.innerText.replace('*', '').trim() || 'أحد الحقول المطلوبة';
+            window.showToast(`يرجى تحديد أو إدخال: ${label}`, 'warning');
+            return;
+        }
+    }
+
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
     btn.disabled = true;
 
@@ -1208,7 +1223,9 @@ async function handleFormSubmit(e) {
 
         let insertedId = cmCurrentEditId;
 
-        if (cmCurrentEditId) {
+        const isEditing = cmCurrentEditId !== null && cmCurrentEditId !== undefined && cmCurrentEditId !== '';
+
+        if (isEditing) {
             const { error } = await supabase.from(cmCurrentLevel).update(payload).eq(pk, cmCurrentEditId);
             if (error) throw error;
         } else {
@@ -1416,28 +1433,44 @@ function showCustomDeleteModal(level, itemName) {
 
 // Helpers for cascading deletes
 
+// Helpers for cascading deletes
+
 async function deleteQuizCascade(quizId) {
     if (!quizId) return;
     // 1. attempts
-    await supabase.from('quiz_attempts').delete().eq('quiz_id', quizId);
+    const { error: errAttempts } = await supabase.from('quiz_attempts').delete().eq('quiz_id', quizId);
+    if (errAttempts) console.warn("Could not delete quiz_attempts:", errAttempts);
+
     // 2. states
-    await supabase.from('active_quiz_states').delete().eq('quiz_id', quizId);
+    const { error: errStates } = await supabase.from('active_quiz_states').delete().eq('quiz_id', quizId);
+    if (errStates) console.warn("Could not delete active_quiz_states:", errStates);
+
     // 3. questions
-    await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+    const { error: errQuestions } = await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+    if (errQuestions) throw errQuestions;
+
     // 4. remove references in course_materials
-    await supabase.from('course_materials').update({ ref_quiz_id: null }).eq('ref_quiz_id', quizId);
+    const { error: errMat } = await supabase.from('course_materials').update({ ref_quiz_id: null }).eq('ref_quiz_id', quizId);
+    if (errMat) console.warn("Could not unlink ref_quiz_id from course_materials:", errMat);
+
     // 5. delete quiz
-    await supabase.from('quizzes').delete().eq('quiz_id', quizId);
+    const { error: errQuiz } = await supabase.from('quizzes').delete().eq('quiz_id', quizId);
+    if (errQuiz) throw errQuiz;
 }
 
 async function deleteProjectCascade(projectId) {
     if (!projectId) return;
     // 1. submissions
-    await supabase.from('project_submissions').delete().eq('project_id', projectId);
+    const { error: errSub } = await supabase.from('project_submissions').delete().eq('project_id', projectId);
+    if (errSub) console.warn("Could not delete project_submissions:", errSub);
+
     // 2. remove references in course_materials
-    await supabase.from('course_materials').update({ ref_project_id: null }).eq('ref_project_id', projectId);
+    const { error: errMat } = await supabase.from('course_materials').update({ ref_project_id: null }).eq('ref_project_id', projectId);
+    if (errMat) console.warn("Could not unlink ref_project_id from course_materials:", errMat);
+
     // 3. delete project
-    await supabase.from('projects').delete().eq('id', projectId);
+    const { error: errProj } = await supabase.from('projects').delete().eq('id', projectId);
+    if (errProj) throw errProj;
 }
 
 async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true, deleteProject: true }) {
@@ -1447,36 +1480,58 @@ async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true,
     const { data: material } = await supabase.from('course_materials')
         .select('ref_quiz_id, ref_project_id')
         .eq('content_id', contentId)
-        .single();
+        .maybeSingle();
         
     if (material) {
         // 1. completed_materials
-        await supabase.from('completed_materials').delete().eq('material_id', contentId);
+        const { error: errComp } = await supabase.from('completed_materials').delete().eq('material_id', contentId);
+        if (errComp) console.warn("Could not delete completed_materials:", errComp);
+
         // 2. team_tasks
-        await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
+        const { error: errTasks } = await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
+        if (errTasks) console.warn("Could not unlink team_tasks content_id:", errTasks);
+
+        // 3. curriculum_documents
+        try {
+            await supabase.from('curriculum_documents').delete().eq('lesson_id', contentId);
+        } catch (_) {}
         
-        // 3. Delete linked quiz if requested
+        // 4. Delete linked quiz if requested
         if (selections.deleteQuiz && material.ref_quiz_id) {
             await deleteQuizCascade(material.ref_quiz_id);
         }
         
-        // 4. Delete linked project if requested
+        // 5. Delete linked project if requested
         if (selections.deleteProject && material.ref_project_id) {
             await deleteProjectCascade(material.ref_project_id);
         }
     }
     
-    // 5. Delete the material itself
-    await supabase.from('course_materials').delete().eq('content_id', contentId);
+    // 6. Delete the material itself
+    const { error: delMatErr } = await supabase.from('course_materials').delete().eq('content_id', contentId);
+    if (delMatErr) throw delMatErr;
 }
 
 async function deleteCourseCascade(courseId, selections = { deleteMaterials: true, deleteQuizzes: true, deleteProjects: true }) {
     if (!courseId) return;
     
-    // 1. Always delete enrollments and completed_materials referencing this course
-    await supabase.from('enrollments').delete().eq('course_id', courseId);
-    await supabase.from('completed_materials').delete().eq('course_id', courseId);
+    // 1. Unlink other courses that reference this course (e.g. related_with)
+    await supabase.from('courses').update({ related_with: null }).eq('related_with', courseId);
+
+    // 2. Delete enrollments and completed_materials referencing this course
+    const { error: errEnroll } = await supabase.from('enrollments').delete().eq('course_id', courseId);
+    if (errEnroll) console.warn("Could not delete enrollments directly:", errEnroll);
+
+    const { error: errComp } = await supabase.from('completed_materials').delete().eq('course_id', courseId);
+    if (errComp) console.warn("Could not delete completed_materials directly:", errComp);
+
+    // 3. Unlink team_tasks
     await supabase.from('team_tasks').update({ course_id: null }).eq('course_id', courseId);
+
+    // 4. Delete curriculum_documents linked to this course
+    try {
+        await supabase.from('curriculum_documents').delete().eq('course_id', courseId);
+    } catch (_) {}
     
     if (selections.deleteMaterials) {
         // Find materials
@@ -1489,6 +1544,9 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
             // Delete completed_materials for these
             await supabase.from('completed_materials').delete().in('material_id', matIds);
             await supabase.from('team_tasks').update({ content_id: null }).in('content_id', matIds);
+            try {
+                await supabase.from('curriculum_documents').delete().in('lesson_id', matIds);
+            } catch (_) {}
             
             // Delete quizzes if checked
             if (selections.deleteQuizzes) {
@@ -1507,19 +1565,27 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
             }
             
             // Delete materials
-            await supabase.from('course_materials').delete().eq('course_id', courseId);
+            const { error: delMatErr } = await supabase.from('course_materials').delete().eq('course_id', courseId);
+            if (delMatErr) throw delMatErr;
         }
     } else {
         // Just unlink them
-        await supabase.from('course_materials').update({ course_id: null }).eq('course_id', courseId);
+        const { error: unlinkMatErr } = await supabase.from('course_materials').update({ course_id: null }).eq('course_id', courseId);
+        if (unlinkMatErr) throw unlinkMatErr;
     }
     
-    // Delete the course
-    await supabase.from('courses').delete().eq('course_id', courseId);
+    // 5. Delete the course itself
+    const { error: delCourseErr } = await supabase.from('courses').delete().eq('course_id', courseId);
+    if (delCourseErr) throw delCourseErr;
 }
 
 async function deletePhaseCascade(phaseId, selections = { deleteCourses: true }) {
     if (!phaseId) return;
+
+    // 1. Delete curriculum_documents linked to this phase
+    try {
+        await supabase.from('curriculum_documents').delete().eq('phase_id', phaseId);
+    } catch (_) {}
     
     if (selections.deleteCourses) {
         const { data: courses } = await supabase.from('courses')
@@ -1533,15 +1599,22 @@ async function deletePhaseCascade(phaseId, selections = { deleteCourses: true })
         }
     } else {
         // Unlink courses
-        await supabase.from('courses').update({ phase_id: null }).eq('phase_id', phaseId);
+        const { error: unlinkErr } = await supabase.from('courses').update({ phase_id: null }).eq('phase_id', phaseId);
+        if (unlinkErr) throw unlinkErr;
     }
     
     // Delete phase
-    await supabase.from('phases').delete().eq('phase_id', phaseId);
+    const { error: delPhaseErr } = await supabase.from('phases').delete().eq('phase_id', phaseId);
+    if (delPhaseErr) throw delPhaseErr;
 }
 
 async function deleteTrackCascade(trackId, selections = { deletePhases: true }) {
     if (!trackId) return;
+
+    // 1. Delete curriculum_documents linked to this track
+    try {
+        await supabase.from('curriculum_documents').delete().eq('track_id', trackId);
+    } catch (_) {}
     
     if (selections.deletePhases) {
         const { data: phases } = await supabase.from('phases')
@@ -1555,11 +1628,13 @@ async function deleteTrackCascade(trackId, selections = { deletePhases: true }) 
         }
     } else {
         // Unlink phases
-        await supabase.from('phases').update({ track_id: null }).eq('track_id', trackId);
+        const { error: unlinkErr } = await supabase.from('phases').update({ track_id: null }).eq('track_id', trackId);
+        if (unlinkErr) throw unlinkErr;
     }
     
     // Delete track
-    await supabase.from('tracks').delete().eq('id', trackId);
+    const { error: delTrackErr } = await supabase.from('tracks').delete().eq('id', trackId);
+    if (delTrackErr) throw delTrackErr;
 }
 
 window.cmDeleteItem = async (id) => {
@@ -1603,7 +1678,8 @@ window.cmDeleteItem = async (id) => {
         loadTableData();
     } catch (err) {
         console.error("Delete Error:", err);
-        window.showToast("حدث خطأ أثناء عملية الحذف: " + err.message, "error");
+        const detailMsg = err.details || err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+        window.showToast("فشل الحذف: " + detailMsg, "error");
     }
 };
 
@@ -1962,7 +2038,15 @@ const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 se
         // تجاهل القوائم التي تم تحويلها مسبقاً
         if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-ui')) return;
 
-        select.style.display = 'none'; // إخفاء القائمة الأصلية
+        // إخفاء القائمة الأصلية بطريقة آمنة لا تعطل تركيز المتصفح أو الـ HTML5 validation
+        select.style.position = 'absolute';
+        select.style.opacity = '0';
+        select.style.pointerEvents = 'none';
+        select.style.width = '1px';
+        select.style.height = '1px';
+        select.style.margin = '0';
+        select.style.padding = '0';
+        select.style.border = 'none';
 
         const ui = document.createElement('div');
         ui.className = 'custom-select-ui relative w-full dir-rtl text-right';

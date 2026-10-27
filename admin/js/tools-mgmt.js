@@ -612,8 +612,9 @@ async function duplicateTool(toolId) {
     const tool = allTools.find(t => t.id === toolId);
     if (!tool) return;
 
-    const confirm = window.confirmDialog || window.confirm;
-    const isApproved = confirm ? await window.confirmAction(`هل ترغب في إنشاء نسخة مكررة من الأداة "${tool.name}"؟`) : true;
+    const isApproved = window.showCustomConfirm
+        ? await window.showCustomConfirm("تكرار الأداة", `هل ترغب في إنشاء نسخة مكررة من الأداة "${tool.name}"؟`, null, null, 'info')
+        : (window.confirmAction ? await window.confirmAction(`هل ترغب في إنشاء نسخة مكررة من الأداة "${tool.name}"؟`, "تكرار الأداة", 'info') : true);
     if (!isApproved) return;
 
     // Clone tool fields
@@ -665,7 +666,9 @@ async function deleteTool(toolId) {
     const tool = allTools.find(t => t.id === toolId);
     if (!tool) return;
 
-    const isApproved = await window.confirmAction(`⚠️ تحذير: هل أنت متأكد من رغبتك في حذف الأداة "${tool.name}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`);
+    const isApproved = window.showCustomConfirm
+        ? await window.showCustomConfirm("حذف الأداة", `⚠️ تحذير: هل أنت متأكد من رغبتك في حذف الأداة "${tool.name}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, null, null, 'danger')
+        : (window.confirmAction ? await window.confirmAction(`⚠️ تحذير: هل أنت متأكد من رغبتك في حذف الأداة "${tool.name}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, "حذف الأداة", 'danger') : true);
     if (!isApproved) return;
 
     try {
