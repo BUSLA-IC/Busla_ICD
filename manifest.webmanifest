@@ -1,0 +1,72 @@
+{
+  "name": "منصة بوصلة | Busla ICD",
+  "short_name": "بوصلة - Busla",
+  "description": "المنصة العربية الرائدة لاحتراف وتدريب هندسة وتصميم الدوائر المتكاملة Digital IC Design",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#006A67",
+  "dir": "rtl",
+  "lang": "ar",
+  "categories": ["education", "engineering", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icons/BUSLA-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/BUSLA-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "لوحة الطالب",
+      "short_name": "لوحتي",
+      "description": "الوصول المباشر إلى لوحة تحكم الطالب والمهام",
+      "url": "./pages/student-dash.html",
+      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "المسار التعليمي",
+      "short_name": "المسار",
+      "description": "استعراض شجرة ومراحل تخصص الـ Digital IC Design",
+      "url": "./index.html#roadmap",
+      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "المكتبة العلمية",
+      "short_name": "المكتبة",
+      "description": "تصفح المراجع والكتب وأوراق البحث",
+      "url": "./index.html#references",
+      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "أدوات التصميم EDA",
+      "short_name": "الأدوات",
+      "description": "أدوات المحاكاة والتصميم البرمجية",
+      "url": "./index.html#tools",
+      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "مشغل الدورات",
+      "short_name": "المشغل",
+      "description": "متابعة مشاهدة الدروس والمحاضرات",
+      "url": "./pages/course-player.html",
+      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+    }
+  ]
+}
