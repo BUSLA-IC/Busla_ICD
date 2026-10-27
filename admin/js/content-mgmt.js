@@ -1225,30 +1225,45 @@ async function generateFormFields(data = null) {
                     </div>
                 </div>
 
-                <!-- Video URL & Live Preview -->
+                <!-- Video URL & Live Preview & Auto Metadata -->
                 <div class="md:col-span-3 bg-black/30 border border-white/5 rounded-2xl p-5 space-y-4">
-                    <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
-                        <i class="fab fa-youtube"></i>
-                        <span>رابط الفيديو أو مصدر المحتوى التعليمي</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                            <i class="fab fa-youtube"></i>
+                            <span>رابط الفيديو ومصدر المحتوى التعليمي</span>
+                        </div>
+                        <span class="text-[11px] text-teal-400/90 font-medium flex items-center gap-1.5 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20">
+                            <i class="fas fa-magic text-teal-400"></i> جلب المدة والبيانات تلقائياً عبر API
+                        </span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                        <div class="md:col-span-9">
+                        <div class="md:col-span-8">
                             <label class="${labelStyle}">رابط الفيديو أو معرف اليوتيوب (Video URL / ID)</label>
-                            <input type="text" id="f-video-id" placeholder="مثال: dQw4w9WgXcQ أو رابط يوتيوب أو جوجل درايف أو رابط فيديو مباشر" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
+                            <input type="text" id="f-video-id" placeholder="مثال: https://www.youtube.com/watch?v=... أو معرف الفيديو" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
                         </div>
-                        <div class="md:col-span-3">
-                            <button type="button" onclick="window.previewAdminVideo()" class="w-full bg-b-primary/10 hover:bg-b-primary/20 border border-b-primary/30 text-b-primary font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm">
-                                <i class="fas fa-play-circle text-base"></i>
-                                <span>معاينة الفيديو</span>
+                        <div class="md:col-span-4 flex gap-2">
+                            <button type="button" id="btn-fetch-video-meta" onclick="window.fetchAndPreviewAdminVideo(true, false)" class="flex-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm text-xs">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                                <span>جلب المدة</span>
+                            </button>
+                            <button type="button" onclick="window.previewAdminVideo()" class="flex-1 bg-b-primary/10 hover:bg-b-primary/20 border border-b-primary/30 text-b-primary font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm text-xs">
+                                <i class="fas fa-play-circle text-sm"></i>
+                                <span>معاينة</span>
                             </button>
                         </div>
                     </div>
-                    <div id="admin-video-preview-wrapper" class="hidden bg-black/80 border border-white/10 rounded-2xl p-4 transition-all duration-300">
-                        <div class="flex justify-between items-center mb-3">
+
+                    <!-- Live Metadata Detection Badge -->
+                    <div id="admin-video-meta-badge" class="hidden text-xs py-2.5 px-4 rounded-xl border transition-all duration-300"></div>
+
+                    <!-- Video Preview Screen -->
+                    <div id="admin-video-preview-wrapper" class="hidden bg-black/80 border border-white/10 rounded-2xl p-4 transition-all duration-300 space-y-3">
+                        <div class="flex justify-between items-center mb-1">
                             <span class="text-xs font-bold text-gray-300 flex items-center gap-2"><i class="fas fa-tv text-teal-400"></i> شاشة المعاينة الفورية</span>
                             <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-400 hover:text-red-400 text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">إغلاق المعاينة <i class="fas fa-times ml-1"></i></button>
                         </div>
                         <div id="admin-video-preview-content" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-white/10 shadow-inner"></div>
+                        <div id="admin-video-preview-details" class="hidden p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs space-y-1.5"></div>
                     </div>
                 </div>
 
@@ -1259,7 +1274,10 @@ async function generateFormFields(data = null) {
                         <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
                     </div>
                     <div>
-                        <label class="${labelStyle}">المدة بالدقائق (Duration in Minutes)</label>
+                        <label class="${labelStyle} flex items-center justify-between">
+                            <span>المدة بالدقائق (Duration in Minutes)</span>
+                            <span class="text-[10px] text-teal-400 font-normal">تلقائي من الفيديو</span>
+                        </label>
                         <input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}">
                     </div>
                     <div>
@@ -1594,6 +1612,11 @@ async function generateFormFields(data = null) {
 
     container.innerHTML = html;
     bindModalCascading(hData); // تفعيل الفلاتر المتسلسلة داخل المودال
+
+    // 💡 تفعيل الجلب التلقائي الذكي لبيانات الفيديو ومدته
+    if (cmCurrentLevel === 'course_materials') {
+        bindVideoMetadataAutoFetch();
+    }
 }
 
 // 💡 دالة الفلترة المتسلسلة الديناميكية داخل المودال
