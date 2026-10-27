@@ -283,39 +283,42 @@ function renderLeaderboard(items, isSearchMode = false) {
             `;
         }
 
-        let rowStyles = "hover:bg-white/5 border-r-4 border-r-transparent";
-        let rankDisplay = `<span class="text-gray-500 font-black text-xl">#${actualRank}</span>`;
+        let rowStyles = "hover:bg-white/[0.04] transition-all duration-200 border-r-4 border-r-transparent";
+        let rankDisplay = `<span class="text-gray-400 font-black text-base sm:text-lg font-mono">#${actualRank}</span>`;
 
         // لا نميز الأوائل في وضع البحث لكي يبقى التصميم مرتباً
         if (!isSearchMode) {
             if (actualRank === 1) {
-                rowStyles = "bg-yellow-500/10 border-r-4 border-r-yellow-500 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]";
-                rankDisplay = `<i class="fas fa-crown text-yellow-500 text-3xl drop-shadow-md"></i>`;
+                rowStyles = "bg-gradient-to-l from-amber-500/15 via-amber-500/5 to-transparent border-r-4 border-amber-400 shadow-[inset_0_0_25px_rgba(245,158,11,0.08)] hover:bg-amber-500/20";
+                rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-crown text-amber-400 text-2xl drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] animate-pulse"></i><span class="text-[10px] font-black text-amber-400 mt-0.5 font-mono">#1</span></div>`;
             } else if (actualRank === 2) {
-                rowStyles = "bg-gray-400/10 border-r-4 border-r-gray-400";
-                rankDisplay = `<i class="fas fa-medal text-gray-300 text-3xl drop-shadow-md"></i>`;
+                rowStyles = "bg-gradient-to-l from-slate-400/10 via-slate-400/5 to-transparent border-r-4 border-slate-300 hover:bg-slate-400/15";
+                rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-medal text-slate-300 text-2xl drop-shadow-[0_0_10px_rgba(203,213,225,0.6)]"></i><span class="text-[10px] font-black text-slate-300 mt-0.5 font-mono">#2</span></div>`;
             } else if (actualRank === 3) {
-                rowStyles = "bg-orange-500/10 border-r-4 border-r-orange-500";
-                rankDisplay = `<i class="fas fa-award text-orange-400 text-3xl drop-shadow-md"></i>`;
+                rowStyles = "bg-gradient-to-l from-amber-700/15 via-amber-700/5 to-transparent border-r-4 border-amber-600 hover:bg-amber-700/20";
+                rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-award text-amber-600 text-2xl drop-shadow-[0_0_10px_rgba(217,119,6,0.6)]"></i><span class="text-[10px] font-black text-amber-600 mt-0.5 font-mono">#3</span></div>`;
             } else if (isMe) {
-                rowStyles = "bg-b-primary/10 border-r-4 border-r-b-primary";
+                rowStyles = "bg-gradient-to-l from-teal-500/20 via-teal-500/10 to-transparent border-r-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
             }
         } else if (isMe) {
-            rowStyles = "bg-b-primary/10 border-r-4 border-r-b-primary";
+            rowStyles = "bg-gradient-to-l from-teal-500/20 via-teal-500/10 to-transparent border-r-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
         }
+
+        const youBadge = isMe ? `<span class="bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-black px-2 py-0.5 rounded-full mr-1.5 shadow-sm">أنت</span>` : '';
 
         html += `
         <div class="flex items-center px-4 sm:px-6 py-4 transition-all ${rowStyles}">
-            <div class="w-12 sm:w-16 text-center">${rankDisplay}</div>
+            <div class="w-14 sm:w-16 text-center shrink-0">${rankDisplay}</div>
             
-            <div class="flex-1 flex items-center gap-4 pr-4 border-l border-white/5 pl-4">
-                <img src="${avatar}" class="w-12 h-12 rounded-xl object-cover bg-black border border-white/10 shadow-md shrink-0">
+            <div class="flex-1 flex items-center gap-3 sm:gap-4 pr-3 sm:pr-4 border-l border-white/5 pl-4 min-w-0">
+                <img src="${avatar}" class="w-12 h-12 rounded-2xl object-cover bg-black border border-white/10 shadow-md shrink-0">
                 <div class="min-w-0 flex flex-col justify-center">
-                    <div class="flex items-center gap-2 mb-1">
-                        <h4 class="font-bold text-white text-base leading-tight truncate">${name}</h4>
+                    <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <h4 class="font-bold text-white text-sm sm:text-base leading-tight truncate max-w-[180px] sm:max-w-none" title="${name}">${name}</h4>
+                        ${youBadge}
                         ${roleBadge}
                     </div>
-                    <div class="sm:hidden">${contextHTML}</div>
+                    <div class="sm:hidden mt-0.5">${contextHTML}</div>
                 </div>
             </div>
             
@@ -323,13 +326,15 @@ function renderLeaderboard(items, isSearchMode = false) {
                 ${contextHTML}
             </div>
             
-            <div class="hidden md:flex w-48 flex-col justify-center text-right px-2 border-l border-white/5 pl-4">
+            <div class="hidden md:flex w-44 flex-col justify-center text-right px-2 border-l border-white/5 pl-4">
                 ${badgeHTML}
             </div>
             
-            <div class="w-24 text-left pl-2">
-                <span class="text-xl sm:text-2xl font-black text-white font-mono">${points}</span>
-                <span class="text-xs text-yellow-500 block font-bold">XP</span>
+            <div class="w-28 text-left pl-2 shrink-0">
+                <div class="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl w-fit mr-auto shadow-sm">
+                    <i class="fas fa-bolt text-amber-400 text-xs"></i>
+                    <span class="text-amber-400 text-sm sm:text-base font-mono font-black">${points} XP</span>
+                </div>
             </div>
         </div>
         `;
@@ -342,12 +347,52 @@ function renderLeaderboard(items, isSearchMode = false) {
 function renderPodium(top3, container) {
     if (!container || top3.length === 0) return;
     
-    const orderedTop3 = [top3[1], top3[0], top3[2]];
+    // Ordered: 2nd place (right in RTL), 1st place (center), 3rd place (left in RTL)
+    const orderedTop3 = [top3[1] || null, top3[0] || null, top3[2] || null];
     
     const positions = [
-        { rank: 2, height: 'h-32 sm:h-40', color: 'from-gray-400/20 to-gray-600/50', border: 'border-gray-400', badge: 'text-gray-300' },
-        { rank: 1, height: 'h-40 sm:h-48', color: 'from-yellow-400/20 to-yellow-600/50', border: 'border-yellow-400', badge: 'text-yellow-300' },
-        { rank: 3, height: 'h-24 sm:h-32', color: 'from-orange-400/20 to-orange-700/50', border: 'border-orange-500', badge: 'text-orange-400' }
+        { 
+            rank: 2, 
+            title: 'الوصيف',
+            placeholder: 'المركز الثاني شاغر',
+            height: 'h-36 sm:h-44', 
+            ring: 'ring-4 ring-slate-300/80 shadow-[0_0_25px_rgba(203,213,225,0.4)]', 
+            border: 'border-slate-300', 
+            badgeBg: 'bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 text-slate-900',
+            pedestalBg: 'bg-gradient-to-t from-slate-900/80 via-slate-700/30 to-slate-400/40 border-t-2 border-x border-slate-300/50 shadow-[0_0_30px_rgba(203,213,225,0.15)]',
+            rim: 'bg-gradient-to-r from-transparent via-slate-200 to-transparent',
+            numColor: 'text-slate-300/30',
+            labelColor: 'text-slate-300',
+            icon: '<i class="fas fa-medal text-slate-300 text-2xl absolute -top-8 drop-shadow-[0_0_12px_rgba(203,213,225,0.7)]"></i>'
+        },
+        { 
+            rank: 1, 
+            title: 'البطل الأول',
+            placeholder: 'المركز الأول شاغر',
+            height: 'h-48 sm:h-56', 
+            ring: 'ring-4 ring-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.6)]', 
+            border: 'border-amber-400', 
+            badgeBg: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 text-black',
+            pedestalBg: 'bg-gradient-to-t from-amber-950/80 via-amber-600/30 to-amber-400/50 border-t-2 border-x border-amber-400/70 shadow-[0_0_45px_rgba(245,158,11,0.3)]',
+            rim: 'bg-gradient-to-r from-transparent via-amber-300 to-transparent',
+            numColor: 'text-amber-400/30',
+            labelColor: 'text-amber-300',
+            icon: '<i class="fas fa-crown text-amber-400 text-3xl sm:text-4xl absolute -top-11 animate-bounce drop-shadow-[0_0_20px_rgba(245,158,11,0.9)]"></i>'
+        },
+        { 
+            rank: 3, 
+            title: 'المركز الثالث',
+            placeholder: 'المركز الثالث شاغر',
+            height: 'h-28 sm:h-36', 
+            ring: 'ring-4 ring-amber-700/80 shadow-[0_0_25px_rgba(217,119,6,0.4)]', 
+            border: 'border-amber-600', 
+            badgeBg: 'bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 text-amber-100',
+            pedestalBg: 'bg-gradient-to-t from-amber-950/80 via-amber-800/30 to-amber-700/40 border-t-2 border-x border-amber-600/50 shadow-[0_0_30px_rgba(217,119,6,0.15)]',
+            rim: 'bg-gradient-to-r from-transparent via-amber-500 to-transparent',
+            numColor: 'text-amber-700/30',
+            labelColor: 'text-amber-500',
+            icon: '<i class="fas fa-award text-amber-600 text-2xl absolute -top-8 drop-shadow-[0_0_12px_rgba(217,119,6,0.7)]"></i>'
+        }
     ];
 
     let html = '';
@@ -355,7 +400,26 @@ function renderPodium(top3, container) {
         const pos = positions[idx];
         
         if (!item) {
-            html += `<div class="w-1/3 flex flex-col justify-end items-center"><div class="w-full ${pos.height} bg-white/5 rounded-t-2xl"></div></div>`;
+            html += `
+            <div class="w-1/3 flex flex-col items-center justify-end relative px-1 max-w-[220px]">
+                <div class="relative mb-3 flex flex-col items-center">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-white/20 bg-white/[0.02] flex flex-col items-center justify-center text-gray-500 backdrop-blur-sm shadow-inner">
+                        <i class="fas fa-lock text-gray-600 text-sm mb-1"></i>
+                        <span class="text-[9px] text-gray-500 font-bold">شاغر</span>
+                    </div>
+                    <div class="absolute -bottom-2.5 w-7 h-7 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-xs font-black text-gray-500 font-mono shadow">
+                        ${pos.rank}
+                    </div>
+                </div>
+                
+                <span class="text-xs text-gray-500 font-bold mb-1 truncate w-full text-center">${pos.placeholder}</span>
+                <span class="text-[10px] text-gray-600 mb-3 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5 font-semibold">متاح للمنافسة</span>
+
+                <div class="w-full ${pos.height} bg-gradient-to-t from-white/[0.01] to-white/[0.04] rounded-t-3xl relative flex flex-col items-center justify-start pt-4 border-t border-x border-white/10 border-dashed backdrop-blur-sm">
+                    <span class="text-3xl sm:text-5xl font-black text-white/5 font-mono select-none">${pos.rank}</span>
+                </div>
+            </div>
+            `;
             return;
         }
 
@@ -367,29 +431,36 @@ function renderPodium(top3, container) {
         if (currentType === 'students') {
             const isLeader = item.role === 'leader';
             roleBadge = isLeader 
-                ? `<div class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit"><i class="fas fa-crown ml-1 text-[8px]"></i>قائد</div>`
-                : `<div class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit"><i class="fas fa-user ml-1 text-[8px]"></i>طالب</div>`;
+                ? `<div class="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-crown text-[8px]"></i><span>قائد</span></div>`
+                : `<div class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-user-graduate text-[8px]"></i><span>طالب</span></div>`;
         }
 
+        const avatarSize = pos.rank === 1 ? 'w-20 h-20 sm:w-28 sm:h-28' : 'w-16 h-16 sm:w-22 sm:h-22';
+        const badgeSize = pos.rank === 1 ? 'w-9 h-9 sm:w-11 sm:h-11 text-sm sm:text-base' : 'w-8 h-8 sm:w-9 sm:h-9 text-xs sm:text-sm';
+
         html += `
-        <div class="w-1/3 flex flex-col items-center justify-end relative group px-1">
-            <div class="relative mb-4 flex flex-col items-center">
-                ${pos.rank === 1 ? '<i class="fas fa-crown text-yellow-400 text-3xl absolute -top-10 animate-bounce"></i>' : ''}
-                <div class="w-16 h-16 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr ${pos.color} shadow-2xl relative z-10 transform group-hover:scale-110 transition-transform">
-                    <img src="${avatar}" class="w-full h-full rounded-full object-cover border-4 ${pos.border}">
+        <div class="w-1/3 flex flex-col items-center justify-end relative group px-1 max-w-[240px]">
+            <div class="relative mb-3 flex flex-col items-center">
+                ${pos.icon}
+                <div class="${avatarSize} rounded-full p-1 ${pos.ring} relative z-10 transform group-hover:scale-105 transition-all duration-300 bg-black">
+                    <img src="${avatar}" class="w-full h-full rounded-full object-cover border-2 ${pos.border}">
                 </div>
-                <div class="absolute -bottom-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black border border-white/20 flex items-center justify-center z-20 shadow-lg text-sm sm:text-lg font-black ${pos.badge}">
+                <div class="absolute -bottom-3 ${badgeSize} rounded-full ${pos.badgeBg} border-2 border-black flex items-center justify-center z-20 shadow-xl font-black font-mono">
                     ${pos.rank}
                 </div>
             </div>
             
-            <h4 class="text-white font-bold text-xs sm:text-base text-center truncate w-full px-2 mb-1 drop-shadow-md">${name}</h4>
+            <h4 class="text-white font-bold text-xs sm:text-base text-center truncate w-full px-2 mb-1 drop-shadow-md group-hover:text-amber-400 transition-colors" title="${name}">${name}</h4>
             ${roleBadge}
-            <span class="text-[10px] sm:text-sm font-mono font-bold text-yellow-500 mb-5 bg-black/50 px-3 py-0.5 rounded-full border border-white/5">${points} XP</span>
+            <div class="flex items-center gap-1 bg-black/70 px-3 py-1 rounded-full border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)] mb-3">
+                <i class="fas fa-bolt text-amber-400 text-[10px]"></i>
+                <span class="text-xs sm:text-sm font-mono font-black text-amber-400">${points} XP</span>
+            </div>
 
-            <div class="w-full ${pos.height} bg-gradient-to-t ${pos.color} rounded-t-3xl relative flex items-start justify-center pt-5 border-x border-t border-white/10 backdrop-blur-sm">
-                <div class="absolute inset-0 bg-black/30 rounded-t-3xl"></div>
-                <span class="text-4xl sm:text-6xl font-black text-white/20 relative z-10">${pos.rank}</span>
+            <div class="w-full ${pos.height} ${pos.pedestalBg} rounded-t-3xl relative flex flex-col items-center justify-start pt-4 backdrop-blur-md overflow-hidden">
+                <div class="w-full h-1.5 ${pos.rim} absolute top-0"></div>
+                <span class="text-4xl sm:text-6xl font-black ${pos.numColor} font-mono select-none drop-shadow">${pos.rank}</span>
+                <span class="text-[10px] sm:text-xs font-black tracking-widest ${pos.labelColor} uppercase mt-1 select-none">${pos.title}</span>
             </div>
         </div>
         `;
@@ -433,11 +504,11 @@ window.switchLeaderboardType = (type) => {
     if(searchInput) searchInput.value = '';
     
     if (type === 'students') {
-        btnS.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg";
-        btnT.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold text-gray-500 hover:text-white transition-all";
+        btnS.className = "flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg flex items-center justify-center gap-2";
+        btnT.className = "flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2";
     } else {
-        btnT.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg";
-        btnS.className = "flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold text-gray-500 hover:text-white transition-all";
+        btnT.className = "flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg flex items-center justify-center gap-2";
+        btnS.className = "flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2";
     }
     window.fetchAndRenderLeaderboard();
 };
@@ -448,11 +519,11 @@ window.switchLeaderboardScope = (scope) => {
     if(searchInput) searchInput.value = '';
 
     document.querySelectorAll('.scope-btn').forEach(btn => {
-        btn.className = "scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold text-gray-500 hover:bg-white/5 border border-transparent transition-all";
+        btn.className = "scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center gap-1.5";
     });
     
     const activeBtn = document.getElementById(`scope-${scope}`);
-    if (activeBtn) activeBtn.className = "scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold bg-white/10 text-white border border-white/20 shadow-md transition-all";
+    if (activeBtn) activeBtn.className = "scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold bg-white/15 text-white border border-white/20 shadow-sm transition-all flex items-center gap-1.5";
     
     window.fetchAndRenderLeaderboard();
 };

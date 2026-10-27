@@ -606,94 +606,131 @@ main {
             <div id="team-rank-container" class="max-w-7xl mx-auto"></div>
         </section>
 
-        <section id="leaderboard" class="tab-content hidden animate-fade-in relative min-h-screen pb-20">
-            <div class="relative w-full rounded-3xl overflow-hidden mb-8 shadow-2xl bg-black border border-white/10 flex flex-col md:flex-row">
-                <div class="absolute inset-0 bg-gradient-to-l from-b-primary/10 to-transparent opacity-50"></div>
-                
-                <div class="flex-1 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-l border-white/10 relative z-10">
-                    <span class="text-xs font-bold text-gray-500 tracking-widest uppercase mb-2">ترتيبك العالمي</span>
-                    <h2 id="hero-student-rank" class="text-5xl font-black text-white drop-shadow-lg mb-3">--</h2>
-                    <div class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10 backdrop-blur-sm">
-                        <span id="hero-student-badge" class="text-sm font-bold uppercase">--</span>
-                        <span class="w-1 h-1 rounded-full bg-gray-600 mx-1"></span>
-                        <span id="hero-student-points" class="text-white text-sm font-mono font-bold text-yellow-500">0 XP</span>
+        <section id="leaderboard" class="tab-content hidden animate-fade-in relative min-h-screen pb-24">
+            <!-- Hero Stats Command Deck -->
+            <div class="relative w-full rounded-3xl overflow-hidden mb-8 shadow-2xl bg-gradient-to-br from-[#0c1618] via-[#080d0f] to-[#040607] border border-teal-500/20 flex flex-col md:flex-row group">
+                <!-- Ambient Glowing Orbs -->
+                <div class="absolute -top-20 -right-20 w-80 h-80 bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute inset-0 bg-[radial-gradient(#006A67_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none"></div>
+
+                <!-- Global User Rank -->
+                <div class="flex-1 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-l border-white/10 relative z-10 transition-all">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span class="text-xs font-black text-amber-400/90 tracking-widest uppercase">ترتيبك العالمي</span>
+                    </div>
+                    
+                    <div class="flex items-baseline gap-2 mb-4">
+                        <h2 id="hero-student-rank" class="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 drop-shadow-[0_4px_25px_rgba(245,158,11,0.4)] font-mono">--</h2>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 bg-black/60 px-5 py-2 rounded-2xl border border-amber-500/30 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                        <i class="fas fa-medal text-amber-400 text-sm"></i>
+                        <span id="hero-student-badge" class="text-sm font-bold uppercase tracking-wide">--</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-white/20 mx-1"></span>
+                        <span id="hero-student-points" class="text-amber-400 text-sm font-mono font-black drop-shadow">0 XP</span>
                     </div>
                 </div>
 
-                <div class="flex-1 p-8 flex flex-col items-center justify-center relative z-10 bg-white/[0.02]">
-                    <span class="text-xs font-bold text-gray-500 tracking-widest uppercase mb-2">ترتيب فريقك</span>
-                    <h2 id="hero-team-rank" class="text-5xl font-black text-white drop-shadow-lg mb-3">--</h2>
-                    <div class="flex items-center gap-2 bg-b-primary/10 px-4 py-2 rounded-xl border border-b-primary/20 backdrop-blur-sm">
-                        <span id="hero-team-badge" class="text-sm font-bold uppercase text-b-primary">--</span>
-                        <span class="w-1 h-1 rounded-full bg-b-primary/50 mx-1"></span>
-                        <span id="hero-team-points" class="text-white text-sm font-mono font-bold text-yellow-500">0 XP</span>
+                <!-- Team Rank -->
+                <div class="flex-1 p-8 flex flex-col items-center justify-center relative z-10 bg-white/[0.01] transition-all">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
+                        <span class="text-xs font-black text-teal-400/90 tracking-widest uppercase">ترتيب فريقك</span>
+                    </div>
+                    
+                    <div class="flex items-baseline gap-2 mb-4">
+                        <h2 id="hero-team-rank" class="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-teal-200 via-teal-400 to-emerald-600 drop-shadow-[0_4px_25px_rgba(20,184,166,0.35)] font-mono">--</h2>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 bg-black/60 px-5 py-2 rounded-2xl border border-teal-500/30 backdrop-blur-md shadow-[0_0_20px_rgba(20,184,166,0.15)]">
+                        <i class="fas fa-shield-alt text-teal-400 text-sm"></i>
+                        <span id="hero-team-badge" class="text-sm font-bold uppercase tracking-wide text-teal-300">--</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-teal-500/30 mx-1"></span>
+                        <span id="hero-team-points" class="text-yellow-400 text-sm font-mono font-black drop-shadow">0 XP</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-4 mb-10 bg-black/40 p-2 rounded-2xl border border-white/5">
-                <div class="flex w-full lg:w-auto bg-black p-1 rounded-xl border border-white/10">
-                    <button onclick="window.switchLeaderboardType('students')" id="tab-students" class="flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg">
-                        <i class="fas fa-user-graduate ml-2"></i> الطلاب
+            <!-- Filter Controls Bar -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10 bg-[#0c1417]/90 backdrop-blur-xl p-3 rounded-2xl border border-white/10 shadow-2xl">
+                <!-- Type Toggle: Students vs Teams -->
+                <div class="flex w-full sm:w-auto bg-black/60 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                    <button onclick="window.switchLeaderboardType('students')" id="tab-students" class="flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>الطلاب</span>
                     </button>
-                    <button onclick="window.switchLeaderboardType('teams')" id="tab-teams" class="flex-1 lg:flex-none px-8 py-3 rounded-lg text-sm font-bold text-gray-500 hover:text-white transition-all">
-                        <i class="fas fa-users ml-2"></i> الفرق
+                    <button onclick="window.switchLeaderboardType('teams')" id="tab-teams" class="flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-users"></i>
+                        <span>الفرق</span>
                     </button>
                 </div>
 
-                <div class="flex w-full lg:w-auto gap-2 bg-black p-1 rounded-xl border border-white/10 overflow-x-auto custom-scroll">
-                    <button onclick="window.switchLeaderboardScope('global')" id="scope-global" class="scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold bg-white/10 text-white border border-white/20">
-                        عالمي 🌍
+                <!-- Scope Switcher: Global / University / Governorate -->
+                <div class="flex w-full sm:w-auto gap-1.5 bg-black/60 p-1.5 rounded-xl border border-white/10 overflow-x-auto custom-scroll">
+                    <button onclick="window.switchLeaderboardScope('global')" id="scope-global" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold bg-white/15 text-white border border-white/20 shadow-sm transition-all flex items-center gap-1.5">
+                        <span>عالمي</span> <span>🌍</span>
                     </button>
-                    <button onclick="window.switchLeaderboardScope('university')" id="scope-university" class="scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold text-gray-500 hover:bg-white/5 border border-transparent">
-                        جامعتي 🎓
+                    <button onclick="window.switchLeaderboardScope('university')" id="scope-university" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center gap-1.5">
+                        <span>جامعتي</span> <span>🎓</span>
                     </button>
-                    <button onclick="window.switchLeaderboardScope('governorate')" id="scope-governorate" class="scope-btn whitespace-nowrap px-5 py-3 rounded-lg text-xs font-bold text-gray-500 hover:bg-white/5 border border-transparent">
-                        محافظتي 📍
+                    <button onclick="window.switchLeaderboardScope('governorate')" id="scope-governorate" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center gap-1.5">
+                        <span>محافظتي</span> <span>📍</span>
                     </button>
                 </div>
             </div>
 
-            <div id="podium-container" class="flex justify-center items-end gap-2 sm:gap-6 mb-12 min-h-[260px] pt-10"></div>
+            <!-- 3D Champion Podium Container -->
+            <div id="podium-container" class="flex justify-center items-end gap-3 sm:gap-6 mb-12 min-h-[300px] pt-12 px-2"></div>
 
-            <div class="mb-1 relative w-full max-w-2xl mx-auto">
+            <!-- Search Bar -->
+            <div class="mb-6 relative w-full max-w-2xl mx-auto">
                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-500"></i>
+                    <i class="fas fa-search text-gray-400 text-sm"></i>
                 </div>
                 <input type="text" id="leaderboard-search" onkeyup="window.filterLeaderboardSearch()" 
                        placeholder="ابحث بالاسم، الفريق، أو الجامعة..." 
-                       class="w-full bg-black/60 border border-white/10 rounded-2xl py-3 pr-12 pl-4 text-white placeholder-gray-500 focus:outline-none focus:border-b-primary focus:ring-1 focus:ring-b-primary transition-all shadow-inner">
+                       class="w-full bg-[#0a0f12]/90 border border-white/10 rounded-2xl py-3.5 pr-11 pl-4 text-white placeholder-gray-500 focus:outline-none focus:border-b-primary focus:ring-2 focus:ring-b-primary/40 transition-all shadow-inner backdrop-blur-md text-sm">
             </div>
 
-            <div class="bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-md">
-                <div class="flex items-center px-4 sm:px-6 py-4 bg-white/5 border-b border-white/10 text-sm font-bold text-gray-400 uppercase tracking-widest">
-                    <div class="w-12 sm:w-16 text-center">الترتيب</div>
+            <!-- Leaderboard Table / Cards -->
+            <div class="bg-[#090e11]/80 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl">
+                <div class="flex items-center px-4 sm:px-6 py-4 bg-white/[0.03] border-b border-white/10 text-xs font-black text-gray-400 uppercase tracking-widest">
+                    <div class="w-14 sm:w-16 text-center">الترتيب</div>
                     <div class="flex-1 text-right pr-4">المنافس</div>
                     <div class="hidden sm:block w-48 text-right" id="col-header-context">الجامعة / الفريق</div>
-                    <div class="hidden md:block w-48 text-right">الشارة / التفاصيل</div>
-                    <div class="w-24 text-left pl-4">النقاط</div>
+                    <div class="hidden md:block w-44 text-right">الرتبة والشارة</div>
+                    <div class="w-28 text-left pl-4">النقاط</div>
                 </div>
 
                 <div id="leaderboard-list" class="divide-y divide-white/5">
-                    <div class="text-center py-20 text-gray-500 flex flex-col items-center">
-                        <i class="fas fa-spinner fa-spin text-4xl text-b-primary mb-4"></i>
-                        <p>جاري تحميل بيانات الترتيب...</p>
+                    <div class="text-center py-24 text-gray-500 flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full border-2 border-b-primary border-t-transparent animate-spin mb-4"></div>
+                        <p class="text-sm font-bold text-gray-400">جاري تحميل ساحة المنافسة...</p>
                     </div>
                 </div>
             </div>
 
-            <div id="sticky-user-rank" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-2xl bg-black border border-white/20 rounded-2xl shadow-[0_10px_40px_rgba(0,106,103,0.3)] p-4 flex items-center justify-between z-50 transform translate-y-[200%] transition-transform duration-500">
+            <!-- Sticky Current User Bar -->
+            <div id="sticky-user-rank" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-2xl bg-[#091012]/95 border border-teal-500/30 rounded-2xl shadow-[0_15px_50px_rgba(0,106,103,0.35)] p-4 flex items-center justify-between z-50 transform translate-y-[200%] transition-transform duration-500 backdrop-blur-2xl">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-                        <span class="text-xl font-black text-white font-mono" id="sticky-rank-num">#0</span>
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-teal-900/40 flex items-center justify-center border border-teal-500/40 shadow-inner">
+                        <span class="text-xl font-black text-teal-300 font-mono" id="sticky-rank-num">#0</span>
                     </div>
                     <div>
-                        <h4 class="text-white font-bold text-sm">موقعك الحالي</h4>
-                        <p class="text-xs text-gray-400" id="sticky-diff-text">استمر في التقدم!</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-bold text-sm">موقعك الحالي</span>
+                            <span class="bg-teal-500/20 text-teal-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-500/30">أنت</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5" id="sticky-diff-text">استمر في التقدم!</p>
                     </div>
                 </div>
-                <div class="text-left">
-                    <span class="block text-2xl font-black text-yellow-500 font-mono" id="sticky-points">0 XP</span>
+                <div class="text-left flex items-center gap-2">
+                    <div class="bg-amber-400/10 border border-amber-400/30 px-3.5 py-1.5 rounded-xl shadow-inner flex items-center gap-1.5">
+                        <i class="fas fa-bolt text-amber-400 text-xs"></i>
+                        <span class="text-xl font-black text-amber-400 font-mono" id="sticky-points">0 XP</span>
+                    </div>
                 </div>
             </div>
         </section>
