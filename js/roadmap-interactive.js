@@ -244,6 +244,26 @@ function bindViewportEvents() {
     if (btnFit) btnFit.addEventListener('click', fitRoadmapToScreen,       sig);
     if (btnCtr) btnCtr.addEventListener('click', centerGraph,              sig);
     if (btnRst) btnRst.addEventListener('click', resetRoadmapView,         sig);
+
+    // Auto-fit on size change / when becoming visible (e.g. switching tabs on mobile)
+    if (window.ResizeObserver && !vp._hasResizeObserver) {
+        vp._hasResizeObserver = true;
+        const ro = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (width > 50 && height > 50) {
+                    if (!window._roadmapHasAutoFitted || (offsetX === 0 && offsetY === 0)) {
+                        window._roadmapHasAutoFitted = true;
+                        requestAnimationFrame(() => {
+                            fitRoadmapToScreen();
+                            updateMinimap();
+                        });
+                    }
+                }
+            }
+        });
+        ro.observe(vp);
+    }
 }
 
 /**
@@ -966,6 +986,7 @@ function renderHtmlNodes() {
 
         // Click = smart drill-down & camera focus
         nodeEl.addEventListener('click', (e) => {
+            if (Date.now() - _lastTapTime < 400) return;
             e.stopPropagation();
             handleRoadmapNodeClick(node);
         });
@@ -1102,7 +1123,7 @@ function getNodeInnerHtml(node) {
                 </div>
                 <div class="flex-1 min-w-0 text-right">
                     <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">مسار تعليمي</span>
-                    <h4 class="font-bold text-white text-sm line-clamp-1 leading-relaxed pb-1">${node.title}</h4>
+                    <h4 class="font-bold text-white text-sm line-clamp-2 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
@@ -1125,12 +1146,13 @@ function getNodeInnerHtml(node) {
                 </div>
                 <div class="flex-1 min-w-0 text-right">
                     <span class="text-[9px] text-blue-400 font-bold uppercase tracking-widest block mb-0.5">المرحلة ${node.orderIndex}</span>
-                    <h4 class="font-bold text-white text-sm line-clamp-1 leading-relaxed pb-1">${node.title}</h4>
+                    <h4 class="font-bold text-white text-sm line-clamp-2 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
+                <span class="text-[10px] text-gray-400 font-semibold">الكورسات: <strong class="text-blue-400 font-bold">${node.coursesCount || 0}</strong></span>
                 <button onclick="event.stopPropagation(); window._roadmapTogglePhaseCollapse('${node.id}')"
-                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-bold ${toggleBg} cursor-pointer transition-all hover:scale-105 active:scale-95">
+                        class="phase-collapse-btn inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-bold ${toggleBg} cursor-pointer transition-all hover:scale-105 active:scale-95">
                     <span>${toggleText}</span>
                     <i class="fas ${toggleIcon} text-[8px]"></i>
                 </button>
@@ -1153,7 +1175,7 @@ function getNodeInnerHtml(node) {
             leaderToggleBtn = `
                 <button onclick="event.stopPropagation(); window.leaderToggleCourseActivation('${node.dbId}', ${!isPlanActive})"
                         title="${isPlanActive ? 'إلغاء تفعيل الكورس للفريق' : 'تفعيل الكورس للفريق'}"
-                        class="inline-flex items-center gap-1 text-[9px] px-2 h-5 rounded font-bold transition-all hover:scale-105 active:scale-95 ${isPlanActive ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-teal-500/20 hover:text-teal-300 hover:border-teal-500/30'}">
+                        class="leader-toggle-btn inline-flex items-center gap-1 text-[9px] px-2 h-5 rounded font-bold transition-all hover:scale-105 active:scale-95 ${isPlanActive ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-teal-500/20 hover:text-teal-300 hover:border-teal-500/30'}">
                     <i class="fas ${isPlanActive ? 'fa-unlock' : 'fa-lock'} text-[8px]"></i>
                     <span>${isPlanActive ? 'مفعّل' : 'تفعيل'}</span>
                 </button>
@@ -1166,7 +1188,7 @@ function getNodeInnerHtml(node) {
                     <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">كورس</span>
                     ${totalItems > 0 ? `
                         <button onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
-                                class="inline-flex items-center gap-1 text-[8px] px-1.5 h-5 rounded font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${isCollapsed ? 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/15' : 'bg-green-500/20 text-green-300 border border-green-500/30'}">
+                                class="course-collapse-btn inline-flex items-center gap-1 text-[8px] px-1.5 h-5 rounded font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${isCollapsed ? 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/15' : 'bg-green-500/20 text-green-300 border border-green-500/30'}">
                             <i class="fas ${isCollapsed ? 'fa-folder' : 'fa-folder-open'}"></i>
                             ${isCollapsed ? 'المحتوى' : 'مفتوح'}
                         </button>
@@ -1177,7 +1199,7 @@ function getNodeInnerHtml(node) {
                     ${statusBadge}
                 </div>
             </div>
-            <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-2.5 leading-relaxed pb-1">${node.title}</h4>
+            <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-2.5 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
             <div class="grid grid-cols-3 gap-1.5 text-[9px] text-gray-400 border-t border-white/5 pt-2 text-center">
                 <div class="${node.videosCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
                 <div class="${node.quizzesCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
@@ -1202,7 +1224,7 @@ function getNodeInnerHtml(node) {
                         <span class="text-[8px] font-bold uppercase tracking-wider ${docColor}">${docLabel} (${node.docType || node.rawItem?.document_type || 'PDF'})</span>
                         ${statusBadge}
                     </div>
-                    <p class="font-semibold text-white text-xs leading-relaxed line-clamp-2 text-right pb-0.5">${node.title}</p>
+                    <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-right pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
                     ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : node.rawItem?.estimated_reading_time ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.rawItem.estimated_reading_time} دقيقة</span>` : ''}
                 </div>
             </div>
@@ -1225,7 +1247,7 @@ function getNodeInnerHtml(node) {
                     <span class="text-[8px] font-bold uppercase tracking-wider ${typeColor}">${typeLabel}</span>
                     ${statusBadge}
                 </div>
-                <p class="font-semibold text-white text-xs leading-relaxed line-clamp-2 text-right pb-0.5">${node.title}</p>
+                <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-right pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
                 ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : ''}
             </div>
         </div>
@@ -1237,7 +1259,7 @@ function getNodeInnerHtml(node) {
  *
  * IMPORTANT: node.x is the LEFT EDGE of the card (set via style.left in renderHtmlNodes).
  *            node.y is the VERTICAL CENTER of the card.
- *            Card widths: track=320, phase=300, course=260, material=240.
+ *            Card widths: track=320, phase=320, course=260, material=240.
  */
 function renderSvgLines() {
     const svg = document.getElementById('roadmap-svg');
@@ -1245,7 +1267,7 @@ function renderSvgLines() {
     svg.innerHTML = '';
 
     // ── Full card widths (px) — must match CSS .node-* width rules ──
-    const CW = { track: 320, phase: 300, course: 260, material: 240 };
+    const CW = { track: 320, phase: 320, course: 260, material: 240 };
     // ── Card half-heights (exact math based on height: H/2) ──
     const HH = { track: 48, phase: 36, course: 52, material: 37 };
 
@@ -1582,28 +1604,40 @@ function initExportGlobals() {
     };
 }
 
-/** Calculate the exact bounding box of the visible roadmap tree nodes */
-function getRoadmapBounds(padding = 50) {
-    // Exact half-widths and half-heights matching CSS/Layout
-    const HW = { track: 160, phase: 150, course: 130, material: 120 };
-    const HH = { track: 48,  phase: 36,  course: 52,  material: 37  };
-
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-
-    const visibleNodes = computedNodes.filter(n => !n.isHidden);
-    if (visibleNodes.length === 0) {
+/** Calculate the exact bounding box of the visible roadmap tree nodes from real DOM measurements */
+function getRoadmapBounds(padding = 80) {
+    const nodes = document.querySelectorAll('#roadmap-nodes-container .roadmap-node');
+    if (!nodes || nodes.length === 0) {
         return { x: 0, y: 0, w: 3000, h: 3000 };
     }
 
-    visibleNodes.forEach(node => {
-        const hw = HW[node.type] || 130;
-        const hh = HH[node.type] || 40;
-        if (node.x - hw < minX) minX = node.x - hw;
-        if (node.x + hw > maxX) maxX = node.x + hw;
-        if (node.y - hh < minY) minY = node.y - hh;
-        if (node.y + hh > maxY) maxY = node.y + hh;
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let foundVisible = false;
+
+    nodes.forEach(el => {
+        if (el.style.display === 'none') return;
+
+        const left = parseFloat(el.style.left) || 0;
+        const top  = parseFloat(el.style.top)  || 0;
+        const w = el.offsetWidth  || 260;
+        const h = el.offsetHeight || 90;
+
+        foundVisible = true;
+        const nodeMinX = left - w / 2;
+        const nodeMaxX = left + w / 2;
+        const nodeMinY = top  - h / 2;
+        const nodeMaxY = top  + h / 2;
+
+        if (nodeMinX < minX) minX = nodeMinX;
+        if (nodeMaxX > maxX) maxX = nodeMaxX;
+        if (nodeMinY < minY) minY = nodeMinY;
+        if (nodeMaxY > maxY) maxY = nodeMaxY;
     });
+
+    if (!foundVisible || minX === Infinity) {
+        return { x: 0, y: 0, w: 3000, h: 3000 };
+    }
 
     const x = Math.max(0, Math.floor(minX - padding));
     const y = Math.max(0, Math.floor(minY - padding));
@@ -1621,26 +1655,9 @@ function centerGraphBounds() {
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
 
-    // Full card widths and heights
-    const CW = { track: 320, phase: 300, course: 260, material: 240 };
-    const HH = { track: 48,  phase: 36,  course: 52,  material: 37  };
-
-    const visibleNodes = computedNodes.filter(n => !n.isHidden && n.x !== undefined && n.y !== undefined);
-    if (visibleNodes.length === 0) return;
-
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    visibleNodes.forEach(node => {
-        const hw = (CW[node.type] || 260) / 2;
-        const hh = HH[node.type] || 40;
-        if (node.x - hw < minX) minX = node.x - hw;
-        if (node.x + hw > maxX) maxX = node.x + hw;
-        if (node.y - hh < minY) minY = node.y - hh;
-        if (node.y + hh > maxY) maxY = node.y + hh;
-    });
-
-    const graphCenterX = (minX + maxX) / 2;
-    const graphCenterY = (minY + maxY) / 2;
+    const bounds = getRoadmapBounds(0);
+    const graphCenterX = bounds.x + bounds.w / 2;
+    const graphCenterY = bounds.y + bounds.h / 2;
 
     offsetX = vw / 2 - graphCenterX * zoomLevel;
     offsetY = vh / 2 - graphCenterY * zoomLevel;
@@ -1655,7 +1672,13 @@ async function exportAsSvg() {
     const nodesContainer = document.getElementById('roadmap-nodes-container');
     if (!canvas || !svgLayer || !nodesContainer) return;
 
-    const bounds = getRoadmapBounds(60);
+    // Temporarily hide interactive buttons to measure exact bounds
+    const buttonsToHide = canvas.querySelectorAll(
+        '.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn, .phase-collapse-btn, .course-collapse-btn, .leader-toggle-btn'
+    );
+    buttonsToHide.forEach(btn => btn.style.setProperty('display', 'none', 'important'));
+
+    const bounds = getRoadmapBounds(80);
 
     // Build a root SVG
     const ns   = 'http://www.w3.org/2000/svg';
@@ -1686,6 +1709,12 @@ async function exportAsSvg() {
     } catch (e) {
         console.warn("Could not read stylesheets:", e);
     }
+
+    cssText += `
+        .roadmap-node { padding: 18px 18px !important; height: auto !important; }
+        .roadmap-node h4, .roadmap-node p { overflow: visible !important; -webkit-line-clamp: unset !important; line-height: 1.55 !important; padding-bottom: 4px !important; }
+        .roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn, .phase-collapse-btn, .course-collapse-btn, .leader-toggle-btn { display: none !important; }
+    `;
     styleEl.textContent = `/* <![CDATA[ */\n${cssText}\n/* ]]> */`;
     root.appendChild(styleEl);
 
@@ -1706,10 +1735,11 @@ async function exportAsSvg() {
 
     // Embed each HTML node as foreignObject
     nodesContainer.querySelectorAll('.roadmap-node').forEach(el => {
+        if (el.style.display === 'none') return;
         const left   = parseFloat(el.style.left) || 0;
         const top    = parseFloat(el.style.top)  || 0;
         const w = el.offsetWidth  || 260;
-        const h = el.offsetHeight || 80;
+        const h = el.offsetHeight || 90;
 
         const fo = document.createElementNS(ns, 'foreignObject');
         fo.setAttribute('x', left - w / 2);
@@ -1723,20 +1753,24 @@ async function exportAsSvg() {
         body.className = el.className;
         body.style.setProperty('position', 'relative', 'important');
         body.style.setProperty('width', w + 'px', 'important');
-        body.style.setProperty('height', h + 'px', 'important');
+        body.style.setProperty('height', 'auto', 'important');
         body.style.setProperty('left', '0', 'important');
         body.style.setProperty('top', '0', 'important');
         body.style.setProperty('transform', 'none', 'important');
+        body.style.setProperty('padding', '18px 18px', 'important');
         body.innerHTML = el.innerHTML;
 
-        // Hide collapse/info buttons in the exported SVG to make it clean
-        body.querySelectorAll('.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn').forEach(btn => {
+        // Hide collapse/info/action buttons in the exported SVG to make it clean
+        body.querySelectorAll('.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn, .phase-collapse-btn, .course-collapse-btn, .leader-toggle-btn').forEach(btn => {
             btn.style.display = 'none';
         });
 
         fo.appendChild(body);
         root.appendChild(fo);
     });
+
+    // Restore live DOM buttons
+    buttonsToHide.forEach(btn => btn.style.removeProperty('display'));
 
     // Serialize
     const serializer = new XMLSerializer();
@@ -1757,25 +1791,46 @@ async function exportAsPng(scale = 1) {
         });
     }
 
+    // Wait for web fonts (Cairo, FontAwesome, etc.) to fully render
+    if (document.fonts) {
+        try {
+            await document.fonts.ready;
+        } catch (e) {
+            console.warn('Fonts ready check:', e);
+        }
+    }
+
     const canvas = document.getElementById('roadmap-canvas');
     if (!canvas) throw new Error('لم يتم العثور على الكانفاس');
+
+    // Suppress noisy browser extension errors during html2canvas temporary iframe creation (e.g. video speed extensions)
+    const extErrorHandler = (e) => {
+        if (e.reason?.message?.includes?.('rate') || 
+            (typeof e.reason?.stack === 'string' && e.reason.stack.includes('contentScript'))) {
+            e.preventDefault();
+        }
+    };
+    window.addEventListener('unhandledrejection', extErrorHandler);
 
     // 1. Temporarily reset transform to avoid html2canvas offset issues
     const origTransform = canvas.style.transform;
     canvas.style.transform = 'none';
 
-    // Force style recalculation/repaint
-    canvas.offsetHeight; 
-
-    // 2. Hide collapse/info buttons during export for a cleaner image
-    const buttonsToHide = canvas.querySelectorAll('.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn');
+    // 2. Hide collapse/info/action buttons during export for a cleaner image
+    const buttonsToHide = canvas.querySelectorAll(
+        '.roadmap-collapse-btn, .roadmap-collapse-related-btn, .rm-info-btn, .phase-collapse-btn, .course-collapse-btn, .leader-toggle-btn'
+    );
     buttonsToHide.forEach(btn => btn.style.setProperty('display', 'none', 'important'));
 
-    const bounds = getRoadmapBounds(60);
+    // Force style recalculation/repaint so real heights are measurable
+    canvas.offsetHeight; 
+
+    // Calculate accurate bounds based on actual rendered card dimensions
+    const bounds = getRoadmapBounds(80);
 
     try {
         const h2c = await window.html2canvas(canvas, {
-            scale,
+            scale: Math.min(scale, 4),
             backgroundColor: '#050505',
             useCORS: true,
             allowTaint: true,
@@ -1784,6 +1839,80 @@ async function exportAsPng(scale = 1) {
             y: bounds.y,
             width: bounds.w,
             height: bounds.h,
+            windowWidth: Math.max(3200, bounds.x + bounds.w + 200),
+            windowHeight: Math.max(3200, bounds.y + bounds.h + 200),
+            onclone: (clonedDoc, clonedCanvas) => {
+                // Inject custom export stylesheet into the cloned document to guarantee zero text-clipping
+                const style = clonedDoc.createElement('style');
+                style.textContent = `
+                    /* 1. Prevent text clipping by removing line-clamp and overflow restrictions */
+                    .roadmap-node,
+                    .roadmap-node * {
+                        overflow: visible !important;
+                        text-overflow: clip !important;
+                        -webkit-line-clamp: unset !important;
+                        line-clamp: unset !important;
+                        max-height: none !important;
+                    }
+
+                    /* 2. Proper line-height and bottom padding so letter descenders are never sliced */
+                    .roadmap-node h4 {
+                        display: block !important;
+                        line-height: 1.55 !important;
+                        padding-bottom: 6px !important;
+                        margin-bottom: 4px !important;
+                        white-space: normal !important;
+                    }
+                    .roadmap-node p {
+                        display: block !important;
+                        line-height: 1.5 !important;
+                        padding-bottom: 4px !important;
+                        white-space: normal !important;
+                    }
+
+                    /* 3. Balanced, proportional card padding without the gap for hidden top buttons */
+                    .roadmap-node {
+                        padding: 16px 18px !important;
+                        height: auto !important;
+                        box-sizing: border-box !important;
+                    }
+                    .node-track {
+                        padding: 20px 22px !important;
+                    }
+                    .node-phase {
+                        padding: 18px 20px !important;
+                    }
+                    .node-course {
+                        padding: 16px 18px !important;
+                    }
+                    .node-video, .node-quiz, .node-document, .node-project {
+                        padding: 12px 14px !important;
+                    }
+
+                    /* 4. Hide all interactive controls */
+                    .roadmap-collapse-btn,
+                    .roadmap-collapse-related-btn,
+                    .rm-info-btn,
+                    .phase-collapse-btn,
+                    .course-collapse-btn,
+                    .leader-toggle-btn,
+                    .roadmap-controls,
+                    .roadmap-minimap,
+                    .roadmap-toolbar {
+                        display: none !important;
+                    }
+                `;
+                clonedDoc.head.appendChild(style);
+
+                if (clonedCanvas) {
+                    clonedCanvas.style.transform = 'none';
+                    clonedCanvas.style.overflow = 'visible';
+                }
+                const clonedViewport = clonedDoc.getElementById('roadmap-viewport');
+                if (clonedViewport) {
+                    clonedViewport.style.overflow = 'visible';
+                }
+            }
         });
 
         const blob = await new Promise(res => h2c.toBlob(res, 'image/png'));
@@ -1792,6 +1921,7 @@ async function exportAsPng(scale = 1) {
         // 3. Restore original transform and button display properties
         canvas.style.transform = origTransform;
         buttonsToHide.forEach(btn => btn.style.removeProperty('display'));
+        window.removeEventListener('unhandledrejection', extErrorHandler);
     }
 }
 
@@ -3053,7 +3183,7 @@ function clampOffsets() {
     const visibleNodes = computedNodes.filter(n => !n.isHidden && n.x !== undefined && n.y !== undefined);
     if (visibleNodes.length === 0) return;
 
-    const CW = { track: 320, phase: 300, course: 260, material: 240 };
+    const CW = { track: 320, phase: 320, course: 260, material: 240 };
     const HH = { track: 48, phase: 36, course: 52, material: 37 };
 
     let minX = Infinity, maxX = -Infinity;
@@ -3098,12 +3228,16 @@ function smartFocusOnNodes(nodes, customMargin = 60) {
 
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    if (vw === 0 || vh === 0) return;
+    if (vw === 0 || vh === 0) {
+        // If viewport is hidden or layout hasn't finished yet (e.g. background tab), retry shortly
+        setTimeout(() => smartFocusOnNodes(nodes, customMargin), 100);
+        return;
+    }
 
     const targetNodes = Array.isArray(nodes) ? nodes.filter(n => n && !n.isHidden && n.x !== undefined) : [nodes].filter(Boolean);
     if (targetNodes.length === 0) return;
 
-    const CW = { track: 320, phase: 300, course: 260, material: 240 };
+    const CW = { track: 320, phase: 320, course: 260, material: 240 };
     const HH = { track: 48, phase: 36, course: 52, material: 37 };
 
     let minX = Infinity, maxX = -Infinity;
@@ -3124,13 +3258,14 @@ function smartFocusOnNodes(nodes, customMargin = 60) {
     const centerY = (minY + maxY) / 2;
 
     let targetZoom = zoomLevel;
+    const margin = vw < 640 ? Math.min(customMargin, 20) : customMargin;
     if (targetNodes.length === 1) {
         // Single card: comfortable, clear zoom level
         targetZoom = Math.max(0.85, Math.min(1.1, zoomLevel));
     } else {
         // Multi-card group: fit with margin
-        const availW = Math.max(150, vw - customMargin * 2);
-        const availH = Math.max(150, vh - customMargin * 2);
+        const availW = Math.max(150, vw - margin * 2);
+        const availH = Math.max(150, vh - margin * 2);
         const fitScale = Math.min(availW / contentW, availH / contentH);
         targetZoom = Math.max(0.35, Math.min(1.05, fitScale));
     }
@@ -3180,6 +3315,9 @@ function fitRoadmapToScreen() {
     if (visibleNodes.length === 0) return;
     smartFocusOnNodes(visibleNodes, 60);
 }
+window.fitRoadmapToScreen = fitRoadmapToScreen;
+window.centerGraph = centerGraph;
+window.smartFocusOnNodes = smartFocusOnNodes;
 
 /**
  * Centers the graph on active node or entire graph
@@ -3280,10 +3418,15 @@ function handleMouseWheel(e) {
     updateCanvasTransform();
 }
 
-// ── Touch interaction event handlers (Mobile & Tablet Drag / Pinch) ──
+// ── Touch interaction event handlers (Mobile & Tablet Drag / Pinch / Tap) ──
 let touchMode = 'none'; // 'none' | 'pan' | 'pinch'
 let lastTouchX = 0, lastTouchY = 0;
+let touchStartX = 0, touchStartY = 0;
+let touchStartTime = 0;
+let touchTarget = null;
+let isTouchPanning = false;
 let lastPinchDist = 0;
+let _lastTapTime = 0;
 
 function handleTouchStart(e) {
     cancelCameraAnimation();
@@ -3292,10 +3435,17 @@ function handleTouchStart(e) {
 
     if (e.touches.length === 1) {
         touchMode = 'pan';
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+        touchStartTime = Date.now();
+        touchTarget = e.target;
+        isTouchPanning = false;
     } else if (e.touches.length === 2) {
         touchMode = 'pinch';
+        isTouchPanning = true;
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         lastPinchDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
@@ -3310,8 +3460,26 @@ function handleTouchMove(e) {
     const rect = viewport.getBoundingClientRect();
 
     if (touchMode === 'pan' && e.touches.length === 1) {
-        e.preventDefault();
         const touch = e.touches[0];
+        const totalDx = touch.clientX - touchStartX;
+        const totalDy = touch.clientY - touchStartY;
+        const moveDist = Math.hypot(totalDx, totalDy);
+
+        const onInteractive = touchTarget && (touchTarget.closest('.roadmap-node') || touchTarget.closest('.roadmap-controls'));
+        const dragThreshold = onInteractive ? 10 : 5;
+
+        if (!isTouchPanning) {
+            if (moveDist >= dragThreshold) {
+                isTouchPanning = true;
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+            } else {
+                // Within tap threshold: do not cancel click or move canvas
+                return;
+            }
+        }
+
+        e.preventDefault();
         const dx = touch.clientX - lastTouchX;
         const dy = touch.clientY - lastTouchY;
         lastTouchX = touch.clientX;
@@ -3359,13 +3527,35 @@ function handleTouchMove(e) {
 }
 
 function handleTouchEnd(e) {
-    if (e.touches.length === 1) {
+    if (e.touches.length === 0) {
+        // If the user touched and released without dragging/panning within 500ms, treat as TAP!
+        if (!isTouchPanning && touchTarget) {
+            const elapsed = Date.now() - touchStartTime;
+            if (elapsed < 500) {
+                _lastTapTime = Date.now();
+                const btn = touchTarget.closest('button');
+                if (btn) {
+                    btn.click();
+                } else {
+                    const nodeEl = touchTarget.closest('.roadmap-node');
+                    if (nodeEl && nodeEl.id) {
+                        const nodeId = nodeEl.id.replace('node-', '');
+                        const targetNode = computedNodes.find(n => n.id === nodeId);
+                        if (targetNode) {
+                            handleRoadmapNodeClick(targetNode);
+                        }
+                    }
+                }
+            }
+        }
+        touchMode = 'none';
+        isTouchPanning = false;
+        lastPinchDist = 0;
+        touchTarget = null;
+    } else if (e.touches.length === 1) {
         touchMode = 'pan';
         lastTouchX = e.touches[0].clientX;
         lastTouchY = e.touches[0].clientY;
-    } else if (e.touches.length === 0) {
-        touchMode = 'none';
-        lastPinchDist = 0;
     }
 }
 

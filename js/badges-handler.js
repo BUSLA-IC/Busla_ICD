@@ -124,7 +124,7 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
 
                 <div class="w-20 h-20 mx-auto mb-4 rounded-[15%] flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative bg-black"
                      style="border: 2px solid ${isUnlocked ? hexColor : '#333'};">
-                    <img src="${badgeUrl}" class="w-full h-full object-cover relative z-10 p-[2px] rounded-2xl" style="${imgStyle}" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${rank.level}'">
+                    <img src="${badgeUrl}" loading="lazy" decoding="async" class="w-full h-full object-cover relative z-10 p-[2px] rounded-2xl" style="${imgStyle}" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${rank.level}'">
                 </div>
 
                 <h3 class="text-white font-bold text-center text-sm mb-2 truncate">${rank.title}</h3>

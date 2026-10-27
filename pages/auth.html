@@ -444,6 +444,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (signupEmailInput) {
             signupEmailInput.value = emailParam;
         }
+    } else if (urlParams.get('logout') !== 'true') {
+        // 🛡️ توجيه ذكي: إذا كان المستخدم مسجل دخول بالفعل، نوجهه تلقائياً للوحته المناسبة
+        (async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', session.user.id)
+                        .maybeSingle();
+
+                    if (profile) {
+                        const role = (profile.role || 'student').toLowerCase().trim();
+                        const staticAdminRoles = [
+                            'owner', 'admin', 'master admin', 'leader supervisor', 
+                            'content manager', 'team reviewer', 'project reviewer', 'support'
+                        ];
+
+                        let isAdmin = staticAdminRoles.includes(role) || role.includes('admin');
+                        if (!isAdmin) {
+                            const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+                            const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+                            isAdmin = dbAdminRoles.includes(role);
+                        }
+
+                        if (isAdmin) {
+                            window.location.replace("../admin/html/admin-dash.html");
+                        } else if (role === 'leader') {
+                            window.location.replace("leader-dash.html");
+                        } else {
+                            window.location.replace("student-dash.html");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Auto-redirect check failed:", e);
+            }
+        })();
     }
 });
 

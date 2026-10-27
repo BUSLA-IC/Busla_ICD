@@ -181,6 +181,26 @@ async function initDashboard(uid) {
             return;
         }
 
+        const userRole = (profile.role || 'student').toLowerCase().trim();
+        const staticAdminRoles = [
+            'owner', 'admin', 'master admin', 'leader supervisor', 
+            'content manager', 'team reviewer', 'project reviewer', 'support'
+        ];
+
+        // 🛡️ توجيه ذكي: الأدوار الإدارية تذهب إلى لوحة الأدمن
+        if (staticAdminRoles.includes(userRole) || userRole.includes('admin')) {
+            console.log("Admin detected on student dashboard, redirecting to admin dashboard...");
+            window.location.replace('../admin/html/admin-dash.html');
+            return;
+        }
+
+        // 🛡️ توجيه ذكي: القائد يتم توجيهه تلقائياً إلى لوحة القائد
+        if (userRole === 'leader') {
+            console.log("Leader detected on student dashboard, redirecting to leader dashboard...");
+            window.location.replace('leader-dash.html');
+            return;
+        }
+
         const teamId = currentUserData.team_id; 
 
         if (!teamId) {
@@ -452,6 +472,8 @@ function updateHeaderInfo(user, team) {
     const safeText = (id, txt) => {
         const el = document.getElementById(id);
         if (el) el.innerText = txt;
+        const mobileEl = document.getElementById(id + '-mobile');
+        if (mobileEl) mobileEl.innerText = txt;
     };
 
     const userPoints = user.total_xp || user.xp_points || 0;
@@ -474,6 +496,7 @@ function updateHeaderInfo(user, team) {
     const teamRank = getRankObject(teamPoints, TEAM_RANKS_DATA);
 
     safeText('header-user-badge', userRank.title);
+    safeText('header-user-badge-mobile', userRank.title);
     safeText('sidebar-team-badge', teamRank.title);
 
     // Update Header Badges Images
@@ -486,10 +509,16 @@ function updateHeaderInfo(user, team) {
 
     // Update Badge styling dynamically based on Stage Color
     const badgeTextEl = document.getElementById('header-user-badge');
+    const badgeMobileTextEl = document.getElementById('header-user-badge-mobile');
     if (badgeTextEl && userRank.stage_color) {
         badgeTextEl.style.color = userRank.stage_color;
         badgeTextEl.style.borderColor = userRank.stage_color + '80'; // 50% opacity
         badgeTextEl.style.backgroundColor = userRank.stage_color + '1A'; // 10% opacity
+    }
+    if (badgeMobileTextEl && userRank.stage_color) {
+        badgeMobileTextEl.style.color = userRank.stage_color;
+        badgeMobileTextEl.style.borderColor = userRank.stage_color + '80';
+        badgeMobileTextEl.style.backgroundColor = userRank.stage_color + '1A';
     }
 
     // Set User and Team Names
@@ -537,15 +566,33 @@ function updateHeaderInfo(user, team) {
     }
 }
 
+window.closeSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    if (sidebar) sidebar.classList.add('translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+};
+
 window.switchTab = function(id) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    // Auto-close sidebar on mobile if open
+    if (window.innerWidth < 768) {
+        window.closeSidebar();
+    }
+
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('active');
+    });
     document.querySelectorAll('.nav-btn').forEach(b => {
         b.classList.remove('bg-b-primary/10', 'text-b-primary', 'font-bold');
         b.classList.add('text-gray-400');
     });
 
     const activeContent = document.getElementById(id);
-    if (activeContent) activeContent.classList.add('active');
+    if (activeContent) {
+        activeContent.classList.remove('hidden');
+        activeContent.classList.add('active');
+    }
 
     const activeBtn = document.getElementById('btn-' + id);
     if (activeBtn) {
@@ -553,12 +600,35 @@ window.switchTab = function(id) {
         activeBtn.classList.remove('text-gray-400');
     }
 
-    if (id === 'rank') initBadgesSystem();
+    if (id === 'overview' && typeof renderOverview === 'function') renderOverview();
+    if (id === 'roadmap') {
+        window._roadmapHasAutoFitted = false;
+        if (typeof renderRoadmapTree === 'function') renderRoadmapTree();
+        setTimeout(() => {
+            if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+        }, 80);
+        setTimeout(() => {
+            if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+        }, 250);
+    }
+    if (id === 'squad' && typeof renderSquadTab === 'function') renderSquadTab(currentTeam);
+    if (id === 'calendar') {
+        if (typeof renderCalendarTab === 'function') renderCalendarTab();
+        if (typeof window.renderCalendarTab === 'function') window.renderCalendarTab();
+    }
+    if (id === 'rank') {
+        initBadgesSystem();
+        if (typeof window.loadRankSystem === 'function') window.loadRankSystem();
+    }
     if (id === 'team-rank') initTeamBadgesSystem();
-    if (id === 'leaderboard') initLeaderboard();
+    if (id === 'leaderboard') {
+        initLeaderboard();
+        if (typeof renderLeaderboard === 'function') renderLeaderboard();
+    }
     if (id === 'announcements') {
         if (currentUserData?.team_id) {
             initNotificationsSystem(currentUserData.team_id);
+            if (typeof loadAnnouncements === 'function') loadAnnouncements();
         } else {
             showToast("Loading team data...", "info");
         }
@@ -755,7 +825,7 @@ async function renderTeamOverview(tasks) {
                             <i class="fas ${typeConfig.icon}"></i>
                         </div>
                         <div class="flex-1 min-w-0 pr-2 text-right">
-                            <h4 class="font-bold text-white text-sm line-clamp-1 group-hover:text-b-primary transition-colors">
+                            <h4 class="font-bold text-white text-sm line-clamp-2 leading-snug group-hover:text-b-primary transition-colors" dir="auto" title="${task.title || 'Untitled Task'}">
                                 ${task.title || "Untitled Task"}
                             </h4>
                             <div class="flex items-center justify-end gap-2 mt-1.5 flex-row-reverse w-full">
@@ -811,7 +881,7 @@ function renderActiveCourses(activeIds) {
                     <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white shadow-lg border-2 border-b-surface mb-2">
                         <i class="fas fa-book-open text-sm"></i>
                     </div>
-                    <h4 class="font-bold text-white text-base mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">${title}</h4>
+                    <h4 class="font-bold text-white text-base mb-1 group-hover:text-purple-400 transition-colors line-clamp-2 leading-snug" dir="auto" title="${title}">${title}</h4>
                     <span class="text-xs text-gray-400">انقر للمتابعة ←</span>
                 </div>
             </a>
@@ -835,20 +905,20 @@ function renderWeekInfo() {
     const endStr = week.end.toLocaleDateString('ar-EG', options);
 
     headerContainer.innerHTML = `
-        <div class="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-b-primary/20 to-black/20 p-4 rounded-xl border border-b-primary/30 mb-6">
-            <div class="flex items-center gap-4 mb-2 md:mb-0">
-                <div class="w-12 h-12 rounded-full bg-b-primary flex items-center justify-center text-white text-xl">
+        <div class="flex flex-row justify-between items-center bg-gradient-to-r from-b-primary/20 to-black/30 p-3 sm:p-4 rounded-2xl border border-b-primary/30 mb-4 sm:mb-6 shadow-lg">
+            <div class="flex items-center gap-2.5 sm:gap-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-full bg-b-primary/90 flex items-center justify-center text-white text-base sm:text-xl shrink-0 shadow">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white text-lg">الاسبوع الحالي</h3>
-                    <p class="text-sm text-gray-300">من <span class="text-b-hl-light font-bold">${startStr}</span> الى <span class="text-b-hl-light font-bold">${endStr}</span></p>
+                    <h3 class="font-bold text-white text-sm sm:text-lg">الأسبوع الحالي</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-300">من <span class="text-teal-300 font-bold">${startStr}</span> إلى <span class="text-teal-300 font-bold">${endStr}</span></p>
                 </div>
             </div>
-            <div class="text-center md:text-left">
-                <div class="bg-black/40 px-4 py-2 rounded-lg border border-white/5">
-                    <p class="text-xs text-gray-400">اليوم</p>
-                    <p class="font-bold text-white text-lg">${currentDayName}</p>
+            <div class="shrink-0 text-center">
+                <div class="bg-black/50 px-2.5 sm:px-4 py-1 sm:py-2 rounded-xl border border-white/10 shadow-inner">
+                    <p class="text-[10px] sm:text-xs text-gray-400">اليوم</p>
+                    <p class="font-bold text-teal-400 text-xs sm:text-base">${currentDayName}</p>
                 </div>
             </div>
         </div>
@@ -1133,32 +1203,50 @@ async function renderSquad() {
             const isMe = member.id === currentUser.id;
 
             containerHtml += `
-            <div class="group flex flex-col md:flex-row items-center bg-white/5 border border-white/5 rounded-3xl p-5 relative overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20">
-                <div class="absolute right-0 top-0 bottom-0 w-1.5 transition-all duration-500 bg-gradient-to-b from-${index < 3 ? 'yellow-500' : 'transparent'} to-transparent group-hover:h-full"></div>
-                <div class="hidden md:flex items-center justify-center w-14 text-3xl font-black text-white/5 font-mono">#${index + 1}</div>
-                <div class="relative mb-4 md:mb-0 md:ml-8 flex-shrink-0">
-                    <div class="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[${rankData.stage_color}] to-transparent relative">
-                        <img src="${photo}" class="w-full h-full rounded-full object-cover border-4 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
+            <div class="group flex items-center justify-between bg-b-surface/80 hover:bg-white/5 border border-white/5 hover:border-white/15 rounded-2xl p-3 sm:p-4 md:p-5 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/40">
+                <div class="absolute right-0 top-0 bottom-0 w-1 sm:w-1.5 bg-gradient-to-b ${index === 0 ? 'from-yellow-400 to-yellow-600' : index === 1 ? 'from-gray-300 to-gray-500' : index === 2 ? 'from-amber-600 to-amber-800' : 'from-b-primary/40 to-transparent'} opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div class="flex items-center gap-2.5 sm:gap-4 md:gap-5 flex-1 min-w-0 pr-1 sm:pr-2">
+                    <div class="hidden md:flex items-center justify-center w-8 text-2xl font-black text-white/15 font-mono group-hover:text-white/30 transition-colors shrink-0">
+                        #${index + 1}
                     </div>
-                    <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-black rounded-full flex items-center justify-center border-2 border-[${rankData.stage_color}] shadow-lg z-10">
-                        <img src="../assets/user-badge/lv${rankData.level}.png" class="w-10 h-10 object-contain">
+                    <div class="relative shrink-0">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#00F5FF'}, transparent);">
+                            <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'" alt="Avatar">
+                        </div>
+                        <div class="absolute -bottom-1 -left-1 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#00F5FF'}] shadow-md z-10 p-0.5" title="المستوى ${rankData.level}">
+                            <img src="../assets/user-badge/lv${rankData.level}.png" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0 text-right space-y-0.5 sm:space-y-1">
+                        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <h4 class="text-white font-bold text-sm sm:text-base md:text-lg truncate tracking-tight max-w-[130px] sm:max-w-[200px] md:max-w-none">
+                                ${name}
+                            </h4>
+                            ${isLeader ? `
+                                <span class="px-2 py-0.5 bg-yellow-500/15 text-yellow-400 text-[10px] sm:text-xs rounded-full border border-yellow-500/30 font-bold inline-flex items-center gap-1 shrink-0">
+                                    <i class="fas fa-crown text-[9px]"></i> الليدر
+                                </span>` : ''}
+                            ${isMe && !isLeader ? `
+                                <span class="px-2 py-0.5 bg-b-primary/10 text-b-primary text-[10px] sm:text-xs rounded-full border border-b-primary/20 font-bold shrink-0">
+                                    أنت
+                                </span>` : ''}
+                        </div>
+                        <div class="text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: ${rankData.stage_color}">
+                            <span class="w-1.5 h-1.5 rounded-full inline-block shrink-0" style="background-color: ${rankData.stage_color}"></span>
+                            <span class="truncate">${rankData.title}</span>
+                        </div>
+                        <div class="text-[10px] sm:text-xs text-gray-400 truncate flex items-center gap-1">
+                            <i class="fas fa-university text-gray-500 text-[9px] sm:text-[10px] shrink-0"></i>
+                            <span class="truncate">${university}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex-1 text-center md:text-right space-y-1.5 min-w-0">
-                    <div class="flex items-center justify-center md:justify-start gap-3">
-                        <h4 class="text-white font-bold text-xl truncate tracking-tight">${name}</h4>
-                        ${isMe ? `<span class="px-2 py-0.5 bg-white/10 text-gray-300 text-[10px] rounded-full">أنت</span>` : ''}
-                        ${isLeader ? `<span class="px-2.5 py-0.5 bg-yellow-500/20 text-yellow-500 text-[10px] rounded-full border border-yellow-500/30 font-bold uppercase"><i class="fas fa-crown mr-1"></i> الليدر</span>` : ''}
-                    </div>
-                    <div class="text-xs font-bold tracking-widest uppercase opacity-90" style="color: ${rankData.stage_color}">${rankData.title}</div>
-                    <div class="flex items-center justify-center md:justify-start gap-2 text-xs text-gray-400 mt-1">
-                        <i class="fas fa-university"></i> <span>${university}</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-6 mt-6 md:mt-0 pl-4 border-l border-white/5 ml-4">
-                    <div class="text-center px-2">
-                        <span class="block text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">النقاط</span>
-                        <span class="font-mono font-black text-2xl text-white">${points.toLocaleString()} <span class="text-[10px] text-b-primary">XP</span></span>
+
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0 pl-1">
+                    <div class="text-center bg-black/30 sm:bg-white/5 border border-white/5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl">
+                        <span class="block text-[8px] sm:text-[9px] text-gray-400 uppercase font-mono tracking-wider">XP</span>
+                        <span class="font-mono font-black text-xs sm:text-sm md:text-base text-b-primary">${points.toLocaleString()}</span>
                     </div>
                 </div>
             </div>`;
@@ -1824,25 +1912,35 @@ function renderCalendarTab() {
             return taskDue.getTime() >= weekStart.getTime() && taskDue.getTime() <= weekEnd.getTime();
         });
 
+        const now = new Date();
+        const isCurrent = (now >= weekStart && now <= weekEnd);
+
         const weekHTML = `
             <div onclick="window.openWeekDetails('${weekStart.toISOString()}', '${weekEnd.toISOString()}')" 
-                 class="group bg-b-surface border border-white/10 rounded-xl p-5 hover:border-b-primary cursor-pointer transition-all relative overflow-hidden mb-3 shadow-sm">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl ${weekTasks.length > 0 ? 'bg-b-primary text-white shadow-lg shadow-b-primary/20' : 'bg-white/5 text-gray-500'} flex flex-col items-center justify-center font-bold transition-colors">
-                            <span class="text-[10px] uppercase tracking-wider">Week</span>
-                            <span class="text-lg">${i + 1}</span>
+                 class="group relative bg-b-surface/80 border ${isCurrent ? 'border-b-primary/60 shadow-[0_0_15px_rgba(0,106,103,0.2)] bg-gradient-to-r from-b-primary/10 via-b-surface/80 to-b-surface/80' : 'border-white/10'} hover:border-b-primary rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 cursor-pointer transition-all hover:bg-white/5 flex items-center justify-between gap-3 shadow-sm">
+                
+                <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl ${isCurrent ? 'bg-b-primary text-white shadow-md shadow-b-primary/30' : (weekTasks.length > 0 ? 'bg-b-primary/20 text-b-primary border border-b-primary/30' : 'bg-white/5 text-gray-400 border border-white/5')} flex flex-col items-center justify-center font-bold shrink-0 transition-all group-hover:scale-105">
+                        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider leading-none">WEEK</span>
+                        <span class="text-sm sm:text-base font-black leading-tight">${i + 1}</span>
+                    </div>
+                    
+                    <div class="min-w-0 text-right">
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-xs sm:text-sm truncate">${startStr} - ${endStr}</h4>
+                            ${isCurrent ? `<span class="bg-b-primary/20 text-b-primary text-[9px] font-bold px-1.5 py-0.5 rounded border border-b-primary/30 shrink-0 animate-pulse">الحالي</span>` : ''}
                         </div>
-                        <div class="text-right">
-                            <h4 class="font-bold text-white text-lg">${startStr} - ${endStr}</h4>
-                            <p class="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                <span class="${weekTasks.length > 0 ? 'text-b-hl-light font-bold' : ''}">
-                                    ${weekTasks.length} مهام <i class="fas fa-tasks mr-1"></i>
-                                </span>
-                            </p>
+                        <div class="text-[10px] sm:text-xs text-gray-400 mt-0.5 flex items-center gap-2">
+                            <span class="flex items-center gap-1 ${weekTasks.length > 0 ? 'text-teal-300 font-semibold' : 'text-gray-500'}">
+                                <i class="fas fa-tasks text-[9px] sm:text-[10px]"></i>
+                                <span>${weekTasks.length} مهام</span>
+                            </span>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-left text-gray-600 group-hover:text-white transition-transform transform group-hover:-translate-x-1"></i>
+                </div>
+                
+                <div class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
+                    <i class="fas fa-chevron-left text-[10px] sm:text-xs group-hover:-translate-x-0.5 transition-transform"></i>
                 </div>
             </div>
         `;
@@ -1904,23 +2002,23 @@ window.openWeekDetails = (startIso, endIso) => {
 
             return `
             <div onclick="window.openCalendarTask('${t.id}')" 
-                 class="group bg-black/40 border border-white/5 p-4 rounded-xl hover:border-b-primary hover:bg-white/5 cursor-pointer transition-all flex items-center gap-4 relative overflow-hidden mb-3">
+                 class="group bg-black/40 border border-white/5 p-2.5 sm:p-4 rounded-xl hover:border-b-primary hover:bg-white/5 cursor-pointer transition-all flex items-center gap-2.5 sm:gap-4 relative overflow-hidden mb-2 sm:mb-3">
                 
                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-white/10 to-transparent group-hover:via-b-primary transition-all"></div>
                 
-                <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-b-primary/30 transition-all shadow-md">
-                    <i class="fas ${icon} text-xl group-hover:scale-110 transition-transform"></i>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-b-primary/30 transition-all shadow-md">
+                    <i class="fas ${icon} text-base sm:text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 
                 <div class="flex-1 min-w-0 text-right">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-2 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
-                        <h4 class="text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate mr-3" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
+                    <div class="flex items-center justify-between gap-2 mb-0.5">
+                        <h4 class="text-xs sm:text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
+                        <span class="text-[9px] sm:text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-1.5 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
                     </div>
                 </div>
                 
-                <div class="w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
-                    <i class="fas fa-chevron-left text-xs"></i>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
+                    <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
                 </div>
             </div>
             `;

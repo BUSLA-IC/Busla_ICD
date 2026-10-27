@@ -44,6 +44,11 @@
         }
     </script>
     <style>
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden !important;
+        }
         body { font-family: 'Cairo', sans-serif; background-color: #000; color: #fff; overflow: hidden; }
         .tab-content { display: none; }
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease-out forwards; }
@@ -81,104 +86,192 @@
     </style>
     <link rel="stylesheet" href="../../css/roadmap.css">
 </head>
-<body class="flex h-screen w-screen overflow-hidden select-none bg-black">
+<body class="flex flex-col md:flex-row h-screen w-screen overflow-hidden select-none bg-black relative">
 
     <!-- 🌌 Background Gradient -->
     <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-b-primary/10 via-black to-black"></div>
 
+    <div id="mobile-overlay" onclick="toggleAdminSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
     <!-- Sidebar Section -->
-    <aside class="w-72 bg-b-surface border-l border-white/10 flex flex-col h-full z-40 shrink-0">
+    <aside id="admin-sidebar" class="w-[85vw] max-w-xs sm:w-72 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-full shrink-0 shadow-2xl md:shadow-none">
         <!-- Logo -->
-        <div class="p-6 border-b border-white/10 text-center">
-            <h2 class="text-2xl font-black text-white tracking-wide flex items-center justify-center gap-2">
+        <div class="p-4 sm:p-6 border-b border-white/10 text-center relative">
+            <button onclick="toggleAdminSidebar()" class="md:hidden absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-gray-300 hover:text-white hover:bg-red-500/20 transition-all">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+            <h2 class="text-xl sm:text-2xl font-black text-white tracking-wide flex items-center justify-center gap-2">
                 <i class="fas fa-compass text-teal-500"></i>
                 <span>بوصــــلة</span>
             </h2>
-            <p class="text-xs text-b-primary font-bold mt-1 uppercase tracking-widest">Admin Control Center</p>
+            <p class="text-[11px] sm:text-xs text-b-primary font-bold mt-1 uppercase tracking-widest">Admin Control Center</p>
+        </div>
+
+        <!-- بوابة المنصة الرئيسية -->
+        <div class="px-3 sm:px-4 pt-3 pb-1 shrink-0">
+            <div class="bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-500/20 rounded-2xl p-2.5 sm:p-3 shadow-inner">
+                <a href="../../index.html" class="flex items-center justify-between text-teal-400 font-bold hover:text-white transition-colors group mb-1.5">
+                    <span class="flex items-center gap-2 text-xs">
+                        <i class="fas fa-compass text-teal-400 group-hover:rotate-45 transition-transform duration-300"></i>
+                        <span>المنصة الرئيسية</span>
+                    </span>
+                    <i class="fas fa-external-link-alt text-[10px] opacity-60 group-hover:opacity-100 group-hover:-translate-x-0.5 transition-all"></i>
+                </a>
+                <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/5 text-[10px] text-gray-400 font-medium">
+                    <a href="../../index.html#roadmap" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المسار</a>
+                    <a href="../../index.html#tools" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الأدوات</a>
+                    <a href="../../index.html#references" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المكتبة</a>
+                    <a href="../../index.html#courses" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الدورات</a>
+                    <a href="../../index.html#experts" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الخبراء</a>
+                    <a href="../../index.html#hero" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الرئيسية</a>
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar Navigation Buttons -->
-        <nav id="admin-nav" class="flex-1 p-4 space-y-2 overflow-y-auto custom-scroll">
-            <button data-target="dashboard" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-right">
-                <i class="fas fa-chart-line"></i> <span>نظرة عامة</span>
+        <nav id="admin-nav" class="flex-1 p-3 sm:p-4 space-y-1.5 overflow-y-auto custom-scroll">
+            <button data-target="dashboard" class="nav-btn w-full flex items-center gap-3 p-2.5 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-right text-sm">
+                <i class="fas fa-chart-line w-5 text-center"></i> <span>نظرة عامة</span>
             </button>
             
-            <button data-target="content-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-photo-video"></i> <span>إدارة المحتوى</span>
+            <button data-target="content-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-photo-video w-5 text-center"></i> <span>إدارة المحتوى</span>
             </button>
 
-            <button data-target="learning-roadmap" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-sitemap"></i> <span>شجرة المنهج</span>
+            <button data-target="learning-roadmap" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-sitemap w-5 text-center"></i> <span>شجرة المنهج</span>
             </button>
 
-            <button data-target="tools-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-tools"></i> <span>إدارة الأدوات</span>
+            <button data-target="tools-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-tools w-5 text-center"></i> <span>إدارة الأدوات</span>
             </button>
 
-            <button data-target="references-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-book"></i> <span>إدارة المراجع</span>
+            <button data-target="references-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-book w-5 text-center"></i> <span>إدارة المراجع</span>
             </button>
 
-            <button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-users"></i> <span>طلبات الأعضاء</span>
+            <button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-users w-5 text-center"></i> <span>طلبات الأعضاء</span>
             </button>
 
-            <button data-target="project-audit" data-perm="audit_projects" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-check-double"></i> <span>إشراف المشاريع</span>
+            <button data-target="project-audit" data-perm="audit_projects" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-check-double w-5 text-center"></i> <span>إشراف المشاريع</span>
             </button>
 
-            <button data-target="team-mgmt" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-users-cog"></i> <span>إدارة الفرق</span>
+            <button data-target="team-mgmt" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-users-cog w-5 text-center"></i> <span>إدارة الفرق</span>
             </button>
 
-            <button data-target="student-leader-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-users"></i> <span>إدارة المستخدمين</span>
+            <button data-target="student-leader-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-users w-5 text-center"></i> <span>إدارة المستخدمين</span>
             </button>
 
-            <button data-target="users-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right">
-                <i class="fas fa-users-cog"></i> <span>إدارة الصلاحيات</span>
+            <button data-target="users-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-users-cog w-5 text-center"></i> <span>إدارة الصلاحيات</span>
             </button>
         </nav>
 
         <!-- Admin Profile Info & Logout -->
-        <div class="p-4 border-t border-white/10 bg-black/40">
-            <div class="flex items-center gap-3 mb-4 px-2">
-                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-10 h-10 rounded-full border border-white/10 object-cover">
+        <div class="p-3 sm:p-4 border-t border-white/10 bg-black/40 shrink-0">
+            <div class="flex items-center gap-3 mb-3 px-1">
+                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-9 h-9 rounded-full border border-white/10 object-cover">
                 <div class="flex-1 min-w-0">
-                    <p id="admin-user-name" class="text-sm font-bold text-white truncate">جاري التحميل...</p>
+                    <p id="admin-user-name" class="text-xs sm:text-sm font-bold text-white truncate">جاري التحميل...</p>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         <p id="admin-user-role" class="text-[10px] text-gray-400 font-mono">---</p>
                     </div>
                 </div>
             </div>
-            <button id="logout-btn" class="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-bold text-sm">
+            <button id="logout-btn" class="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-bold text-xs sm:text-sm">
                 <i class="fas fa-sign-out-alt"></i> تسجيل خروج
             </button>
         </div>
     </aside>
 
     <!-- Main Content Panels Container -->
-    <main class="flex-1 h-full overflow-y-auto bg-black p-8 custom-scroll relative flex flex-col">
+    <main class="flex-1 w-full max-w-full h-full overflow-y-auto bg-black p-3 sm:p-5 md:p-8 custom-scroll relative flex flex-col">
         
         <!-- Tab 1: Dashboard Overview -->
-        <section id="dashboard" class="tab-content active space-y-8 pb-12">
+        <section id="dashboard" class="tab-content active space-y-6 sm:space-y-8 pb-12">
             <!-- 👤 Header Section -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-b-surface border border-white/10 rounded-2xl p-6 shadow-xl">
-                <div>
-                    <h1 class="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                        <i class="fas fa-compass text-teal-500 animate-spin-slow"></i>
-                        <span>لوحة التحكم المركزية</span>
-                        <span class="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full font-mono">Mission Control</span>
-                    </h1>
-                    <p class="text-gray-400 mt-2 text-sm flex items-center gap-2">
-                        <span>مرحباً،</span>
-                        <span id="dash-welcome-name" class="font-bold text-white">جاري التحميل...</span>
-                    </p>
+            <div class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 mb-6">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleAdminSidebar()" class="md:hidden w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 transition-all shrink-0">
+                        <i class="fas fa-bars text-sm"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
+                            <i class="fas fa-compass text-teal-500 animate-spin-slow text-base sm:text-2xl"></i>
+                            <span>لوحة التحكم المركزية</span>
+                            <span class="text-[10px] sm:text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full font-mono">Mission Control</span>
+                        </h1>
+                        <p class="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-sm flex items-center gap-2">
+                            <span>مرحباً،</span>
+                            <span id="dash-welcome-name" class="font-bold text-white">جاري التحميل...</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-xs text-gray-500">آخر تسجيل دخول</p>
-                    <p id="dash-last-login" class="text-sm font-bold text-teal-400 font-mono mt-1">--</p>
+                <div class="flex items-center gap-3 sm:gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <!-- Dropdown: المنصة الرئيسية -->
+                    <div class="relative" id="main-site-nav-dropdown">
+                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs font-bold transition-all shadow-sm">
+                            <i class="fas fa-compass text-teal-400"></i>
+                            <span class="hidden sm:inline">المنصة الرئيسية</span>
+                            <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
+                            <div class="px-3 py-1.5 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
+                            <a href="../../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-home text-teal-400 w-4 text-center"></i>
+                                    <span>الرئيسية</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-map-signs text-teal-400 w-4 text-center"></i>
+                                    <span>المسار التعليمي</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i>
+                                    <span>الدورات التدريبية</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-book-reader text-teal-400 w-4 text-center"></i>
+                                    <span>المكتبة العلمية</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-tools text-teal-400 w-4 text-center"></i>
+                                    <span>الأدوات البرمجية</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i>
+                                    <span>الخبراء</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">آخر تسجيل دخول</p>
+                        <p id="dash-last-login" class="text-sm font-bold text-teal-400 font-mono mt-1">--</p>
+                    </div>
                 </div>
             </div>
 
@@ -4377,6 +4470,47 @@
     <script type="module" src="../js/references-mgmt.js?v=2.1"></script>
     <script type="module" src="../../js/tools-drawer.js?v=2.1"></script>
     <script type="module" src="../../js/references-drawer.js?v=2.1"></script>
+ 
+    <script>
+    function closeAdminSidebar() {
+        const sidebar = document.getElementById('admin-sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        if (sidebar) sidebar.classList.add('translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+    }
+    window.closeAdminSidebar = closeAdminSidebar;
 
+    document.getElementById('admin-sidebar')?.addEventListener('click', (e) => {
+        if (window.innerWidth < 768) {
+            const clickable = e.target.closest('button, a');
+            if (clickable && !clickable.querySelector('.fa-times')) {
+                closeAdminSidebar();
+            }
+        }
+    });
+
+    function toggleMainSiteDropdown(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('main-site-dropdown-menu');
+        const chevron = document.getElementById('main-site-chevron');
+        if (menu) {
+            menu.classList.toggle('hidden');
+            if (chevron) chevron.classList.toggle('rotate-180');
+        }
+    }
+    window.toggleMainSiteDropdown = toggleMainSiteDropdown;
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('main-site-dropdown-menu');
+        const btn = document.getElementById('main-site-dropdown-btn');
+        if (menu && !menu.classList.contains('hidden')) {
+            if (!menu.contains(e.target) && !btn?.contains(e.target)) {
+                menu.classList.add('hidden');
+                const chevron = document.getElementById('main-site-chevron');
+                if (chevron) chevron.classList.remove('rotate-180');
+            }
+        }
+    });
+    </script>
 </body>
 </html>

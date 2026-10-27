@@ -24,181 +24,299 @@
     </script>
 
     <style>
-        /* منع التمرير الأفقي بشكل قطعي في كل الصفحة */
-html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-}
-
-/* التأكد من أن المشغل الرئيسي لا يتجاوز عرض الشاشة */
-main {
-    max-width: 100vw;
-    overflow-x: hidden !important;
-}
-
-/* تحسين استجابة الـ Grid في الشاشات الصغيرة جداً */
-@media (max-width: 400px) {
-    .grid-cols-2 {
-        grid-template-columns: 1fr; /* تحويل الشبكة لعمود واحد في الشاشات الصغيرة جداً */
-    }
-}
         body { font-family: 'Cairo', sans-serif; background-color: #000; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Tree Styles */
-        .tree-line { position: absolute; right: 23px; top: 35px; bottom: -20px; width: 2px; background: #333; z-index: 0; }
-        .last-item .tree-line { display: none; }
-        .custom-scroll::-webkit-scrollbar { width: 9px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        /* Mobile Collapsible Header Styles */
+        @media (max-width: 767px) {
+            .collapsible-banner {
+                max-height: 80px;
+                opacity: 1;
+                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
+                            opacity 0.25s ease-in-out, 
+                            margin 0.3s ease, 
+                            padding 0.3s ease,
+                            border-color 0.25s ease;
+            }
+            .banner-collapsed {
+                max-height: 0 !important;
+                opacity: 0 !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                border-top-width: 0 !important;
+                border-color: transparent !important;
+                pointer-events: none !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .collapsible-banner, .banner-collapsed {
+                max-height: none !important;
+                opacity: 1 !important;
+                margin: 0 !important;
+                pointer-events: auto !important;
+                display: flex !important;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-b-bg text-white min-h-screen flex overflow-hidden">
     
-    <div id="mobile-overlay" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <aside id="sidebar" class="w-80 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-screen shadow-2xl md:shadow-none">
-     <button onclick="toggleSidebar()" class="md:hidden absolute top-4 left-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:text-white hover:bg-red-500/20 transition-all">
-        <i class="fas fa-times"></i>
-    </button>
-
-
-        <div class="flex flex-col items-center p-6 border-b border-white/10 text-center bg-gradient-to-b from-white/5 to-transparent">
-            <div class="relative mb-3 group">
-                <img id="sidebar-team-logo" src="../assets/icons/BUSLA-icon.png" class="w-20 h-20 rounded-2xl object-cover border-2 mb-4 border-white/10 shadow-lg group-hover:border-b-primary transition-all cursor-pointer">
-                <div class="absolute -bottom-2 -right-2 bg-b-surface p-1 rounded-full">
-                    <div class="bg-yellow-500/20 text-yellow-500 w-6 h-6 flex items-center justify-center rounded-full border border-yellow-500/30">
-                        <i class="fas fa-crown text-[12px]"></i>
+    <aside id="sidebar" class="w-80 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-screen shadow-2xl md:shadow-none shrink-0 overflow-hidden">
+        
+        <!-- Sidebar Header (Responsive: Compact Horizontal on Mobile, Original Centered Vertical on Desktop) -->
+        <div class="p-3 sm:p-3.5 md:p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent shrink-0 flex items-center justify-between gap-3 md:flex-col md:items-center md:text-center md:gap-0">
+            <div class="flex items-center gap-3 min-w-0 flex-1 md:flex-col md:items-center md:w-full md:gap-0">
+                <!-- Logo with Crown -->
+                <div class="relative shrink-0 group md:mb-3">
+                    <img id="sidebar-team-logo" src="../assets/icons/BUSLA-icon.png" class="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-white/15 md:border-2 md:mb-4 border-white/10 shadow-md md:shadow-lg group-hover:border-b-primary transition-all cursor-pointer">
+                    <div class="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 bg-b-surface p-0.5 md:p-1 rounded-full border border-white/10 md:border-none">
+                        <div class="bg-yellow-500/20 text-yellow-500 w-4 h-4 md:w-6 md:h-6 rounded-full flex items-center justify-center border border-yellow-500/30">
+                            <i class="fas fa-crown text-[8px] md:text-[12px]"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Team and Leader Info -->
+                <div class="min-w-0 flex-1 flex flex-col justify-center md:w-full md:items-center">
+                    <div class="flex items-center gap-1.5 flex-wrap md:flex-col md:gap-0">
+                        <h2 id="sidebar-team-name" class="font-bold text-sm sm:text-base md:text-lg text-white truncate md:overflow-visible md:whitespace-normal md:mb-1 tracking-wide"></h2>
+                        <span id="sidebar-team-badge" class="text-[9px] md:text-[15px] font-black text-b-primary bg-b-primary/10 md:bg-transparent border border-b-primary/30 md:border-none px-1.5 py-0.5 md:p-0 rounded md:mb-2 uppercase tracking-wider md:tracking-tighter"></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] md:text-xs text-gray-400 mt-1 md:mt-0 md:bg-black/30 md:px-3 md:py-1 md:rounded-full md:border md:border-white/5 truncate">
+                        <i class="fas fa-user-tie text-teal-400 md:text-b-primary text-[10px] md:text-xs"></i>
+                        <span class="truncate">القائد: <span id="sidebar-leader-name" class="text-gray-200 md:text-gray-300 font-medium"></span></span>
                     </div>
                 </div>
             </div>
-            <h2 id="sidebar-team-name" class="font-bold text-lg text-white mb-1 tracking-wide"> </h2>
-            <div id="sidebar-team-badge" class="text-[15px] font-black font-bold text-b-primary mb-2 uppercase tracking-tighter"></div>
-            <div class="flex items-center justify-center gap-1.5 text-xs text-gray-400 bg-black/30 px-3 py-1 rounded-full border border-white/5">
-                <i class="fas fa-user-tie text-b-primary"></i>
-                <span>القائد: <span id="sidebar-leader-name" class="text-gray-300"> </span></span>
-            </div>
-            <div id="sidebar-badges-container" class="mt-3 flex gap-1 justify-center min-h-[20px]"></div>
+
+            <!-- Mobile Close Button (Hidden on Desktop) -->
+            <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 transition-all shrink-0">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+            <!-- Badges container (Desktop only) -->
+            <div id="sidebar-badges-container" class="hidden md:flex md:mt-3 md:gap-1 md:justify-center md:min-h-[20px]"></div>
         </div>
 
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scroll">
-            <button onclick="switchTab('overview')" id="btn-overview" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all">
-                <i class="fas fa-chart-pie"></i> <span>نظرة عامة</span>
-            </button>
-            <button onclick="switchTab('roadmap')" id="btn-roadmap" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-sitemap"></i> <span>خريطة التعلم</span>
-            </button>
+        <!-- Main Site Quick Accordion Portal -->
+        <div class="px-3 pt-2 pb-1 shrink-0">
+            <div class="bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent border border-teal-500/20 rounded-xl p-2 shadow-inner">
+                <div class="flex items-center justify-between">
+                    <a href="../index.html" class="flex items-center gap-2 text-teal-400 font-bold hover:text-white transition-colors group">
+                        <i class="fas fa-compass text-teal-400 text-xs group-hover:rotate-45 transition-transform duration-300"></i>
+                        <span class="text-xs">المنصة الرئيسية</span>
+                        <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
+                    </a>
+                    <button type="button" onclick="document.getElementById('sidebar-main-site-links').classList.toggle('hidden'); document.getElementById('sidebar-main-site-chevron').classList.toggle('rotate-180');" class="text-teal-400 hover:text-white text-[10px] bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-lg border border-teal-500/20 flex items-center gap-1 transition-all">
+                        <span>الأقسام</span>
+                        <i id="sidebar-main-site-chevron" class="fas fa-chevron-down text-[8px] transition-transform duration-200"></i>
+                    </button>
+                </div>
+                <div id="sidebar-main-site-links" class="hidden grid grid-cols-3 gap-1 pt-2 mt-1.5 border-t border-white/5 text-[10px] text-gray-400 font-medium">
+                    <a href="../index.html#roadmap" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المسار</a>
+                    <a href="../index.html#tools" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الأدوات</a>
+                    <a href="../index.html#references" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المكتبة</a>
+                    <a href="../index.html#courses" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الدورات</a>
+                    <a href="../index.html#experts" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الخبراء</a>
+                    <a href="../index.html#hero" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الرئيسية</a>
+                </div>
+            </div>
+        </div>
 
-            <button onclick="switchTab('squad')" id="btn-squad" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-users-cog"></i> <span> الفريق</span>
+        <!-- Navigation Menu -->
+        <nav class="flex-1 px-3 py-1.5 md:p-4 space-y-1 md:space-y-2 overflow-y-auto custom-scroll min-h-0">
+            <button onclick="switchTab('overview')" id="btn-overview" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-chart-pie w-4 md:w-auto text-center"></i> <span>نظرة عامة</span>
             </button>
-            <button onclick="switchTab('announcements')" id="btn-announcements" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-bullhorn"></i> <span>إشعارات الفريق</span>
+            <button onclick="switchTab('roadmap')" id="btn-roadmap" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-sitemap w-4 md:w-auto text-center"></i> <span>خريطة التعلم</span>
             </button>
-            <button onclick="switchTab('calendar')" id="btn-calendar" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-calendar-alt"></i> <span>التقويم</span>
+            <button onclick="switchTab('squad')" id="btn-squad" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-users-cog w-4 md:w-auto text-center"></i> <span>الفريق</span>
             </button>
-            <button onclick="switchTab('rank')" id="btn-rank" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all">
-                <i class="fas fa-medal w-5"></i> <span class="font-bold">رحلة الصعود</span>
+            <button onclick="switchTab('announcements')" id="btn-announcements" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-bullhorn w-4 md:w-auto text-center"></i> <span>إشعارات الفريق</span>
             </button>
-            <button onclick="switchTab('team-rank')" id="btn-team-rank" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all">
-                <i class="fas fa-chess-rook w-5"></i> <span class="font-bold">رحلة الفريق</span>
+            <button onclick="switchTab('calendar')" id="btn-calendar" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-calendar-alt w-4 md:w-auto text-center"></i> <span>التقويم</span>
             </button>
-            <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-trophy"></i> <span>ساحة المنافسة</span>
+            <button onclick="switchTab('rank')" id="btn-rank" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-medal w-4 md:w-5 text-center"></i> <span class="font-bold">رحلة الصعود</span>
             </button>
-            <button id="open-settings-btn" class="nav-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all">
-                <i class="fas fa-cog"></i> <span>إعدادات الحساب</span>
+            <button onclick="switchTab('team-rank')" id="btn-team-rank" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-chess-rook w-4 md:w-5 text-center"></i> <span class="font-bold">رحلة الفريق</span>
+            </button>
+            <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-trophy w-4 md:w-auto text-center"></i> <span>ساحة المنافسة</span>
+            </button>
+            <button id="open-settings-btn" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
+                <i class="fas fa-cog w-4 md:w-auto text-center"></i> <span>إعدادات الحساب</span>
             </button>
         </nav>
 
-        <div class="p-4 border-t border-white/10">
-            <button id="logout-btn" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all">
-                <i class="fas fa-sign-out-alt"></i> <span>تسجيل خروج</span>
+        <!-- Pinned Logout Footer (Zero empty space below) -->
+        <div class="p-2.5 sm:p-3 md:p-4 border-t border-white/10 mt-auto shrink-0 bg-black/40">
+            <button id="logout-btn" class="w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 sm:py-2.5 md:p-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all text-xs sm:text-sm md:text-base font-bold">
+                <i class="fas fa-sign-out-alt w-4 md:w-auto text-center"></i>
+                <span>تسجيل خروج</span>
             </button>
         </div>
-        <br></br>
     </aside>
 
-    <main class="flex-1 h-screen overflow-y-auto p-4 md:p-8 relative custom-scroll">
+    <main class="flex-1 h-screen overflow-y-auto p-3 sm:p-5 md:p-8 relative custom-scroll min-w-0">
         
-        <header class="flex flex-col-reverse md:flex-row justify-between items-center mb-8 bg-b-surface p-4 rounded-2xl border border-white/10 shadow-lg gap-4">
-            <div class="flex items-center gap-4 w-full px-5 md:w-auto bg-black/20 p-2 pr-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors relative overflow-hidden">
-                <img id="header-user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-20 h-20 rounded-full border-2 border-white/10 p-0.5 bg-b-surface object-cover relative z-10">
-                <div class="relative z-10 flex items-center gap-6">
-                    <div>
-                        <p class="text-[16px] text-gray-400 mb-0.5">أهلاً بك،</p>
-                        <h2 id="header-user-name" class="text-lg font-bold text-white mb-3 leading-none drop-shadow-md"></h2>
-                        <span id="header-user-badge" class="text-[14px] mt-2 font-bold px-2 py-0.5 rounded bg-b-primary/20 text-b-primary font-bold border border-b-primary/30 uppercase backdrop-blur-sm"></span>
+        <!-- Header (Responsive: Mobile Sticky Collapsible | Desktop Original Static Bar) -->
+        <header id="main-header" class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 sm:p-2.5 mb-3 shadow-xl shrink-0 transition-all duration-300 md:static md:z-auto md:bg-b-surface md:p-4 md:mb-8 md:flex md:flex-row md:justify-between md:items-center md:shadow-lg md:backdrop-blur-none">
+            
+            <!-- 1. User Welcome Card (Desktop: Right Side (order-1) | Mobile: Collapsible Bottom Banner (order-2)) -->
+            <div id="user-welcome-banner" class="collapsible-banner order-2 md:order-1 flex items-center justify-between gap-3 pt-2 mt-2 border-t border-white/10 overflow-hidden md:border-t-0 md:pt-0 md:mt-0 md:overflow-visible md:w-auto md:bg-black/20 md:p-2 md:pr-4 md:rounded-xl md:border md:border-white/5 md:hover:border-white/10 md:transition-colors md:gap-6">
+                <!-- Avatar & Welcome Name -->
+                <div class="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
+                    <img id="header-user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-8 h-8 sm:w-9 sm:h-9 md:w-20 md:h-20 rounded-full border border-b-primary/40 md:border-2 md:border-white/10 p-0.5 bg-b-surface object-cover shrink-0 shadow-sm md:relative md:z-10">
+                    <div class="min-w-0 flex flex-col justify-center">
+                        <span class="text-[9px] sm:text-[10px] md:text-[16px] text-gray-400 leading-none md:mb-0.5">أهلاً بك،</span>
+                        <h2 id="header-user-name" class="text-xs sm:text-sm md:text-lg font-bold text-white leading-snug truncate mt-0.5 md:mt-0 md:mb-3 md:leading-none md:drop-shadow-md"></h2>
+                        <!-- Badge on Desktop (under name) -->
+                        <div class="hidden md:block">
+                            <span id="header-user-badge" class="text-[14px] font-bold px-2 py-0.5 rounded bg-b-primary/20 text-b-primary border border-b-primary/30 uppercase backdrop-blur-sm"></span>
+                        </div>
                     </div>
-                    <img id="header-user-badge-img-clear" src="../assets/icons/BUSLA-icon.png" class="hidden md:block w-20 h-20 object-contain rounded-2xl border-2 border-[#006a67] drop-shadow-xl z-20 transition-transform hover:scale-110">
+                </div>
+
+                <!-- Left (Mobile: Badge on opposite side | Desktop: Clear Rank Image) -->
+                <div class="flex items-center gap-1.5 sm:gap-2 md:gap-6 shrink-0 md:relative md:z-10">
+                    <!-- Badge on Mobile (opposite side to save space) -->
+                    <span id="header-user-badge-mobile" class="md:hidden inline-flex items-center text-[9px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-b-primary/20 text-teal-300 border border-b-primary/30 uppercase tracking-wide backdrop-blur-sm shadow-sm"></span>
+                    
+                    <!-- Clear Rank Badge Image (Desktop: Large 20x20 Original | Mobile: Small 6x6) -->
+                    <img id="header-user-badge-img-clear" src="../assets/icons/BUSLA-icon.png" class="w-6 h-6 sm:w-8 sm:h-8 md:w-20 md:h-20 object-contain rounded-lg md:rounded-2xl border border-[#006a67]/50 md:border-2 md:border-[#006a67] drop-shadow-sm md:drop-shadow-xl shrink-0 transition-transform md:hover:scale-110">
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
-                <div class="flex items-center gap-3 absolute right-[8%]">
-                    <button onclick="toggleSidebar()" class="md:hidden w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 transition-all">
-                        <i class="fas fa-bars"></i>
+            <!-- 2. Controls Cluster (Desktop: Left Side (order-2) | Mobile: Top Pinned Row (order-1)) -->
+            <div class="order-1 md:order-2 flex items-center justify-between md:justify-end gap-2 md:gap-3 w-full md:w-auto">
+                <!-- Mobile Only: Hamburger menu button -->
+                <div class="flex items-center gap-2 md:hidden">
+                    <button onclick="toggleSidebar()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 transition-all shrink-0">
+                        <i class="fas fa-bars text-xs sm:text-sm"></i>
                     </button>
-                </div>
-                <div class="flex items-center gap-3 w-full md:w-auto md:static absolute right-[19%]">
-                    <button onclick="switchTab('announcements')" class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:bg-white/10 transition-all cursor-pointer">
-                        <i class="fas fa-bell"></i>
-                        <span id="global-notif-badge" class="absolute -top-1.5 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
-                    </button>
-                </div>  
-                <div class="flex items-center gap-3 bg-black/30 px-4 py-2 rounded-xl border border-white/5">
-                    <div class="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    
-                    <div>
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest">نقاط الفريق</p>
-                        <p id="stat-team-score" class="font-bold text-white font-mono">0</p>
+                    <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold">
+                        <span class="text-b-primary">BUSLA</span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 bg-b-primary/10 px-4 py-2 rounded-xl border border-b-primary/20">
-                    <div class="w-8 h-8 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary">
-                        <i class="fas fa-star"></i>
+                <!-- Controls: Search, Notifications, Points, Main Site Dropdown -->
+                <div class="flex items-center gap-1.5 sm:gap-2.5 md:gap-3">
+                    <!-- Omni-Search Trigger Button -->
+                    <button onclick="window.openOmniSearch()" class="flex items-center gap-1.5 sm:gap-2 md:gap-2 px-2 sm:px-3 md:px-3 py-1.5 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group" title="البحث الشامل (Ctrl + K)">
+                        <i class="fas fa-search text-teal-400 text-xs group-hover:scale-110 transition-transform"></i>
+                        <span class="hidden md:inline font-medium">بحث...</span>
+                        <kbd class="hidden lg:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
+                    </button>
+
+                    <!-- Notifications button -->
+                    <button onclick="switchTab('announcements')" class="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:bg-white/10 transition-all cursor-pointer shrink-0">
+                        <i class="fas fa-bell text-xs sm:text-sm md:text-base"></i>
+                        <span id="global-notif-badge" class="absolute -top-1 -right-1 md:-top-1.5 md:-right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
+                    </button>
+
+                    <!-- Points: Team -->
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-3 bg-black/40 md:bg-black/30 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-xl border border-white/5">
+                        <div class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">
+                            <i class="fas fa-trophy text-[9px] sm:text-xs md:text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[8px] md:text-[9px] text-gray-500 uppercase tracking-widest hidden sm:block">نقاط الفريق</p>
+                            <p id="stat-team-score" class="font-bold text-white font-mono text-xs sm:text-sm md:text-base leading-tight">0</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-[9px] text-b-primary uppercase tracking-widest">نقاطي</p>
-                        <p id="my-points" class="font-bold text-white font-mono">0</p>
+
+                    <!-- Points: My -->
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-3 bg-b-primary/10 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-xl border border-b-primary/20">
+                        <div class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
+                            <i class="fas fa-star text-[9px] sm:text-xs md:text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[8px] md:text-[9px] text-b-primary uppercase tracking-widest hidden sm:block">نقاطي</p>
+                            <p id="my-points" class="font-bold text-white font-mono text-xs sm:text-sm md:text-base leading-tight">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Site Dropdown -->
+                    <div class="relative" id="main-site-nav-dropdown">
+                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
+                            <i class="fas fa-compass text-teal-400 text-xs sm:text-sm"></i>
+                            <span class="hidden sm:inline">المنصة الرئيسية</span>
+                            <i class="fas fa-chevron-down text-[9px] md:text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
+                            <div class="px-3 py-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
+                            <a href="../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-home text-teal-400 w-4 text-center"></i><span>الرئيسية</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-map-signs text-teal-400 w-4 text-center"></i><span>المسار التعليمي</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i><span>الدورات التدريبية</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-book-reader text-teal-400 w-4 text-center"></i><span>المكتبة العلمية</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-tools text-teal-400 w-4 text-center"></i><span>الأدوات البرمجية</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                            <a href="../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                <span class="flex items-center gap-2"><i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i><span>الخبراء</span></span>
+                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <section id="overview" class="tab-content active space-y-8">
+        <section id="overview" class="tab-content active space-y-4 sm:space-y-6">
             <div id="week-header-info"></div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[500px]">
-                <div class="lg:col-span-2 bg-b-surface p-6 rounded-2xl border border-white/10 flex flex-col h-[55vh] shadow-lg">
-                    <div class="flex items-center justify-between mb-4 shrink-0 border-b border-white/5 pb-4">
-                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                            <span class="w-2 h-8 bg-b-primary rounded-full"></span>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-auto lg:h-[520px]">
+                <div class="lg:col-span-2 bg-b-surface p-4 sm:p-6 rounded-2xl border border-white/10 flex flex-col h-auto min-h-[360px] lg:h-full shadow-lg">
+                    <div class="flex items-center justify-between mb-4 shrink-0 border-b border-white/5 pb-3">
+                        <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                            <span class="w-2 h-7 bg-b-primary rounded-full"></span>
                             المهام المطلوبة منك
                         </h3>
-                        <div class="flex gap-2">
-                            <span class="text-[10px] text-gray-500 bg-white/5 px-2 py-1 rounded">فيديو <i class="fas fa-circle text-b-primary text-[8px] ml-1"></i></span>
-                            <span class="text-[10px] text-gray-500 bg-white/5 px-2 py-1 rounded">كويز <i class="fas fa-circle text-yellow-500 text-[8px] ml-1"></i></span>
-                            <span class="text-[10px] text-gray-500 bg-white/5 px-2 py-1 rounded">مشروع <i class="fas fa-circle text-purple-500 text-[8px] ml-1"></i></span>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">فيديو <i class="fas fa-circle text-b-primary text-[8px] ml-1"></i></span>
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">كويز <i class="fas fa-circle text-yellow-500 text-[8px] ml-1"></i></span>
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">مشروع <i class="fas fa-circle text-purple-500 text-[8px] ml-1"></i></span>
                         </div>
                     </div>
-                    <div id="overview-container" class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-2">
+                    <div id="overview-container" class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-1">
                         <div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>
                     </div>
                 </div>
 
-                <div class="bg-b-surface p-6 rounded-2xl border border-white/10 flex flex-col h-[55vh] shadow-lg">
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2 mb-4 shrink-0 border-b border-white/5 pb-4">
-                        <span class="w-2 h-8 bg-purple-500 rounded-full"></span>
+                <div class="bg-b-surface p-4 sm:p-6 rounded-2xl border border-white/10 flex flex-col h-auto min-h-[300px] lg:h-full shadow-lg">
+                    <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 mb-4 shrink-0 border-b border-white/5 pb-3">
+                        <span class="w-2 h-7 bg-purple-500 rounded-full"></span>
                         الكورسات النشطة
                     </h3>
-                    <div id="active-courses-container" class="space-y-4 flex-1 overflow-y-auto custom-scroll pr-2">
+                    <div id="active-courses-container" class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-1">
                         <div class="text-center py-10 text-gray-500 bg-black/20 rounded-xl border border-white/5">
                             <i class="fas fa-spinner fa-spin mb-2"></i>
                             <p>جاري التحميل...</p>
@@ -208,21 +326,21 @@ main {
             </div>
         </section>
 
-<section id="roadmap" class="tab-content space-y-6">
+        <section id="roadmap" class="tab-content space-y-4 sm:space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 rounded-xl border border-white/10 gap-4">
                 <div>
-                    <h3 class="font-bold text-xl text-purple-400">شجرة المنهج (Curriculum Tree)</h3>
+                    <h3 class="font-bold text-lg sm:text-xl text-purple-400">شجرة المنهج (Curriculum Tree)</h3>
                     <p class="text-xs text-gray-400">استعرض مسار التعلم الخاص بك واضغط على الكورس لعرض التفاصيل والمشاهدة.</p>
                 </div>
                 
                 <div class="relative w-full md:w-64">
-                    <select id="roadmap-track-selector" onchange="window.renderRoadmapTree()" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                    <select id="roadmap-track-selector" onchange="window.renderRoadmapTree()" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
                         <option value="all">جاري تحميل المسارات...</option>
                     </select>
                     <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
                 </div>
             </div>
-            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 h-[calc(100vh-260px)] relative">
+            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-260px)] relative">
                 <!-- Roadmap tree viewer (70%) -->
                 <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="roadmap-tree-container">
                     <div class="text-center py-20 text-gray-500">
@@ -231,26 +349,25 @@ main {
                 </div>
 
                 <!-- Unified Details Panel (30%) -->
-                <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
+                <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-4 sm:p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
                     <!-- Populated dynamically by NodeDetailsPanel -->
                 </div>
             </div>
-            </div>
         </section>
-<section id="squad" class="tab-content hidden space-y-8">
+<section id="squad" class="tab-content hidden space-y-6">
     
-    <div id="has-team-view" class="hidden space-y-6">
-        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface p-6 rounded-2xl border border-white/10 shadow-lg gap-4">
+    <div id="has-team-view" class="hidden space-y-4 sm:space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-b-surface p-4 sm:p-5 md:p-6 rounded-2xl border border-white/10 shadow-lg gap-3 sm:gap-4">
             <div>
-                <h2 class="text-2xl font-black text-white">أعضاء الفريق</h2>
-                <p class="text-gray-400 text-sm mt-1">ترتيب الأعضاء بناءً على النقاط المكتسبة</p>
+                <h2 class="text-xl sm:text-2xl font-black text-white">أعضاء الفريق</h2>
+                <p class="text-gray-400 text-xs sm:text-sm mt-0.5">ترتيب الأعضاء بناءً على النقاط المكتسبة (XP)</p>
             </div>
-            <button onclick="window.leaveCurrentTeam()" class="px-6 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg">
+            <button onclick="window.leaveCurrentTeam()" class="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg active:scale-95">
                 <i class="fas fa-sign-out-alt"></i> مغادرة الفريق
             </button>
         </div>
         <div id="squad-list-container" class="space-y-3">
-            </div>
+        </div>
     </div>
 
 <div id="no-team-view" class="hidden">
@@ -569,26 +686,33 @@ main {
     </div>
 </div>
 
-        <section id="calendar" class="tab-content space-y-6">
-            <div class="bg-b-surface p-6 rounded-2xl border border-white/10 min-h-[500px]">
-                <div class="flex justify-between items-center mb-8 pb-6 border-b border-white/5">
-                    <div>
-                        <h3 class="font-bold text-2xl text-white mb-1">التقويم الأسبوعي</h3>
-                        <p class="text-xs text-gray-400">استعرض مهام الفريق موزعة بالأسابيع</p>
+        <section id="calendar" class="tab-content hidden space-y-3 sm:space-y-4 animate-fade-in">
+            <!-- Header Card with Integrated Month Controls -->
+            <div class="bg-b-surface/90 border border-white/10 p-3 sm:p-4 rounded-2xl shadow-lg backdrop-blur-md flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-b-primary/15 border border-b-primary/30 flex items-center justify-center text-b-primary text-sm sm:text-base shrink-0 shadow-[0_0_12px_rgba(0,245,255,0.15)]">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <div class="flex items-center gap-3 bg-black/40 p-1.5 rounded-xl border border-white/5">
-                        <button onclick="changeMonth(-1)" class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center text-gray-400 transition-colors">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <span id="calendar-month-title" class="font-bold text-b-primary min-w-[140px] text-center text-lg select-none">...</span>
-                        <button onclick="changeMonth(1)" class="w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center text-gray-400 transition-colors">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-sm sm:text-base md:text-lg text-white truncate">التقويم الأسبوعي</h3>
+                        <p class="text-[11px] sm:text-xs text-gray-400 truncate">مهام الفريق والخطط موزعة بالأسابيع</p>
                     </div>
                 </div>
 
-                <div id="calendar-weeks-container" class="space-y-4"></div>
+                <!-- Month Selector Pill -->
+                <div class="flex items-center gap-1 sm:gap-1.5 bg-black/50 p-1 sm:p-1.5 rounded-xl border border-white/10 shrink-0">
+                    <button onclick="changeMonth(-1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="الشهر السابق">
+                        <i class="fas fa-chevron-right text-[10px] sm:text-xs"></i>
+                    </button>
+                    <span id="calendar-month-title" class="font-bold text-b-primary min-w-[85px] sm:min-w-[110px] text-center text-xs sm:text-sm select-none px-1">...</span>
+                    <button onclick="changeMonth(1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="الشهر التالي">
+                        <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
+                    </button>
+                </div>
             </div>
+
+            <!-- Weeks List Container -->
+            <div id="calendar-weeks-container" class="space-y-2 sm:space-y-3"></div>
         </section>
 
         <section id="rank" class="tab-content hidden animate-fade-in">
@@ -916,64 +1040,64 @@ main {
     </div>
 </div>
 
-    <div id="task-details-modal" onclick="if(event.target === this) closeTaskDetailsModal()" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl relative my-8 flex flex-col max-h-[90vh] transform transition-all">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-black to-b-surface rounded-t-2xl shrink-0">
-                <div>
-                    <h3 id="td-modal-title" class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-tasks text-b-primary"></i> تفاصيل المهمة
+    <div id="task-details-modal" onclick="if(event.target === this) closeTaskDetailsModal()" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl relative my-auto sm:my-8 flex flex-col max-h-[92vh] sm:max-h-[90vh] transform transition-all">
+            <div class="p-3.5 sm:p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-black to-b-surface rounded-t-2xl shrink-0">
+                <div class="min-w-0">
+                    <h3 id="td-modal-title" class="text-base sm:text-xl font-bold text-white flex items-center gap-2 truncate">
+                        <i class="fas fa-tasks text-b-primary shrink-0"></i> <span class="truncate">تفاصيل المهمة</span>
                     </h3>
-                    <p id="td-modal-subtitle" class="text-xs font-mono text-gray-400 mt-1 uppercase tracking-widest bg-white/5 inline-block px-2 py-0.5 rounded border border-white/5">...</p>
+                    <p id="td-modal-subtitle" class="text-[10px] sm:text-xs font-mono text-gray-400 mt-0.5 sm:mt-1 uppercase tracking-widest bg-white/5 inline-block px-2 py-0.5 rounded border border-white/5 truncate max-w-xs">...</p>
                 </div>
-                <button id="td-modal-action-btn" onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white transition-colors w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 shadow-sm">
-                    <i id="td-modal-action-icon" class="fas fa-times text-lg"></i>
+                <button id="td-modal-action-btn" onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white transition-colors w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/5 shadow-sm shrink-0">
+                    <i id="td-modal-action-icon" class="fas fa-times text-sm sm:text-lg"></i>
                 </button>
             </div>
             
-            <div class="p-6 overflow-y-auto custom-scroll flex-1 space-y-6">
-                <div class="flex justify-between items-center bg-white/5 p-5 rounded-xl border border-white/10 shadow-inner">
+            <div class="p-3.5 sm:p-6 overflow-y-auto custom-scroll flex-1 space-y-4 sm:space-y-6">
+                <div class="flex justify-between items-center bg-white/5 p-3.5 sm:p-5 rounded-xl border border-white/10 shadow-inner">
                     <div class="text-center">
-                        <span class="block text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-bold">نسبة الإنجاز للفريق</span>
-                        <span id="td-modal-progress-txt" class="text-3xl font-black text-b-primary font-mono">0%</span>
+                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">نسبة الإنجاز للفريق</span>
+                        <span id="td-modal-progress-txt" class="text-2xl sm:text-3xl font-black text-b-primary font-mono">0%</span>
                     </div>
-                    <div class="w-[1px] h-12 bg-white/10"></div>
+                    <div class="w-[1px] h-10 sm:h-12 bg-white/10"></div>
                     <div class="text-center">
-                        <span class="block text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-bold">الطلاب المنجزون</span>
+                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">الطلاب المنجزون</span>
                         <div class="flex items-baseline justify-center gap-1">
-                            <span id="td-modal-completed-count" class="text-2xl font-bold text-white font-mono">0</span> 
-                            <span class="text-gray-500 text-sm font-mono" id="td-modal-total-count">/ 0</span>
+                            <span id="td-modal-completed-count" class="text-xl sm:text-2xl font-bold text-white font-mono">0</span> 
+                            <span class="text-gray-500 text-xs sm:text-sm font-mono" id="td-modal-total-count">/ 0</span>
                         </div>
                     </div>
                 </div>
                 
                 <div>
-                    <h4 class="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider flex items-center gap-2">
+                    <h4 class="text-xs sm:text-sm font-bold text-gray-300 mb-2 sm:mb-3 uppercase tracking-wider flex items-center gap-2">
                         <i class="fas fa-users text-gray-500"></i> حالة أعضاء الفريق
                     </h4>
                     <div id="td-members-list" class="space-y-2"></div>
                 </div>
             </div>
 
-            <div class="p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
-                <button onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white text-sm transition-colors">إغلاق النافذة</button>
+            <div class="p-3 sm:p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
+                <button onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">إغلاق النافذة</button>
             </div>
         </div>
     </div>
 
-    <div id="week-details-modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-b-surface w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl flex flex-col max-h-[85vh]">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-b-primary/10 to-transparent">
-                <div>
-                    <h3 id="week-modal-title" class="text-xl font-bold text-white">تفاصيل الأسبوع</h3>
-                    <p class="text-sm text-gray-400 mt-1">إجمالي نقاط الأسبوع: <span id="week-modal-points" class="text-yellow-400 font-bold">0</span> نقطة</p>
+    <div id="week-details-modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm">
+        <div class="bg-b-surface w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden my-auto">
+            <div class="p-3.5 sm:p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-b-primary/10 to-transparent shrink-0">
+                <div class="min-w-0">
+                    <h3 id="week-modal-title" class="text-base sm:text-xl font-bold text-white truncate">تفاصيل الأسبوع</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-400 mt-0.5 sm:mt-1 truncate">إجمالي نقاط الأسبوع: <span id="week-modal-points" class="text-yellow-400 font-bold">0</span> نقطة</p>
                 </div>
-                <button onclick="closeWeekModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-                    <i class="fas fa-times"></i>
+                <button onclick="closeWeekModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0">
+                    <i class="fas fa-times text-sm"></i>
                 </button>
             </div>
-            <div id="week-modal-tasks" class="p-6 space-y-3 overflow-y-auto custom-scroll flex-1"></div>
-            <div class="p-4 border-t border-white/10 bg-black/20 text-center">
-                <button onclick="closeWeekModal()" class="text-gray-400 hover:text-white text-sm">إغلاق النافذة</button>
+            <div id="week-modal-tasks" class="p-3.5 sm:p-6 space-y-2.5 sm:space-y-3 overflow-y-auto custom-scroll flex-1"></div>
+            <div class="p-3 sm:p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
+                <button onclick="closeWeekModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">إغلاق النافذة</button>
             </div>
         </div>
     </div>
@@ -1433,71 +1557,189 @@ main {
     </div>
 
     <div id="toast-container" class="fixed bottom-6 left-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
-        <footer class="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row end-10 text-sm text-gray-500 gap-4 absolute bottom-[5px]">
-            <div class="flex items-center gap-2">
-                <img src="../assets/icons/BUSLA-icon.png" class="w-6 h-6 rounded-full opacity-50 grayscale hover:grayscale-0 transition-all">
-                <span class="font-bold text-gray-400">BUSLA LMS &copy; 2026</span>
-                <span class="hidden md:inline">|</span>
-                <span class="hidden md:inline">منصة إدارة الفرق التعليمية</span>
-            </div>
-            
-            <!-- <div class="flex items-center gap-2 group cursor-pointer hover:text-white transition-colors">
-                <a href="https://github.com/Ahm3d0x" target="_blank" class="hover:text-white"><i class="fab fa-github"></i></a>
-                <a href="https://www.linkedin.com/in/ahmed-m-attia-757aa6292/" target="_blank" class="hover:text-blue-400"><i class="fab fa-linkedin"></i></a>
-                <span class="font-bold text-b-primary group-hover:underline">Ahmed Mohamed Attia</span>
-                <span>Developed with <i class="fas fa-heart text-red-500 mx-1 animate-pulse"></i> by</span>
-            </div> -->
-        </footer>
+    <footer class="mt-auto pt-6 pb-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-3 w-full shrink-0">
+        <div class="flex items-center gap-2">
+            <img src="../assets/icons/BUSLA-icon.png" class="w-5 h-5 rounded-full opacity-60 grayscale hover:grayscale-0 transition-all">
+            <span class="font-bold text-gray-400">BUSLA LMS &copy; 2026</span>
+            <span class="hidden sm:inline">|</span>
+            <span class="hidden sm:inline">منصة إدارة الفرق التعليمية</span>
+        </div>
+    </footer>
     <script type="module" src="../js/student-dash.js"></script>
+    <script type="module" src="../js/omni-search.js"></script>
     <script>
+    function toggleMainSiteDropdown(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('main-site-dropdown-menu');
+        const chevron = document.getElementById('main-site-chevron');
+        if (menu) {
+            menu.classList.toggle('hidden');
+            if (chevron) chevron.classList.toggle('rotate-180');
+        }
+    }
+    window.toggleMainSiteDropdown = toggleMainSiteDropdown;
 
-            function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            
-            if (sidebar) {
-                // تبديل الكلاس الذي يخفي ويظهر القائمة
-                sidebar.classList.toggle('translate-x-full');
-            }
-            if (overlay) {
-                // إظهار وإخفاء الطبقة السوداء
-                overlay.classList.toggle('hidden');
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('main-site-dropdown-menu');
+        const btn = document.getElementById('main-site-dropdown-btn');
+        if (menu && !menu.classList.contains('hidden')) {
+            if (!menu.contains(e.target) && !btn?.contains(e.target)) {
+                menu.classList.add('hidden');
+                const chevron = document.getElementById('main-site-chevron');
+                if (chevron) chevron.classList.remove('rotate-180');
             }
         }
+    });
 
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        if (sidebar) sidebar.classList.add('translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+    }
+    window.closeSidebar = closeSidebar;
 
-        function switchTab(id) {
-            // 1. Visual Tab Switching
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('active');
-            });
-            
-            const target = document.getElementById(id);
-            if(target) {
-                target.classList.remove('hidden');
-                target.classList.add('active');
-            }
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        
+        if (sidebar) {
+            sidebar.classList.toggle('translate-x-full');
+        }
+        if (overlay) {
+            overlay.classList.toggle('hidden');
+        }
+    }
+    window.toggleSidebar = toggleSidebar;
 
-            // 2. Update Sidebar Navigation Buttons State
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('bg-b-primary/10', 'text-b-primary', 'font-bold');
-                b.classList.add('text-gray-400');
-            });
-            
-            const activeBtn = document.getElementById('btn-'+id);
-            if(activeBtn) {
-                activeBtn.classList.add('bg-b-primary/10', 'text-b-primary', 'font-bold');
-                activeBtn.classList.remove('text-gray-400');
-            }
-
-            if (id === 'rank' && window.loadRankSystem) {
-                window.loadRankSystem();
-            }
-            if (id === 'calendar' && window.renderCalendarTab) {
-                window.renderCalendarTab();
+    // Auto-close sidebar when any menu item or link is tapped on mobile
+    document.getElementById('sidebar')?.addEventListener('click', (e) => {
+        if (window.innerWidth < 768) {
+            const clickable = e.target.closest('button, a');
+            if (clickable && !clickable.querySelector('.fa-times')) {
+                closeSidebar();
             }
         }
+    });
+
+    function switchTab(id) {
+        // Auto-close sidebar on mobile if open
+        if (window.innerWidth < 768) {
+            closeSidebar();
+        }
+
+        // 1. Visual Tab Switching
+        document.querySelectorAll('.tab-content').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('active');
+        });
+        
+        const target = document.getElementById(id);
+        if(target) {
+            target.classList.remove('hidden');
+            target.classList.add('active');
+        }
+
+        // 2. Update Sidebar Navigation Buttons State
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            b.classList.remove('bg-b-primary/10', 'text-b-primary', 'font-bold');
+            b.classList.add('text-gray-400');
+        });
+        
+        const activeBtn = document.getElementById('btn-'+id);
+        if(activeBtn) {
+            activeBtn.classList.add('bg-b-primary/10', 'text-b-primary', 'font-bold');
+            activeBtn.classList.remove('text-gray-400');
+        }
+
+        // 3. Module Trigger Functions
+        if (id === 'overview' && typeof window.renderOverview === 'function') {
+            window.renderOverview();
+        }
+        if (id === 'roadmap') {
+            window._roadmapHasAutoFitted = false;
+            if (typeof window.renderRoadmapTree === 'function') window.renderRoadmapTree();
+            setTimeout(() => {
+                if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+            }, 80);
+            setTimeout(() => {
+                if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+            }, 250);
+        }
+        if (id === 'squad' && typeof window.renderSquadTab === 'function') {
+            window.renderSquadTab(window.currentTeam);
+        }
+        if (id === 'rank' && window.loadRankSystem) {
+            window.loadRankSystem();
+        }
+        if (id === 'calendar' && window.renderCalendarTab) {
+            window.renderCalendarTab();
+        }
+        if (id === 'announcements' && typeof window.loadAnnouncements === 'function') {
+            window.loadAnnouncements();
+        }
+        if (id === 'leaderboard' && typeof window.renderLeaderboard === 'function') {
+            window.renderLeaderboard();
+        }
+
+        // Reset collapsible header banner on tab switch
+        document.getElementById('user-welcome-banner')?.classList.remove('banner-collapsed');
+    }
+    window.switchTab = switchTab;
+
+    // Smart Collapsible Header Scroll Logic (Strictly Mobile Only: < 768px)
+    (function initSmartHeaderScroll() {
+        const mainEl = document.querySelector('main');
+        const banner = document.getElementById('user-welcome-banner');
+        if (!banner) return;
+
+        let lastScrollTop = 0;
+        let upScrollDistance = 0;
+        const SCROLL_UP_THRESHOLD = 30; // Scroll up distance threshold before revealing
+        const SCROLL_DOWN_THRESHOLD = 15; // Scroll down threshold to trigger collapse
+
+        function onScroll(currentScrollTop) {
+            // STRICT DESKTOP GUARD: Never collapse on desktop / laptop screens
+            if (window.innerWidth >= 768) {
+                banner.classList.remove('banner-collapsed');
+                return;
+            }
+
+            // Near top of page: always reveal
+            if (currentScrollTop <= 25) {
+                banner.classList.remove('banner-collapsed');
+                upScrollDistance = 0;
+                lastScrollTop = currentScrollTop;
+                return;
+            }
+
+            const delta = currentScrollTop - lastScrollTop;
+
+            if (delta > SCROLL_DOWN_THRESHOLD) {
+                // Scrolling down -> Collapse lower banner
+                upScrollDistance = 0;
+                banner.classList.add('banner-collapsed');
+            } else if (delta < -5) {
+                // Scrolling up -> Accumulate distance
+                upScrollDistance += Math.abs(delta);
+                if (upScrollDistance >= SCROLL_UP_THRESHOLD) {
+                    banner.classList.remove('banner-collapsed');
+                }
+            }
+
+            lastScrollTop = Math.max(0, currentScrollTop);
+        }
+
+        if (mainEl) {
+            mainEl.addEventListener('scroll', () => onScroll(mainEl.scrollTop), { passive: true });
+        }
+        window.addEventListener('scroll', () => onScroll(window.scrollY || document.documentElement.scrollTop), { passive: true });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                banner.classList.remove('banner-collapsed');
+            }
+        });
+    })();
 
         // Global Modal Control Functions
         window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');

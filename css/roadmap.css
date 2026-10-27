@@ -186,17 +186,28 @@
     border: 1px solid rgba(255, 255, 255, 0.07);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    /* top padding increased to avoid overlap with collapse (left) + info (right) buttons */
-    padding: 36px 16px 14px 16px;
+    /* top padding leaves room for collapse/info buttons, bottom padding provides breathing room */
+    padding: 32px 16px 16px 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, border-color 0.2s;
     cursor: pointer;
     z-index: 2;
     transform: translate(-50%, -50%);
-    direction: rtl !important;
+    direction: rtl;
     text-align: right;
     font-family: 'Cairo', sans-serif !important;
     letter-spacing: normal !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.roadmap-node button,
+.roadmap-node .phase-collapse-btn,
+.roadmap-node .roadmap-collapse-btn,
+.roadmap-node .rm-info-btn,
+.roadmap-node .leader-toggle-btn {
+    touch-action: manipulation;
+    cursor: pointer;
 }
 
 .roadmap-node:hover {
@@ -217,7 +228,7 @@
 }
 
 .node-phase {
-    width: 300px;
+    width: 320px;
     border-left: 5px solid var(--color-phase);
     box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
 }
@@ -239,7 +250,8 @@
     width: 240px;
     border-left: 3px solid var(--color-video);
     box-shadow: 0 3px 16px rgba(156, 163, 175, 0.08);
-    padding: 10px 14px;
+    padding: 12px 14px;
+    min-height: 64px;
 }
 .node-video:hover {
     box-shadow: 0 4px 22px rgba(156, 163, 175, 0.22);
@@ -250,7 +262,8 @@
     width: 240px;
     border-left: 3px solid var(--color-quiz);
     box-shadow: 0 3px 16px rgba(139, 92, 246, 0.1);
-    padding: 10px 14px;
+    padding: 12px 14px;
+    min-height: 64px;
 }
 .node-quiz:hover {
     box-shadow: 0 4px 22px rgba(139, 92, 246, 0.28);
@@ -261,7 +274,8 @@
     width: 240px;
     border-left: 3px solid var(--color-document);
     box-shadow: 0 3px 16px rgba(34, 211, 238, 0.08);
-    padding: 10px 14px;
+    padding: 12px 14px;
+    min-height: 64px;
 }
 .node-document:hover {
     box-shadow: 0 4px 22px rgba(34, 211, 238, 0.25);
@@ -272,7 +286,8 @@
     width: 240px;
     border-left: 3px solid var(--color-project);
     box-shadow: 0 3px 16px rgba(249, 115, 22, 0.1);
-    padding: 10px 14px;
+    padding: 12px 14px;
+    min-height: 64px;
 }
 .node-project:hover {
     box-shadow: 0 4px 22px rgba(249, 115, 22, 0.28);
@@ -588,11 +603,19 @@
     min-height: 0;
 }
 
-/* Ensure html2canvas parses RTL Arabic text with normal letter spacing */
-.roadmap-node *,
-.roadmap-nodes-layer * {
-    direction: rtl !important;
+/* Ensure html2canvas and browser render text with normal letter spacing and natural direction */
+.roadmap-node,
+.roadmap-nodes-layer {
     letter-spacing: normal !important;
+}
+
+.roadmap-node * {
+    letter-spacing: normal !important;
+}
+
+/* Allow text with dir="auto" to resolve natural LTR / RTL direction */
+.roadmap-node [dir="auto"] {
+    text-align: start;
 }
 
 /* ============================================================================
@@ -631,41 +654,114 @@
 }
 
 @media (max-width: 767px) {
-    /* Mobile sizes: Convert Details Panel into a Bottom Sheet Drawer */
+    /* Mobile sizes: Compact Tree Container */
+    #roadmap-tree-container,
+    #learning-roadmap-container {
+        height: 52vh !important;
+        min-height: 320px !important;
+        border-radius: 14px !important;
+    }
+
+    .roadmap-toolbar {
+        padding: 0.45rem 0.6rem !important;
+        gap: 0.45rem !important;
+        margin-bottom: 8px !important;
+        border-radius: 12px !important;
+    }
+
+    .roadmap-legend {
+        padding: 5px 8px !important;
+        gap: 5px 8px !important;
+        font-size: 10px !important;
+        border-radius: 10px !important;
+    }
+
+    .roadmap-legend-item {
+        font-size: 9.5px !important;
+        gap: 4px !important;
+    }
+
+    .roadmap-legend-dot {
+        width: 6px !important;
+        height: 6px !important;
+    }
+
+    #rm-export-btn {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 11px !important;
+        border-radius: 10px !important;
+    }
+
+    .roadmap-controls {
+        bottom: 10px !important;
+        left: 10px !important;
+        gap: 4px !important;
+    }
+
+    .roadmap-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+    }
+
+    /* Mobile sizes: Convert Details Panel into a Smooth Bottom Sheet Drawer */
     #node-details-container {
         position: fixed !important;
         bottom: 0 !important;
         left: 0 !important;
         right: 0 !important;
-        height: 75vh !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: 84vh !important;
+        max-height: 88vh !important;
         z-index: 9999 !important;
-        background: rgba(10, 10, 10, 0.98) !important;
-        border-top: 1.5px solid rgba(0, 245, 255, 0.3) !important;
+        background: rgba(14, 15, 18, 0.98) !important;
+        border-top: 1.5px solid rgba(0, 245, 255, 0.35) !important;
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
         border-radius: 24px 24px 0 0 !important;
         transform: translateY(100%);
         transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.9) !important;
-        padding-top: 2.5rem !important;
+        box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.95) !important;
+        padding: 2.25rem 1rem 1.25rem 1rem !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        pointer-events: none !important;
     }
     
     #node-details-container.sheet-open {
         transform: translateY(0) !important;
+        pointer-events: auto !important;
     }
     
     /* Drag handle indicator at the top of the Bottom Sheet */
     #node-details-container::before {
         content: '';
         position: absolute;
-        top: 12px;
+        top: 10px;
         left: 50%;
         transform: translateX(-50%);
-        width: 50px;
+        width: 48px;
         height: 4px;
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    #node-details-container h3,
+    #node-details-container .text-2xl {
+        font-size: 1.15rem !important;
+        line-height: 1.4 !important;
+    }
+
+    #node-details-container .grid {
+        gap: 0.5rem !important;
+    }
+
+    #node-details-container .p-4 {
+        padding: 0.65rem !important;
     }
 }
+
 

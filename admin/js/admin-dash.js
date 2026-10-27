@@ -94,7 +94,11 @@ async function initDashboard(uid) {
 
         if (!isAuthorizedAdmin) {
             showToast("غير مصرح لك بالدخول إلى لوحة التحكم", "error");
-            setTimeout(() => window.location.href = "../../pages/auth.html", 2000);
+            if (roleLower === 'leader') {
+                setTimeout(() => window.location.replace("../../pages/leader-dash.html"), 1500);
+            } else {
+                setTimeout(() => window.location.replace("../../pages/student-dash.html"), 1500);
+            }
             return;
         }
 
@@ -1361,6 +1365,14 @@ function setupTabNavigation() {
                 }
             });
 
+            // Auto-close sidebar on mobile
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('admin-sidebar');
+                const overlay = document.getElementById('mobile-overlay');
+                if (sidebar) sidebar.classList.add('translate-x-full');
+                if (overlay) overlay.classList.add('hidden');
+            }
+
             // Adjust main panel layout for roadmap tab (needs to be full-screen, no padding/scroll)
             if (mainPanel) {
                 if (targetId === 'learning-roadmap') {
@@ -1378,6 +1390,20 @@ function setupTabNavigation() {
         });
     });
 }
+
+window.closeAdminSidebar = function() {
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    if (sidebar) sidebar.classList.add('translate-x-full');
+    if (overlay) overlay.classList.add('hidden');
+};
+
+window.toggleAdminSidebar = function() {
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    if (sidebar) sidebar.classList.toggle('translate-x-full');
+    if (overlay) overlay.classList.toggle('hidden');
+};
 
 function setupSubTabNavigation() {
     const subTabButtons = document.querySelectorAll('.users-nav-btn');
@@ -1428,7 +1454,14 @@ function loadModuleData(moduleId) {
     } else if (moduleId === 'references-mgmt') {
         if (typeof window.initReferencesMgmt === 'function') window.initReferencesMgmt();
     } else if (moduleId === 'learning-roadmap') {
+        window._roadmapHasAutoFitted = false;
         initInteractiveRoadmap('admin');
+        setTimeout(() => {
+            if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+        }, 100);
+        setTimeout(() => {
+            if (typeof window.fitRoadmapToScreen === 'function') window.fitRoadmapToScreen();
+        }, 250);
     }
 }
 

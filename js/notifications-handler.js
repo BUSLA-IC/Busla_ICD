@@ -84,7 +84,17 @@ async function fetchAndRenderPosts() {
 function renderTable(posts, tbody, isArchive) {
     if (!tbody) return;
     if (posts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-gray-500 italic">لا توجد إشعارات ${isArchive ? 'في الأرشيف' : 'نشطة'}</td></tr>`;
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center py-12 text-gray-500">
+                <div class="flex flex-col items-center justify-center gap-2">
+                    <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 text-lg">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium">لا توجد إشعارات ${isArchive ? 'في الأرشيف' : 'نشطة حالياً'}</p>
+                </div>
+            </td>
+        </tr>`;
         return;
     }
 
@@ -99,38 +109,38 @@ function renderTable(posts, tbody, isArchive) {
 
         return `
         <tr class="hover:bg-white/5 transition-colors group">
-            <td class="p-4 pr-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full ${typeData.bg} flex items-center justify-center ${typeData.color} shrink-0 shadow-inner">
+            <td class="p-3 sm:p-4 pr-4 sm:pr-6">
+                <div class="flex items-center gap-2.5 sm:gap-3">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full ${typeData.bg} flex items-center justify-center ${typeData.color} shrink-0 shadow-inner text-xs sm:text-sm">
                         <i class="fas ${typeData.icon}"></i>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-2">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             ${post.is_pinned ? '<i class="fas fa-thumbtack text-yellow-500 text-xs"></i>' : ''}
-                            <h4 class="font-bold text-white text-sm cursor-pointer hover:text-b-primary transition-colors" onclick="window.openPostDetail('${post.id}')">${post.title}</h4>
+                            <h4 class="font-bold text-white text-xs sm:text-sm cursor-pointer hover:text-b-primary transition-colors truncate max-w-[160px] sm:max-w-xs" onclick="window.openPostDetail('${post.id}')">${post.title}</h4>
                             ${targetBadge}
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">بواسطة ${post.creator_name}</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">بواسطة ${post.creator_name}</p>
                     </div>
                 </div>
             </td>
-            <td class="p-4 text-center text-xs text-gray-300 font-mono">${dateStr}</td>
-            <td class="p-4 text-center">
-                <span class="bg-black/40 border border-white/5 text-gray-300 text-xs px-2.5 py-1 rounded-lg font-mono">
-                    <i class="fas fa-eye text-b-primary mr-1"></i> ${seenCount}
+            <td class="p-3 sm:p-4 text-center text-[11px] sm:text-xs text-gray-300 font-mono">${dateStr}</td>
+            <td class="p-3 sm:p-4 text-center">
+                <span class="bg-black/40 border border-white/5 text-gray-300 text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg font-mono inline-flex items-center gap-1">
+                    <i class="fas fa-eye text-b-primary"></i> ${seenCount}
                 </span>
             </td>
-            <td class="p-4 text-center">
+            <td class="p-3 sm:p-4 text-center">
                 ${isArchive 
-                    ? '<span class="bg-gray-500/20 text-gray-400 text-xs px-3 py-1 rounded-full border border-gray-500/30">مؤرشف</span>' 
-                    : '<span class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full border border-green-500/30">نشط</span>'}
+                    ? '<span class="bg-gray-500/20 text-gray-400 text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border border-gray-500/30">مؤرشف</span>' 
+                    : '<span class="bg-green-500/20 text-green-400 text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border border-green-500/30">نشط</span>'}
             </td>
-            <td class="p-4 text-center">
-                <div class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    ${!isArchive ? `<button onclick="window.openCreatePostModal('${post.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all" title="تعديل"><i class="fas fa-edit text-xs"></i></button>` : ''}
-                    <button onclick="window.deletePost('${post.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-600 hover:text-white transition-all" title="حذف"><i class="fas fa-trash text-xs"></i></button>
-                    ${!post.is_pinned && !isArchive ? `<button onclick="window.togglePinPost('${post.id}', true)" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all" title="تثبيت"><i class="fas fa-thumbtack text-xs"></i></button>` : ''}
-                    ${post.is_pinned && !isArchive ? `<button onclick="window.togglePinPost('${post.id}', false)" class="w-8 h-8 rounded-lg bg-white/10 text-gray-300 hover:bg-white hover:text-black transition-all" title="إلغاء التثبيت"><i class="fas fa-thumbtack text-xs opacity-50"></i></button>` : ''}
+            <td class="p-3 sm:p-4 text-center">
+                <div class="flex items-center justify-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    ${!isArchive ? `<button onclick="window.openCreatePostModal('${post.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                    <button onclick="window.deletePost('${post.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف"><i class="fas fa-trash"></i></button>
+                    ${!post.is_pinned && !isArchive ? `<button onclick="window.togglePinPost('${post.id}', true)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all flex items-center justify-center text-xs" title="تثبيت"><i class="fas fa-thumbtack"></i></button>` : ''}
+                    ${post.is_pinned && !isArchive ? `<button onclick="window.togglePinPost('${post.id}', false)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 text-gray-300 hover:bg-white hover:text-black transition-all flex items-center justify-center text-xs" title="إلغاء التثبيت"><i class="fas fa-thumbtack opacity-50"></i></button>` : ''}
                 </div>
             </td>
         </tr>
@@ -147,19 +157,19 @@ window.switchNotificationTab = (tab) => {
     const teamCont = document.getElementById('team-notifs-container');
     const adminCont = document.getElementById('admin-notifs-container');
 
-    teamBtn.className = "flex-1 py-3 bg-transparent text-gray-500 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2";
-    adminBtn.className = "flex-1 py-3 bg-transparent text-gray-500 hover:bg-white/5 hover:text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 relative";
+    const baseClass = "py-2 px-3 rounded-lg font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5";
+
+    if (teamBtn) teamBtn.className = `${baseClass} text-gray-400 hover:text-white hover:bg-white/5`;
+    if (adminBtn) adminBtn.className = `${baseClass} text-gray-400 hover:text-white hover:bg-white/5 relative`;
 
     if (tab === 'team') {
-        teamBtn.classList.add('bg-b-primary/20', 'text-b-primary', 'border', 'border-b-primary/30');
-        teamBtn.classList.remove('text-gray-500', 'bg-transparent');
-        teamCont.classList.remove('hidden');
-        adminCont.classList.add('hidden');
+        if (teamBtn) teamBtn.className = `${baseClass} bg-b-primary/20 text-b-primary border border-b-primary/30 shadow-sm`;
+        if (teamCont) teamCont.classList.remove('hidden');
+        if (adminCont) adminCont.classList.add('hidden');
     } else {
-        adminBtn.classList.add('bg-red-500/20', 'text-red-400', 'border', 'border-red-500/30');
-        adminBtn.classList.remove('text-gray-500', 'bg-transparent');
-        teamCont.classList.add('hidden');
-        adminCont.classList.remove('hidden');
+        if (adminBtn) adminBtn.className = `${baseClass} bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm relative`;
+        if (teamCont) teamCont.classList.add('hidden');
+        if (adminCont) adminCont.classList.remove('hidden');
         if (window.loadAdminNotifications) window.loadAdminNotifications(); 
     }
 };

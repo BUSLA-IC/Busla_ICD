@@ -115,14 +115,29 @@
                 <a href="#courses" class="nav-link">الدورات</a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white font-semibold transition-colors text-sm hidden sm:block">
-                    تسجيل دخول
-                </a>
-                <a href="pages/auth.html?mode=signup" class="px-5 py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg hover:shadow-b-primary/50 hover:scale-105 transition-all text-sm flex items-center gap-2">
-                    <i class="fas fa-user-plus"></i>
-                    <span>حساب جديد</span>
-                </a>
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- Omni-Search Trigger Button (Desktop & Tablet) -->
+                <button onclick="window.openOmniSearch()" class="hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group" title="البحث الشامل (Ctrl + K)">
+                    <i class="fas fa-search text-xs text-teal-400 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-medium">بحث في المنصة...</span>
+                    <kbd class="text-[9px] bg-black/50 px-1.5 py-0.5 rounded border border-white/10 font-mono text-gray-400">Ctrl K</kbd>
+                </button>
+
+                <div id="nav-auth-section" class="flex items-center gap-4">
+                    <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white font-semibold transition-colors text-sm hidden sm:block">
+                        تسجيل دخول
+                    </a>
+                    <a href="pages/auth.html?mode=signup" class="px-5 py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg hover:shadow-b-primary/50 hover:scale-105 transition-all text-sm flex items-center gap-2">
+                        <i class="fas fa-user-plus"></i>
+                        <span>حساب جديد</span>
+                    </a>
+                </div>
+
+                <!-- Search button for mobile -->
+                <button onclick="window.openOmniSearch()" class="sm:hidden text-teal-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all" title="البحث الشامل">
+                    <i class="fas fa-search text-sm"></i>
+                </button>
+
                 <!-- Hamburger menu button for mobile -->
                 <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-white focus:outline-none w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all">
                     <i class="fas fa-bars text-lg"></i>
@@ -140,7 +155,7 @@
         <a href="#references" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المكتبة العلمية</a>
         <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2">الدورات</a>
         
-        <div class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
+        <div id="mobile-auth-section" class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
             <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white py-2 text-sm">تسجيل دخول</a>
         </div>
     </div>
@@ -602,6 +617,7 @@
         import { initInteractiveRoadmap } from './js/roadmap-interactive.js';
         import './js/tools-drawer.js';
         import './js/references-drawer.js';
+        import './js/omni-search.js';
 
         // Expose to window for inline onclick HTML bindings
         window.supabase = supabase;
@@ -623,6 +639,7 @@
             setupMobileFilters();
             setupReferencesMobileFilters();
             loadPublicReferences();
+            checkUserSessionAndSetupNav();
         });
 
         function setupMobileMenu() {
@@ -1072,11 +1089,80 @@
                 });
             });
 
-            // Listen to back/forward navigation
+            // Listen to back/forward navigation and hash changes
             window.addEventListener('popstate', handleRouting);
+            window.addEventListener('hashchange', handleRouting);
 
             // Initial check
             handleRouting();
+        }
+
+        // Check active session to display direct Dashboard Portal button
+        async function checkUserSessionAndSetupNav() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role, full_name, avatar_url')
+                        .eq('id', session.user.id)
+                        .maybeSingle();
+
+                    const role = (profile?.role || 'student').toLowerCase().trim();
+                    const staticAdminRoles = [
+                        'owner', 'admin', 'master admin', 'leader supervisor', 
+                        'content manager', 'team reviewer', 'project reviewer', 'support'
+                    ];
+
+                    let isAdmin = staticAdminRoles.includes(role) || role.includes('admin');
+                    if (!isAdmin) {
+                        const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+                        const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+                        isAdmin = dbAdminRoles.includes(role);
+                    }
+
+                    let dashUrl = 'pages/student-dash.html';
+                    let dashTitle = 'لوحة الطالب';
+                    if (isAdmin) {
+                        dashUrl = 'admin/html/admin-dash.html';
+                        dashTitle = 'لوحة الإدارة';
+                    } else if (role === 'leader') {
+                        dashUrl = 'pages/leader-dash.html';
+                        dashTitle = 'لوحة القائد';
+                    }
+
+                    const userName = profile?.full_name || session.user.email?.split('@')[0] || 'حسابي';
+                    const userAvatar = profile?.avatar_url || 'assets/icons/BUSLA-icon.png';
+
+                    const navAuth = document.getElementById('nav-auth-section');
+                    if (navAuth) {
+                        navAuth.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <a href="${dashUrl}" class="px-4 py-2 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg hover:shadow-b-primary/50 hover:scale-105 transition-all text-xs sm:text-sm flex items-center gap-2 border border-teal-400/30">
+                                    <i class="fas fa-columns"></i>
+                                    <span>${dashTitle}</span>
+                                </a>
+                                <a href="${dashUrl}" class="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 py-1.5 px-3 rounded-xl border border-white/10 transition-colors">
+                                    <img src="${userAvatar}" class="w-7 h-7 rounded-full object-cover border border-teal-500/40" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
+                                    <span class="text-xs font-bold text-gray-200 max-w-[120px] truncate">${userName}</span>
+                                </a>
+                            </div>
+                        `;
+                    }
+
+                    const mobileAuth = document.getElementById('mobile-auth-section');
+                    if (mobileAuth) {
+                        mobileAuth.innerHTML = `
+                            <a href="${dashUrl}" class="py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg text-sm flex items-center justify-center gap-2">
+                                <i class="fas fa-columns"></i>
+                                <span>العودة إلى ${dashTitle}</span>
+                            </a>
+                        `;
+                    }
+                }
+            } catch (err) {
+                console.warn("Session check in index failed:", err);
+            }
         }
 
         // Public Courses Grid Loader
