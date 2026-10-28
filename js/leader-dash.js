@@ -1,5 +1,5 @@
 import { supabase, AuthService, TeamService, UserService } from './supabase-config.js';
-import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.3';
+import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.6';
 import { initSettingsModal, openSettings } from './settings-handler.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
@@ -83,6 +83,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 function setupEventListeners() {
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
+        const validTabs = ['overview', 'roadmap', 'assignments', 'squad', 'announcements', 'grading', 'submissions', 'calendar', 'rank', 'team-rank', 'leaderboard'];
+        if (hash && validTabs.includes(hash)) {
+            window.switchTab(hash);
+        }
+    });
     const settingsBtn = document.getElementById('open-settings-btn'); 
     if(settingsBtn) {
         settingsBtn.addEventListener('click', (e) => {
@@ -244,6 +251,12 @@ async function initDashboard(uid) {
         // تشغيل نظام الإشعارات
         if (typeof initNotificationsSystem === 'function') {
             initNotificationsSystem(teamId);
+        }
+
+        // 🔄 استرجاع آخر تبويب نشط للوحة القائد تلقائياً
+        const savedTab = getRememberedLeaderTab();
+        if (typeof window.switchTab === 'function') {
+            window.switchTab(savedTab);
         }
 
     } catch (e) {
@@ -513,10 +526,27 @@ window.closeSidebar = function() {
     if (overlay) overlay.classList.add('hidden');
 };
 
+function getRememberedLeaderTab() {
+    const validTabs = ['overview', 'roadmap', 'assignments', 'squad', 'announcements', 'grading', 'submissions', 'calendar', 'rank', 'team-rank', 'leaderboard'];
+    const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
+    if (hash && validTabs.includes(hash)) return hash;
+    const saved = localStorage.getItem('busla_leader_active_tab');
+    if (saved && validTabs.includes(saved)) return saved;
+    return 'overview';
+}
+window.getRememberedLeaderTab = getRememberedLeaderTab;
+
 window.switchTab = function(id) {
+    if (!id) return;
     // Auto-close sidebar on mobile if open
     if (window.innerWidth < 768) {
         window.closeSidebar();
+    }
+
+    // Save active tab state
+    localStorage.setItem('busla_leader_active_tab', id);
+    if (window.location.hash !== '#' + id) {
+        try { history.replaceState(null, '', '#' + id); } catch(e) {}
     }
 
     document.querySelectorAll('.tab-content').forEach(el => {

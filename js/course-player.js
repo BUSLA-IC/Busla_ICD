@@ -539,6 +539,14 @@ async function initPlayer() {
             }
         }
 
+        // 🔄 استرجاع آخر عنصر كان مفتوحاً في هذا الكورس (فيديو، كويز، مشروع، مستند)
+        if (!targetContentId && courseId) {
+            const savedContentId = localStorage.getItem(`busla_course_last_content_${courseId}`);
+            if (savedContentId) {
+                targetContentId = cleanParam(savedContentId);
+            }
+        }
+
         // SMART RESOLVER: Identify target content type
         if (targetContentId) {
             let foundDirect = courseContents.find(c => String(c.content_id) === String(targetContentId));
@@ -959,6 +967,21 @@ async function loadContent(item) {
     }
 
     currentContent = item;
+
+    // 🔄 حفظ آخر محتوى نشط في الذاكرة وتحديث رابط الصفحة
+    if (item && item.content_id) {
+        if (courseId) {
+            localStorage.setItem(`busla_course_last_content_${courseId}`, item.content_id);
+        }
+        localStorage.setItem('busla_last_played_course', courseId || '');
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('content', item.content_id);
+            if (courseId) url.searchParams.set('id', courseId);
+            window.history.replaceState(null, '', url.toString());
+        } catch (e) {}
+    }
+
     updateVideoHeader(item);
     recordTaskStart(item.content_id);
     loadCourseSuggestedReferences(courseId, item.content_id);

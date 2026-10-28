@@ -84,7 +84,7 @@
             background: rgba(255, 255, 255, 0.08);
         }
     </style>
-    <link rel="stylesheet" href="../../css/roadmap.css">
+    <link rel="stylesheet" href="../../css/roadmap.css?v=2.6">
 </head>
 <body class="flex flex-col md:flex-row h-screen w-screen overflow-hidden select-none bg-black relative">
 
@@ -97,8 +97,9 @@
     <aside id="admin-sidebar" class="w-[85vw] max-w-xs sm:w-72 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-full shrink-0 shadow-2xl md:shadow-none">
         <!-- Logo -->
         <div class="p-4 sm:p-6 border-b border-white/10 text-center relative">
-            <button onclick="toggleAdminSidebar()" class="md:hidden absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-gray-300 hover:text-white hover:bg-red-500/20 transition-all">
-                <i class="fas fa-times text-sm"></i>
+            <button onclick="toggleAdminSidebar()" class="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-gray-300 hover:text-white hover:bg-teal-500/20 hover:text-teal-400 transition-all cursor-pointer" title="طي القائمة الجانبية (Ctrl + B)">
+                <i class="fas fa-times md:hidden text-sm"></i>
+                <i class="fas fa-angles-right hidden md:inline text-xs"></i>
             </button>
             <h2 class="text-xl sm:text-2xl font-black text-white tracking-wide flex items-center justify-center gap-2">
                 <i class="fas fa-compass text-teal-500"></i>
@@ -191,14 +192,18 @@
 
     <!-- Main Content Panels Container -->
     <main class="flex-1 w-full max-w-full h-full overflow-y-auto bg-black p-3 sm:p-5 md:p-8 custom-scroll relative flex flex-col">
+        <!-- Desktop Floating Sidebar Re-open Button (Visible when sidebar is collapsed) -->
+        <button id="admin-sidebar-reopen-btn" onclick="toggleAdminSidebar()" class="hidden fixed top-4 right-4 z-40 w-9 h-9 rounded-xl bg-b-surface/90 border border-white/10 hover:border-teal-500/40 text-gray-300 hover:text-white flex items-center justify-center shadow-xl transition-all cursor-pointer group" title="إظهار القائمة الجانبية (Ctrl + B)">
+            <i class="fas fa-bars text-sm group-hover:text-teal-400 transition-colors"></i>
+        </button>
         
         <!-- Tab 1: Dashboard Overview -->
         <section id="dashboard" class="tab-content active space-y-6 sm:space-y-8 pb-12">
             <!-- 👤 Header Section -->
             <div class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 mb-6">
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleAdminSidebar()" class="md:hidden w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 transition-all shrink-0">
-                        <i class="fas fa-bars text-sm"></i>
+                    <button onclick="toggleAdminSidebar()" class="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 hover:border-teal-500/40 transition-all shrink-0 cursor-pointer group" title="إظهار / إخفاء القائمة الجانبية (Ctrl + B)">
+                        <i class="fas fa-bars text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
                     </button>
                     <div>
                         <h1 class="text-xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -4460,7 +4465,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- Module Scripts Load -->
-    <script type="module" src="../js/admin-dash.js?v=2.0"></script>
+    <script type="module" src="../js/admin-dash.js?v=2.6?v=2.0"></script>
     <script type="module" src="../js/content-mgmt.js?v=2.0"></script>
     <script type="module" src="../js/member-requests.js?v=2.0"></script>
     <script type="module" src="../js/team-mgmt.js?v=2.0"></script>

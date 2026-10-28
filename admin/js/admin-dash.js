@@ -123,11 +123,8 @@ async function initDashboard(uid) {
         // Re-apply permission visibility
         updateAdminUI();
 
-        // Click first tab
-        const firstTab = document.querySelector('.nav-btn[data-target="dashboard"]');
-        if (firstTab) {
-            firstTab.click();
-        }
+        // 🔄 استرجاع آخر تبويب وتصنيف نشط في لوحة الإدارة تلقائياً
+        restoreAdminNavigation();
 
     } catch (err) {
         console.error("Dashboard Loading Error:", err);
@@ -1384,6 +1381,12 @@ function setupTabNavigation() {
                 }
             }
 
+            // Save active tab state
+            localStorage.setItem('busla_admin_active_tab', targetId);
+            const savedSub = localStorage.getItem('busla_admin_active_subtab_' + targetId);
+            const newHash = savedSub ? '#' + targetId + '/' + savedSub : '#' + targetId;
+            try { history.replaceState(null, '', newHash); } catch(e) {}
+
             // Trigger specific module loads based on tab
             loadModuleData(targetId);
             updateAdminActivity('navigation');
@@ -1401,9 +1404,122 @@ window.closeAdminSidebar = function() {
 window.toggleAdminSidebar = function() {
     const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    if (sidebar) sidebar.classList.toggle('translate-x-full');
-    if (overlay) overlay.classList.toggle('hidden');
+    const reopenBtn = document.getElementById('admin-sidebar-reopen-btn');
+    if (!sidebar) return;
+
+    if (window.innerWidth < 768) {
+        sidebar.classList.toggle('translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
+    } else {
+        const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('busla_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        if (reopenBtn) {
+            reopenBtn.classList.toggle('hidden', !isCollapsed);
+        }
+        window.dispatchEvent(new Event('resize'));
+    }
 };
+
+function initAdminSidebarState() {
+    const isCollapsed = localStorage.getItem('busla_admin_sidebar_collapsed') === 'true';
+    const sidebar = document.getElementById('admin-sidebar');
+    const reopenBtn = document.getElementById('admin-sidebar-reopen-btn');
+    if (sidebar && window.innerWidth >= 768 && isCollapsed) {
+        sidebar.classList.add('sidebar-collapsed');
+        if (reopenBtn) reopenBtn.classList.remove('hidden');
+    }
+}
+
+function restoreAdminNavigation() {
+    let targetTab = 'dashboard';
+    let targetSubtab = null;
+    
+    const hash = window.location.hash.replace('#', '').trim();
+    if (hash) {
+        const parts = hash.split('/');
+        targetTab = parts[0] || 'dashboard';
+        targetSubtab = parts[1] || null;
+    } else {
+        const savedTab = localStorage.getItem('busla_admin_active_tab');
+        if (savedTab) {
+            targetTab = savedTab;
+            targetSubtab = localStorage.getItem('busla_admin_active_subtab_' + savedTab) || null;
+        }
+    }
+
+    if (typeof window.navigateFromDashboard === 'function') {
+        window.navigateFromDashboard(targetTab, targetSubtab);
+    } else {
+        const tabBtn = document.querySelector(`.nav-btn[data-target="${targetTab}"]`);
+        if (tabBtn) tabBtn.click();
+    }
+}
+window.restoreAdminNavigation = restoreAdminNavigation;
+
+// Subtab memory listeners
+function setupSubtabMemoryListeners() {
+    // Content management subtabs
+    document.querySelectorAll('.cm-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const level = btn.getAttribute('data-level');
+            if (level) {
+                localStorage.setItem('busla_admin_active_subtab_content-mgmt', level);
+                try { history.replaceState(null, '', '#content-mgmt/' + level); } catch(e) {}
+            }
+        });
+    });
+
+    // Team management subtabs
+    document.querySelectorAll('.teams-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sub = btn.getAttribute('data-subtab');
+            if (sub) {
+                localStorage.setItem('busla_admin_active_subtab_team-mgmt', sub);
+                try { history.replaceState(null, '', '#team-mgmt/' + sub); } catch(e) {}
+            }
+        });
+    });
+
+    // Project audit subtabs
+    document.querySelectorAll('.audit-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-tab');
+            if (tab) {
+                localStorage.setItem('busla_admin_active_subtab_project-audit', tab);
+                try { history.replaceState(null, '', '#project-audit/' + tab); } catch(e) {}
+            }
+        });
+    });
+
+    // Users management subtabs
+    document.querySelectorAll('.users-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sub = btn.getAttribute('data-subtab');
+            if (sub) {
+                localStorage.setItem('busla_admin_active_subtab_users-mgmt', sub);
+                try { history.replaceState(null, '', '#users-mgmt/' + sub); } catch(e) {}
+            }
+        });
+    });
+
+    // Keyboard shortcut (Ctrl + B / Cmd + B)
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            const tag = document.activeElement?.tagName;
+            if (!['INPUT', 'TEXTAREA'].includes(tag) && !document.activeElement?.isContentEditable) {
+                e.preventDefault();
+                window.toggleAdminSidebar();
+            }
+        }
+    });
+
+    // Hash change navigation
+    window.addEventListener('hashchange', () => {
+        restoreAdminNavigation();
+    });
+
+    initAdminSidebarState();
+}
 
 function setupSubTabNavigation() {
     const subTabButtons = document.querySelectorAll('.users-nav-btn');
@@ -1541,6 +1657,7 @@ function updateAdminUI() {
 }
 
 function setupEventListeners() {
+    setupSubtabMemoryListeners();
     // Search filter
     document.getElementById('admin-search')?.addEventListener('input', renderAdminAccounts);
     document.getElementById('admin-role-filter')?.addEventListener('change', renderAdminAccounts);

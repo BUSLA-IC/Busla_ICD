@@ -94,6 +94,7 @@ export async function initInteractiveRoadmap(role = 'student') {
  * Sets up the container layout (adds toolbar, viewport, canvas, controls, minimap, legends)
  */
 function setupRoadmapHTML(container) {
+    initDetailsPanelSwipeToDismiss();
     if (document.getElementById('roadmap-viewport')) {
         bindViewportEvents();
         return;
@@ -363,6 +364,15 @@ async function renderInteractiveRoadmapTree() {
         requestAnimationFrame(() => {
             fitRoadmapToScreen();
             updateMinimap();
+
+            // 🔄 استرجاع آخر نود محددة في شجرة المنهج
+            const rememberedNodeId = localStorage.getItem('busla_roadmap_active_node_id');
+            if (rememberedNodeId) {
+                const targetNode = computedNodes.find(n => n.id === rememberedNodeId);
+                if (targetNode) {
+                    selectNode(targetNode, false, false);
+                }
+            }
         });
     });
 }
@@ -464,6 +474,7 @@ function buildGraphStructure(data) {
         description: data.track.description,
         phasesCount: data.phases.length,
         completionRate: calculateTrackCompletion(data),
+        rawItem: data.track,
         isCollapsed: false,
         isHidden: false
     };
@@ -686,6 +697,7 @@ function buildGraphStructure(data) {
             time: phase['Module Time'] || phase.module_time,
             coursesCount: data.courses.filter(c => c.phase_id === phase.phase_id).length,
             parentPhaseId: lastPhaseNodeId,
+            rawItem: phase,
             isCollapsed: isPhaseCollapsed,
             isHidden: false
         };
@@ -1007,7 +1019,7 @@ function renderHtmlNodes() {
         _lastToggleTime = Date.now();
         const targetNode = computedNodes.find(n => n.id === nodeId);
         if (targetNode) {
-            handleRoadmapNodeClick(targetNode);
+            handleRoadmapNodeClick(targetNode, false);
         }
     };
 
@@ -1016,7 +1028,7 @@ function renderHtmlNodes() {
         _lastToggleTime = Date.now();
         const phaseNode = computedNodes.find(n => n.id === phaseId);
         if (phaseNode) {
-            handleRoadmapNodeClick(phaseNode);
+            handleRoadmapNodeClick(phaseNode, false);
         }
     };
 
@@ -1042,7 +1054,7 @@ function renderHtmlNodes() {
  * Smart Drill-Down click handler on nodes.
  * Debounced at module level to prevent double-fire from touch+click events.
  */
-function handleRoadmapNodeClick(node) {
+function handleRoadmapNodeClick(node, openDetails = true) {
     const now = Date.now();
     // 400ms debounce: blocks the synthetic 'click' that browsers fire
     // after touchend (even with touch-action:none) from double-triggering
@@ -1056,7 +1068,7 @@ function handleRoadmapNodeClick(node) {
             expandedPhases.delete(node.id);
         }
 
-        selectNode(node, false);
+        selectNode(node, false, openDetails);
 
         buildGraphStructure(currentGraphData);
         calculateGraphLayout();
@@ -1091,7 +1103,7 @@ function handleRoadmapNodeClick(node) {
             expandedNodes.delete(node.id);
         }
 
-        selectNode(node, false);
+        selectNode(node, false, openDetails);
 
         buildGraphStructure(currentGraphData);
         calculateGraphLayout();
@@ -1113,7 +1125,7 @@ function handleRoadmapNodeClick(node) {
     }
 
     // Material or Track: Select and focus camera smoothly
-    selectNode(node, false);
+    selectNode(node, false, openDetails);
     const refreshed = computedNodes.find(n => n.id === node.id) || node;
     smartFocusOnNodes([refreshed]);
 }
@@ -1959,7 +1971,10 @@ function _rmDownload(blob, filename) {
 // ── Standard select node action & Unified Details Panel ──
 // ============================================================
 
-function selectNode(node, autoPan = true) {
+function selectNode(node, autoPan = true, openDetails = true) {
+    if (node && node.id) {
+        localStorage.setItem('busla_roadmap_active_node_id', node.id);
+    }
     // Remove previous selection states
     document.querySelectorAll('.roadmap-node').forEach(el => el.classList.remove('node-active-selection'));
     document.querySelectorAll('.roadmap-link').forEach(el => el.classList.remove('highlighted-link'));
@@ -1974,7 +1989,7 @@ function selectNode(node, autoPan = true) {
     highlightRelationships(node.id);
 
     // Update details side panel
-    renderNodeDetailsPanel(node);
+    renderNodeDetailsPanel(node, openDetails);
 
     // Pan camera smoothly to center this node if requested
     if (autoPan) {
@@ -1997,8 +2012,9 @@ function highlightRelationships(nodeId) {
 /**
  * Renders the unified details panel content inside '#node-details-container'
  * @param {Object|null} node - The selected node, or null to show placeholder
+ * @param {boolean} forceOpenSheet - Whether to open bottom sheet drawer on mobile
  */
-export function renderNodeDetailsPanel(node) {
+export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
     const container = document.getElementById('node-details-container');
     if (!container) return;
 
@@ -2011,23 +2027,32 @@ export function renderNodeDetailsPanel(node) {
             </div>
         `;
         container.classList.remove('sheet-open');
+        container.style.transform = '';
+        container.style.transition = '';
         return;
     }
 
-    // Add sheet-open class on mobile to slide drawer up
-    container.classList.add('sheet-open');
+    // Add sheet-open class on mobile to slide drawer up when requested
+    if (forceOpenSheet || window.innerWidth > 767) {
+        container.classList.add('sheet-open');
+    }
 
     // Panel close button & header
     let headerHtml = `
-        <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-1.5 h-4 bg-teal-500 rounded-full"></span>
-                تفاصيل العنصر
-            </h3>
-            <button onclick="window.closeRoadmapDetailsPanel()"
-                    class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-red-400 transition-all">
-                <i class="fas fa-times text-xs"></i>
-            </button>
+        <div class="sticky top-0 bg-[#0e0f12] z-20 pb-2 mb-3 border-b border-white/5 -mt-1 pt-1">
+            <div class="sheet-drag-handle-zone md:hidden w-full flex justify-center items-center py-1.5 cursor-grab active:cursor-grabbing select-none" style="touch-action: none;">
+                <div class="w-12 h-1.5 bg-white/30 rounded-full hover:bg-white/50 transition-colors"></div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-teal-500 rounded-full"></span>
+                    تفاصيل العنصر
+                </h3>
+                <button onclick="window.closeRoadmapDetailsPanel()"
+                        class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-red-400 transition-all">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
         </div>
     `;
 
@@ -2809,6 +2834,7 @@ export function renderNodeDetailsPanel(node) {
 
     loadRoadmapNodeTools(node);
     loadRoadmapNodeReferences(node);
+    initDetailsPanelSwipeToDismiss();
 }
 
 /**
@@ -2974,9 +3000,150 @@ async function loadRoadmapNodeTools(node) {
 }
 
 // Global helpers for navigation/actions inside Details Panel
-window.closeRoadmapDetailsPanel = function() {
-    renderNodeDetailsPanel(null);
+window.closeRoadmapDetailsPanel = function(immediate = false) {
+    localStorage.removeItem('busla_roadmap_active_node_id');
+    const container = document.getElementById('node-details-container');
+    if (!container) return;
+
+    if (!immediate && window.innerWidth <= 767 && container.classList.contains('sheet-open')) {
+        container.style.setProperty('transition', 'transform 0.28s cubic-bezier(0.32, 1, 0.23, 1)', 'important');
+        container.style.setProperty('transform', 'translateY(100%)', 'important');
+        setTimeout(() => {
+            container.classList.remove('sheet-open');
+            container.style.removeProperty('transform');
+            container.style.removeProperty('transition');
+            renderNodeDetailsPanel(null);
+        }, 280);
+    } else {
+        container.classList.remove('sheet-open');
+        container.style.removeProperty('transform');
+        container.style.removeProperty('transition');
+        renderNodeDetailsPanel(null);
+    }
 };
+
+/**
+ * Enables smooth swipe/drag-to-dismiss on mobile for the Bottom Sheet Details Panel.
+ * Tracks user touch or mouse drag downwards and snaps or dismisses.
+ */
+function initDetailsPanelSwipeToDismiss() {
+    const panel = document.getElementById('node-details-container');
+    if (!panel || panel._swipeDismissBound) return;
+    panel._swipeDismissBound = true;
+
+    let startY = 0;
+    let startX = 0;
+    let currentDeltaY = 0;
+    let isDragging = false;
+    let isTopAreaTouch = false;
+    let touchStartTime = 0;
+
+    function handleStart(clientY, clientX, target) {
+        if (window.innerWidth > 767 || !panel.classList.contains('sheet-open')) return false;
+
+        // Never drag if user tapped directly on an interactive element
+        if (target && target.closest && target.closest('button, a, input, select, textarea')) {
+            return false;
+        }
+
+        startY = clientY;
+        startX = clientX;
+        currentDeltaY = 0;
+        isDragging = false;
+        touchStartTime = Date.now();
+
+        const rect = panel.getBoundingClientRect();
+        const isHandle = Boolean(target && target.closest && target.closest('.sheet-drag-handle-zone'));
+        // Touch is in top area if touching handle or within top 90px of sheet
+        isTopAreaTouch = isHandle || ((clientY - rect.top) <= 90);
+        return true;
+    }
+
+    function handleMove(clientY, clientX, cancelable, preventDefault) {
+        if (!panel.classList.contains('sheet-open')) return;
+        const diffY = clientY - startY;
+        const diffX = clientX - startX;
+
+        // Downward vertical drag detection
+        if (diffY > 6 && Math.abs(diffY) > Math.abs(diffX)) {
+            if (isTopAreaTouch || panel.scrollTop <= 0) {
+                isDragging = true;
+                if (cancelable) preventDefault();
+                currentDeltaY = diffY;
+                panel.style.setProperty('transition', 'none', 'important');
+                panel.style.setProperty('transform', `translateY(${diffY}px)`, 'important');
+            }
+        } else if (isDragging && diffY <= 0) {
+            currentDeltaY = 0;
+            panel.style.setProperty('transform', 'translateY(0)', 'important');
+        }
+    }
+
+    function handleEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const elapsed = Date.now() - touchStartTime;
+        const velocity = currentDeltaY / Math.max(elapsed, 1);
+
+        // Threshold to close: dragged down > 80px OR quick downward flick (> 35px & velocity > 0.35)
+        const shouldClose = currentDeltaY > 80 || (velocity > 0.35 && currentDeltaY > 35);
+
+        if (shouldClose) {
+            panel.style.setProperty('transition', 'transform 0.28s cubic-bezier(0.32, 1, 0.23, 1)', 'important');
+            panel.style.setProperty('transform', 'translateY(100%)', 'important');
+            setTimeout(() => {
+                window.closeRoadmapDetailsPanel(true);
+            }, 290);
+        } else {
+            panel.style.setProperty('transition', 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
+            panel.style.setProperty('transform', 'translateY(0)', 'important');
+            setTimeout(() => {
+                panel.style.removeProperty('transform');
+                panel.style.removeProperty('transition');
+            }, 240);
+        }
+    }
+
+    // Touch events for mobile screens
+    panel.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            handleStart(e.touches[0].clientY, e.touches[0].clientX, e.target);
+        }
+    }, { passive: true });
+
+    panel.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+            handleMove(e.touches[0].clientY, e.touches[0].clientX, e.cancelable, () => e.preventDefault());
+        }
+    }, { passive: false });
+
+    panel.addEventListener('touchend', handleEnd, { passive: true });
+    panel.addEventListener('touchcancel', handleEnd, { passive: true });
+
+    // Mouse drag support for testing in desktop DevTools mobile emulator
+    panel.addEventListener('mousedown', (e) => {
+        if (e.button !== 0 || window.innerWidth > 767 || !panel.classList.contains('sheet-open')) return;
+        if (e.target && e.target.closest && e.target.closest('button, a, input, select, textarea')) return;
+
+        const rect = panel.getBoundingClientRect();
+        const isHandle = Boolean(e.target && e.target.closest && e.target.closest('.sheet-drag-handle-zone'));
+        const inTopArea = (e.clientY - rect.top) <= 90;
+
+        if (isHandle || inTopArea || panel.scrollTop <= 0) {
+            if (handleStart(e.clientY, e.clientX, e.target)) {
+                const onMouseMove = (me) => handleMove(me.clientY, me.clientX, true, () => me.preventDefault());
+                const onMouseUp = () => {
+                    handleEnd();
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                };
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            }
+        }
+    });
+}
 
 window.refreshRoadmapNodeDetails = function() {
     if (activeNode) {

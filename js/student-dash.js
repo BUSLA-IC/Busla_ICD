@@ -1,5 +1,5 @@
 import { supabase, AuthService, TeamService, UserService } from './supabase-config.js';
-import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.3';
+import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.6';
 import { initSettingsModal, openSettings } from './settings-handler.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
@@ -34,6 +34,13 @@ let currentGradingSubmission = null;
 let hasInitialized = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
+        const validTabs = ['overview', 'roadmap', 'squad', 'announcements', 'calendar', 'rank', 'team-rank', 'leaderboard'];
+        if (hash && validTabs.includes(hash)) {
+            window.switchTab(hash);
+        }
+    });
     initSettingsModal();
     initBadgesSystem();
     initTeamBadgesSystem();
@@ -286,6 +293,13 @@ async function initDashboard(uid) {
         }
 
         renderAllTabs();
+
+        // 🔄 استرجاع آخر تبويب نشط للوحة الطالب تلقائياً
+        const savedStudentTab = getRememberedStudentTab();
+        if (typeof window.switchTab === 'function') {
+            window.switchTab(savedStudentTab);
+        }
+
         setTimeout(() => {
             if (typeof window.loadStudentNotifications === 'function') {
                 window.loadStudentNotifications();
@@ -573,10 +587,27 @@ window.closeSidebar = function() {
     if (overlay) overlay.classList.add('hidden');
 };
 
+function getRememberedStudentTab() {
+    const validTabs = ['overview', 'roadmap', 'squad', 'announcements', 'calendar', 'rank', 'team-rank', 'leaderboard'];
+    const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
+    if (hash && validTabs.includes(hash)) return hash;
+    const saved = localStorage.getItem('busla_student_active_tab');
+    if (saved && validTabs.includes(saved)) return saved;
+    return 'overview';
+}
+window.getRememberedStudentTab = getRememberedStudentTab;
+
 window.switchTab = function(id) {
+    if (!id) return;
     // Auto-close sidebar on mobile if open
     if (window.innerWidth < 768) {
         window.closeSidebar();
+    }
+
+    // Save active tab state
+    localStorage.setItem('busla_student_active_tab', id);
+    if (window.location.hash !== '#' + id) {
+        try { history.replaceState(null, '', '#' + id); } catch(e) {}
     }
 
     document.querySelectorAll('.tab-content').forEach(el => {

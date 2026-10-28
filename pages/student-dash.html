@@ -16,7 +16,7 @@
     <script src="../js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/roadmap.css">
+    <link rel="stylesheet" href="../css/roadmap.css?v=2.6">
     
     <script>
         tailwind.config = {
@@ -104,10 +104,16 @@
                 </div>
             </div>
 
-            <!-- Mobile Close Button (Hidden on Desktop) -->
-            <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 transition-all shrink-0">
-                <i class="fas fa-times text-xs"></i>
-            </button>
+            <div class="flex items-center gap-1 shrink-0">
+                <!-- Mobile Close Button -->
+                <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 transition-all shrink-0">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+                <!-- Desktop Collapse Button -->
+                <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-teal-400 items-center justify-center border border-white/10 hover:border-teal-500/30 transition-all shrink-0 cursor-pointer" title="طي القائمة الجانبية (Ctrl + B)">
+                    <i class="fas fa-angles-right text-xs"></i>
+                </button>
+            </div>
             <!-- Badges container (Desktop only) -->
             <div id="sidebar-badges-container" class="hidden md:flex md:mt-3 md:gap-1 md:justify-center md:min-h-[20px]"></div>
         </div>
@@ -209,9 +215,9 @@
 
             <!-- 2. Controls Cluster (Desktop: Left Side (order-2) | Mobile: Top Pinned Row (order-1)) -->
             <div class="order-1 md:order-2 flex items-center justify-between md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                <!-- Mobile Only: Clean Hamburger Button (No cramped text) -->
-                <button onclick="toggleSidebar()" class="md:hidden w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 active:scale-95 transition-all shrink-0">
-                    <i class="fas fa-bars text-sm"></i>
+                <!-- Sidebar Toggle Button (Desktop, Tablet & Mobile) -->
+                <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 hover:border-teal-500/40 active:scale-95 transition-all shrink-0 cursor-pointer group" title="إظهار / إخفاء القائمة الجانبية (Ctrl + B)">
+                    <i class="fas fa-bars text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
                 </button>
 
                 <!-- Controls: Search, Notifications, Points, Main Site Dropdown -->
@@ -329,7 +335,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </section>
 
         <section id="roadmap" class="tab-content space-y-4 sm:space-y-6">
@@ -1569,7 +1574,7 @@
             <span class="hidden md:inline">منصة إدارة الفرق التعليمية</span>
         </div>
     </footer>
-    <script type="module" src="../js/student-dash.js"></script>
+    <script type="module" src="../js/student-dash.js?v=2.6"></script>
     <script type="module" src="../js/omni-search.js"></script>
     <script type="module" src="../js/pwa-handler.js"></script>
     <script>
@@ -1604,18 +1609,45 @@
     }
     window.closeSidebar = closeSidebar;
 
+    function initSidebarState() {
+        const isCollapsed = localStorage.getItem('busla_sidebar_collapsed') === 'true';
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && window.innerWidth >= 768 && isCollapsed) {
+            sidebar.classList.add('sidebar-collapsed');
+        }
+    }
+
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobile-overlay');
+        if (!sidebar) return;
         
-        if (sidebar) {
+        if (window.innerWidth < 768) {
             sidebar.classList.toggle('translate-x-full');
-        }
-        if (overlay) {
-            overlay.classList.toggle('hidden');
+            if (overlay) overlay.classList.toggle('hidden');
+        } else {
+            const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('busla_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            window.dispatchEvent(new Event('resize'));
+            if (typeof window.fitRoadmapToScreen === 'function') {
+                setTimeout(() => window.fitRoadmapToScreen(), 320);
+            }
         }
     }
     window.toggleSidebar = toggleSidebar;
+
+    // Keyboard shortcut (Ctrl + B / Cmd + B)
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            const tag = document.activeElement?.tagName;
+            if (!['INPUT', 'TEXTAREA'].includes(tag) && !document.activeElement?.isContentEditable) {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        }
+    });
+
+    initSidebarState();
 
     // Auto-close sidebar when any menu item or link is tapped on mobile
     document.getElementById('sidebar')?.addEventListener('click', (e) => {
@@ -1631,6 +1663,12 @@
         // Auto-close sidebar on mobile if open
         if (window.innerWidth < 768) {
             closeSidebar();
+        }
+
+        // Save active tab state
+        localStorage.setItem('busla_student_active_tab', id);
+        if (window.location.hash !== '#' + id) {
+            try { history.replaceState(null, '', '#' + id); } catch(e) {}
         }
 
         // 1. Visual Tab Switching
