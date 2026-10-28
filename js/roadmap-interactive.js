@@ -36,6 +36,10 @@ let expandedRelated = new Set();
 let currentGraphData = null;
 let cameraAnimFrame = null;
 
+// ── Debounce guards (module-level so they survive re-renders) ──
+let _lastToggleTime = 0;       // guards toggle-collapse buttons
+let _lastNodeClickTime = 0;    // guards handleRoadmapNodeClick (prevent touch+click double-fire)
+
 // Standard icons for different node types
 const ICONS = {
     track: 'fa-map-signs',
@@ -985,8 +989,9 @@ function renderHtmlNodes() {
         nodeEl.innerHTML = collapseBtn + infoBtn + getNodeInnerHtml(node);
 
         // Click = smart drill-down & camera focus
+        // Guard: if the click came from inside a <button> let the button's own handler run.
         nodeEl.addEventListener('click', (e) => {
-            if (Date.now() - _lastTapTime < 400) return;
+            if (e.target.closest('button')) return; // button handles itself
             e.stopPropagation();
             handleRoadmapNodeClick(node);
         });
@@ -994,8 +999,12 @@ function renderHtmlNodes() {
         container.appendChild(nodeEl);
     });
 
-    // Expose global toggle functions
+    // Expose global toggle functions with debounce protection
+    // NOTE: _lastToggleTime is at module scope so it survives re-renders
+
     window._roadmapToggleCollapse = function(nodeId) {
+        if (Date.now() - _lastToggleTime < 350) return;
+        _lastToggleTime = Date.now();
         const targetNode = computedNodes.find(n => n.id === nodeId);
         if (targetNode) {
             handleRoadmapNodeClick(targetNode);
@@ -1003,6 +1012,8 @@ function renderHtmlNodes() {
     };
 
     window._roadmapTogglePhaseCollapse = function(phaseId) {
+        if (Date.now() - _lastToggleTime < 350) return;
+        _lastToggleTime = Date.now();
         const phaseNode = computedNodes.find(n => n.id === phaseId);
         if (phaseNode) {
             handleRoadmapNodeClick(phaseNode);
@@ -1010,6 +1021,8 @@ function renderHtmlNodes() {
     };
 
     window._roadmapToggleRelatedCollapse = function(nodeId) {
+        if (Date.now() - _lastToggleTime < 350) return;
+        _lastToggleTime = Date.now();
         if (expandedRelated.has(nodeId)) {
             expandedRelated.delete(nodeId); // collapse it
         } else {
@@ -1026,9 +1039,15 @@ function renderHtmlNodes() {
 }
 
 /**
- * Smart Drill-Down click handler on nodes
+ * Smart Drill-Down click handler on nodes.
+ * Debounced at module level to prevent double-fire from touch+click events.
  */
 function handleRoadmapNodeClick(node) {
+    const now = Date.now();
+    // 400ms debounce: blocks the synthetic 'click' that browsers fire
+    // after touchend (even with touch-action:none) from double-triggering
+    if (now - _lastNodeClickTime < 400) return;
+    _lastNodeClickTime = now;
     if (node.type === 'phase') {
         const willExpand = !expandedPhases.has(node.id);
         if (willExpand) {
@@ -3019,7 +3038,11 @@ window.refreshRoadmapCourseNodes = function() {
 };
 
 if (!window.leaderToggleCourseActivation) {
+    let _lastLeaderToggleTime = 0;
     window.leaderToggleCourseActivation = async (courseId, isChecked) => {
+        // Debounce: prevent touch+click double-fire from toggling twice
+        if (Date.now() - _lastLeaderToggleTime < 600) return;
+        _lastLeaderToggleTime = Date.now();
         if (typeof window.toggleActivate === 'function') {
             await window.toggleActivate(courseId, isChecked);
         }
@@ -3419,14 +3442,13 @@ function handleMouseWheel(e) {
 }
 
 // ── Touch interaction event handlers (Mobile & Tablet Drag / Pinch / Tap) ──
-let touchMode = 'none'; // 'none' | 'pan' | 'pinch'
+let touchMode = 'none'; // 'none' | 'interactive' | 'pan' | 'pinch'
 let lastTouchX = 0, lastTouchY = 0;
 let touchStartX = 0, touchStartY = 0;
 let touchStartTime = 0;
 let touchTarget = null;
 let isTouchPanning = false;
 let lastPinchDist = 0;
-let _lastTapTime = 0;
 
 function handleTouchStart(e) {
     cancelCameraAnimation();
@@ -3434,7 +3456,6 @@ function handleTouchStart(e) {
     if (canvas) canvas.style.transition = 'none';
 
     if (e.touches.length === 1) {
-        touchMode = 'pan';
         const t = e.touches[0];
         touchStartX = t.clientX;
         touchStartY = t.clientY;
@@ -3443,6 +3464,10 @@ function handleTouchStart(e) {
         touchStartTime = Date.now();
         touchTarget = e.target;
         isTouchPanning = false;
+
+        // If touch starts on a node, button, or control, mark as interactive
+        const isInteractive = !!(e.target.closest('.roadmap-node') || e.target.closest('.roadmap-controls') || e.target.closest('.roadmap-toolbar'));
+        touchMode = isInteractive ? 'interactive' : 'pan';
     } else if (e.touches.length === 2) {
         touchMode = 'pinch';
         isTouchPanning = true;
@@ -3459,18 +3484,19 @@ function handleTouchMove(e) {
     if (!viewport) return;
     const rect = viewport.getBoundingClientRect();
 
-    if (touchMode === 'pan' && e.touches.length === 1) {
+    if ((touchMode === 'pan' || touchMode === 'interactive') && e.touches.length === 1) {
         const touch = e.touches[0];
         const totalDx = touch.clientX - touchStartX;
         const totalDy = touch.clientY - touchStartY;
         const moveDist = Math.hypot(totalDx, totalDy);
 
-        const onInteractive = touchTarget && (touchTarget.closest('.roadmap-node') || touchTarget.closest('.roadmap-controls'));
-        const dragThreshold = onInteractive ? 10 : 5;
+        // If on interactive element, require larger movement (14px) before converting to a pan
+        const dragThreshold = (touchMode === 'interactive') ? 14 : 6;
 
         if (!isTouchPanning) {
             if (moveDist >= dragThreshold) {
                 isTouchPanning = true;
+                touchMode = 'pan';
                 lastTouchX = touch.clientX;
                 lastTouchY = touch.clientY;
             } else {
@@ -3479,7 +3505,7 @@ function handleTouchMove(e) {
             }
         }
 
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const dx = touch.clientX - lastTouchX;
         const dy = touch.clientY - lastTouchY;
         lastTouchX = touch.clientX;
@@ -3490,7 +3516,7 @@ function handleTouchMove(e) {
         clampOffsets();
         updateCanvasTransform();
     } else if (touchMode === 'pinch' && e.touches.length === 2) {
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
@@ -3528,15 +3554,22 @@ function handleTouchMove(e) {
 
 function handleTouchEnd(e) {
     if (e.touches.length === 0) {
-        // If the user touched and released without dragging/panning within 500ms, treat as TAP!
+        // The viewport has touch-action:none so the browser will NOT fire synthetic
+        // click events from touches.  We must trigger them manually here.
         if (!isTouchPanning && touchTarget) {
             const elapsed = Date.now() - touchStartTime;
-            if (elapsed < 500) {
-                _lastTapTime = Date.now();
+            const totalDx = Math.abs(touchStartX - (e.changedTouches[0]?.clientX ?? touchStartX));
+            const totalDy = Math.abs(touchStartY - (e.changedTouches[0]?.clientY ?? touchStartY));
+            const moved   = Math.hypot(totalDx, totalDy);
+
+            // Treat as tap only if elapsed < 600ms AND finger moved less than 12px
+            if (elapsed < 600 && moved < 12) {
+                // Try the closest button first
                 const btn = touchTarget.closest('button');
-                if (btn) {
+                if (btn && !btn.disabled) {
                     btn.click();
                 } else {
+                    // Otherwise fire the node click handler
                     const nodeEl = touchTarget.closest('.roadmap-node');
                     if (nodeEl && nodeEl.id) {
                         const nodeId = nodeEl.id.replace('node-', '');
@@ -3548,6 +3581,7 @@ function handleTouchEnd(e) {
                 }
             }
         }
+
         touchMode = 'none';
         isTouchPanning = false;
         lastPinchDist = 0;

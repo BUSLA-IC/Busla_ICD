@@ -17,7 +17,6 @@ const PRECACHE_ASSETS = [
     './assets/icons/1.png',
     './js/custom-dialogs.js',
     './js/omni-search.js',
-    './js/quick-cheatsheets.js',
     './js/pwa-handler.js'
 ];
 

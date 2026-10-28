@@ -1,5 +1,5 @@
 import { supabase, AuthService, TeamService, UserService } from './supabase-config.js';
-import { initInteractiveRoadmap } from './roadmap-interactive.js';
+import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.3';
 import { initSettingsModal, openSettings } from './settings-handler.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';

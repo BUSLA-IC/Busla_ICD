@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap Debug Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/roadmap.css">
+</head>
+<body class="bg-black text-white p-4">
+    <h1 class="text-xl font-bold mb-4">Roadmap Test</h1>
+    
+    <select id="roadmap-track-selector" class="bg-gray-800 text-white p-2 rounded mb-4">
+        <option value="0e31a64c-f8e7-4c87-a7aa-8df82f94f3da">Digital IC Design</option>
+        <option value="dummy">Dummy option</option>
+    </select>
+
+    <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 h-[500px] relative">
+        <div id="roadmap-tree-container" class="lg:col-span-7 bg-[#0a0a0a] rounded-2xl border border-white/10 overflow-hidden relative flex flex-col"></div>
+        <div id="node-details-container" class="lg:col-span-3 bg-[#0a0a0a] rounded-2xl border border-white/10 p-6 overflow-y-auto relative flex flex-col h-full"></div>
+    </div>
+
+    <div id="debug-log" class="mt-4 p-4 bg-gray-900 rounded font-mono text-xs text-green-400 max-h-48 overflow-y-auto"></div>
+
+    <script type="module">
+        import { initInteractiveRoadmap } from './js/roadmap-interactive.js?v=test3';
+
+        function log(msg) {
+            console.log('[DEBUG_LOG]', msg);
+            const el = document.getElementById('debug-log');
+            if (el) el.innerHTML += `<div>${new Date().toISOString().slice(11, 19)}: ${msg}</div>`;
+        }
+        window.log = log;
+
+        try {
+            await initInteractiveRoadmap('leader');
+            log('initInteractiveRoadmap completed successfully');
+            const selector = document.getElementById('roadmap-track-selector');
+            if (selector && (!selector.value || selector.value === '')) {
+                selector.value = '0e31a64c-f8e7-4c87-a7aa-8df82f94f3da';
+                selector.dispatchEvent(new Event('change'));
+                log('Dispatched change to selector');
+            }
+        } catch(e) {
+            log('Error: ' + e.message);
+            console.error(e);
+        }
+    </script>
+</body>
+</html>

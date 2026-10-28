@@ -350,6 +350,7 @@
     flex-direction: column;
     gap: 8px;
     z-index: 5;
+    pointer-events: none;
 }
 
 .roadmap-btn {
@@ -366,6 +367,7 @@
     transition: all 0.2s;
     backdrop-filter: blur(8px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    pointer-events: auto;
 }
 
 .roadmap-btn:hover {
@@ -693,9 +695,12 @@
     }
 
     .roadmap-controls {
-        bottom: 10px !important;
-        left: 10px !important;
+        top: 16px !important;
+        right: 12px !important;
+        bottom: auto !important;
+        left: auto !important;
         gap: 4px !important;
+        pointer-events: none !important;
     }
 
     .roadmap-btn {
@@ -703,6 +708,7 @@
         height: 32px !important;
         font-size: 12px !important;
         border-radius: 8px !important;
+        pointer-events: auto !important;
     }
 
     /* Mobile sizes: Convert Details Panel into a Smooth Bottom Sheet Drawer */

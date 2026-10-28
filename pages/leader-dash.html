@@ -175,9 +175,6 @@
             <button id="open-team-settings-btn" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
                 <i class="fas fa-users-cog w-4 md:w-auto text-center"></i> <span>إعدادات الفريق</span>
             </button>
-            <button onclick="window.openQuickCheatsheets()" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-teal-400/90 hover:text-teal-300 hover:bg-teal-500/10 border border-transparent hover:border-teal-500/20 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-terminal w-4 md:w-auto text-center text-teal-400"></i> <span>الأوامر السريعة (Offline)</span>
-            </button>
             <button id="open-settings-btn" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
                 <i class="fas fa-cog w-4 md:w-auto text-center"></i> <span>إعدادات الحساب</span>
             </button>
@@ -236,12 +233,6 @@
                         <i class="fas fa-search text-teal-400 text-xs md:text-sm group-hover:scale-110 transition-transform"></i>
                         <span class="hidden md:inline font-medium">بحث...</span>
                         <kbd class="hidden lg:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
-                    </button>
-
-                    <!-- Quick Cheatsheets Trigger Button (Offline references) -->
-                    <button onclick="window.openQuickCheatsheets()" class="w-9 h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 hover:text-white border border-teal-500/30 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="الأوامر والمسودات السريعة (Offline)">
-                        <i class="fas fa-terminal text-teal-400 text-xs md:text-sm group-hover:scale-110 transition-transform"></i>
-                        <span class="hidden md:inline font-medium">أوامر سريعة</span>
                     </button>
 
                     <!-- Notifications button -->
@@ -1718,9 +1709,8 @@
             <span class="hidden md:inline">منصة إدارة الفرق التعليمية</span>
         </div>
     </footer>
-    <script type="module" src="../js/leader-dash.js"></script>
+    <script type="module" src="../js/leader-dash.js?v=2.3"></script>
     <script type="module" src="../js/omni-search.js"></script>
-    <script type="module" src="../js/quick-cheatsheets.js"></script>
     <script type="module" src="../js/pwa-handler.js"></script>
     <script>
     function toggleMainSiteDropdown(e) {
