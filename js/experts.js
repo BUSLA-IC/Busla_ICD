@@ -1,3 +1,5 @@
+import { supabase } from './supabase-config.js';
+
 // ==================== MOBILE MENU ====================
 function initMobileMenu() {
     const menuButton = document.getElementById('mobile-menu-button');
@@ -568,12 +570,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadAdvice() {
         try {
-            const response = await fetch('../data/experts_data.json');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            // 1. First attempt to load dynamic expert advice from Supabase
+            let supaAdvice = [];
+            try {
+                const { data, error } = await supabase
+                    .from('expert_advices')
+                    .select('*')
+                    .eq('is_published', true)
+                    .order('order_index', { ascending: true });
+
+                if (!error && data && data.length > 0) {
+                    supaAdvice = data.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        summary: item.summary || item.title,
+                        fullText: item.content,
+                        source: item.source || 'Multiple Engineers',
+                        tags: item.tags || ['#General'],
+                        difficulty: item.difficulty || 'beginner',
+                        priority: item.priority || 'high'
+                    }));
+                }
+            } catch (supaErr) {
+                console.warn("Supabase expert_advices query:", supaErr);
+            }
+
+            try {
+                const response = await fetch('../data/experts_data.json');
+                if (response.ok) {
+                    allData = await response.json();
+                } else {
+                    allData = { filterTags: [], Advice: [] };
+                }
+            } catch(e) {
+                allData = { filterTags: [], Advice: [] };
+            }
             
-            allData = await response.json();
-            
-            allAdvice = allData.Advice || (Array.isArray(allData) ? allData : []);
+            if (supaAdvice.length > 0) {
+                allAdvice = supaAdvice;
+            } else {
+                allAdvice = allData.Advice || (Array.isArray(allData) ? allData : []);
+            }
             
             allAdvice = allAdvice.filter((advice, index, self) =>
                 index === self.findIndex(a => a.title === advice.title)

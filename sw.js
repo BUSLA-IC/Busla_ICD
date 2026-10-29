@@ -4,7 +4,7 @@
  * Desktop & Mobile Support with Instant Auto-Updates
  */
 
-const CACHE_VERSION = 'busla-pwa-v1.0.0';
+const CACHE_VERSION = 'busla-pwa-v1.0.3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 
@@ -13,6 +13,9 @@ const PRECACHE_ASSETS = [
     './index.html',
     './manifest.webmanifest',
     './css/roadmap.css',
+    './assets/icons/icon-192.png',
+    './assets/icons/icon-512.png',
+    './assets/icons/icon-maskable-512.png',
     './assets/icons/BUSLA-icon.png',
     './assets/icons/1.png',
     './js/custom-dialogs.js',
@@ -31,6 +34,26 @@ const NETWORK_ONLY_ORIGINS = [
     'ytimg.com',
     'api.github.com'
 ];
+
+// Helper to safely match cache or return a valid synthetic Response
+async function safeMatchOrFallback(request, fallbackUrl = null) {
+    try {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (fallbackUrl) {
+            const fb = await caches.match(fallbackUrl);
+            if (fb) return fb;
+        }
+    } catch (e) {
+        // Cache error fallback
+    }
+    // NEVER return undefined to event.respondWith - must always be a valid Response object!
+    return new Response('Network error and asset not in cache', {
+        status: 404,
+        statusText: 'Not Found',
+        headers: new Headers({ 'Content-Type': 'text/plain; charset=utf-8' })
+    });
+}
 
 // 1. Service Worker Installation
 self.addEventListener('install', (event) => {
@@ -81,6 +104,11 @@ self.addEventListener('fetch', (event) => {
     const request = event.request;
     const url = new URL(request.url);
 
+    // Rule 0: Skip non-HTTP(S) schemes, WebSockets (Live Server reload), or chrome extensions
+    if (!url.protocol.startsWith('http') || url.pathname.includes('/ws')) {
+        return;
+    }
+
     // Rule 1: Only handle GET requests
     if (request.method !== 'GET') {
         return;
@@ -96,7 +124,6 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then((networkResponse) => {
-                    // Update cache copy with fresh page
                     if (networkResponse && networkResponse.status === 200) {
                         const responseClone = networkResponse.clone();
                         caches.open(DYNAMIC_CACHE).then((cache) => {
@@ -105,18 +132,12 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 })
-                .catch(() => {
-                    // Network failed (Offline mode) -> return cached copy or index fallback
-                    return caches.match(request).then((cached) => {
-                        return cached || caches.match('./index.html');
-                    });
-                })
+                .catch(() => safeMatchOrFallback(request, './index.html'))
         );
         return;
     }
 
     // Rule 4: JavaScript & CSS Code (Strict Network-First with Offline Fallback)
-    // Ensures updates to code are ALWAYS fetched fresh when online!
     if (request.destination === 'script' || request.destination === 'style') {
         event.respondWith(
             fetch(request)
@@ -129,14 +150,12 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 })
-                .catch(() => {
-                    return caches.match(request);
-                })
+                .catch(() => safeMatchOrFallback(request))
         );
         return;
     }
 
-    // Rule 5: Images & Media (Stale-While-Revalidate for performance, with background refresh)
+    // Rule 5: Images & Media (Stale-While-Revalidate with background refresh)
     if (request.destination === 'image' || request.destination === 'font') {
         event.respondWith(
             caches.match(request).then((cachedResponse) => {
@@ -150,7 +169,7 @@ self.addEventListener('fetch', (event) => {
                         }
                         return networkResponse;
                     })
-                    .catch(() => cachedResponse);
+                    .catch(() => safeMatchOrFallback(request));
 
                 return cachedResponse || fetchPromise;
             })
@@ -170,9 +189,7 @@ self.addEventListener('fetch', (event) => {
                 }
                 return networkResponse;
             })
-            .catch(() => {
-                return caches.match(request);
-            })
+            .catch(() => safeMatchOrFallback(request))
     );
 });
 

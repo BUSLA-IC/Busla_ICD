@@ -151,6 +151,10 @@
                 <i class="fas fa-book w-5 text-center"></i> <span>إدارة المراجع</span>
             </button>
 
+            <button data-target="experts-mgmt" data-perm="manage_content" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-user-graduate w-5 text-center"></i> <span>إدارة نصائح الخبراء</span>
+            </button>
+
             <button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
                 <i class="fas fa-users w-5 text-center"></i> <span>طلبات الأعضاء</span>
             </button>
@@ -1937,6 +1941,339 @@
                 <!-- Grid View -->
                 <div id="admin-references-grid-container" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Loaded dynamically in JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 9: Experts Advice & Insights Dashboard -->
+        <div id="experts-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(0,106,103,0.3)]">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <span>إدارة نصائح وخبرات المهندسين (Expert Advice Management)</span>
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">إضافة وتعديل وحذف وتنظيم نصائح الخبراء وتنسيق الصناديق والقوائم والمقارنات</p>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase">إجمالي النصائح</span>
+                        <span id="stat-advices-total" class="text-lg font-black text-white font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase">المنشورة للطلاب</span>
+                        <span id="stat-advices-published" class="text-lg font-black text-emerald-400 font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-yellow-500 font-bold uppercase">المسودات</span>
+                        <span id="stat-advices-draft" class="text-lg font-black text-yellow-500 font-mono mt-0.5">0</span>
+                    </div>
+                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
+                        <span class="text-[10px] text-purple-400 font-bold uppercase">التصنيفات النشطة</span>
+                        <span id="stat-advices-categories" class="text-lg font-black text-purple-400 font-mono mt-0.5">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar Controls -->
+            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0">
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="admin-advices-search" placeholder="البحث بالعنوان، المصدر، أو الوسوم..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
+                    </div>
+                    <select id="admin-advices-category-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">كل التصنيفات</option>
+                    </select>
+                    <select id="admin-advices-status-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">كل الحالات</option>
+                        <option value="published">المنشورة فقط</option>
+                        <option value="draft">المسودات فقط</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="window.openAddAdviceModal()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(20,184,166,0.25)] flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة نصيحة جديدة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-6 bg-black">
+                <div class="bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                    <table class="w-full text-right border-collapse select-text">
+                        <thead>
+                            <tr class="bg-white/5 border-b border-white/10 text-xs font-bold text-gray-400 select-none">
+                                <th class="p-4 text-center w-20">الترتيب</th>
+                                <th class="p-4">عنوان النصيحة والملخص</th>
+                                <th class="p-4">التصنيف</th>
+                                <th class="p-4">الوسوم</th>
+                                <th class="p-4">المصدر / المتحدث</th>
+                                <th class="p-4 text-center">الحالة</th>
+                                <th class="p-4 text-center w-28">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-advices-table-body" class="divide-y divide-white/5 text-sm">
+                            <tr><td colspan="7" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>جاري تحميل النصائح...</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🌌 Create & Edit Advice Modal (with Quick Formatting Toolbar & Live Preview) -->
+        <div id="admin-advice-modal" class="fixed inset-0 z-[700] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 transition-opacity dir-rtl select-text">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col overflow-hidden h-[92vh] max-h-[92vh]">
+                <!-- Modal Header -->
+                <div class="p-4 sm:p-5 border-b border-white/10 bg-white/5 flex justify-between items-center shrink-0">
+                    <h3 id="admin-advice-modal-title" class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-user-graduate text-teal-400"></i>
+                        <span>إضافة نصيحة جديدة من الخبراء</span>
+                    </h3>
+                    <button onclick="window.closeAdviceModal()" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+                </div>
+
+                <form id="admin-advice-form" class="flex flex-col flex-1 overflow-hidden min-h-0">
+                    <input type="hidden" id="advice-form-id">
+
+                    <!-- Modal Body: Split 2 columns (Form Editor & Live Preview) with independent smooth scrolling -->
+                    <div class="flex-1 overflow-hidden p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-black min-h-0">
+                        
+                        <!-- Col 1: Form Inputs & Toolbar (Scrolls independently) -->
+                        <div class="h-full overflow-y-auto custom-scroll pr-1 pl-2 space-y-4">
+                            <!-- Title -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 mb-1.5">عنوان النصيحة الرئيسي *</label>
+                                <input type="text" id="advice-form-title" required placeholder="مثال: GPA ليس كل شيء - المشاريع والمهارات أهم" class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-teal-500 outline-none">
+                            </div>
+
+                            <!-- Category & Source -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">التصنيف الأساسي *</label>
+                                    <select id="advice-form-category" class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-gray-200 focus:border-teal-500 outline-none"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">المصدر أو المتحدث *</label>
+                                    <input type="text" id="advice-form-source" required placeholder="مثال: Y. Sherif – GP Mentors from Si-Vision" class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-teal-500 outline-none">
+                                    <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
+                                        <span class="text-gray-500 self-center">مقترحات:</span>
+                                        <button type="button" onclick="window.setAdviceSource('Multiple Engineers & Professors')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">مهندسون ودكاترة كبرى الشركات</button>
+                                        <button type="button" onclick="window.setAdviceSource('Y. Sherif – GP Mentors from Si-Vision')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">م. يوسف شريف</button>
+                                        <button type="button" onclick="window.setAdviceSource('Tarek Eldeeb – Senior FPGA Engineer')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">م. طارق الديب</button>
+                                        <button type="button" onclick="window.setAdviceSource('Karim Waseem – Digital IC Design')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">م. كريم وسيم</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tags & Order -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">الوسوم (مفصولة بفاصلة)</label>
+                                    <input type="text" id="advice-form-tags" placeholder="#General, #GP, #Career" class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-teal-500 outline-none">
+                                    <div class="flex flex-wrap gap-1 mt-1 text-[10px]">
+                                        <span class="text-gray-500 self-center">وسوم سريعة:</span>
+                                        <button type="button" onclick="window.toggleAdviceTag('#General')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#General</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#Career')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#Career</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#GP')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#GP</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#Verification')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#Verification</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#RTL')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#RTL</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#FPGA')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#FPGA</button>
+                                        <button type="button" onclick="window.toggleAdviceTag('#Tools')" class="px-2 py-0.5 rounded bg-white/5 hover:bg-teal-500/20 text-gray-300 hover:text-teal-300 transition-colors">#Tools</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">الترتيب في العرض</label>
+                                    <input type="number" id="advice-form-order" value="1" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-teal-500 outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Summary -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-300 mb-1.5">ملخص النصيحة (يظهر في الكارت بالخارج)</label>
+                                <textarea id="advice-form-summary" rows="2" placeholder="ملخص سريع وموجز في سطر أو سطرين..." class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-teal-500 outline-none resize-none"></textarea>
+                            </div>
+
+                            <!-- Difficulty & Priority & Published -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">مستوى الصعوبة</label>
+                                    <select id="advice-form-difficulty" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:border-teal-500 outline-none">
+                                        <option value="beginner">مبتدئ (Beginner)</option>
+                                        <option value="intermediate">متوسط (Intermediate)</option>
+                                        <option value="advanced">متقدم (Advanced)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-300 mb-1.5">الأولوية</label>
+                                    <select id="advice-form-priority" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 focus:border-teal-500 outline-none">
+                                        <option value="high">مرتفعة (High)</option>
+                                        <option value="medium">متوسطة (Medium)</option>
+                                        <option value="low">منخفضة (Low)</option>
+                                    </select>
+                                </div>
+                                <div class="pt-4">
+                                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                                        <input type="checkbox" id="advice-form-published" checked class="w-4 h-4 accent-teal-500 rounded">
+                                        <span class="text-xs font-bold text-emerald-400">نشر النصيحة فوراً</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="advice-form-author" value="">
+
+                            <!-- Content Formatting Toolbar -->
+                            <div class="pt-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-xs font-bold text-teal-400 flex items-center gap-1.5">
+                                        <i class="fas fa-magic"></i>
+                                        <span>أدوات الإدراج والتنسيق المرئي السريع</span>
+                                    </label>
+                                    <span class="text-[11px] text-gray-400">اضغط لإدراج عنصر منسق مباشرة في المحتوى</span>
+                                </div>
+
+                                <div class="p-2.5 bg-white/[0.03] border border-white/10 rounded-xl flex flex-wrap gap-1.5 items-center">
+                                    <!-- Blocks insertion -->
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('tip')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج صندوق نصيحة مهمة بلون أخضر زمردي">
+                                        <span>💡</span> <span>صندوق نصيحة</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('stats')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج صندوق إحصائيات وفرص بلون أزرق سماوي">
+                                        <span>📈</span> <span>صندوق إحصائيات</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('code')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج صندوق لغات وأدوات بلون بنفسجي">
+                                        <span>&lt;/&gt;</span> <span>صندوق أدوات ولغات</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('warning')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج صندوق تحدي أو تنبيه بلون كهرماني">
+                                        <span>⚠️</span> <span>صندوق تحدي/تنبيه</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('table')" class="px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج جدول مقارنة منسق">
+                                        <span>📊</span> <span>جدول مقارنة</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('checklist')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/20 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج قائمة بعلامات صح ملونة">
+                                        <span>✔</span> <span>علامات صح</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.insertSnippet('list-bullet')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-colors" title="إدراج قائمة نقطية">
+                                        <span>•</span> <span>قائمة نقطية</span>
+                                    </button>
+
+                                    <!-- Divider -->
+                                    <div class="h-5 w-px bg-white/10 mx-1"></div>
+
+                                    <!-- Inline Text Styling -->
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.formatSelectedText('bold')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white font-bold text-xs transition-colors" title="جعل النص المحدد عريضاً">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.formatSelectedText('green')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-colors" title="تلوين النص المحدد بالأخضر">
+                                        <span>🟢 أخضر</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.formatSelectedText('red')" class="px-2.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition-colors" title="تلوين النص المحدد بالأحمر">
+                                        <span>🔴 أحمر</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.formatSelectedText('teal')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-colors" title="تلوين النص المحدد بالتيل">
+                                        <span>💠 تيل</span>
+                                    </button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="window.formatSelectedText('clear')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white text-xs transition-colors" title="إزالة التنسيق عن النص المحدد">
+                                        <i class="fas fa-eraser"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Visual WYSIWYG Canvas & HTML Toggle -->
+                                <div class="mt-2.5 pb-6">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                                            <i class="fas fa-edit text-teal-400 text-xs"></i>
+                                            <span>مساحة الكتابة والتنسيق المرئي:</span>
+                                        </span>
+                                        <button type="button" onclick="window.toggleHtmlMode()" id="btn-toggle-html-mode" class="text-[11px] text-gray-500 hover:text-teal-300 transition-colors flex items-center gap-1">
+                                            <i class="fas fa-code"></i>
+                                            <span id="btn-toggle-html-label">كود HTML للمطورين</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- WYSIWYG Editor Canvas (Primary Friendly Visual Editor) -->
+                                    <div id="advice-visual-editor" contenteditable="true" spellcheck="false" class="w-full min-h-[320px] bg-black/70 border border-white/10 rounded-xl p-4 text-gray-200 text-sm leading-relaxed outline-none focus:border-teal-500 custom-scroll space-y-4 font-sans select-text shadow-inner transition-colors"></div>
+
+                                    <!-- Raw HTML Editor (Hidden by default, available for power users) -->
+                                    <textarea id="advice-form-content-raw" class="hidden w-full min-h-[320px] bg-black border border-white/10 rounded-xl p-3.5 font-mono text-xs text-gray-200 focus:border-teal-500 outline-none custom-scroll resize-y leading-relaxed" rows="12"></textarea>
+
+                                    <!-- Hidden Input for Form Submission -->
+                                    <input type="hidden" id="advice-form-content">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Col 2: Live Interactive & Editable Preview Panel (Full Height, Matching Footers) -->
+                        <div class="h-full flex flex-col border border-white/10 rounded-2xl bg-[#0a0a0a] overflow-hidden shadow-xl min-h-0">
+                            <!-- Preview Header -->
+                            <div class="p-3.5 bg-white/5 border-b border-white/10 flex items-center justify-between shrink-0">
+                                <span class="text-xs font-bold text-gray-300 flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>المعاينة والتعديل المباشر (Live Editable Preview)</span>
+                                </span>
+                                <span class="text-[10px] text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20 font-bold">
+                                    <i class="fas fa-pen-to-square ml-1"></i>انقر على أي نص للتعديل المباشر
+                                </span>
+                            </div>
+
+                            <!-- Preview Window Simulation (Scrolls full card contents smoothly) -->
+                            <div class="p-4 sm:p-5 flex-1 overflow-y-auto custom-scroll bg-black/60 min-h-0">
+                                <div class="border border-teal-500/30 rounded-2xl p-6 bg-[#111111] shadow-2xl min-h-full flex flex-col justify-between">
+                                    <!-- Card Content Body -->
+                                    <div class="space-y-5 flex-1">
+                                        <!-- Title (Directly Editable in Preview) -->
+                                        <h3 id="preview-advice-title" contenteditable="true" spellcheck="false" title="انقر هنا لتعديل العنوان مباشرة" class="text-xl md:text-2xl font-bold text-emerald-400 leading-snug p-1.5 -m-1.5 rounded-lg border border-transparent hover:border-teal-500/40 focus:border-teal-500 focus:bg-teal-500/5 outline-none transition-all cursor-text">
+                                            عنوان النصيحة يظهر هنا...
+                                        </h3>
+
+                                        <!-- Tags -->
+                                        <div id="preview-advice-tags" class="flex flex-wrap gap-2"></div>
+
+                                        <!-- Body Content (Directly Editable in Preview) -->
+                                        <div id="preview-advice-content" contenteditable="true" spellcheck="false" title="انقر هنا لتعديل أي فقرة أو صندوق أو جدول مباشرة" class="text-gray-300 text-sm leading-relaxed space-y-4 pt-2 p-2 -m-2 rounded-xl border border-transparent hover:border-teal-500/30 focus:border-teal-500 focus:bg-black/40 outline-none transition-all select-text cursor-text"></div>
+                                    </div>
+
+                                    <!-- Source Footer (Directly Editable in Preview) -->
+                                    <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-400 mt-6 shrink-0">
+                                        <div id="preview-advice-source" contenteditable="true" spellcheck="false" title="انقر لتعديل المصدر مباشرة" class="font-bold text-emerald-400 p-1.5 -m-1.5 rounded-lg border border-transparent hover:border-teal-500/40 focus:border-teal-500 focus:bg-teal-500/5 outline-none transition-all cursor-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Modal Actions Footer -->
+                    <div class="p-4 border-t border-white/10 flex gap-3 bg-white/5 shrink-0">
+                        <button type="button" onclick="window.closeAdviceModal()" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all text-xs">إلغاء</button>
+                        <button type="submit" id="advice-submit-btn" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all text-xs flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ النصيحة في قاعدة البيانات</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 🌌 Dedicated Preview Modal (when clicking Eye icon in table) -->
+        <div id="admin-advice-preview-modal" class="fixed inset-0 z-[750] hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl select-text">
+            <div class="bg-b-surface border border-teal-500/40 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+                <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-start">
+                    <h3 id="modal-preview-title" class="text-xl font-bold text-emerald-400 flex-1 leading-snug"></h3>
+                    <button onclick="window.closePreviewModal()" class="text-gray-400 hover:text-white text-2xl ml-4 leading-none">&times;</button>
+                </div>
+                <div class="p-6 overflow-y-auto custom-scroll space-y-5 bg-black/80">
+                    <div id="modal-preview-tags" class="flex flex-wrap gap-2"></div>
+                    <div id="modal-preview-body" class="text-gray-300 leading-relaxed text-sm space-y-4"></div>
+                    <div class="pt-4 border-t border-white/10">
+                        <p id="modal-preview-source" class="text-xs font-bold text-emerald-400"></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4473,6 +4810,7 @@
     <script type="module" src="../js/project-audit.js?v=2.0"></script>
     <script type="module" src="../js/tools-mgmt.js?v=2.1"></script>
     <script type="module" src="../js/references-mgmt.js?v=2.1"></script>
+    <script type="module" src="../js/experts-mgmt.js?v=2.4"></script>
     <script type="module" src="../../js/tools-drawer.js?v=2.1"></script>
     <script type="module" src="../../js/references-drawer.js?v=2.1"></script>
  
@@ -4487,6 +4825,7 @@
 
     document.getElementById('admin-sidebar')?.addEventListener('click', (e) => {
         if (window.innerWidth < 768) {
+            if (e.target.closest('[data-prevent-sidebar-close="true"]')) return;
             const clickable = e.target.closest('button, a');
             if (clickable && !clickable.querySelector('.fa-times')) {
                 closeAdminSidebar();

@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوصلة | بوابتك لاحتراف Digital IC Design</title>
-    <link rel="icon" type="image/jpg" href="assets/icons/BUSLA-icon.png">
+    <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#006A67">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="بوصلة">
-    <link rel="apple-touch-icon" href="assets/icons/BUSLA-icon.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/custom-dialogs.js"></script>
@@ -62,20 +64,68 @@
             position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(0, 106, 103, 0.1), transparent 80%); z-index: -2;
         }
 
-        /* نافبار موحد */
+        /* نافبار موحد ومرن للتكيف مع كافة الشاشات */
         .nav-glass {
             background: rgba(10, 10, 10, 0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 100vw;
+            overflow-x: clip;
         }
         
         .nav-link {
-            position: relative; padding: 0.5rem 1rem; color: #9CA3AF; transition: color 0.3s;
+            position: relative;
+            padding: 0.35rem clamp(0.3rem, 0.65vw, 0.9rem);
+            font-size: clamp(0.72rem, 0.8vw, 0.92rem);
+            color: #9CA3AF;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            border-radius: 0.5rem;
+            flex-shrink: 0;
         }
-        .nav-link:hover, .nav-link.active { color: #22C45D; }
+        .nav-link:hover {
+            color: #22C45D;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .nav-link.active {
+            color: #22C45D;
+        }
         .nav-link.active::after {
-            content: ''; position: absolute; bottom: -20px; left: 0; width: 100%; height: 3px;
-            background: #22C45D; box-shadow: 0 -2px 10px rgba(34, 196, 93, 0.5);
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 15%;
+            width: 70%;
+            height: 3px;
+            background: #22C45D;
+            box-shadow: 0 0 10px rgba(34, 196, 93, 0.7);
+            border-radius: 2px;
+        }
+
+        /* نافذة الفلاتر المنبثقة للهواتف (Bottom Sheet) */
+        @media (max-width: 1023px) {
+            .mobile-filter-sheet {
+                display: none;
+            }
+            .mobile-filter-sheet.is-open {
+                display: block !important;
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                max-height: 85vh !important;
+                overflow-y: auto !important;
+                z-index: 50 !important;
+                background: #111417 !important;
+                border-top: 2px solid rgba(45, 212, 191, 0.4) !important;
+                border-radius: 1.5rem 1.5rem 0 0 !important;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8) !important;
+                animation: slideUpSheet 0.25s ease-out;
+            }
+        }
+        @keyframes slideUpSheet {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
 
         /* تأثير الزجاج للكروت (التصميم القديم) */
@@ -105,14 +155,16 @@
     <div class="circuit-overlay"></div>
 
     <nav class="nav-glass fixed w-full z-50 top-0 transition-all duration-300">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="w-full max-w-[1700px] mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 flex justify-between items-center gap-1.5 sm:gap-2.5 min-w-0">
             
-            <a href="#hero" class="text-3xl font-bold text-b-primary hover:text-b-hl-light transition-all duration-300 hover:scale-105 flex items-center gap-2">
-                <img src="assets/icons/BUSLA-icon.png" class="w-10 h-10 object-contain" alt="لوجو بوصلة">
-                <span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light">بوصلة</span>
+            <!-- Logo -->
+            <a href="#hero" class="text-lg sm:text-xl md:text-2xl font-bold text-b-primary hover:text-b-hl-light transition-all duration-300 flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <img src="assets/icons/BUSLA-icon.png" class="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 object-contain shrink-0" alt="لوجو بوصلة">
+                <span class="text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light whitespace-nowrap">بوصلة</span>
             </a>
 
-            <div class="hidden md:flex items-center gap-6 text-sm font-bold">
+            <!-- Desktop & Laptop Navigation Links (Fluid tabs: adapt seamlessly to screen width) -->
+            <div class="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1.5 2xl:gap-2.5 font-bold min-w-0 flex-1 max-w-2xl mx-1 sm:mx-2">
                 <a href="#hero" class="nav-link active">الرئيسية</a>
                 <a href="#roadmap" class="nav-link">المسار</a>
                 <a href="#experts" class="nav-link">الخبراء</a>
@@ -121,48 +173,118 @@
                 <a href="#courses" class="nav-link">الدورات</a>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-4">
-                <!-- Omni-Search Trigger Button (Desktop & Tablet) -->
-                <button onclick="window.openOmniSearch()" class="hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group" title="البحث الشامل (Ctrl + K)">
+            <!-- Controls & Auth Section -->
+            <div class="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0">
+                <!-- Omni-Search Trigger Button (Ultra-Wide: Full Search Bar with title text) -->
+                <button onclick="window.openOmniSearch()" class="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
                     <i class="fas fa-search text-xs text-teal-400 group-hover:scale-110 transition-transform"></i>
                     <span class="font-medium">بحث في المنصة...</span>
                     <kbd class="text-[9px] bg-black/50 px-1.5 py-0.5 rounded border border-white/10 font-mono text-gray-400">Ctrl K</kbd>
                 </button>
 
-                <div id="nav-auth-section" class="flex items-center gap-4">
-                    <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white font-semibold transition-colors text-sm hidden sm:block">
+                <!-- Omni-Search Trigger Button (Laptops: Compact Icon + Ctrl K pill) -->
+                <button onclick="window.openOmniSearch()" class="hidden lg:flex 2xl:hidden items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
+                    <i class="fas fa-search text-xs text-teal-400 group-hover:scale-110 transition-transform"></i>
+                    <kbd class="text-[9px] bg-black/50 px-1.5 py-0.5 rounded border border-white/10 font-mono text-gray-400">Ctrl K</kbd>
+                </button>
+
+                <!-- Omni-Search Mobile & Tablet Icon (Below 1024px: pure icon button, NO Ctrl K text on touch screens!) -->
+                <button onclick="window.openOmniSearch()" class="lg:hidden text-teal-400 hover:text-white w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all shrink-0 active:scale-95" title="البحث الشامل">
+                    <i class="fas fa-search text-xs sm:text-sm"></i>
+                </button>
+
+                <!-- Auth Action Container -->
+                <div id="nav-auth-section" class="flex items-center gap-1.5 xl:gap-2 shrink-0">
+                    <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white font-semibold transition-colors text-xs xl:text-sm hidden lg:block px-2 py-1 hover:bg-white/5 rounded-lg">
                         تسجيل دخول
                     </a>
-                    <a href="pages/auth.html?mode=signup" class="px-5 py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg hover:shadow-b-primary/50 hover:scale-105 transition-all text-sm flex items-center gap-2">
-                        <i class="fas fa-user-plus"></i>
+                    <a href="pages/auth.html?mode=signup" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-md hover:shadow-b-primary/50 hover:scale-105 active:scale-95 transition-all text-xs xl:text-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                        <i class="fas fa-user-plus text-[11px] xl:text-xs"></i>
                         <span>حساب جديد</span>
                     </a>
                 </div>
 
-                <!-- Search button for mobile -->
-                <button onclick="window.openOmniSearch()" class="sm:hidden text-teal-400 hover:text-white w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all" title="البحث الشامل">
-                    <i class="fas fa-search text-sm"></i>
-                </button>
-
-                <!-- Hamburger menu button for mobile -->
-                <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-white focus:outline-none w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all">
-                    <i class="fas fa-bars text-lg"></i>
+                <!-- Hamburger menu button (Shown on Mobile & Tablets below 1024px) -->
+                <button id="mobile-menu-btn" class="lg:hidden text-gray-400 hover:text-white focus:outline-none w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all shrink-0 active:scale-95" title="القائمة">
+                    <i class="fas fa-bars text-sm"></i>
                 </button>
             </div>
         </div>
     </nav>
 
     <!-- Mobile Dropdown Menu -->
-    <div id="mobile-menu" class="hidden fixed top-[73px] left-0 w-full bg-black/95 backdrop-blur-lg border-b border-white/10 z-40 p-6 flex flex-col gap-4 text-center font-bold shadow-2xl transition-all duration-300">
-        <a href="#hero" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الرئيسية</a>
-        <a href="#roadmap" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المسار</a>
-        <a href="#experts" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الخبراء</a>
-        <a href="#tools" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الأدوات</a>
-        <a href="#references" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">المكتبة العلمية</a>
-        <a href="#courses" class="mobile-nav-link text-gray-300 hover:text-b-hl-light py-2 border-b border-white/5">الدورات</a>
+    <div id="mobile-menu" class="hidden fixed top-[54px] sm:top-[64px] md:top-[73px] left-0 w-full bg-[#0c0e10]/95 backdrop-blur-2xl border-b border-white/10 z-40 p-4 sm:p-5 flex flex-col shadow-2xl transition-all duration-300 max-h-[calc(100vh-54px)] overflow-y-auto custom-scroll">
         
-        <div id="mobile-auth-section" class="border-t border-white/10 pt-4 flex flex-col gap-3 mt-2">
-            <a href="pages/auth.html?mode=login" class="text-gray-300 hover:text-white py-2 text-sm">تسجيل دخول</a>
+        <!-- Mobile Auth / User Section (Rendered dynamically at the top) -->
+        <div id="mobile-auth-section" class="border-b border-white/10 pb-3 mb-2">
+            <div class="grid grid-cols-2 gap-2">
+                <a href="pages/auth.html?mode=login" class="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 font-bold text-xs flex items-center justify-center gap-2 transition-all">
+                    <i class="fas fa-sign-in-alt text-teal-400"></i>
+                    <span>تسجيل دخول</span>
+                </a>
+                <a href="pages/auth.html?mode=signup" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all">
+                    <i class="fas fa-user-plus"></i>
+                    <span>حساب جديد</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Navigation Links with Icons & Hover States -->
+        <div class="flex flex-col gap-1 text-right">
+            <a href="#hero" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">الرئيسية</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
+            <a href="#roadmap" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-map-signs"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">المسار التعليمي</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
+            <a href="#experts" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-user-astronaut"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">الخبراء والموجهين</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
+            <a href="#tools" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">الأدوات البرمجية</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
+            <a href="#references" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-book-reader"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">المكتبة العلمية</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
+            <a href="#courses" class="mobile-nav-link flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                <span class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="text-xs sm:text-sm font-bold">الدورات التدريبية</span>
+                </span>
+                <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:text-teal-400 transition-colors"></i>
+            </a>
         </div>
     </div>
 
@@ -238,167 +360,271 @@
             </div>
         </div>
 
-        <!-- Module: Experts (الخبراء) -->
-        <div id="module-experts" class="app-module hidden pt-24 pb-12">
-            <section id="experts" class="py-20 relative">
-                <div class="container mx-auto px-6">
-                    <div class="flex justify-between items-end mb-10">
+        <!-- Module: Experts (الخبرات والنصائح) -->
+        <div id="module-experts" class="app-module hidden pt-20 sm:pt-24 pb-16">
+            <section id="experts" class="py-6 sm:py-8 relative">
+                <div class="container mx-auto px-4 sm:px-6 max-w-7xl">
+                    
+                    <!-- Section Header -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
                         <div>
-                            <h2 class="text-3xl font-bold text-white mb-2">👨‍🏫 تعلم من الخبراء</h2>
-                            <p class="text-gray-400">نصائح وخبرات من مهندسين يعملون في كبرى الشركات</p>
+                            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold mb-3 shadow-[0_0_15px_rgba(20,184,166,0.15)]">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>خلاصة خبرة المهندسين وسوق العمل</span>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2 flex items-center gap-3">
+                                <span>👨‍🏫 نصائح وخبرات المهندسين</span>
+                            </h2>
+                            <p class="text-gray-400 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                                نصائح وخبرات وتجارب عملية يشاركها كبار مهندسي الدوائر الرقمية (VLSI) والأنظمة المدمجة والتصميم والتحقق وسوق العمل
+                            </p>
                         </div>
-                        <a href="pages/experts.html" class="text-b-hl-light hover:underline text-sm font-bold">عرض الكل</a>
+
+                        <!-- Counters & Reset Filter -->
+                        <div class="flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-end">
+                            <div class="bg-b-surface border border-white/10 rounded-2xl px-4 py-2 flex items-center gap-2.5 shadow-lg">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span class="text-xs text-gray-400 font-medium">النصائح المعروضة:</span>
+                                <span id="experts-count-badge" class="text-sm font-black text-teal-400 font-mono">0</span>
+                            </div>
+                            <button id="btn-reset-experts-filters" onclick="window.resetExpertsFilters()" class="text-xs text-gray-400 hover:text-teal-400 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all flex items-center gap-1.5 font-bold" title="إعادة تعيين الفلاتر">
+                                <i class="fas fa-rotate-right text-[11px]"></i>
+                                <span>تهيئة الفلاتر</span>
+                            </button>
+                        </div>
                     </div>
-                    <div id="experts-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                        <!-- Experts will be loaded here -->
+
+                    <!-- Search and Filters Panel -->
+                    <div class="bg-b-surface border border-white/10 rounded-2xl p-4 sm:p-5 mb-8 shadow-2xl space-y-4">
+                        
+                        <!-- Search Bar -->
+                        <div class="relative w-full">
+                            <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                            <input type="text" id="experts-search-input" placeholder="ابحث في النصائح، العناوين، أسماء المهندسين، أو الوسوم (#GP, #Verification)..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-11 pl-10 py-3 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all placeholder:text-gray-500 text-right">
+                            <button id="btn-clear-experts-search" onclick="window.clearExpertsSearch()" class="hidden absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs p-1">
+                                <i class="fas fa-times-circle text-base"></i>
+                            </button>
+                        </div>
+
+                        <!-- Categories Filter Tabs (Pills) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-gray-400 flex items-center gap-1.5">
+                                    <i class="fas fa-tags text-teal-400 text-xs"></i>
+                                    <span>التصنيفات والمسارات:</span>
+                                </span>
+                            </div>
+                            <div id="experts-category-pills" class="flex flex-wrap gap-2 overflow-x-auto custom-scroll pb-1">
+                                <!-- Generated Dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Secondary Filters Row (Source & Sorting) -->
+                        <div class="pt-3 border-t border-white/5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <!-- Source Filter -->
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-gray-400 font-bold whitespace-nowrap">المتحدث / المهندس:</label>
+                                    <select id="experts-source-filter" onchange="window.filterExpertsBySource(this.value)" class="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 outline-none focus:border-teal-500">
+                                        <option value="all">كل المتحدثين والمهندسين</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Sorting Dropdown -->
+                            <div class="flex items-center gap-2 justify-end">
+                                <label class="text-xs text-gray-400 font-bold whitespace-nowrap">ترتيب النصائح:</label>
+                                <select id="experts-sort-filter" onchange="window.sortExperts(this.value)" class="bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-200 outline-none focus:border-teal-500">
+                                    <option value="default">الترتيب الافتراضي</option>
+                                    <option value="title">أبجدياً (أ - ي)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Cards Container -->
+                    <div id="experts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Loaded dynamically -->
+                    </div>
+
                 </div>
             </section>
         </div>
 
         <!-- Module: Tools (الأدوات) -->
-        <div id="module-tools" class="app-module hidden pt-24 pb-12 px-6">
-            <div class="container mx-auto">
-                <div class="mb-8 text-right flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div class="flex items-center gap-3">
-                        <img src="assets/icons/BUSLA-icon.png" class="w-12 h-12 object-contain" alt="لوجو بوصلة">
+        <div id="module-tools" class="app-module hidden pt-16 sm:pt-20 md:pt-24 pb-12 px-3 sm:px-6">
+            <div class="w-full max-w-[1600px] mx-auto">
+                
+                <!-- Modern Responsive Page Header -->
+                <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3 text-right">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-9 h-9 sm:w-11 sm:h-11 object-contain shrink-0" alt="لوجو بوصلة">
                         <div>
-                            <h2 class="text-3xl font-bold text-white mb-1">مكتبة الأدوات</h2>
-                        </div>  
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-white">مكتبة الأدوات</h2>
+                            <p class="text-[11px] sm:text-xs text-gray-400 hidden sm:block">أفضل الأدوات والبرمجيات والمحاكيات لمهندسي الدوائر الرقمية</p>
+                        </div>
                     </div>
+                    
+                    <!-- Mobile Filter Toggle Button (Compact, modern pill with active indicator) -->
+                    <button id="btn-toggle-filters-mobile" class="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 text-xs font-bold transition-all active:scale-95 shrink-0" title="خيارات التصفية">
+                        <i class="fas fa-sliders-h text-xs"></i>
+                        <span>تصفية الأدوات</span>
+                        <span id="tools-filter-indicator" class="hidden w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                    </button>
                 </div>
 
-                <!-- Mobile Filter Toggle Button -->
-                <button id="btn-toggle-filters-mobile" class="lg:hidden w-full bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex items-center justify-between text-white font-bold transition-all shadow-md mb-4 text-right">
-                    <span class="flex items-center gap-2">
-                        <i class="fas fa-sliders-h text-teal-400"></i>
-                        <span>خيارات تصفية وبحث الأدوات</span>
-                    </span>
-                    <i id="filters-mobile-chevron" class="fas fa-chevron-down text-gray-400 transition-transform animate-pulse"></i>
-                </button>
+                <!-- Backdrop Overlay for Mobile Bottom Sheet -->
+                <div id="tools-filters-backdrop" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 lg:hidden transition-opacity"></div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
-                    <!-- Filters Sidebar (3/10) -->
-                    <aside id="tools-filters-sidebar" class="hidden lg:block lg:col-span-3 bg-b-surface border border-white/10 rounded-2xl p-5 space-y-6 text-right">
+                <!-- Main Layout Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6 items-start">
+                    
+                    <!-- Filters Sidebar (Desktop: Sticky 3-col sidebar. Mobile: Native Bottom Sheet drawer) -->
+                    <aside id="tools-filters-sidebar" class="mobile-filter-sheet hidden lg:block lg:col-span-3 bg-b-surface border border-teal-500/20 lg:border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 sm:space-y-5 text-right shadow-xl">
+                        <!-- Mobile Sheet Header with Close Button -->
+                        <div class="lg:hidden flex items-center justify-between pb-3 border-b border-white/10">
+                            <span class="text-xs font-bold text-teal-400 flex items-center gap-1.5">
+                                <i class="fas fa-filter text-xs"></i>
+                                <span>تصفية الأدوات البرمجية</span>
+                            </span>
+                            <button type="button" id="btn-close-tools-mobile" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
                         <div class="flex items-center justify-between border-b border-white/5 pb-3">
                             <button id="btn-clear-all-filters" class="text-xs text-teal-400 hover:text-teal-300 font-bold transition-all">تهيئة الفلاتر</button>
-                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                                <i class="fas fa-filter text-teal-500"></i> خيارات التصفية
+                            <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+                                <i class="fas fa-filter text-teal-400"></i> خيارات التصفية
                             </h3>
                         </div>
 
-                        <!-- Track Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
-                            <select id="flt-tool-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل المسارات</option>
-                            </select>
+                        <!-- Dropdowns Grid (1 col on desktop, 2 col on tablet/mobile when open) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-3.5">
+                            <!-- Track Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
+                                <select id="flt-tool-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل المسارات</option>
+                                </select>
+                            </div>
+
+                            <!-- Tool Type Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">نوع الأداة</label>
+                                <select id="flt-tool-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل الأنواع</option>
+                                    <option value="Software">Software</option>
+                                    <option value="Website">Website</option>
+                                    <option value="Online Platform">Online Platform</option>
+                                    <option value="IDE">IDE</option>
+                                    <option value="Simulator">Simulator</option>
+                                    <option value="CAD Tool">CAD Tool</option>
+                                    <option value="AI Tool">AI Tool</option>
+                                    <option value="Documentation">Documentation</option>
+                                    <option value="Library">Library</option>
+                                    <option value="Framework">Framework</option>
+                                    <option value="Extension">Extension</option>
+                                    <option value="Plugin">Plugin</option>
+                                    <option value="Learning Platform">Learning Platform</option>
+                                    <option value="Community">Community</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Level Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">مستوى الخبرة المطلوبة</label>
+                                <select id="flt-tool-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل المستويات</option>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                    <option value="Professional">Professional</option>
+                                </select>
+                            </div>
+
+                            <!-- OS Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">نظام التشغيل</label>
+                                <select id="flt-tool-os" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل الأنظمة</option>
+                                    <option value="Windows">Windows</option>
+                                    <option value="Linux">Linux</option>
+                                    <option value="macOS">macOS</option>
+                                    <option value="Android">Android</option>
+                                    <option value="iOS">iOS</option>
+                                    <option value="Web">Web</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- Tool Type Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">نوع الأداة</label>
-                            <select id="flt-tool-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل الأنواع</option>
-                                <option value="Software">Software</option>
-                                <option value="Website">Website</option>
-                                <option value="Online Platform">Online Platform</option>
-                                <option value="IDE">IDE</option>
-                                <option value="Simulator">Simulator</option>
-                                <option value="CAD Tool">CAD Tool</option>
-                                <option value="AI Tool">AI Tool</option>
-                                <option value="Documentation">Documentation</option>
-                                <option value="Library">Library</option>
-                                <option value="Framework">Framework</option>
-                                <option value="Extension">Extension</option>
-                                <option value="Plugin">Plugin</option>
-                                <option value="Learning Platform">Learning Platform</option>
-                                <option value="Community">Community</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-
-                        <!-- Level Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">مستوى الخبرة المطلوبة</label>
-                            <select id="flt-tool-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل المستويات</option>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                                <option value="Professional">Professional</option>
-                            </select>
-                        </div>
-
-                        <!-- OS Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">نظام التشغيل</label>
-                            <select id="flt-tool-os" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل الأنظمة</option>
-                                <option value="Windows">Windows</option>
-                                <option value="Linux">Linux</option>
-                                <option value="macOS">macOS</option>
-                                <option value="Android">Android</option>
-                                <option value="iOS">iOS</option>
-                                <option value="Web">Web</option>
-                            </select>
-                        </div>
-
-                        <!-- Toggle pricing / license -->
-                        <div class="space-y-3 pt-3 border-t border-white/5 flex flex-col items-stretch">
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                        <!-- Checkboxes: Clean horizontal pills on mobile, vertical stack on desktop -->
+                        <div class="pt-3 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
                                 <span>مجانية فقط (Free)</span>
-                                <input type="checkbox" id="flt-tool-free" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                <input type="checkbox" id="flt-tool-free" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-                                <span>مفتوحة المصدر (Open Source)</span>
-                                <input type="checkbox" id="flt-tool-osource" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                                <span>مفتوحة المصدر</span>
+                                <input type="checkbox" id="flt-tool-osource" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-                                <span>تعمل بدون إنترنت (Offline)</span>
-                                <input type="checkbox" id="flt-tool-offline" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                                <span>تعمل بدون نت</span>
+                                <input type="checkbox" id="flt-tool-offline" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
+                        </div>
+
+                        <!-- Mobile Close / Apply Button -->
+                        <div class="lg:hidden pt-2 border-t border-white/5">
+                            <button type="button" id="btn-apply-tools-mobile" class="w-full py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
+                                <i class="fas fa-check"></i>
+                                <span>تطبيق وإغلاق الفلاتر</span>
+                            </button>
                         </div>
                     </aside>
 
-                    <!-- Main Grid & Controls (7/10) -->
-                    <div class="lg:col-span-7 space-y-4">
-                        <!-- Toolbar Controls -->
-                        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface border border-white/10 p-4 rounded-xl gap-4">
-                            <!-- Search -->
-                            <div class="relative w-full md:w-80">
-                                <input type="text" id="tools-search-input" placeholder="ابحث بالاسم، الوصف، أو الوسوم..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none text-right">
-                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <!-- Main Content Column (7/10) -->
+                    <div class="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                        
+                        <!-- Front & Center Search & Toolbar Controls (Always at the top on mobile!) -->
+                        <div class="bg-b-surface border border-white/10 p-3 sm:p-4 rounded-2xl space-y-3">
+                            <!-- Search Input -->
+                            <div class="relative w-full">
+                                <input type="text" id="tools-search-input" placeholder="ابحث بالاسم، الوصف، أو الوسوم..." class="w-full bg-black/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none text-right pl-9 shadow-inner">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-teal-400 text-xs"></i>
                             </div>
 
-                            <!-- Show Count, Sorters & Views Toggles -->
-                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
-                                <div class="text-xs text-gray-400">
-                                    المعروض: <span id="tools-showing-count" class="font-bold text-white">0</span> من <span id="tools-total-count" class="font-bold text-white">0</span>
+                            <!-- Mobile Quick Row: Count, Sorter & Views Toggles -->
+                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 text-xs flex-wrap">
+                                <div class="text-[11px] sm:text-xs text-gray-400 truncate">
+                                    المعروض: <span id="tools-showing-count" class="font-bold text-teal-400">0</span> من <span id="tools-total-count" class="font-bold text-white">0</span>
                                 </div>
-                                <div class="relative w-44">
-                                    <select id="tools-sort-selector" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
-                                        <option value="name_asc">الترتيب: بالاسم أ-ي</option>
-                                        <option value="name_desc">الترتيب: بالاسم ي-أ</option>
-                                        <option value="popularity">الأكثر استخداماً (Clicks)</option>
-                                        <option value="views">الأكثر زيارة (Views)</option>
-                                        <option value="latest">الأحدث إضافتاً</option>
-                                    </select>
-                                    <i class="fas fa-sort absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
-                                </div>
-                                <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
-                                    <button id="btn-tools-grid-view" class="px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10">
-                                        <i class="fas fa-th-large"></i>
-                                    </button>
-                                    <button id="btn-tools-list-view" class="px-3 py-2 text-gray-400 hover:text-white transition-all text-xs">
-                                        <i class="fas fa-list"></i>
-                                    </button>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <div class="relative w-36 sm:w-44">
+                                        <select id="tools-sort-selector" class="w-full bg-black/80 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right appearance-none pl-6">
+                                            <option value="name_asc">الاسم: أ-ي</option>
+                                            <option value="name_desc">الاسم: ي-أ</option>
+                                            <option value="popularity">الأكثر استخداماً</option>
+                                            <option value="views">الأكثر زيارة</option>
+                                            <option value="latest">الأحدث إضافتاً</option>
+                                        </select>
+                                        <i class="fas fa-chevron-down absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-[9px] pointer-events-none"></i>
+                                    </div>
+                                    <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
+                                        <button id="btn-tools-grid-view" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10" title="عرض شبكي">
+                                            <i class="fas fa-th-large"></i>
+                                        </button>
+                                        <button id="btn-tools-list-view" class="px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-400 hover:text-white transition-all text-xs" title="عرض قائمة">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Tools List Container -->
-                        <div id="tools-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div id="tools-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
                             <!-- Populated dynamically from Supabase -->
                         </div>
                     </div>
@@ -407,139 +633,169 @@
         </div>
 
         <!-- Module: References & Research Library (المكتبة العلمية) -->
-        <div id="module-references" class="app-module hidden pt-24 pb-12 px-6">
-            <div class="container mx-auto">
-                <div class="mb-8 text-right flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div class="flex items-center gap-3">
-                        <img src="assets/icons/BUSLA-icon.png" class="w-12 h-12 object-contain" alt="لوجو بوصلة">
+        <div id="module-references" class="app-module hidden pt-16 sm:pt-20 md:pt-24 pb-12 px-3 sm:px-6">
+            <div class="w-full max-w-[1600px] mx-auto">
+                
+                <!-- Modern Responsive Page Header -->
+                <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3 text-right">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-9 h-9 sm:w-11 sm:h-11 object-contain shrink-0" alt="لوجو بوصلة">
                         <div>
-                            <h2 class="text-3xl font-bold text-white mb-1">المكتبة العلمية والمراجع</h2>
-                            <p class="text-xs text-gray-400">كتب علمية، أوراق بحثية ومواصفات فنية مصنفة بعناية لدعم دراستك وتدريبك العملي</p>
-                        </div>  
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-white">المكتبة العلمية والمراجع</h2>
+                            <p class="text-[11px] sm:text-xs text-gray-400 hidden sm:block">كتب علمية، أوراق بحثية ومواصفات فنية لدعم دراستك وتدريبك</p>
+                        </div>
                     </div>
+                    
+                    <!-- Mobile Filter Toggle Button (Compact pill with indicator) -->
+                    <button id="btn-toggle-ref-filters-mobile" class="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 text-xs font-bold transition-all active:scale-95 shrink-0" title="خيارات التصفية">
+                        <i class="fas fa-sliders-h text-xs"></i>
+                        <span>تصفية المراجع</span>
+                        <span id="refs-filter-indicator" class="hidden w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                    </button>
                 </div>
 
-                <!-- Mobile Filter Toggle Button -->
-                <button id="btn-toggle-ref-filters-mobile" class="lg:hidden w-full bg-b-surface border border-white/10 hover:border-teal-500/40 rounded-2xl p-4 flex items-center justify-between text-white font-bold transition-all shadow-md mb-4 text-right">
-                    <span class="flex items-center gap-2">
-                        <i class="fas fa-sliders-h text-teal-400"></i>
-                        <span>خيارات تصفية وبحث المراجع</span>
-                    </span>
-                    <i id="ref-filters-mobile-chevron" class="fas fa-chevron-down text-gray-400 transition-transform animate-pulse"></i>
-                </button>
+                <!-- Backdrop Overlay for Mobile Bottom Sheet -->
+                <div id="references-filters-backdrop" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-40 lg:hidden transition-opacity"></div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
-                    <!-- Filters Sidebar (3/10) -->
-                    <aside id="references-filters-sidebar" class="hidden lg:block lg:col-span-3 bg-b-surface border border-white/10 rounded-2xl p-5 space-y-6 text-right">
+                <!-- Main Layout Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6 items-start">
+                    
+                    <!-- Filters Sidebar (Desktop: Sticky 3-col sidebar. Mobile: Native Bottom Sheet drawer) -->
+                    <aside id="references-filters-sidebar" class="mobile-filter-sheet hidden lg:block lg:col-span-3 bg-b-surface border border-teal-500/20 lg:border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 sm:space-y-5 text-right shadow-xl">
+                        <!-- Mobile Sheet Header with Close Button -->
+                        <div class="lg:hidden flex items-center justify-between pb-3 border-b border-white/10">
+                            <span class="text-xs font-bold text-teal-400 flex items-center gap-1.5">
+                                <i class="fas fa-filter text-xs"></i>
+                                <span>تصفية المراجع العلمية</span>
+                            </span>
+                            <button type="button" id="btn-close-ref-mobile" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
                         <div class="flex items-center justify-between border-b border-white/5 pb-3">
                             <button id="btn-clear-all-ref-filters" class="text-xs text-teal-400 hover:text-teal-300 font-bold transition-all">تهيئة الفلاتر</button>
-                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                                <i class="fas fa-filter text-teal-500"></i> خيارات التصفية
+                            <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+                                <i class="fas fa-filter text-teal-400"></i> خيارات التصفية
                             </h3>
                         </div>
 
-                        <!-- Track Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
-                            <select id="flt-ref-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل المسارات</option>
-                            </select>
+                        <!-- Dropdowns Grid (1 col on desktop, 2 col on tablet/mobile when open) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-3.5">
+                            <!-- Track Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">المسار التعليمي (Track)</label>
+                                <select id="flt-ref-track" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل المسارات</option>
+                                </select>
+                            </div>
+
+                            <!-- Reference Type Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">نوع المرجع</label>
+                                <select id="flt-ref-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل الأنواع</option>
+                                </select>
+                            </div>
+
+                            <!-- Level Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">مستوى الصعوبة</label>
+                                <select id="flt-ref-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل المستويات</option>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                    <option value="Professional">Professional</option>
+                                </select>
+                            </div>
+
+                            <!-- Importance Filter -->
+                            <div class="space-y-1.5">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">أهمية المرجع</label>
+                                <select id="flt-ref-importance" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل الأهمية</option>
+                                    <option value="Required">Required</option>
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Optional">Optional</option>
+                                    <option value="Advanced Reading">Advanced Reading</option>
+                                </select>
+                            </div>
+
+                            <!-- Language Filter -->
+                            <div class="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                                <label class="block text-[11px] sm:text-xs font-bold text-gray-400">اللغة</label>
+                                <select id="flt-ref-language" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
+                                    <option value="all">كل اللغات</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- Reference Type Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">نوع المرجع</label>
-                            <select id="flt-ref-type" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل الأنواع</option>
-                            </select>
-                        </div>
-
-                        <!-- Level Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">مستوى الصعوبة</label>
-                            <select id="flt-ref-level" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل المستويات</option>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                                <option value="Professional">Professional</option>
-                            </select>
-                        </div>
-
-                        <!-- Importance Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">أهمية المرجع</label>
-                            <select id="flt-ref-importance" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل الأهمية</option>
-                                <option value="Required">Required</option>
-                                <option value="Recommended">Recommended</option>
-                                <option value="Optional">Optional</option>
-                                <option value="Advanced Reading">Advanced Reading</option>
-                            </select>
-                        </div>
-
-                        <!-- Language Filter -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400">اللغة</label>
-                            <select id="flt-ref-language" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-teal-500 outline-none cursor-pointer">
-                                <option value="all">كل اللغات</option>
-                            </select>
-                        </div>
-
-                        <!-- Toggles -->
-                        <div class="space-y-3 pt-3 border-t border-white/5 flex flex-col items-stretch">
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
+                        <!-- Checkboxes: Clean horizontal pills on mobile, vertical stack on desktop -->
+                        <div class="pt-3 border-t border-white/5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
                                 <span>متاح للقراءة مجاناً</span>
-                                <input type="checkbox" id="flt-ref-free" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                                <input type="checkbox" id="flt-ref-free" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-                                <span>يحتوي على تحميل PDF</span>
-                                <input type="checkbox" id="flt-ref-pdf" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                                <span>تحميل PDF مباشر</span>
+                                <input type="checkbox" id="flt-ref-pdf" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
-                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-                                <span>يدعم القراءة المباشرة أونلاين</span>
-                                <input type="checkbox" id="flt-ref-online" class="rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+                            <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 hover:text-white bg-white/[0.02] p-2 rounded-xl border border-white/5">
+                                <span>قراءة أونلاين</span>
+                                <input type="checkbox" id="flt-ref-online" class="rounded border-white/20 bg-black text-teal-500 focus:ring-teal-500">
                             </label>
+                        </div>
+
+                        <!-- Mobile Close / Apply Button -->
+                        <div class="lg:hidden pt-2 border-t border-white/5">
+                            <button type="button" id="btn-apply-ref-mobile" class="w-full py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
+                                <i class="fas fa-check"></i>
+                                <span>تطبيق وإغلاق الفلاتر</span>
+                            </button>
                         </div>
                     </aside>
 
-                    <!-- Main Grid & Controls (7/10) -->
-                    <div class="lg:col-span-7 space-y-4">
-                        <!-- Toolbar Controls -->
-                        <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface border border-white/10 p-4 rounded-xl gap-4">
-                            <!-- Search -->
-                            <div class="relative w-full md:w-80">
-                                <input type="text" id="references-search-input" placeholder="ابحث بالاسم، المؤلف، الوسوم، أو الملخص..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:border-teal-500 outline-none text-right">
-                                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <!-- Main Content Column (7/10) -->
+                    <div class="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                        
+                        <!-- Front & Center Search & Toolbar Controls (Always at the top on mobile!) -->
+                        <div class="bg-b-surface border border-white/10 p-3 sm:p-4 rounded-2xl space-y-3">
+                            <!-- Search Input -->
+                            <div class="relative w-full">
+                                <input type="text" id="references-search-input" placeholder="ابحث بالاسم، المؤلف، الوسوم، أو الملخص..." class="w-full bg-black/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none text-right pl-9 shadow-inner">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-teal-400 text-xs"></i>
                             </div>
 
-                            <!-- Show Count, Sorters & Views Toggles -->
-                            <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
-                                <div class="text-xs text-gray-400">
-                                    المعروض: <span id="refs-showing-count" class="font-bold text-white">0</span> من <span id="refs-total-count" class="font-bold text-white">0</span>
+                            <!-- Mobile Quick Row: Count, Sorter & Views Toggles -->
+                            <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5 text-xs flex-wrap">
+                                <div class="text-[11px] sm:text-xs text-gray-400 truncate">
+                                    المعروض: <span id="refs-showing-count" class="font-bold text-teal-400">0</span> من <span id="refs-total-count" class="font-bold text-white">0</span>
                                 </div>
-                                <div class="relative w-44">
-                                    <select id="references-sort-selector" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
-                                        <option value="latest">الأحدث إضافتاً</option>
-                                        <option value="popularity">الأكثر مشاهدة (Views)</option>
-                                        <option value="title_asc">الترتيب: بالاسم أ-ي</option>
-                                        <option value="title_desc">الترتيب: بالاسم ي-أ</option>
-                                    </select>
-                                    <i class="fas fa-sort absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
-                                </div>
-                                <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
-                                    <button id="btn-refs-grid-view" class="px-3 py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10">
-                                        <i class="fas fa-th-large"></i>
-                                    </button>
-                                    <button id="btn-refs-list-view" class="px-3 py-2 text-gray-400 hover:text-white transition-all text-xs">
-                                        <i class="fas fa-list"></i>
-                                    </button>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <div class="relative w-36 sm:w-44">
+                                        <select id="references-sort-selector" class="w-full bg-black/80 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right appearance-none pl-6">
+                                            <option value="latest">الأحدث إضافتاً</option>
+                                            <option value="popularity">الأكثر مشاهدة</option>
+                                            <option value="title_asc">الاسم: أ-ي</option>
+                                            <option value="title_desc">الاسم: ي-أ</option>
+                                        </select>
+                                        <i class="fas fa-chevron-down absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-[9px] pointer-events-none"></i>
+                                    </div>
+                                    <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
+                                        <button id="btn-refs-grid-view" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-teal-500/20 text-teal-400 transition-all text-xs border-l border-white/10" title="عرض شبكي">
+                                            <i class="fas fa-th-large"></i>
+                                        </button>
+                                        <button id="btn-refs-list-view" class="px-2.5 py-1.5 sm:px-3 sm:py-2 text-gray-400 hover:text-white transition-all text-xs" title="عرض قائمة">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- References List Container -->
-                        <div id="references-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div id="references-library-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
                             <!-- Populated dynamically from Supabase -->
                         </div>
                     </div>
@@ -548,70 +804,324 @@
         </div>
 
         <!-- Module: Courses (الدورات) -->
-        <div id="module-courses" class="app-module hidden pt-24 pb-12 px-6">
-            <div class="container mx-auto">
-                <div class="mb-8 text-right">
-                    <h2 class="text-3xl font-bold text-white mb-2">📚 الدورات والمناهج التعليمية</h2>
-                    <p class="text-gray-400">تصفح الدورات المتوفرة وابدأ رحلتك الأكاديمية الآن</p>
+        <div id="module-courses" class="app-module hidden pt-16 sm:pt-20 md:pt-24 pb-12 px-3 sm:px-6">
+            <div class="w-full max-w-[1600px] mx-auto">
+                
+                <!-- Modern Responsive Page Header -->
+                <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3 text-right">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-9 h-9 sm:w-11 sm:h-11 object-contain shrink-0" alt="لوجو بوصلة">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-white">الدورات والمناهج التعليمية</h2>
+                            <p class="text-[11px] sm:text-xs text-gray-400 hidden sm:block">تصفح الدورات المتوفرة وابدأ رحلتك الأكاديمية التفاعلية الآن</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Filters & Search -->
-                <div class="flex flex-col md:flex-row justify-between gap-4 mb-8 bg-b-surface p-4 border border-white/10 rounded-xl">
-                    <div class="w-full md:w-80 relative">
-                        <input type="text" id="courses-search-input" placeholder="ابحث عن دورة تعليمية..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none text-right">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <!-- Filters & Search Toolbar -->
+                <div class="bg-b-surface border border-white/10 p-3 sm:p-4 rounded-2xl mb-6 space-y-3">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <!-- Search Input -->
+                        <div class="relative w-full sm:flex-1">
+                            <input type="text" id="courses-search-input" placeholder="ابحث عن دورة تعليمية، موضوع، أو مرحلة..." class="w-full bg-black/80 border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none text-right pl-9 shadow-inner">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-teal-400 text-xs sm:text-sm"></i>
+                        </div>
+
+                        <!-- Phase Filter Dropdown -->
+                        <div class="relative w-full sm:w-64 shrink-0">
+                            <select id="courses-phase-filter" class="w-full bg-black/80 border border-white/10 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none cursor-pointer text-right appearance-none pl-8">
+                                <option value="all">كل المراحل التعليمية</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
+                        </div>
                     </div>
-                    <div class="relative w-full md:w-64">
-                        <select id="courses-phase-filter" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none appearance-none cursor-pointer text-right">
-                            <option value="all">كل المراحل</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
+
+                    <!-- Course Count & Info Quick Row -->
+                    <div class="flex items-center justify-between gap-2 pt-2 border-t border-white/5 text-xs text-gray-400">
+                        <div class="text-[11px] sm:text-xs">
+                            المعروض: <span id="courses-showing-count" class="font-bold text-teal-400">0</span> دورة تعليمية
+                        </div>
+                        <div class="text-[11px] text-gray-500 hidden sm:block">
+                            محدثة وتفاعلية مع خريطة المنهج
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Courses Grid -->
-                <div id="public-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="public-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <!-- Populated dynamically -->
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="bg-b-surface border-t border-gray-800">
-        <div class="container mx-auto px-6 pt-8 pb-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div class="col-span-1 md:col-span-2">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fas fa-compass text-b-primary text-2xl"></i>
-                        <h2 class="text-2xl font-bold text-white">بوصلة</h2>
+    <!-- Public Expert Advice Modal -->
+    <div id="public-advice-modal" class="fixed inset-0 z-[600] hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all dir-rtl select-text">
+        <div class="bg-[#111111] border border-teal-500/40 rounded-2xl w-full max-w-3xl shadow-[0_0_50px_rgba(0,106,103,0.3)] flex flex-col overflow-hidden max-h-[88vh]">
+            <!-- Header -->
+            <div class="p-6 border-b border-white/10 flex justify-between items-start shrink-0 bg-white/[0.02]">
+                <h3 id="public-advice-modal-title" class="text-xl md:text-2xl font-bold text-emerald-400 leading-snug flex-1 pr-1"></h3>
+                <button onclick="window.closePublicAdviceModal()" class="text-gray-400 hover:text-white text-3xl leading-none mr-4 transition-colors">&times;</button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto custom-scroll space-y-4 bg-black/60 flex-1">
+                <div id="public-advice-modal-tags" class="flex flex-wrap gap-2"></div>
+                <div id="public-advice-modal-content" class="text-gray-200 text-sm md:text-base leading-relaxed space-y-4 pt-2"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-white/10 bg-white/[0.02] flex items-center justify-between text-xs shrink-0">
+                <div id="public-advice-modal-source" class="font-bold text-emerald-400 flex items-center gap-2"></div>
+                <button onclick="window.closePublicAdviceModal()" class="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Prestigious Engineering Footer (Digital IC Design & Semiconductor Architecture) -->
+    <footer class="relative bg-[#080a0d] border-t border-teal-500/20 overflow-hidden text-right">
+        <!-- Subtle Ambient Circuit Glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-5xl h-28 bg-gradient-to-b from-teal-500/10 to-transparent blur-3xl pointer-events-none"></div>
+        <div class="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>
+
+        <div class="w-full max-w-[1700px] mx-auto px-4 sm:px-6 md:px-8 pt-12 sm:pt-16 pb-8 relative z-10">
+            
+            <!-- Highlights & Values Bar (Silicon Engineering Standards) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pb-8 sm:pb-10 border-b border-white/10 mb-8 sm:mb-10">
+                <div class="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 hover:border-teal-500/30 transition-all group">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 text-xs sm:text-base shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-microchip"></i>
                     </div>
-                    <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
-                        منصة تعليمية مفتوحة المصدر تهدف لتمكين الطلاب العرب وسد الفجوة بين الدراسة الأكاديمية وسوق العمل.
+                    <div class="min-w-0">
+                        <h4 class="text-[11px] sm:text-xs font-bold text-white truncate">100% مبادرة مفتوحة</h4>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate">مكرّسة لمهندسي الـ IC</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 hover:border-teal-500/30 transition-all group">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs sm:text-base shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-[11px] sm:text-xs font-bold text-white truncate">معايير التصنيع</h4>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate">من كود RTL حتى Tapeout</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 hover:border-teal-500/30 transition-all group">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xs sm:text-base shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-[11px] sm:text-xs font-bold text-white truncate">أدوات EDA المفتوحة</h4>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate">OpenLANE, Yosys</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 hover:border-teal-500/30 transition-all group">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs sm:text-base shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-astronaut"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-[11px] sm:text-xs font-bold text-white truncate">إرشاد مهندسي الصناعة</h4>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 truncate">توجيه مباشر لسوق العمل</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Footer 4-Column Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-12 border-b border-white/10">
+                
+                <!-- Col 1: Platform Identity, Mission & Silicon Tags (lg:col-span-4) -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="flex items-center gap-2.5">
+                        <img src="assets/icons/BUSLA-icon.png" class="w-9 h-9 object-contain shrink-0" alt="لوجو بوصلة">
+                        <div>
+                            <span class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-l from-b-primary to-b-hl-light">منصة بوصلة</span>
+                            <span class="block text-[10px] font-mono text-teal-400 tracking-wider">Digital IC Design Platform</span>
+                        </div>
+                    </div>
+
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        المرجع العربي المتخصص الأول لإعداد وتأهيل مهندسي تصميم وتصنيع الرقائق والدوائر المتكاملة (ASIC & FPGA). نربط بين العلوم الأكاديمية وسير العمل الصناعي المعتمد عالمياً لسد الفجوة وبناء كفاءات عربية رائدة.
                     </p>
-                </div>
-                <div>
-                    <h3 class="text-white font-bold mb-4">روابط سريعة</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#roadmap" class="hover:text-b-primary transition">خريطة الطريق</a></li>
-                        <li><a href="#experts" class="hover:text-b-primary transition">الخبراء</a></li>
-                        <li><a href="#module-references" class="hover:text-b-primary transition">المكتبة العلمية</a></li>
-                    </ul>   
-                </div>
-                <div>
-                    <h3 class="text-white font-bold mb-4">تواصل معنا</h3>
-                    <div class="flex gap-4">
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-600 hover:text-white transition"><i class="fab fa-github"></i></a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition"><i class="fas fa-envelope"></i></a>
+
+                    <!-- Technical Chips -->
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">ASIC Flow</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">FPGA</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">SystemVerilog</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">UVM</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">Physical Design</span>
+                        <span class="px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-[10px] text-teal-300 font-mono">RISC-V</span>
+                    </div>
+
+                    <!-- Platform Status Indicator -->
+                    <div class="pt-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px] font-bold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>المنصة وقاعدة البيانات تعمل بكفاءة 100%</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Col 2: Engineering Specialization Tracks (lg:col-span-3) -->
+                <div class="lg:col-span-3 space-y-3.5">
+                    <h3 class="text-white font-black text-sm tracking-wide flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i class="fas fa-microchip text-teal-400 text-xs"></i>
+                        <span>مسارات التخصص الهندسي</span>
+                    </h3>
+                    <ul class="space-y-2.5 text-xs text-gray-400">
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>التصميم الرقمي (RTL Front-End Design)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>التحقق الوظيفي المتقدم (Functional Verification - UVM)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>التصميم الفيزيائي وتخطيط الشرائح (Physical Design & PnR)</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>معمارية الحاسوب وتصميم معالجات RISC-V</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>برمجة وتطبيق مصفوفات FPGA والأنظمة المدمجة</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-angle-left text-[10px] text-gray-600 group-hover:text-teal-400 group-hover:-translate-x-1 transition-all"></i>
+                                <span>اختبار وموثوقية الرقائق (DFT & Tapeout Flow)</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Platform Facilities & Hubs (lg:col-span-2) -->
+                <div class="lg:col-span-2 space-y-3.5">
+                    <h3 class="text-white font-black text-sm tracking-wide flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i class="fas fa-compass text-teal-400 text-xs"></i>
+                        <span>مرافق وأقسام المنصة</span>
+                    </h3>
+                    <ul class="space-y-2.5 text-xs text-gray-400">
+                        <li>
+                            <a href="#roadmap" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-map-marked-alt text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>خريطة المنهج التفاعلية</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#tools" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-tools text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>مكتبة برمجيات ومحاكيات EDA</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#references" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-book-reader text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>المكتبة العلمية والمراجع</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#courses" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-graduation-cap text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>الدورات والمناهج التدريبية</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#experts" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-user-astronaut text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>توجيهات ونصائح الخبراء</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="pages/about.html" class="hover:text-teal-300 transition-colors flex items-center gap-2 group">
+                                <i class="fas fa-info-circle text-[11px] text-teal-500/70 group-hover:text-teal-400 transition-colors"></i>
+                                <span>عن المنصة ورؤيتنا</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Community, Social & Mentor Callout (lg:col-span-3) -->
+                <div class="lg:col-span-3 space-y-4">
+                    <h3 class="text-white font-black text-sm tracking-wide flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i class="fas fa-users text-teal-400 text-xs"></i>
+                        <span>مجتمع المهندسين والتواصل</span>
+                    </h3>
+                    
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        انضم إلى مجتمع مهندسي الإلكترونيات والـ IC العرب لتبادل الخبرات، مناقشة أفكار التخرج، والمشاركة في مشاريع مفتوحة المصدر.
+                    </p>
+
+                    <!-- Social Icons with Glow Effects -->
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-[#0077b5] border border-white/10 hover:border-transparent text-gray-300 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm" title="لينكد إن">
+                            <i class="fab fa-linkedin-in text-sm"></i>
+                        </a>
+                        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-[#24292e] border border-white/10 hover:border-transparent text-gray-300 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm" title="مستودع جيت هاب">
+                            <i class="fab fa-github text-sm"></i>
+                        </a>
+                        <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-[#0088cc] border border-white/10 hover:border-transparent text-gray-300 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm" title="مجتمع تيليجرام">
+                            <i class="fab fa-telegram-plane text-sm"></i>
+                        </a>
+                        <a href="mailto:contact@busla.org" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-emerald-600 border border-white/10 hover:border-transparent text-gray-300 hover:text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm" title="البريد الإلكتروني">
+                            <i class="fas fa-envelope text-sm"></i>
+                        </a>
+                    </div>
+
+                    <!-- Mentor Contribution Card -->
+                    <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-teal-500/20 text-xs space-y-1.5">
+                        <div class="font-bold text-teal-300 flex items-center gap-1.5">
+                            <i class="fas fa-hands-helping text-xs"></i>
+                            <span>هل أنت مهندس في الصناعة؟</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 leading-relaxed">شارك خبرتك وتوجيهاتك مع الطلاب والمهندسين الواعدين عبر المنصة.</p>
+                        <a href="#experts" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-teal-400 hover:text-teal-300 transition-colors pt-1">
+                            <span>انضم كخبير أو موجّه</span>
+                            <i class="fas fa-arrow-left text-[9px]"></i>
+                        </a>
+                    </div>
+                </div>
+
             </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm flex flex-col md:flex-row justify-between items-center">
-                <p>&copy; <span id="current-year"></span> Busla Platform. All rights reserved.</p>
-                <!-- <p>Made with <i class="fas fa-heart text-red-500 mx-1"></i> by <a href="https://www.linkedin.com/in/ahmed-m-attia-757aa6292/" target="_blank" rel="noopener noreferrer" class="text-b-primary hover:text-b-hl-light transition-all font-semibold">
-                        Ahmed M. Attia
-                    </a></p> -->
+
+            <!-- Bottom Bar: Copyright & Legal Policies -->
+            <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+                <div class="flex items-center gap-2 text-center md:text-right">
+                    <span>&copy; <span id="current-year">2026</span> منصة بوصلة (Busla Platform). جميع الحقوق محفوظة لمهندسي المستقبل.</span>
+                </div>
+
+                <div class="flex items-center gap-3.5 text-[11px] flex-wrap justify-center text-gray-500">
+                    <a href="pages/legal/terms.html" class="hover:text-teal-400 transition-colors">شروط الاستخدام</a>
+                    <span>•</span>
+                    <a href="pages/legal/privacy.html" class="hover:text-teal-400 transition-colors">سياسة الخصوصية</a>
+                    <span>•</span>
+                    <a href="pages/legal/volunteer-agreement.html" class="hover:text-teal-400 transition-colors">ميثاق التطوع</a>
+                    <span>•</span>
+                    <a href="pages/legal/guidelines.html" class="hover:text-teal-400 transition-colors">إرشادات المجتمع</a>
+                </div>
+
+                <div class="text-[11px] text-gray-400 flex items-center gap-1.5 font-medium">
+                    <span>بُنيت بشغف لدعم وتطوير الكفاءات العربية في صناعة أشباه الموصلات</span>
+                    <span class="text-teal-400">⚡</span>
+                </div>
             </div>
+
         </div>
     </footer>
 
@@ -646,6 +1156,7 @@
             setupMobileFilters();
             setupReferencesMobileFilters();
             loadPublicReferences();
+            loadPublicExperts();
             checkUserSessionAndSetupNav();
         });
 
@@ -664,36 +1175,73 @@
                         menu.classList.add('hidden');
                     }
                 });
+
+                // Auto-close menu when clicking any nav link
+                menu.querySelectorAll('.mobile-nav-link').forEach(link => {
+                    link.addEventListener('click', () => {
+                        menu.classList.add('hidden');
+                    });
+                });
                 
-                // Close menu when resizing to desktop
+                // Close menu when resizing to desktop/laptop (1024px)
                 window.addEventListener('resize', () => {
-                    if (window.innerWidth >= 768) {
+                    if (window.innerWidth >= 1024) {
                         menu.classList.add('hidden');
                     }
                 });
             }
-
-            // Close mobile menu on clicking any navigation link
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    const menu = document.getElementById('mobile-menu');
-                    if (menu) menu.classList.add('hidden');
-                });
-            });
         }
 
         function setupMobileFilters() {
             const btn = document.getElementById('btn-toggle-filters-mobile');
             const sidebar = document.getElementById('tools-filters-sidebar');
-            const chevron = document.getElementById('filters-mobile-chevron');
-            if (btn && sidebar) {
-                btn.addEventListener('click', () => {
-                    sidebar.classList.toggle('hidden');
-                    if (chevron) {
-                        chevron.classList.toggle('rotate-180');
-                    }
-                });
+            const backdrop = document.getElementById('tools-filters-backdrop');
+            const closeBtn = document.getElementById('btn-close-tools-mobile');
+            const applyBtn = document.getElementById('btn-apply-tools-mobile');
+            const indicator = document.getElementById('tools-filter-indicator');
+
+            function openSheet() {
+                if (sidebar) sidebar.classList.add('is-open');
+                if (backdrop) backdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
+
+            function closeSheet() {
+                if (sidebar) sidebar.classList.remove('is-open');
+                if (backdrop) backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (btn) btn.addEventListener('click', openSheet);
+            if (closeBtn) closeBtn.addEventListener('click', closeSheet);
+            if (applyBtn) applyBtn.addEventListener('click', closeSheet);
+            if (backdrop) backdrop.addEventListener('click', closeSheet);
+
+            // Update active filter badge indicator on tools
+            const filterInputs = [
+                'flt-tool-track', 'flt-tool-type', 'flt-tool-level', 'flt-tool-os',
+                'flt-tool-free', 'flt-tool-osource', 'flt-tool-offline'
+            ];
+            function checkActiveFilters() {
+                let hasActive = false;
+                ['flt-tool-track', 'flt-tool-type', 'flt-tool-level', 'flt-tool-os'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.value !== 'all') hasActive = true;
+                });
+                ['flt-tool-free', 'flt-tool-osource', 'flt-tool-offline'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.checked) hasActive = true;
+                });
+                if (indicator) {
+                    indicator.classList.toggle('hidden', !hasActive);
+                }
+            }
+            filterInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', checkActiveFilters);
+            });
+            const clearBtn = document.getElementById('btn-clear-all-filters');
+            if (clearBtn) clearBtn.addEventListener('click', () => setTimeout(checkActiveFilters, 50));
         }
 
         // --- Data Loading (Experts & Tools) ---
@@ -726,34 +1274,312 @@
         }
 
         function renderAllSections(data) {
-            const experts = data.board_Experts || data['board_Experts'] || data.Experts;
-            const tools = data.board_Tools || data['board_Tools'] || data.Tools;
-
-            if (experts) renderExperts(experts);
-            if (tools) renderTools(tools);
+            // Note: Tools and Expert Advices are loaded dynamically from Supabase
         }
 
         function renderExperts(experts) {
+            // Deprecated: Expert advices are loaded dynamically in loadPublicExperts()
+        }
+
+        let publicAdvicesList = [];
+        let publicExpertsSearchTerm = '';
+        let publicExpertsCategory = 'all';
+        let publicExpertsSource = 'all';
+        let publicExpertsSort = 'default';
+
+        const EXPERTS_CATEGORIES = [
+            { id: 'all', label: 'الكل (All)', icon: 'fa-globe' },
+            { id: 'General', label: 'نصائح عامة', icon: 'fa-lightbulb' },
+            { id: 'Career', label: 'المسار الوظيفي', icon: 'fa-briefcase' },
+            { id: 'GP', label: 'مشروع التخرج', icon: 'fa-graduation-cap' },
+            { id: 'Verification', label: 'Verification', icon: 'fa-check-double' },
+            { id: 'RTL', label: 'RTL & Design', icon: 'fa-microchip' },
+            { id: 'FPGA', label: 'FPGA', icon: 'fa-cube' },
+            { id: 'MATLAB', label: 'MATLAB', icon: 'fa-chart-line' },
+            { id: 'Tools', label: 'الأدوات والمواقع', icon: 'fa-tools' },
+            { id: 'Training', label: 'التدريب', icon: 'fa-user-tie' },
+            { id: 'Presentation', label: 'العرض والتقديم', icon: 'fa-chalkboard-teacher' },
+            { id: 'Study', label: 'المذاكرة والدراسة', icon: 'fa-book-reader' }
+        ];
+
+        async function loadPublicExperts() {
             const container = document.getElementById('experts-container');
             if (!container) return;
 
-            const cleanExperts = experts.filter(ex => ex.name && ex.name !== '');
+            // Only show loading spinner on initial load
+            if (publicAdvicesList.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-16 text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-4 text-teal-400 font-normal"></i>
+                        <p class="font-bold">جاري تحميل خلاصة نصائح وخبرات المهندسين...</p>
+                    </div>
+                `;
+            }
 
-            container.innerHTML = cleanExperts.map(expert => `
-                <div class="bg-b-surface rounded-xl p-6 border border-white/5 text-center hover:-translate-y-2 transition-transform duration-300">
-                    <div class="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-b-primary mb-4">
-                        <img src="${expert.image_url}" alt="${expert.name}" class="w-full h-full object-cover">
-                    </div>
-                    <h3 class="text-lg font-bold text-white">${expert.name}</h3>
-                    <p class="text-b-primary text-sm mb-4">${expert.role}</p>
-                    <div class="flex justify-center space-x-3 space-x-reverse">
-                        <a href="${expert.linkedin_url}" target="_blank" class="text-gray-400 hover:text-b-primary transition-colors">
-                            <i class="fa-brands fa-linkedin text-xl"></i>
-                        </a>
-                    </div>
-                </div>
-            `).join('');
+            try {
+                // 1. Fetch dynamic expert advices from Supabase
+                const { data: supaAdvices, error } = await supabase
+                    .from('expert_advices')
+                    .select('*')
+                    .eq('is_published', true)
+                    .order('order_index', { ascending: true });
+
+                if (!error && supaAdvices && supaAdvices.length > 0) {
+                    publicAdvicesList = supaAdvices;
+                } else {
+                    // 2. Fallback to local experts_data.json
+                    const resp = await fetch('data/experts_data.json');
+                    if (resp.ok) {
+                        const localData = await resp.json();
+                        if (localData.Advice && localData.Advice.length > 0) {
+                            publicAdvicesList = localData.Advice.map((item, idx) => ({
+                                id: item.id || `adv_${idx}`,
+                                title: item.title,
+                                summary: item.summary || item.title,
+                                content: item.fullText || `<p>${item.summary}</p>`,
+                                source: item.source || 'Multiple Engineers & Professors',
+                                tags: item.tags || ['#General'],
+                                category: (item.tags && item.tags[0]?.replace('#', '')) || 'General',
+                                order_index: idx + 1
+                            }));
+                        }
+                    }
+                }
+
+                initExpertsFiltersUI();
+                filterAndRenderPublicAdvices();
+
+            } catch (err) {
+                console.error("Error loading expert advices:", err);
+                container.innerHTML = '<p class="text-gray-400 text-center col-span-full py-8">تعذر تحميل نصائح الخبراء حالياً.</p>';
+            }
         }
+
+        function initExpertsFiltersUI() {
+            // Render Category Pills
+            const pillsContainer = document.getElementById('experts-category-pills');
+            if (pillsContainer) {
+                pillsContainer.innerHTML = EXPERTS_CATEGORIES.map(c => `
+                    <button type="button" onclick="window.selectExpertsCategory('${c.id}')" data-cat="${c.id}" class="expert-cat-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${publicExpertsCategory === c.id ? 'bg-teal-500 text-black shadow-[0_0_15px_rgba(20,184,166,0.4)]' : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5'}">
+                        <i class="fas ${c.icon} text-[10px]"></i>
+                        <span>${c.label}</span>
+                    </button>
+                `).join('');
+            }
+
+            // Populate Unique Sources Filter
+            const sourceSelect = document.getElementById('experts-source-filter');
+            if (sourceSelect) {
+                const uniqueSources = Array.from(new Set(publicAdvicesList.map(a => a.source).filter(Boolean))).sort();
+                sourceSelect.innerHTML = `<option value="all">كل المتحدثين والمهندسين (${publicAdvicesList.length})</option>` +
+                    uniqueSources.map(s => `<option value="${s}">${s}</option>`).join('');
+                sourceSelect.value = publicExpertsSource;
+            }
+
+            // Search input listener
+            const searchInput = document.getElementById('experts-search-input');
+            const clearBtn = document.getElementById('btn-clear-experts-search');
+            if (searchInput) {
+                searchInput.oninput = (e) => {
+                    publicExpertsSearchTerm = e.target.value.toLowerCase().trim();
+                    if (clearBtn) {
+                        clearBtn.classList.toggle('hidden', !publicExpertsSearchTerm);
+                    }
+                    filterAndRenderPublicAdvices();
+                };
+            }
+        }
+
+        function filterAndRenderPublicAdvices() {
+            const container = document.getElementById('experts-container');
+            const countBadge = document.getElementById('experts-count-badge');
+            if (!container) return;
+
+            let filtered = publicAdvicesList.filter(advice => {
+                // Category Filter
+                if (publicExpertsCategory !== 'all') {
+                    const matchCat = advice.category && advice.category.toLowerCase() === publicExpertsCategory.toLowerCase();
+                    const matchTags = (advice.tags || []).some(t => t.toLowerCase().includes(publicExpertsCategory.toLowerCase()));
+                    if (!matchCat && !matchTags) return false;
+                }
+
+                // Source Filter
+                if (publicExpertsSource !== 'all') {
+                    if (advice.source !== publicExpertsSource) return false;
+                }
+
+                // Search Filter
+                if (publicExpertsSearchTerm) {
+                    const matchTitle = (advice.title || '').toLowerCase().includes(publicExpertsSearchTerm);
+                    const matchSummary = (advice.summary || '').toLowerCase().includes(publicExpertsSearchTerm);
+                    const matchSource = (advice.source || '').toLowerCase().includes(publicExpertsSearchTerm);
+                    const matchContent = (advice.content || '').toLowerCase().includes(publicExpertsSearchTerm);
+                    const matchTags = (advice.tags || []).some(t => t.toLowerCase().includes(publicExpertsSearchTerm));
+
+                    if (!matchTitle && !matchSummary && !matchSource && !matchContent && !matchTags) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Sorting
+            if (publicExpertsSort === 'title') {
+                filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ar'));
+            } else {
+                filtered.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+            }
+
+            if (countBadge) countBadge.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-16 bg-b-surface/50 border border-white/5 rounded-2xl p-8">
+                        <i class="fas fa-inbox text-4xl text-gray-600 mb-3 block"></i>
+                        <h3 class="text-white font-bold text-base mb-1">لا توجد نصائح مطابقة للبحث أو الفلتر المحدد</h3>
+                        <p class="text-gray-400 text-xs mb-4">جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً</p>
+                        <button onclick="window.resetExpertsFilters()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)]">إلغاء الفلاتر وعرض الكل</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(advice => {
+                const tags = advice.tags || [];
+                const tagsHtml = tags.map(tag => 
+                    `<button type="button" onclick="event.stopPropagation(); window.filterExpertsByTag('${tag}')" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 border border-pink-500/20 transition-colors" title="فلترة حسب ${tag}">${tag}</button>`
+                ).join(' ');
+
+                return `
+                    <div onclick="window.openPublicAdviceModal('${advice.id}')" class="bg-b-surface rounded-2xl p-6 border border-white/10 hover:border-teal-500/40 text-right cursor-pointer hover:-translate-y-1.5 transition-all duration-300 shadow-xl flex flex-col justify-between group">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-lg border border-teal-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(20,184,166,0.15)]">
+                                    <i class="fas fa-lightbulb"></i>
+                                </span>
+                                <div class="flex flex-wrap gap-1.5 justify-end">
+                                    ${tagsHtml}
+                                </div>
+                            </div>
+
+                            <h3 class="text-base sm:text-lg font-bold text-white group-hover:text-teal-300 transition-colors mb-2.5 leading-snug">
+                                ${advice.title}
+                            </h3>
+
+                            <p class="text-gray-400 text-xs leading-relaxed line-clamp-3 mb-4">
+                                ${advice.summary || ''}
+                            </p>
+                        </div>
+
+                        <div class="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                            <span class="text-gray-400 flex items-center gap-1.5 font-medium truncate max-w-[70%]">
+                                <i class="fas fa-user-graduate text-teal-400 text-[11px]"></i>
+                                <span class="truncate">${advice.source || 'Multiple Engineers'}</span>
+                            </span>
+                            <span class="text-teal-400 font-bold group-hover:translate-x-[-4px] transition-transform flex items-center gap-1">
+                                <span>قراءة النصيحة</span>
+                                <i class="fas fa-chevron-left text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Global Interactive Filter Handlers
+        window.selectExpertsCategory = function(catId) {
+            publicExpertsCategory = catId;
+            document.querySelectorAll('.expert-cat-pill').forEach(pill => {
+                const match = pill.getAttribute('data-cat') === catId;
+                if (match) {
+                    pill.className = 'expert-cat-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap bg-teal-500 text-black shadow-[0_0_15px_rgba(20,184,166,0.4)]';
+                } else {
+                    pill.className = 'expert-cat-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5';
+                }
+            });
+            filterAndRenderPublicAdvices();
+        };
+
+        window.filterExpertsByTag = function(tag) {
+            const cleanTag = tag.replace('#', '').trim();
+            const matchingCat = EXPERTS_CATEGORIES.find(c => c.id.toLowerCase() === cleanTag.toLowerCase());
+            if (matchingCat) {
+                window.selectExpertsCategory(matchingCat.id);
+            } else {
+                const searchInput = document.getElementById('experts-search-input');
+                if (searchInput) {
+                    searchInput.value = tag;
+                    publicExpertsSearchTerm = tag.toLowerCase();
+                    const clearBtn = document.getElementById('btn-clear-experts-search');
+                    if (clearBtn) clearBtn.classList.remove('hidden');
+                    filterAndRenderPublicAdvices();
+                }
+            }
+        };
+
+        window.filterExpertsBySource = function(sourceVal) {
+            publicExpertsSource = sourceVal;
+            filterAndRenderPublicAdvices();
+        };
+
+        window.sortExperts = function(sortVal) {
+            publicExpertsSort = sortVal;
+            filterAndRenderPublicAdvices();
+        };
+
+        window.clearExpertsSearch = function() {
+            const searchInput = document.getElementById('experts-search-input');
+            const clearBtn = document.getElementById('btn-clear-experts-search');
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            publicExpertsSearchTerm = '';
+            filterAndRenderPublicAdvices();
+        };
+
+        window.resetExpertsFilters = function() {
+            publicExpertsSearchTerm = '';
+            publicExpertsCategory = 'all';
+            publicExpertsSource = 'all';
+            publicExpertsSort = 'default';
+
+            const searchInput = document.getElementById('experts-search-input');
+            const clearBtn = document.getElementById('btn-clear-experts-search');
+            const sourceSelect = document.getElementById('experts-source-filter');
+            const sortSelect = document.getElementById('experts-sort-filter');
+
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            if (sourceSelect) sourceSelect.value = 'all';
+            if (sortSelect) sortSelect.value = 'default';
+
+            window.selectExpertsCategory('all');
+        };
+
+        function openPublicAdviceModal(adviceId) {
+            const advice = publicAdvicesList.find(a => a.id === adviceId);
+            if (!advice) return;
+
+            document.getElementById('public-advice-modal-title').textContent = advice.title;
+            document.getElementById('public-advice-modal-source').innerHTML = `<i class="fas fa-user-graduate text-teal-400 ml-1.5"></i> المصدر: ${advice.source || 'Multiple Engineers'}`;
+            
+            const tags = advice.tags || [];
+            document.getElementById('public-advice-modal-tags').innerHTML = tags.map(t => 
+                `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-pink-500/10 text-pink-300 border border-pink-500/20">${t}</span>`
+            ).join('');
+
+            document.getElementById('public-advice-modal-content').innerHTML = advice.content;
+            document.getElementById('public-advice-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePublicAdviceModal() {
+            document.getElementById('public-advice-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        window.openPublicAdviceModal = openPublicAdviceModal;
+        window.closePublicAdviceModal = closePublicAdviceModal;
 
         function renderTools(tools) {
             // Deprecated: Tools are now loaded dynamically from Supabase in loadPublicTools()
@@ -1083,6 +1909,8 @@
                     loadPublicTools();
                 } else if (hash === '#references') {
                     loadPublicReferences();
+                } else if (hash === '#experts') {
+                    loadPublicExperts();
                 }
             }
 
@@ -1144,14 +1972,20 @@
                     const navAuth = document.getElementById('nav-auth-section');
                     if (navAuth) {
                         navAuth.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <a href="${dashUrl}" class="px-4 py-2 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg hover:shadow-b-primary/50 hover:scale-105 transition-all text-xs sm:text-sm flex items-center gap-2 border border-teal-400/30">
-                                    <i class="fas fa-columns"></i>
+                            <div class="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0">
+                                <!-- Mobile & Tablet Compact Avatar Button (< 1024px) - Clean, aesthetic, ZERO crowding! -->
+                                <a href="${dashUrl}" class="lg:hidden relative flex items-center justify-center p-0.5 rounded-full border-2 border-teal-400/60 shadow-md active:scale-95 transition-all" title="${dashTitle}">
+                                    <img src="${userAvatar}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
+                                    <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-black"></span>
+                                </a>
+                                <!-- Desktop / Laptop Dashboard Pill (>= 1024px) -->
+                                <a href="${dashUrl}" class="hidden lg:flex px-3 py-1.5 xl:px-3.5 xl:py-2 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-md hover:shadow-b-primary/40 hover:scale-105 active:scale-95 transition-all text-xs xl:text-sm items-center gap-1.5 border border-teal-400/30 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-columns text-xs"></i>
                                     <span>${dashTitle}</span>
                                 </a>
-                                <a href="${dashUrl}" class="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 py-1.5 px-3 rounded-xl border border-white/10 transition-colors">
-                                    <img src="${userAvatar}" class="w-7 h-7 rounded-full object-cover border border-teal-500/40" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
-                                    <span class="text-xs font-bold text-gray-200 max-w-[120px] truncate">${userName}</span>
+                                <a href="${dashUrl}" class="hidden xl:flex items-center gap-1.5 xl:gap-2 bg-white/5 hover:bg-white/10 py-1.5 px-2.5 rounded-xl border border-white/10 transition-colors shrink-0">
+                                    <img src="${userAvatar}" class="w-6 h-6 rounded-full object-cover border border-teal-500/40 shrink-0" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
+                                    <span class="text-xs font-bold text-gray-200 max-w-[80px] xl:max-w-[120px] truncate">${userName}</span>
                                 </a>
                             </div>
                         `;
@@ -1159,10 +1993,24 @@
 
                     const mobileAuth = document.getElementById('mobile-auth-section');
                     if (mobileAuth) {
+                        const roleLabel = role === 'leader' ? 'قائد الفريق' : (isAdmin ? 'مدير النظام' : 'طالب');
                         mobileAuth.innerHTML = `
-                            <a href="${dashUrl}" class="py-2.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg text-sm flex items-center justify-center gap-2">
-                                <i class="fas fa-columns"></i>
-                                <span>العودة إلى ${dashTitle}</span>
+                            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10 mb-2 text-right">
+                                <img src="${userAvatar}" class="w-11 h-11 rounded-full object-cover border-2 border-teal-400/60 shadow-md shrink-0" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h3 class="text-sm font-bold text-white truncate">${userName}</h3>
+                                        <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase">${roleLabel}</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 truncate mt-0.5">${session.user.email || ''}</p>
+                                </div>
+                            </div>
+                            <a href="${dashUrl}" class="w-full py-2.5 px-4 bg-gradient-to-r from-b-primary to-b-hl-light hover:brightness-110 text-white font-bold rounded-xl shadow-lg text-xs sm:text-sm flex items-center justify-between transition-all border border-teal-400/30 group">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-columns text-sm"></i>
+                                    <span>الانتقال إلى ${dashTitle}</span>
+                                </span>
+                                <i class="fas fa-arrow-left text-xs opacity-70 group-hover:translate-x-[-3px] transition-transform"></i>
                             </a>
                         `;
                     }
@@ -1226,10 +2074,13 @@
             const grid = document.getElementById('public-courses-grid');
             if (!grid) return;
             
+            const countEl = document.getElementById('courses-showing-count');
+            if (countEl) countEl.innerText = courses.length;
+
             if (courses.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-full text-center py-20 text-gray-500 bg-white/5 rounded-xl border border-white/5">
-                        <i class="fas fa-search text-3xl mb-4 text-gray-600"></i>
+                    <div class="col-span-full text-center py-20 text-gray-500 bg-white/5 rounded-2xl border border-white/5">
+                        <i class="fas fa-search text-3xl mb-4 text-teal-400"></i>
                         <p class="font-bold">لم نجد أي دورات مطابقة لبحثك.</p>
                     </div>
                 `;
@@ -1238,22 +2089,22 @@
             
             grid.innerHTML = courses.map(course => {
                 return `
-                    <div class="bg-b-surface p-6 rounded-2xl border border-white/5 hover:border-teal-500 hover:-translate-y-1 transition-all flex flex-col h-full group shadow-lg">
-                        <div class="relative w-full h-44 rounded-xl overflow-hidden mb-4 border border-white/10">
+                    <div class="bg-b-surface p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-teal-500/50 hover:-translate-y-1 transition-all flex flex-col h-full group shadow-lg">
+                        <div class="relative w-full h-40 sm:h-44 rounded-xl overflow-hidden mb-4 border border-white/10">
                             <img src="${course.image_url || 'assets/images/1.jpg'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src='assets/icons/BUSLA-icon.png'">
-                            <span class="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-[9px] px-2.5 py-1 rounded font-bold uppercase tracking-wider">
-                                ${course.phases?.title || 'مرحلة غير مححددة'}
+                            <span class="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-md text-teal-300 border border-teal-500/30 text-[10px] px-2.5 py-1 rounded-lg font-bold">
+                                ${course.phases?.title || 'مرحلة عامة'}
                             </span>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-2 line-clamp-1 text-right">${course.title}</h3>
+                        <h3 class="text-base sm:text-lg font-bold text-white mb-2 line-clamp-1 text-right">${course.title}</h3>
                         <p class="text-gray-400 text-xs text-right line-clamp-3 mb-4 leading-relaxed">${course.description || 'لا يوجد وصف متوفر حالياً لهذه الدورة.'}</p>
-                        <div class="mt-auto flex justify-between items-center pt-4 border-t border-white/5 text-xs text-gray-400">
+                        <div class="mt-auto flex justify-between items-center pt-3 border-t border-white/5 text-xs text-gray-400">
                             <span><i class="far fa-clock ml-1 text-teal-400"></i>${course.Module_Time || course['Module Time'] || 'مرنة'}</span>
-                            <span><i class="fas fa-layer-group ml-1 text-blue-400"></i>${course.type || 'Course'}</span>
+                            <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[11px]"><i class="fas fa-layer-group ml-1 text-blue-400"></i>${course.type || 'Course'}</span>
                         </div>
-                        <button onclick="window.viewCourseInRoadmap('${course.course_id}')" class="mt-4 w-full py-2.5 bg-teal-500/10 hover:bg-teal-500 hover:text-white border border-teal-500/20 text-teal-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                        <button onclick="window.viewCourseInRoadmap('${course.course_id}')" class="mt-3.5 w-full py-2.5 bg-teal-500/10 hover:bg-teal-500 hover:text-white border border-teal-500/25 text-teal-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs active:scale-95 shadow-sm">
                             <span>عرض في خريطة الطريق</span>
-                            <i class="fas fa-sitemap"></i>
+                            <i class="fas fa-sitemap text-[11px]"></i>
                         </button>
                     </div>
                 `;
@@ -1278,17 +2129,53 @@
         function setupReferencesMobileFilters() {
             const btn = document.getElementById('btn-toggle-ref-filters-mobile');
             const sidebar = document.getElementById('references-filters-sidebar');
-            const icon = document.getElementById('ref-filters-mobile-chevron');
-            if (btn && sidebar) {
-                btn.addEventListener('click', () => {
-                    sidebar.classList.toggle('hidden');
-                    if (sidebar.classList.contains('hidden')) {
-                        icon.style.transform = 'rotate(0deg)';
-                    } else {
-                        icon.style.transform = 'rotate(180deg)';
-                    }
-                });
+            const backdrop = document.getElementById('references-filters-backdrop');
+            const closeBtn = document.getElementById('btn-close-ref-mobile');
+            const applyBtn = document.getElementById('btn-apply-ref-mobile');
+            const indicator = document.getElementById('refs-filter-indicator');
+
+            function openSheet() {
+                if (sidebar) sidebar.classList.add('is-open');
+                if (backdrop) backdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
+
+            function closeSheet() {
+                if (sidebar) sidebar.classList.remove('is-open');
+                if (backdrop) backdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            if (btn) btn.addEventListener('click', openSheet);
+            if (closeBtn) closeBtn.addEventListener('click', closeSheet);
+            if (applyBtn) applyBtn.addEventListener('click', closeSheet);
+            if (backdrop) backdrop.addEventListener('click', closeSheet);
+
+            // Update active filter badge indicator on references
+            const refInputs = [
+                'flt-ref-track', 'flt-ref-type', 'flt-ref-level', 'flt-ref-importance', 'flt-ref-language',
+                'flt-ref-free', 'flt-ref-pdf', 'flt-ref-online'
+            ];
+            function checkActiveRefFilters() {
+                let hasActive = false;
+                ['flt-ref-track', 'flt-ref-type', 'flt-ref-level', 'flt-ref-importance', 'flt-ref-language'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.value !== 'all') hasActive = true;
+                });
+                ['flt-ref-free', 'flt-ref-pdf', 'flt-ref-online'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && el.checked) hasActive = true;
+                });
+                if (indicator) {
+                    indicator.classList.toggle('hidden', !hasActive);
+                }
+            }
+            refInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', checkActiveRefFilters);
+            });
+            const clearRefBtn = document.getElementById('btn-clear-all-ref-filters');
+            if (clearRefBtn) clearRefBtn.addEventListener('click', () => setTimeout(checkActiveRefFilters, 50));
         }
 
         // References library logic

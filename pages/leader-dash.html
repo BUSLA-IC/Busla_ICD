@@ -8,6 +8,7 @@
     <link rel="manifest" href="../manifest.webmanifest">
     <meta name="theme-color" content="#006A67">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="بوصلة">
     <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
@@ -41,38 +42,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 
-        /* Mobile Collapsible Header Styles */
-        @media (max-width: 767px) {
-            .collapsible-banner {
-                max-height: 80px;
-                opacity: 1;
-                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
-                            opacity 0.25s ease-in-out, 
-                            margin 0.3s ease, 
-                            padding 0.3s ease,
-                            border-color 0.25s ease;
-            }
-            .banner-collapsed {
-                max-height: 0 !important;
-                opacity: 0 !important;
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
-                border-top-width: 0 !important;
-                border-color: transparent !important;
-                pointer-events: none !important;
-            }
-        }
-        @media (min-width: 768px) {
-            .collapsible-banner, .banner-collapsed {
-                max-height: none !important;
-                opacity: 1 !important;
-                margin: 0 !important;
-                pointer-events: auto !important;
-                display: flex !important;
-            }
-        }
+        
     </style>
 </head>
 
@@ -82,43 +52,46 @@
 
     <aside id="sidebar" class="w-80 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-screen shadow-2xl md:shadow-none shrink-0 overflow-hidden">
         
-        <!-- Sidebar Header (Responsive: Compact Horizontal on Mobile, Original Centered Vertical on Desktop) -->
-        <div class="p-3 sm:p-3.5 md:p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent shrink-0 flex items-center justify-between gap-3 md:flex-col md:items-center md:text-center md:gap-0">
-            <div class="flex items-center gap-3 min-w-0 flex-1 md:flex-col md:items-center md:w-full md:gap-0">
-                <!-- Logo with Crown -->
-                <div class="relative shrink-0 group md:mb-3">
-                    <img id="sidebar-team-logo" src="../assets/icons/BUSLA-icon.png" class="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-white/15 md:border-2 md:mb-4 border-white/10 shadow-md md:shadow-lg group-hover:border-b-primary transition-all cursor-pointer">
-                    <div class="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 bg-b-surface p-0.5 md:p-1 rounded-full border border-white/10 md:border-none">
-                        <div class="bg-yellow-500/20 text-yellow-500 w-4 h-4 md:w-6 md:h-6 rounded-full flex items-center justify-center border border-yellow-500/30">
-                            <i class="fas fa-crown text-[8px] md:text-[12px]"></i>
+                <!-- Sidebar Header (Responsive: Sleek Horizontal on Mobile, Centered Profile with Corner Toggle on Desktop) -->
+        <div class="relative p-3.5 sm:p-4 md:p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent shrink-0 flex items-center justify-between gap-3 md:flex-col md:items-center md:text-center">
+            
+            <!-- Close / Collapse Button (Corner-positioned for clean layout) -->
+            <div class="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 md:top-4 md:left-4 z-10">
+                <!-- Mobile Close Button -->
+                <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center border border-white/10 hover:border-red-500/30 transition-all cursor-pointer active:scale-95" title="إغلاق القائمة">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+                <!-- Desktop Collapse Button (Top-left corner, no longer floating awkwardly in the center!) -->
+                <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-teal-400 items-center justify-center border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer group active:scale-95" title="طي القائمة الجانبية (Ctrl + B)">
+                    <i class="fas fa-angles-right text-xs group-hover:scale-110 transition-transform"></i>
+                </button>
+            </div>
+
+            <!-- Profile Info Container -->
+            <div class="flex items-center gap-3 min-w-0 flex-1 md:flex-col md:items-center md:w-full">
+                <!-- Team Logo & Crown Badge -->
+                <div class="relative group shrink-0 md:mb-3">
+                    <img id="sidebar-team-logo" src="../assets/icons/BUSLA-icon.png" class="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-white/15 md:border-2 border-white/10 shadow-md md:shadow-xl group-hover:border-teal-400/60 transition-all cursor-pointer">
+                    <div class="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 bg-b-surface p-0.5 md:p-1 rounded-full border border-white/10 md:border-none shadow-md">
+                        <div class="bg-yellow-500/20 text-yellow-500 w-4 h-4 md:w-6 md:h-6 rounded-full flex items-center justify-center border border-yellow-500/40">
+                            <i class="fas fa-crown text-[8px] md:text-[11px]"></i>
                         </div>
                     </div>
                 </div>
-                <!-- Team and Leader Info -->
-                <div class="min-w-0 flex-1 flex flex-col justify-center md:w-full md:items-center">
-                    <div class="flex items-center gap-1.5 flex-wrap md:flex-col md:gap-0">
-                        <h2 id="sidebar-team-name" class="font-bold text-sm sm:text-base md:text-lg text-white truncate md:overflow-visible md:whitespace-normal md:mb-1 tracking-wide"></h2>
-                        <span id="sidebar-team-badge" class="text-[9px] md:text-[15px] font-black text-b-primary bg-b-primary/10 md:bg-transparent border border-b-primary/30 md:border-none px-1.5 py-0.5 md:p-0 rounded md:mb-2 uppercase tracking-wider md:tracking-tighter"></span>
+
+                <!-- Team Name & Badges -->
+                <div class="min-w-0 flex-1 md:w-full md:text-center">
+                    <div class="flex items-center gap-2 flex-wrap md:flex-col md:gap-1">
+                        <h2 id="sidebar-team-name" class="font-bold text-sm sm:text-base md:text-lg text-white truncate md:overflow-visible md:whitespace-normal tracking-wide"></h2>
+                        <span id="sidebar-team-badge" class="text-[10px] md:text-xs font-bold text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider"></span>
                     </div>
-                    <div class="flex items-center gap-1.5 text-[11px] md:text-xs text-gray-400 mt-1 md:mt-0 md:bg-black/30 md:px-3 md:py-1 md:rounded-full md:border md:border-white/5 truncate">
-                        <i class="fas fa-user-tie text-teal-400 md:text-b-primary text-[10px] md:text-xs"></i>
-                        <span class="truncate">القائد: <span id="sidebar-leader-name" class="text-gray-200 md:text-gray-300 font-medium"></span></span>
+                    <!-- Leader Label -->
+                    <div class="flex items-center gap-1.5 text-[11px] md:text-xs text-gray-300 mt-1 md:mt-2 bg-white/5 md:bg-black/30 px-2.5 py-1 md:px-3.5 md:py-1 rounded-full border border-white/5 truncate">
+                        <i class="fas fa-user-tie text-teal-400 text-[10px] md:text-xs"></i>
+                        <span class="truncate">القائد: <span id="sidebar-leader-name" class="text-gray-200 font-medium"></span></span>
                     </div>
                 </div>
             </div>
-
-            <div class="flex items-center gap-1 shrink-0">
-                <!-- Mobile Close Button -->
-                <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 transition-all shrink-0">
-                    <i class="fas fa-times text-xs"></i>
-                </button>
-                <!-- Desktop Collapse Button -->
-                <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-teal-400 items-center justify-center border border-white/10 hover:border-teal-500/30 transition-all shrink-0 cursor-pointer" title="طي القائمة الجانبية (Ctrl + B)">
-                    <i class="fas fa-angles-right text-xs"></i>
-                </button>
-            </div>
-            <!-- Badges container (Desktop only) -->
-            <div id="sidebar-badges-container" class="hidden md:flex md:mt-3 md:gap-1 md:justify-center md:min-h-[20px]"></div>
         </div>
 
         <!-- Main Site Quick Accordion Portal -->
@@ -130,7 +103,7 @@
                         <span class="text-xs">المنصة الرئيسية</span>
                         <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
                     </a>
-                    <button type="button" onclick="document.getElementById('sidebar-main-site-links').classList.toggle('hidden'); document.getElementById('sidebar-main-site-chevron').classList.toggle('rotate-180');" class="text-teal-400 hover:text-white text-[10px] bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-lg border border-teal-500/20 flex items-center gap-1 transition-all">
+                    <button type="button" id="sidebar-main-site-toggle" data-prevent-sidebar-close="true" onclick="event.stopPropagation(); document.getElementById('sidebar-main-site-links').classList.toggle('hidden'); document.getElementById('sidebar-main-site-chevron').classList.toggle('rotate-180');" class="text-teal-400 hover:text-white text-[10px] bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-lg border border-teal-500/20 flex items-center gap-1 transition-all cursor-pointer">
                         <span>الأقسام</span>
                         <i id="sidebar-main-site-chevron" class="fas fa-chevron-down text-[8px] transition-transform duration-200"></i>
                     </button>
@@ -197,120 +170,118 @@
 
     <main class="flex-1 h-screen overflow-y-auto p-3 sm:p-5 md:p-8 relative custom-scroll min-w-0">
         
-        <!-- Header (Responsive: Mobile Sticky Collapsible | Desktop Original Static Bar) -->
-        <header id="main-header" class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 sm:p-2.5 mb-3 shadow-xl shrink-0 transition-all duration-300 md:static md:z-auto md:bg-b-surface md:p-4 md:mb-8 md:flex md:flex-row md:justify-between md:items-center md:shadow-lg md:backdrop-blur-none">
+                <!-- Header (Unified Mobile & Desktop Header - Sleek 52px on Mobile, Spacious on Desktop) -->
+        <header id="main-header" class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 sm:p-2.5 md:p-3.5 mb-3 md:mb-8 shadow-xl flex items-center justify-between gap-2 md:gap-6 shrink-0 transition-all duration-300">
             
-            <!-- 1. User Welcome Card (Desktop: Right Side (order-1) | Mobile: Collapsible Bottom Banner (order-2)) -->
-            <div id="user-welcome-banner" class="collapsible-banner order-2 md:order-1 flex items-center justify-between gap-3 pt-2 mt-2 border-t border-white/10 overflow-hidden md:border-t-0 md:pt-0 md:mt-0 md:overflow-visible md:w-auto md:bg-black/20 md:p-2 md:pr-4 md:rounded-xl md:border md:border-white/5 md:hover:border-white/10 md:transition-colors md:gap-6">
-                <!-- Avatar & Welcome Name -->
-                <div class="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
-                    <img id="header-user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-8 h-8 sm:w-9 sm:h-9 md:w-20 md:h-20 rounded-full border border-b-primary/40 md:border-2 md:border-white/10 p-0.5 bg-b-surface object-cover shrink-0 shadow-sm md:relative md:z-10">
-                    <div class="min-w-0 flex flex-col justify-center">
-                        <span class="text-[9px] sm:text-[10px] md:text-[16px] text-gray-400 leading-none md:mb-0.5">أهلاً بك،</span>
-                        <h2 id="header-user-name" class="text-xs sm:text-sm md:text-lg font-bold text-white leading-snug truncate mt-0.5 md:mt-0 md:mb-3 md:leading-none md:drop-shadow-md"></h2>
-                        <!-- Badge on Desktop (under name) -->
-                        <div class="hidden md:block">
-                            <span id="header-user-badge" class="text-[14px] font-bold px-2 py-0.5 rounded bg-b-primary/20 text-b-primary border border-b-primary/30 uppercase backdrop-blur-sm"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Left (Mobile: Badge on opposite side | Desktop: Clear Rank Image) -->
-                <div class="flex items-center gap-1.5 sm:gap-2 md:gap-6 shrink-0 md:relative md:z-10">
-                    <!-- Badge on Mobile (opposite side to save space) -->
-                    <span id="header-user-badge-mobile" class="md:hidden inline-flex items-center text-[9px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-b-primary/20 text-teal-300 border border-b-primary/30 uppercase tracking-wide backdrop-blur-sm shadow-sm"></span>
-                    
-                    <!-- Clear Rank Badge Image (Desktop: Large 20x20 Original | Mobile: Small 6x6) -->
-                    <img id="header-user-badge-img-clear" src="../assets/icons/BUSLA-icon.png" class="w-6 h-6 sm:w-8 sm:h-8 md:w-20 md:h-20 object-contain rounded-lg md:rounded-2xl border border-[#006a67]/50 md:border-2 md:border-[#006a67] drop-shadow-sm md:drop-shadow-xl shrink-0 transition-transform md:hover:scale-110">
-                </div>
-            </div>
-
-            <!-- 2. Controls Cluster (Desktop: Left Side (order-2) | Mobile: Top Pinned Row (order-1)) -->
-            <div class="order-1 md:order-2 flex items-center justify-between md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                <!-- Sidebar Toggle Button (Desktop, Tablet & Mobile) -->
-                <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 hover:border-teal-500/40 active:scale-95 transition-all shrink-0 cursor-pointer group" title="إظهار / إخفاء القائمة الجانبية (Ctrl + B)">
+            <!-- Right Section (in RTL): Navigation & User Profile -->
+            <div id="user-welcome-banner" class="flex items-center gap-2 sm:gap-3 md:gap-3.5 min-w-0 flex-1 md:flex-initial">
+                <!-- Hamburger Sidebar Toggle Button (At the far right in RTL, closest to sidebar) -->
+                <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center shrink-0 transition-all cursor-pointer group active:scale-95" title="القائمة الجانبية (Ctrl + B)">
                     <i class="fas fa-bars text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
                 </button>
 
-                <!-- Controls: Search, Notifications, Points, Main Site Dropdown -->
-                <div class="flex items-center gap-2 md:gap-3">
-                    <!-- Omni-Search Trigger Button (Compact icon on Mobile, Full on Desktop) -->
-                    <button onclick="window.openOmniSearch()" class="w-9 h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
-                        <i class="fas fa-search text-teal-400 text-xs md:text-sm group-hover:scale-110 transition-transform"></i>
-                        <span class="hidden md:inline font-medium">بحث...</span>
-                        <kbd class="hidden lg:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
-                    </button>
+                <!-- User Welcome Card (Cohesive glassmorphic card on desktop) -->
+                <div class="flex items-center gap-2 sm:gap-2.5 md:gap-3 min-w-0 md:bg-white/[0.03] md:hover:bg-white/[0.06] md:p-1.5 md:pr-2 md:pl-3 md:rounded-2xl md:border md:border-white/10 transition-all">
+                    <!-- User Avatar -->
+                    <img id="header-user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full border-2 border-teal-400/50 p-0.5 bg-b-surface object-cover shrink-0 shadow-sm">
+                    
+                    <!-- Text Info Stack -->
+                    <div class="min-w-0 flex flex-col justify-center">
+                        <span class="text-[9px] sm:text-[10px] md:text-xs text-gray-400 leading-none md:mb-0.5">أهلاً بك،</span>
+                        <h2 id="header-user-name" class="text-xs sm:text-sm md:text-base font-bold text-white leading-tight truncate max-w-[110px] sm:max-w-[150px] md:max-w-[180px]"></h2>
+                        <!-- Badge on Desktop (under name) -->
+                        <span id="header-user-badge" class="hidden md:inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-300 border border-teal-500/30 uppercase mt-1 w-fit"></span>
+                    </div>
 
-                    <!-- Notifications button -->
-                    <button onclick="switchTab('announcements')" class="relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:bg-white/10 transition-all cursor-pointer shrink-0">
-                        <i class="fas fa-bell text-xs md:text-base"></i>
-                        <span id="global-notif-badge" class="absolute -top-1 -right-1 md:-top-1.5 md:-right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
-                    </button>
+                    <!-- Rank Medal Image (Desktop: Proportional sleek achievement badge) -->
+                    <div class="relative shrink-0 hidden md:flex items-center mr-1">
+                        <img id="header-user-badge-img-clear" src="../assets/icons/BUSLA-icon.png" class="w-10 h-10 md:w-11 md:h-11 object-contain rounded-xl border border-teal-500/30 bg-black/40 p-1 drop-shadow-md transition-transform hover:scale-105">
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Stats Pill (Unified single container on Mobile | Separate cards on Desktop) -->
-                    <div class="flex items-center bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 gap-2 md:bg-transparent md:border-0 md:p-0 md:gap-3">
-                        <!-- Points: Team -->
-                        <div class="flex items-center gap-1.5 md:gap-3 md:bg-black/30 md:px-4 md:py-2 md:rounded-xl md:border md:border-white/5">
-                            <div class="w-4 h-4 md:w-8 md:h-8 rounded-full bg-yellow-500/15 flex items-center justify-center text-yellow-500 shrink-0">
-                                <i class="fas fa-trophy text-[9px] md:text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] text-gray-500 uppercase tracking-widest hidden md:block">نقاط الفريق</p>
-                                <p id="stat-team-score" class="font-bold text-white font-mono text-xs md:text-base leading-none">0</p>
-                            </div>
+            <!-- Left Section (in RTL): Controls, Stats, Notifications, Search -->
+            <div class="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+                
+                <!-- Stats Pill (Unified single container on Mobile | Separate cards on Desktop) -->
+                <div class="flex items-center bg-black/40 border border-white/10 rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 gap-1.5 sm:gap-2 md:bg-transparent md:border-0 md:p-0 md:gap-3">
+                    <!-- Points: Team -->
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-black/30 md:px-3 md:py-2 md:rounded-xl md:border md:border-white/5" title="نقاط الفريق">
+                        <div class="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 rounded-full bg-yellow-500/15 flex items-center justify-center text-yellow-500 shrink-0">
+                            <i class="fas fa-trophy text-[8px] sm:text-[10px] md:text-xs"></i>
                         </div>
-
-                        <span class="w-px h-3.5 bg-white/15 md:hidden"></span>
-
-                        <!-- Points: My -->
-                        <div class="flex items-center gap-1.5 md:gap-3 md:bg-b-primary/10 md:px-4 md:py-2 md:rounded-xl md:border md:border-b-primary/20">
-                            <div class="w-4 h-4 md:w-8 md:h-8 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
-                                <i class="fas fa-star text-[9px] md:text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] text-b-primary uppercase tracking-widest hidden md:block">نقاطي</p>
-                                <p id="my-points" class="font-bold text-white font-mono text-xs md:text-base leading-none">0</p>
-                            </div>
+                        <div>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest hidden md:block">نقاط الفريق</p>
+                            <p id="stat-team-score" class="font-bold text-white font-mono text-[11px] sm:text-xs md:text-sm leading-none">0</p>
                         </div>
                     </div>
 
-                    <!-- Main Site Dropdown (Desktop Only - Mobile accesses site links via Sidebar) -->
-                    <div class="relative hidden md:block" id="main-site-nav-dropdown">
-                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
-                            <i class="fas fa-compass text-teal-400 text-sm"></i>
-                            <span>المنصة الرئيسية</span>
-                            <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
-                        </button>
-                        <!-- Dropdown Menu -->
-                        <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
-                            <div class="px-3 py-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
-                            <a href="../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-home text-teal-400 w-4 text-center"></i><span>الرئيسية</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-map-signs text-teal-400 w-4 text-center"></i><span>المسار التعليمي</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i><span>الدورات التدريبية</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-book-reader text-teal-400 w-4 text-center"></i><span>المكتبة العلمية</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-tools text-teal-400 w-4 text-center"></i><span>الأدوات البرمجية</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2"><i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i><span>الخبراء</span></span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
+                    <span class="w-px h-3 bg-white/15 md:hidden"></span>
+
+                    <!-- Points: Mine -->
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-b-primary/10 md:px-3 md:py-2 md:rounded-xl md:border md:border-b-primary/20" title="نقاطي">
+                        <div class="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
+                            <i class="fas fa-star text-[8px] sm:text-[10px] md:text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-teal-400 uppercase tracking-widest hidden md:block">نقاطي</p>
+                            <p id="my-points" class="font-bold text-white font-mono text-[11px] sm:text-xs md:text-sm leading-none">0</p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Notifications Button -->
+                <button onclick="switchTab('announcements')" class="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer shrink-0" title="الإشعارات">
+                    <i class="fas fa-bell text-xs sm:text-sm md:text-base"></i>
+                    <span id="global-notif-badge" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
+                </button>
+
+                <!-- Omni-Search Trigger Button -->
+                <button onclick="window.openOmniSearch && window.openOmniSearch()" class="w-8 h-8 sm:w-9 sm:h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
+                    <i class="fas fa-search text-teal-400 text-xs sm:text-sm group-hover:scale-110 transition-transform"></i>
+                    <span class="hidden lg:inline font-medium">بحث...</span>
+                    <kbd class="hidden xl:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
+                </button>
+
+                <!-- Main Site Dropdown (Desktop Only - Mobile accesses site links via Sidebar) -->
+                <div class="relative hidden md:block" id="main-site-nav-dropdown">
+                    <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
+                        <i class="fas fa-compass text-teal-400 text-sm"></i>
+                        <span>المنصة الرئيسية</span>
+                        <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
+                        <div class="px-3 py-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
+                        <a href="../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-home text-teal-400 w-4 text-center"></i><span>الرئيسية</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-map-signs text-teal-400 w-4 text-center"></i><span>المسار التعليمي</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i><span>الدورات التدريبية</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-book-reader text-teal-400 w-4 text-center"></i><span>المكتبة العلمية</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-tools text-teal-400 w-4 text-center"></i><span>الأدوات البرمجية</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                            <span class="flex items-center gap-2"><i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i><span>الخبراء</span></span>
+                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hidden mobile badge element for JS safeText compatibility -->
+                <span id="header-user-badge-mobile" class="hidden"></span>
             </div>
         </header>
 
@@ -1792,6 +1763,10 @@
     // Auto-close sidebar when any menu item or link is tapped on mobile
     document.getElementById('sidebar')?.addEventListener('click', (e) => {
         if (window.innerWidth < 768) {
+            // Do not close sidebar when toggling nested accordions or dropdowns
+            if (e.target.closest('[data-prevent-sidebar-close="true"]') || e.target.closest('#sidebar-main-site-toggle')) {
+                return;
+            }
             const clickable = e.target.closest('button, a');
             if (clickable && !clickable.querySelector('.fa-times')) {
                 closeSidebar();
@@ -1871,65 +1846,8 @@
         if (id === 'leaderboard' && typeof window.renderLeaderboard === 'function') {
             window.renderLeaderboard();
         }
-
-        // Reset collapsible header banner on tab switch
-        document.getElementById('user-welcome-banner')?.classList.remove('banner-collapsed');
     }
     window.switchTab = switchTab;
-
-    // Smart Collapsible Header Scroll Logic (Strictly Mobile Only: < 768px)
-    (function initSmartHeaderScroll() {
-        const mainEl = document.querySelector('main');
-        const banner = document.getElementById('user-welcome-banner');
-        if (!banner) return;
-
-        let lastScrollTop = 0;
-        let upScrollDistance = 0;
-        const SCROLL_UP_THRESHOLD = 30; // Scroll up distance threshold before revealing
-        const SCROLL_DOWN_THRESHOLD = 15; // Scroll down threshold to trigger collapse
-
-        function onScroll(currentScrollTop) {
-            // STRICT DESKTOP GUARD: Never collapse on desktop / laptop screens
-            if (window.innerWidth >= 768) {
-                banner.classList.remove('banner-collapsed');
-                return;
-            }
-
-            // Near top of page: always reveal
-            if (currentScrollTop <= 25) {
-                banner.classList.remove('banner-collapsed');
-                upScrollDistance = 0;
-                lastScrollTop = currentScrollTop;
-                return;
-            }
-
-            const delta = currentScrollTop - lastScrollTop;
-
-            if (delta > SCROLL_DOWN_THRESHOLD) {
-                // Scrolling down -> Collapse lower banner
-                upScrollDistance = 0;
-                banner.classList.add('banner-collapsed');
-            } else if (delta < -5) {
-                // Scrolling up -> Accumulate distance
-                upScrollDistance += Math.abs(delta);
-                if (upScrollDistance >= SCROLL_UP_THRESHOLD) {
-                    banner.classList.remove('banner-collapsed');
-                }
-            }
-
-            lastScrollTop = Math.max(0, currentScrollTop);
-        }
-
-        if (mainEl) {
-            mainEl.addEventListener('scroll', () => onScroll(mainEl.scrollTop), { passive: true });
-        }
-        window.addEventListener('scroll', () => onScroll(window.scrollY || document.documentElement.scrollTop), { passive: true });
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                banner.classList.remove('banner-collapsed');
-            }
-        });
-    })();
 
         // Global Modal Control Functions
         window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');

@@ -14,22 +14,28 @@
   "categories": ["education", "engineering", "productivity"],
   "icons": [
     {
-      "src": "assets/icons/BUSLA-icon.png",
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icons/1.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/icons/BUSLA-icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [
@@ -38,35 +44,35 @@
       "short_name": "لوحتي",
       "description": "الوصول المباشر إلى لوحة تحكم الطالب والمهام",
       "url": "./pages/student-dash.html",
-      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "المسار التعليمي",
       "short_name": "المسار",
       "description": "استعراض شجرة ومراحل تخصص الـ Digital IC Design",
       "url": "./index.html#roadmap",
-      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "المكتبة العلمية",
       "short_name": "المكتبة",
       "description": "تصفح المراجع والكتب وأوراق البحث",
       "url": "./index.html#references",
-      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "أدوات التصميم EDA",
       "short_name": "الأدوات",
       "description": "أدوات المحاكاة والتصميم البرمجية",
       "url": "./index.html#tools",
-      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "مشغل الدورات",
       "short_name": "المشغل",
       "description": "متابعة مشاهدة الدروس والمحاضرات",
       "url": "./pages/course-player.html",
-      "icons": [{ "src": "assets/icons/BUSLA-icon.png", "sizes": "192x192" }]
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

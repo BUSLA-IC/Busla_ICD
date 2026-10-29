@@ -1569,6 +1569,8 @@ function loadModuleData(moduleId) {
         if (typeof window.initToolsMgmt === 'function') window.initToolsMgmt();
     } else if (moduleId === 'references-mgmt') {
         if (typeof window.initReferencesMgmt === 'function') window.initReferencesMgmt();
+    } else if (moduleId === 'experts-mgmt') {
+        if (typeof window.initExpertsMgmt === 'function') window.initExpertsMgmt();
     } else if (moduleId === 'learning-roadmap') {
         window._roadmapHasAutoFitted = false;
         initInteractiveRoadmap('admin');

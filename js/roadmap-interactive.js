@@ -7,6 +7,14 @@ function getAssetPrefix() {
     return './';
 }
 
+function getAuthUrl(params = '') {
+    const loc = window.location.pathname;
+    const query = params ? (params.startsWith('?') ? params : '?' + params) : '';
+    if (loc.includes('/admin/html/')) return `../../pages/auth.html${query}`;
+    if (loc.includes('/pages/') || loc.includes('/admin/')) return `auth.html${query}`;
+    return `pages/auth.html${query}`;
+}
+
 function extractYouTubeId(urlOrId) {
     if (!urlOrId || typeof urlOrId !== 'string') return '';
     const str = urlOrId.trim();
@@ -2491,7 +2499,7 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
                 `;
             }
         } else if (currentRole === 'guest') {
-            const extUrl = course.playlist_url || 'pages/auth.html?mode=signup';
+            const extUrl = course.playlist_url || getAuthUrl('mode=signup');
             const buttonLabel = course.playlist_url ? 'مشاهدة الدورة على يوتيوب ↗' : 'سجل للتعلم مجاناً';
             actionButtonsHtml += `
                 <a href="${extUrl}" target="_blank" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
@@ -2570,7 +2578,7 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
             }
         } else {
             actionButtonsHtml += `
-                <a href="pages/auth.html?mode=signup" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                <a href="${getAuthUrl('mode=signup')}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-user-plus"></i> سجل لفتح المستند
                 </a>
             `;
@@ -2645,7 +2653,7 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
         } else if (currentRole === 'guest') {
             const extUrl = youtubeId 
                 ? `https://www.youtube.com/watch?v=${youtubeId}` 
-                : (rawVideo && rawVideo.startsWith('http') ? rawVideo : 'pages/auth.html?mode=signup');
+                : (rawVideo && rawVideo.startsWith('http') ? rawVideo : getAuthUrl('mode=signup'));
             const buttonLabel = (youtubeId || (rawVideo && rawVideo.startsWith('http'))) ? 'مشاهدة الدرس على يوتيوب ↗' : 'سجل لمشاهدة الدروس';
             actionButtonsHtml += `
                 <a href="${extUrl}" target="_blank" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
@@ -2713,7 +2721,7 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
             }
         } else if (currentRole === 'guest') {
             actionButtonsHtml += `
-                <a href="pages/auth.html?mode=signup" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                <a href="${getAuthUrl('mode=signup')}" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-user-plus"></i> سجل لتقديم الاختبارات
                 </a>
             `;
@@ -2799,7 +2807,7 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
             }
         } else if (currentRole === 'guest') {
             actionButtonsHtml += `
-                <a href="pages/auth.html?mode=signup" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                <a href="${getAuthUrl('mode=signup')}" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-user-plus"></i> سجل لتسليم المشاريع
                 </a>
             `;
