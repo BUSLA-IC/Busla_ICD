@@ -14,40 +14,12 @@
     <meta name="apple-mobile-web-app-title" content="بوصلة">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tailwind.min.css">
     <script src="js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="css/roadmap.css">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'b-bg': '#000000',
-                        'b-surface': '#111111',
-                        'b-primary': '#006A67',
-                        'b-hl-light': '#22C45D',
-                        'b-hl-medium': '#00dec8',
-                        'b-hl-green': '#E6FF94',
-                        'b-hl-yellow': '#FFF4B7',
-                        'b-border': '#222222',
-                    },
-                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
-                    animation: { 
-                        'float': 'float 6s ease-in-out infinite',
-                        'pulse-glow': 'pulseGlow 3s infinite'
-                    },
-                    keyframes: { 
-                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } },
-                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 15px rgba(34, 196, 93, 0.2)' }, '50%': { boxShadow: '0 0 30px rgba(34, 196, 93, 0.5)' } }
-                    }
-                }
-            }
-        }
-    </script>
     
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #000; overflow-x: hidden; color: #F6F6F6; }

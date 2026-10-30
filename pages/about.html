@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="page_title">عن موقع بوصلة</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
           <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
 
@@ -71,30 +71,7 @@
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #22C45D; }
     </style>
 
-    <script>
-        tailwind.config = {
-            darkMode: 'class', 
-            theme: {
-                extend: {
-                    colors: {
-                        'b-bg': '#000000',
-                        'b-text': '#F6F6F6',
-                        'b-primary': '#006A67',
-                        'b-hl-light': '#22C45D',
-                        'b-hl-medium': '#22C45D',
-                        'b-hl-green': '#E6FF94',
-                        'b-hl-yellow': '#FFF4B7',
-                        'b-surface': '#111111',
-                        'b-border': '#222222',
-                    },
-                    fontFamily: {
-                        'cairo': ['Cairo', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-</head> 
+    </head> 
 <body class="antialiased bg-b-bg text-b-text font-cairo">
     <!-- Header -->
     <header class="bg-b-surface shadow-2xl border-b border-b-border sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">

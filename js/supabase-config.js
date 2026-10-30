@@ -463,33 +463,44 @@ export const StorageService = {
     }
 };
 
-// 💡 معالج تلقائي لصور Imgur لتفادي خطأ 403 Forbidden
+// 💡 معالج تلقائي للصور والروابط الخارجية (LinkedIn, Imgur, etc.) لتفادي خطأ 403 Forbidden وتوفير صورة بديلة
 if (typeof document !== 'undefined') {
-    const fixImgurReferrer = (img) => {
-        if (img && img.src && img.src.includes('imgur.com') && img.referrerPolicy !== 'no-referrer') {
-            img.referrerPolicy = 'no-referrer';
-            
-            // إعادة ضبط src لإجبار المتصفح على تحميل الصورة بدون Referer
-            const currentSrc = img.src;
-            img.src = '';
-            img.src = currentSrc;
+    const handleExternalImage = (img) => {
+        if (!img) return;
+
+        // 1. تفعيل no-referrer للمصادر الخارجية لمنع حظر الـ Referer
+        if (img.src && (img.src.includes('licdn.com') || img.src.includes('imgur.com') || img.src.includes('googleusercontent.com'))) {
+            if (img.referrerPolicy !== 'no-referrer') {
+                img.referrerPolicy = 'no-referrer';
+            }
+        }
+
+        // 2. معالج الأخطاء البديل (في حال انتهاء صلاحية رابط لينكد إن أو خطأ 403 أو رابط مفقود)
+        if (!img.dataset.fallbackAttached) {
+            img.dataset.fallbackAttached = 'true';
+            img.addEventListener('error', function onImgError() {
+                if (!this.dataset.fallbackDone) {
+                    this.dataset.fallbackDone = 'true';
+                    const fallback = this.dataset.fallback || 'https://ui-avatars.com/api/?name=User&background=006A67&color=fff&size=100';
+                    this.src = fallback;
+                }
+            }, { once: true });
         }
     };
 
-    // مراقبة التغييرات في شجرة الـ DOM لتطبيق ذلك ديناميكياً
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(node => {
                     if (node.tagName === 'IMG') {
-                        fixImgurReferrer(node);
+                        handleExternalImage(node);
                     } else if (node.querySelectorAll) {
-                        node.querySelectorAll('img').forEach(fixImgurReferrer);
+                        node.querySelectorAll('img').forEach(handleExternalImage);
                     }
                 });
             } else if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
                 if (mutation.target.tagName === 'IMG') {
-                    fixImgurReferrer(mutation.target);
+                    handleExternalImage(mutation.target);
                 }
             }
         }
@@ -502,12 +513,11 @@ if (typeof document !== 'undefined') {
         attributeFilter: ['src']
     });
 
-    // تشغيل فوري على الصور الموجودة بالصفحة
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('img').forEach(fixImgurReferrer);
+            document.querySelectorAll('img').forEach(handleExternalImage);
         });
     } else {
-        document.querySelectorAll('img').forEach(fixImgurReferrer);
+        document.querySelectorAll('img').forEach(handleExternalImage);
     }
 }

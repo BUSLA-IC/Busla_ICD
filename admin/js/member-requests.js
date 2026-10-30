@@ -313,6 +313,21 @@ function renderAcceptancePermissions(roles, permissions, rolePermissions) {
 }
 
 window.updateAppStatus = async (newStatus) => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+
+    if (newStatus === 'accepted') {
+        if (!can('settings:admins') && !can('teams:approve') && !can('manage_requests') && !isOwner) {
+            window.showToast?.('ليس لديك صلاحية لقبول طلبات الانضمام وتعيين الأدوار.', 'error');
+            return;
+        }
+    } else if (newStatus === 'rejected') {
+        if (!can('teams:reject') && !can('manage_requests') && !isOwner) {
+            window.showToast?.('ليس لديك صلاحية لرفض طلبات الانضمام.', 'error');
+            return;
+        }
+    }
+
     const appId = document.getElementById('modal-current-app-id').value;
     const notes = document.getElementById('modal-internal-notes').value;
     if (!appId) return;

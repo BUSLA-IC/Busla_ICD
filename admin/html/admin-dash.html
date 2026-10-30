@@ -3,47 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
     <title>لوحة التحكم المركزية | بوصلة</title>
     <link rel="icon" type="image/jpg" href="../../assets/icons/BUSLA-icon.png">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../css/tailwind.min.css">
     <script src="../../js/custom-dialogs.js?v=2.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 
-                        'b-bg': '#000000', 
-                        'b-surface': '#111111', 
-                        'b-surface-card': '#181818',
-                        'b-primary': '#006A67', 
-                        'b-accent': '#FFC107',
-                        'b-border': 'rgba(255, 255, 255, 0.08)'
-                    },
-                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
-                    animation: {
-                        'slide-over': 'slideOver 0.3s ease-out forwards',
-                        'fade-in': 'fadeIn 0.2s ease-out forwards'
-                    },
-                    keyframes: {
-                        slideOver: {
-                            '0%': { transform: 'translateX(-100%)' },
-                            '100%': { transform: 'translateX(0)' }
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
+        <style>
         html, body {
             width: 100%;
             max-width: 100vw;
@@ -131,7 +101,7 @@
 
         <!-- Sidebar Navigation Buttons -->
         <nav id="admin-nav" class="flex-1 p-3 sm:p-4 space-y-1.5 overflow-y-auto custom-scroll">
-            <button data-target="dashboard" class="nav-btn w-full flex items-center gap-3 p-2.5 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-right text-sm">
+            <button data-target="dashboard" data-perm="dashboard:view" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-right text-sm">
                 <i class="fas fa-chart-line w-5 text-center"></i> <span>نظرة عامة</span>
             </button>
             
@@ -155,31 +125,31 @@
                 <i class="fas fa-user-graduate w-5 text-center"></i> <span>إدارة نصائح الخبراء</span>
             </button>
 
-            <button data-target="member-requests" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+            <button data-target="member-requests" data-perm="settings:admins,teams:approve,manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
                 <i class="fas fa-users w-5 text-center"></i> <span>طلبات الأعضاء</span>
             </button>
 
-            <button data-target="project-audit" data-perm="audit_projects" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+            <button data-target="project-audit" data-perm="reviews:submissions,reviews:leaders,reviews:regrade,reviews:grades:approve,reviews:grades:reject,audit_projects" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
                 <i class="fas fa-check-double w-5 text-center"></i> <span>إشراف المشاريع</span>
             </button>
 
-            <button data-target="team-mgmt" data-perm="manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+            <button data-target="team-mgmt" data-perm="teams:view,teams:approve,teams:reject,teams:create,teams:edit,teams:freeze,teams:delete,manage_requests" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
                 <i class="fas fa-users-cog w-5 text-center"></i> <span>إدارة الفرق</span>
             </button>
 
-            <button data-target="student-leader-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+            <button data-target="student-leader-mgmt" data-perm="users:view,leaders:view,manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
                 <i class="fas fa-users w-5 text-center"></i> <span>إدارة المستخدمين</span>
             </button>
 
-            <button data-target="users-mgmt" data-perm="manage_users" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
-                <i class="fas fa-users-cog w-5 text-center"></i> <span>إدارة الصلاحيات</span>
+            <button data-target="users-mgmt" data-perm="settings:permissions,settings:admins,settings:logs,manage_settings" class="nav-btn hidden w-full flex items-center gap-3 p-2.5 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-right text-sm">
+                <i class="fas fa-shield-halved w-5 text-center"></i> <span>إدارة الصلاحيات</span>
             </button>
         </nav>
 
         <!-- Admin Profile Info & Logout -->
         <div class="p-3 sm:p-4 border-t border-white/10 bg-black/40 shrink-0">
             <div class="flex items-center gap-3 mb-3 px-1">
-                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-9 h-9 rounded-full border border-white/10 object-cover">
+                <img id="admin-user-avatar" src="../../assets/icons/BUSLA-icon.png" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-9 h-9 rounded-full border border-white/10 object-cover">
                 <div class="flex-1 min-w-0">
                     <p id="admin-user-name" class="text-xs sm:text-sm font-bold text-white truncate">جاري التحميل...</p>
                     <div class="flex items-center gap-1.5 mt-0.5">
@@ -738,16 +708,16 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end">
-                    <button id="btn-smart-import" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-red-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                    <button id="btn-smart-import" data-perm="content:material:create,video:create,manage_content" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-red-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fab fa-youtube text-sm sm:text-lg"></i> <span id="smart-import-text" class="text-xs">استيراد يوتيوب</span>
                     </button>
-                    <button id="btn-ai-quiz" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-purple-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                    <button id="btn-ai-quiz" data-perm="content:quiz:create,manage_content" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-purple-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">كويز ذكي</span>
                     </button>
-                    <button id="btn-ai-project" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-emerald-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                    <button id="btn-ai-project" data-perm="content:project:create,manage_content" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-emerald-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">مشروع ذكي</span>
                     </button>
-                    <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 cursor-pointer">
+                    <button onclick="window.cmOpenModal()" data-perm="content:phase:create,content:course:create,content:material:create,content:quiz:create,content:project:create,manage_content" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 cursor-pointer">
                         <i class="fas fa-plus text-xs"></i> <span>إنشاء جديد</span>
                     </button>
                 </div>
@@ -755,14 +725,14 @@
 
             <!-- Sub-Tabs Navigation Strip -->
             <div class="bg-white/5 px-2 py-1.5 sm:px-4 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-                <button class="cm-nav-btn active px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap cursor-pointer" data-level="tracks">المسارات (Tracks)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="phases">المراحل (Phases)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="courses">الكورسات (Courses)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="course_materials">المحتويات (Contents)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quizzes">الاختبارات (Quizzes)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quiz_questions">أسئلة الكويزات (Questions)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="projects">المشاريع (Projects)</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="curriculum_documents">المستندات (Docs)</button>
+                <button class="cm-nav-btn active px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap cursor-pointer" data-level="tracks" data-perm="content:phase:create,content:track:create,manage_content">المسارات (Tracks)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="phases" data-perm="content:phase:create,content:phase:edit,manage_content">المراحل (Phases)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="courses" data-perm="content:course:create,content:course:edit,manage_content">الكورسات (Courses)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="course_materials" data-perm="content:material:create,content:material:edit,video:create,video:edit,manage_content">المحتويات (Contents)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quizzes" data-perm="content:quiz:create,content:quiz:edit,quiz:edit,manage_content">الاختبارات (Quizzes)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quiz_questions" data-perm="content:question:create,content:question:edit,manage_content">أسئلة الكويزات (Questions)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="projects" data-perm="content:project:create,content:project:edit,project:edit,manage_content">المشاريع (Projects)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="curriculum_documents" data-perm="manage_content">المستندات (Docs)</button>
             </div>
 
             <!-- Filters Bar (Collapsible on Mobile, High-Density) -->
@@ -969,7 +939,7 @@
             </div>
 
             <!-- Stats Grid (Compact 3-col on Mobile, 9-col on Desktop) -->
-            <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5 sm:gap-2.5 p-2.5 sm:p-4 border-b border-white/10 bg-b-surface/30 shrink-0 select-none">
+            <div data-perm="dashboard:stats" class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5 sm:gap-2.5 p-2.5 sm:p-4 border-b border-white/10 bg-b-surface/30 shrink-0 select-none">
                 <!-- Stat 1: Pending Grading -->
                 <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
                     <span class="text-[9px] text-gray-500 font-bold uppercase truncate">بانتظار التصحيح</span>
@@ -1037,6 +1007,10 @@
                     <button onclick="window.resetAuditFilters()" class="px-2.5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all shrink-0">
                         إعادة تعيين
                     </button>
+                    <button onclick="window.exportAuditsToCSV()" data-perm="reports:export:excel,dashboard:export,manage_reports" class="px-2.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1" title="تصدير تقرير المراجعات (Excel)">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="hidden sm:inline">تصدير</span>
+                    </button>
                 </div>
                 
                 <!-- Detailed Filters (Collapsible on Mobile, Grid on Desktop) -->
@@ -1085,11 +1059,11 @@
 
             <!-- Sub tabs navigation (Clean Horizontal Scroll) -->
             <div class="bg-white/5 px-2.5 sm:px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1.5 shrink-0 select-none">
-                <button class="audit-tab-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-white transition-all whitespace-nowrap" data-tab="pending-review">Pending Review</button>
-                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-reviews">Leader Reviews</button>
-                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="audit-queue">Audit Queue</button>
-                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-performance">Leader Performance</button>
-                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="appeals-tab">Appeals</button>
+                <button class="audit-tab-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-white transition-all whitespace-nowrap" data-tab="pending-review" data-perm="reviews:submissions,audit_projects">Pending Review</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-reviews" data-perm="reviews:leaders,audit_projects">Leader Reviews</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="audit-queue" data-perm="reviews:submissions,reviews:leaders,audit_projects">Audit Queue</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-performance" data-perm="reviews:leaders,audit_projects">Leader Performance</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="appeals-tab" data-perm="reviews:regrade,audit_projects">Appeals</button>
             </div>
 
             <!-- Tab Contents Tables -->
@@ -1208,10 +1182,10 @@
         <div id="team-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
             <!-- Sub-tab Navigation -->
             <div class="bg-white/5 px-2.5 sm:px-4 py-1.5 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-                <button class="teams-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-subtab="teams">الفرق المسجلة</button>
-                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-requests">طلبات الإنشاء</button>
-                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-invitations">دعوات الانضمام</button>
-                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-activity">أنشطة الفرق</button>
+                <button class="teams-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-subtab="teams" data-perm="teams:view,manage_requests">الفرق المسجلة</button>
+                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-requests" data-perm="teams:approve,teams:reject,manage_requests">طلبات الإنشاء</button>
+                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-invitations" data-perm="teams:view,manage_requests">دعوات الانضمام</button>
+                <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-activity" data-perm="teams:view,manage_requests">أنشطة الفرق</button>
             </div>
 
             <!-- Sub-tabs Content Container -->
@@ -1219,7 +1193,7 @@
                 <!-- Sub-tab 1: Teams -->
                 <div id="subtab-teams" class="teams-subtab-content space-y-4 sm:space-y-6">
                     <!-- Stats / Overview row (Compact 4-col on Mobile, 4-col Cards on Desktop) -->
-                    <div class="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-6">
+                    <div data-perm="dashboard:stats" class="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-6">
                         <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
                             <div class="w-full">
                                 <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">إجمالي الفرق</span>
@@ -1283,6 +1257,10 @@
                             </select>
                             <button onclick="window.fetchTeams()" class="hidden lg:block bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2.5 rounded-xl transition-all shrink-0" title="تحديث البيانات">
                                 <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button onclick="window.exportTeamsToCSV()" data-perm="reports:export:excel,dashboard:export,manage_reports" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 flex items-center gap-1.5 font-bold text-xs sm:text-sm" title="تصدير بيانات الفرق (Excel)">
+                                <i class="fas fa-file-excel"></i>
+                                <span class="hidden sm:inline">تصدير</span>
                             </button>
                         </div>
                     </div>
@@ -1477,7 +1455,7 @@
         </div>
         
         <!-- Quick Stats -->
-        <div class="flex gap-2 sm:gap-3 overflow-x-auto custom-scroll pb-1.5 lg:pb-0 w-full max-w-full lg:max-w-[70%] select-none">
+        <div data-perm="dashboard:stats" class="flex gap-2 sm:gap-3 overflow-x-auto custom-scroll pb-1.5 lg:pb-0 w-full max-w-full lg:max-w-[70%] select-none">
             <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
                 <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">إجمالي الطلاب</span>
                 <span id="stat-mgmt-students" class="text-sm sm:text-xl font-black text-white mt-0.5">0</span>
@@ -1511,8 +1489,8 @@
 
     <!-- Main Navigation Tabs: Students / Leaders -->
     <div class="bg-white/5 px-2.5 sm:px-4 py-1.5 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-        <button id="btn-users-tab-students" onclick="window.switchUsersTab('student')" class="users-tab-btn active px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap">الطلاب (Students)</button>
-        <button id="btn-users-tab-leaders" onclick="window.switchUsersTab('leader')" class="users-tab-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">القادة (Leaders)</button>
+        <button id="btn-users-tab-students" data-perm="users:view,manage_users" onclick="window.switchUsersTab('student')" class="users-tab-btn active px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap">الطلاب (Students)</button>
+        <button id="btn-users-tab-leaders" data-perm="leaders:view,manage_users" onclick="window.switchUsersTab('leader')" class="users-tab-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">القادة (Leaders)</button>
     </div>
 
     <!-- Search & Filters Container -->
@@ -1528,6 +1506,10 @@
             </button>
             <button onclick="window.fetchUsersData()" class="p-2 sm:px-4 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all shrink-0" title="تحديث البيانات">
                 <i class="fas fa-sync-alt text-xs sm:text-sm"></i>
+            </button>
+            <button onclick="window.exportUsersToCSV()" data-perm="reports:export:excel,dashboard:export,manage_reports" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-3 py-2 rounded-xl transition-colors shrink-0 flex items-center gap-1.5 font-bold text-xs" title="تصدير بيانات المستخدمين Excel (CSV)">
+                <i class="fas fa-file-excel"></i>
+                <span class="hidden sm:inline">تصدير</span>
             </button>
         </div>
 
@@ -1624,10 +1606,10 @@
         <div id="users-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
             <!-- Sub-tab Navigation -->
             <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-                <button class="users-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-subtab="admin-accounts">حسابات الإدارة</button>
-                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="roles">الأدوار الأساسية</button>
-                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="permissions">قائمة الصلاحيات</button>
-                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="audit-log">سجل العمليات</button>
+                <button class="users-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-subtab="admin-accounts" data-perm="settings:admins">حسابات الإدارة</button>
+                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="roles" data-perm="settings:permissions">الأدوار الأساسية</button>
+                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="permissions" data-perm="settings:permissions">قائمة الصلاحيات</button>
+                <button class="users-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="audit-log" data-perm="settings:logs">سجل العمليات</button>
             </div>
 
             <!-- Sub-tab contents -->
@@ -1676,7 +1658,7 @@
                                 <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm"></i>
                                 <input type="text" id="admin-search" placeholder="البحث بالاسم أو البريد..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all">
                             </div>
-                            <button id="btn-add-admin" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0" title="إضافة حساب أدمن">
+                            <button id="btn-add-admin" data-perm="settings:admins" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0" title="إضافة حساب أدمن">
                                 <i class="fas fa-user-plus text-xs"></i> <span>إضافة أدمن</span>
                             </button>
                         </div>
@@ -1726,7 +1708,7 @@
                 <div id="subtab-roles" class="users-subtab-content hidden space-y-6">
                     <div class="flex justify-between items-center bg-b-surface p-4 rounded-2xl border border-white/5">
                         <p class="text-sm text-gray-400">تستخدم الأدوار كقوالب لتصنيف حسابات المدراء وتوزيع الصلاحيات الافتراضية.</p>
-                        <button id="btn-create-role" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shadow-purple-900/10">
+                        <button id="btn-create-role" data-perm="settings:permissions" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shadow-purple-900/10">
                             <i class="fas fa-plus"></i> إنشاء دور جديد (Role)
                         </button>
                     </div>
@@ -3053,7 +3035,7 @@
                     <!-- Drawer Header -->
                     <div class="p-6 border-b border-white/10 bg-black/40 flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <img id="drawer-avatar" src="../../assets/icons/BUSLA-icon.png" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-14 h-14 rounded-full border border-teal-500/20 object-cover">
+                            <img id="drawer-avatar" src="../../assets/icons/BUSLA-icon.png" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-14 h-14 rounded-full border border-teal-500/20 object-cover">
                             <div>
                                 <h2 id="drawer-admin-name" class="text-xl font-black text-white">---</h2>
                                 <p id="drawer-admin-email" class="text-xs text-gray-400 mt-1">---</p>
@@ -3094,7 +3076,7 @@
             </div>
             <div class="p-6 overflow-y-auto custom-scroll space-y-6 text-right">
                 <div class="flex items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/5">
-                    <img id="detail-avatar" src="../../assets/icons/BUSLA-icon.png" class="w-16 h-16 rounded-full border border-teal-500/20 object-cover">
+                    <img id="detail-avatar" src="../../assets/icons/BUSLA-icon.png" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff'" class="w-16 h-16 rounded-full border border-teal-500/20 object-cover">
                     <div>
                         <h4 id="detail-name" class="text-lg font-bold text-white">---</h4>
                         <p id="detail-email" class="text-sm text-gray-400 mt-1">---</p>
@@ -3649,8 +3631,8 @@
                         </div>
 
                         <div class="flex flex-wrap gap-3 pt-2">
-                            <button onclick="window.updateTeamRequestStatus('approved')" class="flex-1 min-w-[120px] py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-lg"><i class="fas fa-check-circle"></i> اعتماد وتأسيس الفريق</button>
-                            <button onclick="window.updateTeamRequestStatus('rejected')" class="flex-1 min-w-[120px] py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20 font-bold transition-all text-sm flex items-center justify-center gap-2"><i class="fas fa-times-circle"></i> رفض الطلب</button>
+                            <button onclick="window.updateTeamRequestStatus('approved')" data-perm="teams:approve,teams:create,manage_requests" class="flex-1 min-w-[120px] py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-lg"><i class="fas fa-check-circle"></i> اعتماد وتأسيس الفريق</button>
+                            <button onclick="window.updateTeamRequestStatus('rejected')" data-perm="teams:reject,manage_requests" class="flex-1 min-w-[120px] py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20 font-bold transition-all text-sm flex items-center justify-center gap-2"><i class="fas fa-times-circle"></i> رفض الطلب</button>
                             <button onclick="window.updateTeamRequestStatus('archived')" class="flex-1 min-w-[120px] py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 font-bold transition-all text-sm flex items-center justify-center gap-2"><i class="fas fa-archive"></i> نقل للأرشيف</button>
                         </div>
                     </div>
@@ -4389,19 +4371,19 @@
 
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-white/10 bg-black/60 flex flex-wrap gap-3 shrink-0">
-            <button id="btn-drawer-approve" onclick="window.approveLeaderGradingAction()" class="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold transition-all text-sm flex items-center justify-center gap-2">
+            <button id="btn-drawer-approve" data-perm="reviews:grades:approve,audit_projects" onclick="window.approveLeaderGradingAction()" class="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold transition-all text-sm flex items-center justify-center gap-2">
                 <i class="fas fa-check-double"></i> اعتماد درجة الليدر
             </button>
-            <button id="btn-drawer-save-audit" onclick="window.saveAdminAuditAction()" class="flex-1 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center justify-center gap-2">
+            <button id="btn-drawer-save-audit" data-perm="reviews:grades:edit,reviews:regrade,audit_projects" onclick="window.saveAdminAuditAction()" class="flex-1 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i> حفظ وإرسال تقييم الإدارة
             </button>
-            <button id="btn-drawer-reject" onclick="window.rejectLeaderGradingAction()" class="flex-1 py-3 rounded-xl bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-500/20 font-bold transition-all text-sm flex items-center justify-center gap-2">
+            <button id="btn-drawer-reject" data-perm="reviews:grades:reject,audit_projects" onclick="window.rejectLeaderGradingAction()" class="flex-1 py-3 rounded-xl bg-red-600/10 hover:bg-red-600 text-red-500 border border-red-500/20 font-bold transition-all text-sm flex items-center justify-center gap-2">
                 <i class="fas fa-undo"></i> رفض التقييم وإعادته
             </button>
-            <button id="btn-drawer-reassign" onclick="window.openReassignReviewerModal()" class="py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold transition-all text-sm" title="تحويل لمراجع آخر">
+            <button id="btn-drawer-reassign" data-perm="reviews:regrade,audit_projects" onclick="window.openReassignReviewerModal()" class="py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold transition-all text-sm" title="تحويل لمراجع آخر">
                 <i class="fas fa-exchange-alt"></i>
             </button>
-            <button id="btn-drawer-add-note" onclick="window.openAddAuditNoteModal()" class="py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold transition-all text-sm" title="إضافة ملاحظة إدارية">
+            <button id="btn-drawer-add-note" data-perm="reviews:grades:edit,reviews:submissions,audit_projects" onclick="window.openAddAuditNoteModal()" class="py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold transition-all text-sm" title="إضافة ملاحظة إدارية">
                 <i class="fas fa-comment-alt"></i>
             </button>
         </div>

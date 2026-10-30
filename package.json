@@ -1,0 +1,12 @@
+{
+  "name": "busla-icd",
+  "version": "1.0.0",
+  "description": "Busla Platform - Vanilla JS + Supabase + Tailwind CSS",
+  "scripts": {
+    "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.min.css --minify",
+    "dev:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.min.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

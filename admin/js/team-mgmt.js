@@ -246,21 +246,30 @@ function renderTeamsTable(data) {
             `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مجمد</span>` :
             `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">نشط</span>`;
             
-        // Check deletion permission
-        const isAdminOwner = window.getAdminProfile()?.role?.toLowerCase() === 'owner';
-        const hasDeletePerm = window.hasPermission('teams:delete');
-        const showDeleteBtn = isAdminOwner || hasDeletePerm;
+        // Permission checks
+        const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+        const isAdminOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+        const canEditTeam = can('teams:edit') || can('manage_requests') || isAdminOwner;
+        const canFreezeTeam = can('teams:freeze') || can('manage_requests') || isAdminOwner;
+        const canChangeLeader = can('leaders:change_team') || canEditTeam || isAdminOwner;
+        const showDeleteBtn = can('teams:delete') || isAdminOwner;
         
         let actionButtons = `
             <button onclick="window.openTeamDetails('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
-            <button onclick="window.openEditTeamModalDirect('${t.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل البيانات"><i class="fas fa-edit"></i></button>
-            <button onclick="window.openManageMembersModalDirect('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="إدارة الأعضاء"><i class="fas fa-users-gear"></i></button>
         `;
+        if (canEditTeam) {
+            actionButtons += `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل البيانات"><i class="fas fa-edit"></i></button>`;
+        }
+        if (canChangeLeader || canEditTeam) {
+            actionButtons += `<button onclick="window.openManageMembersModalDirect('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="إدارة الأعضاء"><i class="fas fa-users-gear"></i></button>`;
+        }
         
-        if (isFrozen) {
-            actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل النشاط"><i class="fas fa-play"></i></button>`;
-        } else {
-            actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="text-red-500 hover:text-red-400 p-1" title="تجميد النشاط"><i class="fas fa-pause"></i></button>`;
+        if (canFreezeTeam) {
+            if (isFrozen) {
+                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل النشاط"><i class="fas fa-play"></i></button>`;
+            } else {
+                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="text-red-500 hover:text-red-400 p-1" title="تجميد النشاط"><i class="fas fa-pause"></i></button>`;
+            }
         }
         
         if (showDeleteBtn) {
@@ -325,16 +334,16 @@ function renderTeamsTable(data) {
                         <button onclick="window.openTeamDetails('${t.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                             <i class="fas fa-eye text-[10px]"></i> التفاصيل
                         </button>
-                        <button onclick="window.openManageMembersModalDirect('${t.id}')" class="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                        ${(canChangeLeader || canEditTeam) ? `<button onclick="window.openManageMembersModalDirect('${t.id}')" class="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                             <i class="fas fa-users-gear text-[10px]"></i> الأعضاء
-                        </button>
+                        </button>` : ''}
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="window.openEditTeamModalDirect('${t.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
-                        ${isFrozen ? 
+                        ${canEditTeam ? `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canFreezeTeam ? (isFrozen ? 
                             `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-play"></i></button>` :
                             `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg text-xs" title="تجميد"><i class="fas fa-pause"></i></button>`
-                        }
+                        ) : ''}
                         ${showDeleteBtn ? `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
                     </div>
                 </div>
@@ -527,6 +536,18 @@ window.openTeamRequestDetails = (id) => {
 };
 
 window.updateTeamRequestStatus = async (newStatus) => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    
+    if (newStatus === 'approved' && !can('teams:approve') && !can('manage_requests') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية اعتماد وتأسيس الفريق.', 'error');
+        return;
+    }
+    if (newStatus === 'rejected' && !can('teams:reject') && !can('manage_requests') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية رفض طلب تأسيس الفريق.', 'error');
+        return;
+    }
+    
     const reqId = document.getElementById('modal-current-team-req-id').value;
     const notes = document.getElementById('modal-team-req-notes').value.trim();
     if (!reqId) return;
@@ -1365,6 +1386,12 @@ window.toggleTeamFreezeStatus = async () => {
 };
 
 window.toggleTeamFreezeStatusDirect = async (teamId, status) => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('teams:freeze') && !can('manage_requests') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتجميد أو تفعيل هذا الفريق.', 'error');
+        return;
+    }
     const targetTeam = allTeams.find(t => t.id === teamId);
     const teamName = targetTeam ? targetTeam.name : 'فريق';
     const promptMsg = status === 'frozen' ? 
@@ -1425,6 +1452,12 @@ window.openEditTeamModal = () => {
 };
 
 window.openEditTeamModalDirect = (teamId) => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('teams:edit') && !can('manage_requests') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتعديل بيانات الفريق.', 'error');
+        return;
+    }
     const team = allTeams.find(t => t.id === teamId);
     if (!team) return;
     
@@ -1442,6 +1475,12 @@ window.openEditTeamModalDirect = (teamId) => {
 
 window.saveTeamData = async (e) => {
     e.preventDefault();
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('teams:edit') && !can('manage_requests') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتعديل بيانات الفريق.', 'error');
+        return;
+    }
     const teamId = document.getElementById('edit-team-id').value;
     if (!teamId) return;
     
@@ -1544,6 +1583,12 @@ window.openManageMembersModalDirect = async (teamId) => {
 };
 
 window.submitChangeLeader = async () => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('leaders:change_team') && !can('teams:edit') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتغيير قائد الفريق.', 'error');
+        return;
+    }
     const teamId = document.getElementById('mm-team-id').value;
     const newLeaderId = document.getElementById('mm-leader-select').value;
     if (!teamId || !newLeaderId) return;
@@ -1602,6 +1647,12 @@ window.submitChangeLeader = async () => {
 };
 
 window.makeLeaderDirect = async (memberId) => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('leaders:change_team') && !can('teams:edit') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتغيير قائد الفريق.', 'error');
+        return;
+    }
     const teamId = document.getElementById('td-current-team-id').value;
     if (!teamId || !memberId) return;
     
@@ -2241,5 +2292,40 @@ window.deleteTeamAccountDirect = async (teamId) => {
     } catch (err) {
         console.error("Delete Team Error:", err);
         alert("فشل حذف الفريق: " + err.message);
+    }
+};
+
+// ==========================================
+// 📊 EXPORT TEAMS TO CSV
+// ==========================================
+window.exportTeamsToCSV = () => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتصدير تقارير وبيانات الفرق.', 'error');
+        return;
+    }
+
+    if (!allTeams || allTeams.length === 0) {
+        window.showToast?.('لا توجد بيانات فرق لتصديرها.', 'info');
+        return;
+    }
+
+    const headers = ['اسم الفريق', 'القائد', 'الجامعة', 'المحافظة', 'التراك', 'النقاط', 'الحالة', 'تاريخ الإنشاء'];
+    const rows = allTeams.map(t => [
+        t.name || '',
+        t.leader_name || '',
+        t.university || '',
+        t.governorate || '',
+        typeof tracksMap !== 'undefined' ? (tracksMap[t.specialization] || t.specialization || '') : (t.specialization || ''),
+        t.total_score || 0,
+        t.status === 'frozen' ? 'مجمد' : 'نشط',
+        t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB') : ''
+    ]);
+
+    if (window.exportToCSV) {
+        window.exportToCSV('busla_teams_export.csv', headers, rows);
+    } else {
+        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
     }
 };

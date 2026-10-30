@@ -105,8 +105,16 @@ async function initDashboard(uid) {
         // Update UI Header details
         document.getElementById('admin-user-name').innerText = adminProfile.full_name || adminProfile.email;
         document.getElementById('admin-user-role').innerText = adminProfile.role;
-        if (adminProfile.avatar_url) {
-            document.getElementById('admin-user-avatar').src = adminProfile.avatar_url;
+        const userAvatarEl = document.getElementById('admin-user-avatar');
+        if (userAvatarEl) {
+            userAvatarEl.referrerPolicy = 'no-referrer';
+            userAvatarEl.onerror = function() {
+                this.onerror = null;
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+            };
+            if (adminProfile.avatar_url) {
+                userAvatarEl.src = adminProfile.avatar_url;
+            }
         }
 
         // Show/Hide Owner specific tools
@@ -317,12 +325,14 @@ function renderAdminAccounts() {
         
         // Count total permissions
         const customCount = adminPermissionsMap[admin.id] ? adminPermissionsMap[admin.id].size : 0;
-        const roleRecord = allRoles.find(r => r.name === admin.role);
+        const roleRecord = allRoles.find(r => String(r.name).toLowerCase().trim() === String(admin.role || '').toLowerCase().trim());
         const defaultCount = roleRecord && rolePermissionsMap[roleRecord.id] ? rolePermissionsMap[roleRecord.id].size : 0;
         const permsCount = customCount > 0 ? customCount : defaultCount;
 
         const isOwner = (adminProfile.role || '').toLowerCase() === 'owner';
         const isTargetOwner = (admin.role || '').toLowerCase() === 'owner';
+        const canManageAdmins = isOwner || hasPermission('settings:admins');
+        const canManagePerms = isOwner || hasPermission('settings:permissions');
 
         let statusClass = 'bg-green-500/10 text-green-400 border-green-500/20';
         let statusText = 'نشط';
@@ -334,14 +344,20 @@ function renderAdminAccounts() {
         // Build Actions
         let actionButtons = `
             <button onclick="viewAdminDetails('${admin.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
-            <button onclick="openEditAdminModal('${admin.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل"><i class="fas fa-edit"></i></button>
-            <button onclick="openPermissionsDrawer('${admin.id}')" class="text-yellow-500 hover:text-yellow-400 p-1" title="إدارة الصلاحيات"><i class="fas fa-key"></i></button>
         `;
+        if (canManageAdmins) {
+            actionButtons += `<button onclick="openEditAdminModal('${admin.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل"><i class="fas fa-edit"></i></button>`;
+        }
+        if (canManagePerms) {
+            actionButtons += `<button onclick="openPermissionsDrawer('${admin.id}')" class="text-yellow-500 hover:text-yellow-400 p-1" title="إدارة الصلاحيات"><i class="fas fa-key"></i></button>`;
+        }
 
-        if (admin.status === 'disabled') {
-            actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل الحساب"><i class="fas fa-user-check"></i></button>`;
-        } else {
-            actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="text-orange-500 hover:text-orange-400 p-1" title="تعطيل الحساب"><i class="fas fa-user-slash"></i></button>`;
+        if (canManageAdmins) {
+            if (admin.status === 'disabled') {
+                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل الحساب"><i class="fas fa-user-check"></i></button>`;
+            } else {
+                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="text-orange-500 hover:text-orange-400 p-1" title="تعطيل الحساب"><i class="fas fa-user-slash"></i></button>`;
+            }
         }
 
         if (isOwner && !isTargetOwner) {
@@ -352,7 +368,7 @@ function renderAdminAccounts() {
             tableRow: `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatarUrl}" class="w-9 h-9 rounded-full object-cover border border-white/10">
+                    <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(admin.full_name || 'Admin') + '&background=006A67&color=fff&size=100'" class="w-9 h-9 rounded-full object-cover border border-white/10">
                     <span class="font-bold text-white">${admin.full_name || 'بلا اسم'}</span>
                 </td>
                 <td class="p-4 text-gray-300 font-mono text-xs">${admin.email}</td>
@@ -368,7 +384,7 @@ function renderAdminAccounts() {
             <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
                 <div class="flex items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(admin.full_name || 'Admin') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div class="min-w-0">
                             <h4 class="text-sm font-bold text-white truncate">${admin.full_name || 'بلا اسم'}</h4>
                             <div class="text-[10px] text-gray-400 font-mono truncate select-all mt-0.5">${admin.email}</div>
@@ -396,16 +412,17 @@ function renderAdminAccounts() {
                         <button onclick="viewAdminDetails('${admin.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                             <i class="fas fa-eye text-[10px]"></i> التفاصيل
                         </button>
+                        ${canManagePerms ? `
                         <button onclick="openPermissionsDrawer('${admin.id}')" class="px-2.5 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 text-yellow-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                             <i class="fas fa-key text-[10px]"></i> الصلاحيات
-                        </button>
+                        </button>` : ''}
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="openEditAdminModal('${admin.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
-                        ${admin.status === 'disabled' ? 
+                        ${canManageAdmins ? `<button onclick="openEditAdminModal('${admin.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canManageAdmins ? (admin.status === 'disabled' ? 
                             `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-user-check"></i></button>` :
                             `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="p-1.5 text-orange-400 hover:bg-orange-500/10 rounded-lg text-xs" title="تعطيل"><i class="fas fa-user-slash"></i></button>`
-                        }
+                        ) : ''}
                         ${(isOwner && !isTargetOwner) ? `<button onclick="deleteAdminAccount('${admin.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
                     </div>
                 </div>
@@ -611,6 +628,10 @@ async function renderAuditLogs() {
 // 🚀 5. PERMISSIONS DRAWER ENGINE
 // ==========================================
 window.openPermissionsDrawer = async (adminId) => {
+    if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية إدارة وتخصيص الصلاحيات", "error");
+        return;
+    }
     currentSelectedAdminId = adminId;
     const admin = allAdmins.find(a => a.id === adminId);
     if (!admin) return;
@@ -621,18 +642,26 @@ window.openPermissionsDrawer = async (adminId) => {
     document.getElementById('drawer-admin-role').innerText = admin.role;
     
     const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
-    document.getElementById('drawer-avatar').src = avatarUrl;
+    const drawerAv = document.getElementById('drawer-avatar');
+    if (drawerAv) {
+        drawerAv.referrerPolicy = 'no-referrer';
+        drawerAv.onerror = function() {
+            this.onerror = null;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+        };
+        drawerAv.src = avatarUrl;
+    }
 
     // Get active permissions for admin
     let activePerms = new Set();
-    if (adminPermissionsMap[adminId] && adminPermissionsMap[adminId].size > 0) {
+    if (adminPermissionsMap[adminId]) {
         // Has customized permissions
-        activePerms = adminPermissionsMap[adminId];
+        activePerms = new Set(adminPermissionsMap[adminId]);
     } else {
         // Fall back to default Role permissions
-        const roleRecord = allRoles.find(r => r.name === admin.role);
+        const roleRecord = allRoles.find(r => String(r.name).toLowerCase().trim() === String(admin.role || '').toLowerCase().trim());
         if (roleRecord && rolePermissionsMap[roleRecord.id]) {
-            activePerms = rolePermissionsMap[roleRecord.id];
+            activePerms = new Set(rolePermissionsMap[roleRecord.id]);
         }
     }
 
@@ -847,13 +876,25 @@ window.viewAdminDetails = (adminId) => {
     document.getElementById('detail-rank').innerText = admin.current_rank || 'Newbie';
     
     const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
-    document.getElementById('detail-avatar').src = avatarUrl;
+    const detailAv = document.getElementById('detail-avatar');
+    if (detailAv) {
+        detailAv.referrerPolicy = 'no-referrer';
+        detailAv.onerror = function() {
+            this.onerror = null;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+        };
+        detailAv.src = avatarUrl;
+    }
 
     openModal('view-details-modal');
 };
 
 // Edit Admin Account (Modal)
 window.openEditAdminModal = (adminId) => {
+    if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية تعديل بيانات الأدمن", "error");
+        return;
+    }
     const admin = allAdmins.find(a => a.id === adminId);
     if (!admin) return;
 
@@ -868,6 +909,10 @@ window.openEditAdminModal = (adminId) => {
 
 // Edit Role Modal
 window.openEditRoleModal = (roleId) => {
+    if (!hasPermission('settings:permissions') && !hasPermission('settings:edit') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية تعديل الأدوار", "error");
+        return;
+    }
     const role = allRoles.find(r => r.id === roleId);
     if (!role) return;
 
@@ -896,6 +941,10 @@ window.openEditRoleModal = (roleId) => {
 
 // Create Role Modal
 window.openCreateRoleModal = () => {
+    if (!hasPermission('settings:permissions') && !hasPermission('settings:edit') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية إنشاء أدوار جديدة", "error");
+        return;
+    }
     document.getElementById('role-editor-id').value = '';
     document.getElementById('role-editor-name').value = '';
     document.getElementById('role-editor-name').disabled = false;
@@ -922,6 +971,10 @@ window.openCreateRoleModal = () => {
 // Save Admin Customized Permissions (Drawer)
 async function saveAdminPermissions() {
     if (!currentSelectedAdminId) return;
+    if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية حفظ وتعديل الصلاحيات", "error");
+        return;
+    }
     
     const btn = document.getElementById('btn-save-permissions');
     const originalText = btn.innerHTML;
@@ -1012,6 +1065,10 @@ async function saveAdminPermissions() {
 // Edit Admin Account Details
 async function handleEditAdminSubmit(e) {
     e.preventDefault();
+    if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية تعديل بيانات الحسابات الإدارية", "error");
+        return;
+    }
     const adminId = document.getElementById('edit-admin-id').value;
     const name = document.getElementById('edit-admin-name').value;
     const email = document.getElementById('edit-admin-email').value;
@@ -1129,6 +1186,10 @@ window.deleteAdminAccount = async (adminId) => {
 // Add Admin Account
 async function handleAddAdminSubmit(e) {
     e.preventDefault();
+    if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية إضافة حسابات أدمن جديدة", "error");
+        return;
+    }
     const name = document.getElementById('add-admin-name').value;
     const email = document.getElementById('add-admin-email').value;
     const role = document.getElementById('add-admin-role').value;
@@ -1190,6 +1251,10 @@ async function handleAddAdminSubmit(e) {
 // Role Form Controller (Create/Edit Role)
 async function handleRoleEditorSubmit(e) {
     e.preventDefault();
+    if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
+        showToast("ليس لديك صلاحية إنشاء أو تعديل الأدوار", "error");
+        return;
+    }
     const roleId = document.getElementById('role-editor-id').value;
     const name = document.getElementById('role-editor-name').value;
     const desc = document.getElementById('role-editor-desc').value;
@@ -1654,55 +1719,136 @@ function loadModuleData(moduleId) {
 // ==========================================
 // 🚀 8.5. ROLE-BASED ACCESS CONTROL (RBAC)
 // ==========================================
-function hasPermission(permId) {
+function hasPermission(permId, context = null) {
     if (!adminProfile) return false;
     const roleLower = (adminProfile.role || '').toLowerCase().trim();
     if (roleLower === 'owner') return true;
 
     // Load active permissions set for this admin
-    const activePerms = adminPermissionsMap[adminProfile.id] || new Set();
+    const hasCustom = Boolean(adminPermissionsMap[adminProfile.id]);
+    let checkSet = hasCustom ? adminPermissionsMap[adminProfile.id] : null;
     
     // If they don't have customized permissions, check default Role permissions
-    let checkSet = activePerms;
-    if (activePerms.size === 0) {
-        const roleRecord = allRoles.find(r => r.name === adminProfile.role);
+    if (!checkSet) {
+        const roleRecord = allRoles.find(r => 
+            String(r.name).toLowerCase().trim() === roleLower
+        );
         if (roleRecord && rolePermissionsMap[roleRecord.id]) {
             checkSet = rolePermissionsMap[roleRecord.id];
+        } else {
+            checkSet = new Set();
         }
     }
 
-    // Fallback to profile's admin_permissions column if both are empty
+    // Fallback to profile's admin_permissions column if empty
     if (checkSet.size === 0 && adminProfile.admin_permissions) {
         let raw = adminProfile.admin_permissions;
         if (typeof raw === 'string') {
             try { raw = JSON.parse(raw); } catch(e) {}
         }
         const arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.permissions) ? raw.permissions : []);
-        if (arr.includes('*')) return true;
-        if (arr.includes(permId)) return true;
-        
-        // Mapped old to new permission matches
-        if (permId === 'manage_content' && (arr.includes('manage_content') || arr.includes('*'))) return true;
-        if (permId === 'manage_requests' && (arr.includes('manage_requests') || arr.includes('*'))) return true;
-        if (permId === 'audit_projects' && (arr.includes('audit_projects') || arr.includes('*'))) return true;
-        if (permId === 'manage_users' && (arr.includes('manage_users') || arr.includes('*'))) return true;
+        checkSet = new Set(arr);
     }
 
     if (checkSet.has('*')) return true;
+
+    // Support multiple permissions separated by comma or pipe (OR logic)
+    if (typeof permId === 'string' && (permId.includes(',') || permId.includes('|'))) {
+        const separator = permId.includes(',') ? ',' : '|';
+        const parts = permId.split(separator).map(s => s.trim()).filter(Boolean);
+        return parts.some(p => hasPermission(p, context));
+    }
+
+    // Direct match
     if (checkSet.has(permId)) return true;
 
-    // Bridge old perm keys to fine-grained database permissions
+    // Granular content context check (track / phase / course / subaction)
+    if (context && typeof context === 'object') {
+        const { track_id, phase_id, course_id, sub } = context;
+        if (track_id && checkSet.has(`content:track:${track_id}`)) return true;
+        if (track_id && phase_id && checkSet.has(`content:track:${track_id}:phase:${phase_id}`)) return true;
+        if (track_id && course_id && checkSet.has(`content:track:${track_id}:course:${course_id}`)) return true;
+        if (track_id && course_id && sub && checkSet.has(`content:track:${track_id}:course:${course_id}:${sub}`)) return true;
+    }
+
+    // Bridge Dashboard permissions
+    if (permId === 'dashboard:view') {
+        return checkSet.has('dashboard:view') || checkSet.has('dashboard:stats') || checkSet.has('dashboard:export') || roleLower === 'master admin';
+    }
+    if (permId === 'dashboard:stats') {
+        return checkSet.has('dashboard:stats') || roleLower === 'master admin';
+    }
+    if (permId === 'dashboard:export') {
+        return checkSet.has('dashboard:export') || checkSet.has('reports:export:excel') || checkSet.has('reports:export:pdf') || roleLower === 'master admin';
+    }
+
+    // Bridge Umbrella: manage_content
     if (permId === 'manage_content') {
-        return checkSet.has('manage_content') || checkSet.has('content:course:view') || checkSet.has('content:phase:view') || checkSet.has('content:material:view');
+        if (checkSet.has('manage_content')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('content:'));
     }
+
+    // Bridge Umbrella: manage_requests (Teams & Requests)
     if (permId === 'manage_requests') {
-        return checkSet.has('manage_requests') || checkSet.has('teams:approve') || checkSet.has('teams:reject') || checkSet.has('teams:view');
+        if (checkSet.has('manage_requests')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('teams:'));
     }
+
+    // Bridge Umbrella: audit_projects (Reviews)
     if (permId === 'audit_projects') {
-        return checkSet.has('audit_projects') || checkSet.has('reviews:submissions') || checkSet.has('reviews:grades:approve');
+        if (checkSet.has('audit_projects')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('reviews:'));
     }
+
+    // Bridge Umbrella: manage_users (Users & Leaders)
     if (permId === 'manage_users') {
-        return checkSet.has('manage_users') || checkSet.has('settings:permissions') || checkSet.has('settings:admins');
+        if (checkSet.has('manage_users')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('users:') || p.startsWith('leaders:') || p.startsWith('settings:'));
+    }
+
+    // Bridge Umbrella: manage_settings
+    if (permId === 'manage_settings') {
+        if (checkSet.has('manage_settings')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('settings:'));
+    }
+
+    // Bridge Umbrella: manage_notifications
+    if (permId === 'manage_notifications') {
+        if (checkSet.has('manage_notifications')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('notifications:'));
+    }
+
+    // Bridge Umbrella: manage_reports
+    if (permId === 'manage_reports') {
+        if (checkSet.has('manage_reports')) return true;
+        return Array.from(checkSet).some(p => p.startsWith('reports:'));
+    }
+
+    // If checking a specific content permission and user has general manage_content
+    if (permId.startsWith('content:') && checkSet.has('manage_content')) {
+        return true;
+    }
+
+    // If checking a specific teams permission and user has general manage_requests
+    if (permId.startsWith('teams:') && checkSet.has('manage_requests')) {
+        return true;
+    }
+
+    // If checking a specific reviews permission and user has general audit_projects
+    if (permId.startsWith('reviews:') && checkSet.has('audit_projects')) {
+        return true;
+    }
+
+    // If checking a specific users or leaders permission and user has general manage_users
+    if ((permId.startsWith('users:') || permId.startsWith('leaders:')) && checkSet.has('manage_users')) {
+        return true;
+    }
+
+    // If user has specific track permissions, they can view content
+    if (permId.startsWith('content:') && permId.includes(':view')) {
+        if (Array.from(checkSet).some(p => p.startsWith('content:track:'))) {
+            return true;
+        }
     }
 
     return false;
@@ -1710,7 +1856,7 @@ function hasPermission(permId) {
 
 function updateAdminUI() {
     try {
-        const restrictedElements = document.querySelectorAll('[data-perm]');
+        const restrictedElements = document.querySelectorAll('[data-perm]:not(#permissions-drawer *):not(#role-editor-modal *)');
         restrictedElements.forEach((el) => {
             const requiredPermission = el.getAttribute('data-perm');
             const isAllowed = hasPermission(requiredPermission);
@@ -1721,6 +1867,13 @@ function updateAdminUI() {
                 el.classList.add('hidden');
             }
         });
+
+        // If active nav button is hidden, switch to first visible tab
+        const activeNavBtn = document.querySelector('.nav-btn.bg-b-primary\\/10');
+        if (activeNavBtn && activeNavBtn.classList.contains('hidden')) {
+            const firstAllowedBtn = document.querySelector('.nav-btn:not(.hidden)');
+            if (firstAllowedBtn) firstAllowedBtn.click();
+        }
     } catch (err) {
         console.error("updateAdminUI Error:", err);
     }
@@ -1945,11 +2098,12 @@ async function renderDashboardOverview() {
             }
         };
 
-        toggleKpiWrapper('kpi-total-students', isMasterOrOwner || hasPermission('manage_users'));
-        toggleKpiWrapper('kpi-total-teams', isMasterOrOwner || hasPermission('manage_requests'));
-        toggleKpiWrapper('kpi-total-phases', isMasterOrOwner || hasPermission('manage_content'));
-        toggleKpiWrapper('kpi-online-now', isMasterOrOwner);
-        toggleKpiWrapper('kpi-pending-grading', isMasterOrOwner || hasPermission('audit_projects'));
+        const canStats = isMasterOrOwner || hasPermission('dashboard:stats') || hasPermission('reports:view') || hasPermission('manage_reports');
+        toggleKpiWrapper('kpi-total-students', canStats || hasPermission('users:view'));
+        toggleKpiWrapper('kpi-total-teams', canStats || hasPermission('teams:view'));
+        toggleKpiWrapper('kpi-total-phases', canStats || hasPermission('content:phase:view'));
+        toggleKpiWrapper('kpi-online-now', canStats);
+        toggleKpiWrapper('kpi-pending-grading', canStats || hasPermission('reviews:submissions'));
 
         // 6. Action Required Alerts List
         const actionListEl = document.getElementById('dash-action-required-list');
@@ -2092,14 +2246,14 @@ async function renderDashboardOverview() {
                 else btn.classList.add('hidden');
             }
         };
-        toggleBtn('button[onclick*="add-phase"]', hasPermission('manage_content'));
-        toggleBtn('button[onclick*="add-course"]', hasPermission('manage_content'));
-        toggleBtn('button[onclick*="add-quiz"]', hasPermission('manage_content'));
-        toggleBtn('button[onclick*="add-project"]', hasPermission('manage_content'));
-        toggleBtn('button[onclick*="create-admin"]', hasPermission('manage_users'));
-        toggleBtn('button[onclick*="create-notif"]', hasPermission('manage_users'));
-        toggleBtn('button[onclick*="review-projects"]', hasPermission('audit_projects'));
-        toggleBtn('button[onclick*="review-teams"]', hasPermission('manage_requests'));
+        toggleBtn('button[onclick*="add-phase"]', hasPermission('content:phase:create'));
+        toggleBtn('button[onclick*="add-course"]', hasPermission('content:course:create'));
+        toggleBtn('button[onclick*="add-quiz"]', hasPermission('content:quiz:create'));
+        toggleBtn('button[onclick*="add-project"]', hasPermission('content:project:create'));
+        toggleBtn('button[onclick*="create-admin"]', hasPermission('settings:admins'));
+        toggleBtn('button[onclick*="create-notif"]', hasPermission('notifications:all,notifications:team,notifications:student,notifications:leader'));
+        toggleBtn('button[onclick*="review-projects"]', hasPermission('reviews:submissions'));
+        toggleBtn('button[onclick*="review-teams"]', hasPermission('teams:approve,teams:reject'));
 
         // 8. Toggle Section Views (Charts, Log Timeline, Active Tables)
         const toggleSection = (id, allowed) => {
@@ -2119,12 +2273,12 @@ async function renderDashboardOverview() {
             }
         };
 
-        toggleWrapperByChild('activityChart', isMasterOrOwner);
-        toggleWrapperByChild('distributionChart', isMasterOrOwner);
-        toggleWrapperByChild('dash-recent-activity-timeline', isMasterOrOwner);
-        toggleWrapperByChild('dash-top-students-list', isMasterOrOwner || hasPermission('manage_requests'));
-        toggleWrapperByChild('dash-top-teams-tbody', isMasterOrOwner || hasPermission('manage_requests'));
-        toggleSection('dash-section-active-courses', isMasterOrOwner || hasPermission('manage_content'));
+        toggleWrapperByChild('activityChart', canStats);
+        toggleWrapperByChild('distributionChart', canStats);
+        toggleWrapperByChild('dash-recent-activity-timeline', canStats || hasPermission('settings:logs'));
+        toggleWrapperByChild('dash-top-students-list', canStats || hasPermission('users:view'));
+        toggleWrapperByChild('dash-top-teams-tbody', canStats || hasPermission('teams:view'));
+        toggleSection('dash-section-active-courses', canStats || hasPermission('content:course:view'));
         toggleWrapperByChild('status-db', isMasterOrOwner);
         toggleWrapperByChild('dash-my-role', isMasterOrOwner);
 
@@ -2775,11 +2929,35 @@ window.submitGlobalNotification = async (e) => {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
 
+    const isOwner = (adminProfile?.role || '').toLowerCase() === 'owner';
+    const targetType = document.getElementById('global-notif-target-type').value;
+
+    if (targetType === 'all' && !hasPermission('notifications:all') && !isOwner) {
+        showToast("ليس لديك صلاحية إرسال إشعار عام للجميع", "error");
+        return;
+    }
+    if (targetType === 'team' && !hasPermission('notifications:team') && !isOwner) {
+        showToast("ليس لديك صلاحية إرسال إشعار لفريق", "error");
+        return;
+    }
+    if (targetType === 'user') {
+        const uid = document.getElementById('global-notif-user-id').value;
+        const targetUser = (allUsers || []).find(u => u.id === uid);
+        const isLeader = targetUser && (String(targetUser.role).toLowerCase() === 'leader');
+        if (isLeader && !hasPermission('notifications:leader') && !isOwner) {
+            showToast("ليس لديك صلاحية إرسال إشعار لليدر", "error");
+            return;
+        }
+        if (!isLeader && !hasPermission('notifications:student') && !hasPermission('users:notify') && !isOwner) {
+            showToast("ليس لديك صلاحية إرسال إشعار لطالب", "error");
+            return;
+        }
+    }
+
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
     submitBtn.disabled = true;
 
     try {
-        const targetType = document.getElementById('global-notif-target-type').value;
         const title = document.getElementById('global-notif-title').value;
         const type = document.getElementById('global-notif-type').value;
         const content = document.getElementById('global-notif-content').value;
@@ -2813,5 +2991,80 @@ window.submitGlobalNotification = async (e) => {
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
+    }
+};
+
+// ==========================================
+// 🚀 9. CSV & EXCEL EXPORT ENGINE
+// ==========================================
+window.exportToCSV = function(filename, headers, rows) {
+    const isOwner = (adminProfile?.role || '').toLowerCase() === 'owner';
+    if (!hasPermission('reports:export:excel') && !hasPermission('dashboard:export') && !isOwner) {
+        showToast("ليس لديك صلاحية تصدير البيانات (Excel/CSV)", "error");
+        return;
+    }
+
+    const csvContent = "\uFEFF" + [
+        headers.join(","),
+        ...rows.map(r => r.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("تم تصدير البيانات بنجاح", "success");
+};
+
+// ==========================================
+// 💾 10. SYSTEM BACKUP ENGINE
+// ==========================================
+window.triggerDataBackup = async function() {
+    const isOwner = (adminProfile?.role || '').toLowerCase() === 'owner';
+    if (!hasPermission('settings:backup') && !hasPermission('manage_settings') && !isOwner) {
+        showToast("ليس لديك صلاحية إنشاء وتصدير النسخ الاحتياطية", "error");
+        return;
+    }
+
+    try {
+        showToast("جاري جمع بيانات المنصة وتحضير النسخة الاحتياطية...", "info");
+        const [tracksRes, phasesRes, coursesRes, rolesRes] = await Promise.all([
+            supabase.from('tracks').select('*'),
+            supabase.from('phases').select('*'),
+            supabase.from('courses').select('*'),
+            supabase.from('admin_roles').select('*')
+        ]);
+
+        const backupData = {
+            export_date: new Date().toISOString(),
+            version: '2.0',
+            system: 'Busla LMS Platform',
+            tracks: tracksRes.data || [],
+            phases: phasesRes.data || [],
+            courses: coursesRes.data || [],
+            roles: rolesRes.data || []
+        };
+
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `busla_system_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        await logAdminAction('settings:backup', 'Platform Backup', 'تصدير نسخة احتياطية من بيانات المنصة');
+        showToast("تم تصدير النسخة الاحتياطية بنجاح!", "success");
+    } catch (err) {
+        console.error("Backup Export Error:", err);
+        showToast("فشل إنشاء النسخة الاحتياطية: " + err.message, "error");
     }
 };

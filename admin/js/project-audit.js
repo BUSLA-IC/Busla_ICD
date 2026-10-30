@@ -1236,27 +1236,39 @@ function populateHistoryTimeline(sub) {
 
 // Adjust drawer footer buttons based on submission status
 function adjustFooterButtons(sub) {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    
+    const canApprove = can('reviews:grades:approve') || can('audit_projects') || isOwner;
+    const canSaveAudit = can('reviews:grades:edit') || can('reviews:regrade') || can('audit_projects') || isOwner;
+    const canReject = can('reviews:grades:reject') || can('audit_projects') || isOwner;
+
     const btnApprove = document.getElementById('btn-drawer-approve');
     const btnSaveAudit = document.getElementById('btn-drawer-save-audit');
     const btnReject = document.getElementById('btn-drawer-reject');
     
-    // Default show/hide configuration
-    if (sub.status === 'pending') {
-        btnApprove.classList.add('hidden');
-        btnSaveAudit.classList.add('hidden');
-        btnReject.classList.add('hidden');
-    } else if (sub.status === 'graded') {
-        btnApprove.classList.remove('hidden');
-        btnSaveAudit.classList.remove('hidden');
-        btnReject.classList.remove('hidden');
-    } else if (sub.status === 'approved') {
-        btnApprove.classList.add('hidden');
-        btnSaveAudit.classList.remove('hidden'); // allow audit updates
-        btnReject.classList.remove('hidden'); // allow rejection
-    } else if (sub.status === 'rejected') {
-        btnApprove.classList.add('hidden');
-        btnSaveAudit.classList.add('hidden');
-        btnReject.classList.add('hidden');
+    if (btnSaveAudit) {
+        if (!canSaveAudit || sub.status === 'pending' || sub.status === 'rejected') {
+            btnSaveAudit.classList.add('hidden');
+        } else {
+            btnSaveAudit.classList.remove('hidden');
+        }
+    }
+    
+    if (btnApprove) {
+        if (!canApprove || sub.status !== 'graded') {
+            btnApprove.classList.add('hidden');
+        } else {
+            btnApprove.classList.remove('hidden');
+        }
+    }
+    
+    if (btnReject) {
+        if (!canReject || (sub.status !== 'graded' && sub.status !== 'approved')) {
+            btnReject.classList.add('hidden');
+        } else {
+            btnReject.classList.remove('hidden');
+        }
     }
 }
 
@@ -1273,6 +1285,12 @@ window.copyToClipboard = (text) => {
 // Action 1: Approve Leader Grading directly
 window.approveLeaderGradingAction = async () => {
     if (!selectedSubmission) return;
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reviews:grades:approve') && !can('audit_projects') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية اعتماد درجات المشاريع.', 'error');
+        return;
+    }
     
     const btn = document.getElementById('btn-drawer-approve');
     const originalText = btn.innerHTML;
@@ -1339,6 +1357,12 @@ window.approveLeaderGradingAction = async () => {
 // Action 2: Save Administrative Review/Audit Grading
 window.saveAdminAuditAction = async () => {
     if (!selectedSubmission) return;
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reviews:grades:edit') && !can('reviews:regrade') && !can('audit_projects') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتعديل درجات وتدقيق المشاريع.', 'error');
+        return;
+    }
 
     const btn = document.getElementById('btn-drawer-save-audit');
     const originalText = btn.innerHTML;
@@ -1477,6 +1501,12 @@ window.saveAdminAuditAction = async () => {
 // Action 3: Reject Grading and return project to Leader
 window.rejectLeaderGradingAction = async () => {
     if (!selectedSubmission) return;
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reviews:grades:reject') && !can('audit_projects') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية رفض تقييم الليدر وإرجاع المشروع.', 'error');
+        return;
+    }
 
     const confirmed = await window.showCustomConfirm(
         "تأكيد رفض التصحيح",
@@ -1575,6 +1605,12 @@ window.openReassignReviewerModal = () => {
 
 window.submitReassignReviewer = async () => {
     if (!selectedSubmission) return;
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reviews:regrade') && !can('audit_projects') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لإعادة تعيين مراجع المشروع.', 'error');
+        return;
+    }
 
     const selectEl = document.getElementById('reassign-reviewer-select');
     const reasonText = document.getElementById('reassign-reason-textarea').value.trim();
@@ -1644,5 +1680,40 @@ window.submitAddAuditNote = async () => {
     } catch (err) {
         console.error("Add Audit Note Error:", err);
         window.showToast("حدث خطأ أثناء تسجيل الملاحظة", "error");
+    }
+};
+
+// ==========================================
+// 📊 EXPORT AUDITS TO CSV
+// ==========================================
+window.exportAuditsToCSV = () => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتصدير تقارير المراجعات.', 'error');
+        return;
+    }
+
+    if (!submissionsData || submissionsData.length === 0) {
+        window.showToast?.('لا توجد تسليمات لتصديرها.', 'info');
+        return;
+    }
+
+    const headers = ['المشروع', 'الطالب', 'الفريق', 'الليدر المراجع', 'الدرجة', 'الحالة', 'تاريخ التسليم', 'تاريخ التصحيح'];
+    const rows = submissionsData.map(s => [
+        s.project_title || '',
+        s.student_name || '',
+        s.team_name || '',
+        s.reviewer_name || '',
+        s.grade !== null ? s.grade : '--',
+        s.status || '',
+        s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('en-GB') : '',
+        s.graded_at ? new Date(s.graded_at).toLocaleDateString('en-GB') : ''
+    ]);
+
+    if (window.exportToCSV) {
+        window.exportToCSV('busla_project_audits_export.csv', headers, rows);
+    } else {
+        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
     }
 };

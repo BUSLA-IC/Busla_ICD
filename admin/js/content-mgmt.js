@@ -457,6 +457,51 @@ function renderTypeBadge(type) {
     return `<span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-xs font-bold uppercase shadow-sm">${type}</span>`;
 }
 
+
+function getCmPermission(action, level, item = null) {
+    const can = (perm, ctx) => window.hasPermission ? window.hasPermission(perm, ctx) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (isOwner) return true;
+    if (can('manage_content')) return true;
+
+    const ctx = item ? {
+        track_id: item.track_id || (level === 'tracks' ? item.id : null),
+        phase_id: item.phase_id || (level === 'phases' ? item.phase_id : null),
+        course_id: item.course_id || (level === 'courses' ? item.course_id : null)
+    } : null;
+
+    if (level === 'tracks') {
+        if (action === 'create') return can('content:phase:create') || can('content:track:create');
+        if (action === 'edit') return can('content:track:edit', ctx) || can('content:phase:edit');
+        if (action === 'delete') return can('content:track:delete', ctx);
+    } else if (level === 'phases') {
+        if (action === 'create') return can('content:phase:create', ctx);
+        if (action === 'edit') return can('content:phase:edit', ctx);
+        if (action === 'delete') return can('content:phase:delete', ctx);
+    } else if (level === 'courses') {
+        if (action === 'create') return can('content:course:create', ctx);
+        if (action === 'edit') return can('content:course:edit', ctx);
+        if (action === 'delete') return can('content:course:delete', ctx);
+    } else if (level === 'course_materials') {
+        if (action === 'create') return can('content:material:create', ctx) || can('video:create');
+        if (action === 'edit') return can('content:material:edit', ctx) || can('video:edit');
+        if (action === 'delete') return can('content:material:delete', ctx) || can('video:delete');
+    } else if (level === 'quizzes') {
+        if (action === 'create') return can('content:quiz:create', ctx);
+        if (action === 'edit') return can('content:quiz:edit', ctx) || can('quiz:edit');
+        if (action === 'delete') return can('content:quiz:delete', ctx) || can('quiz:delete');
+    } else if (level === 'quiz_questions') {
+        if (action === 'create') return can('content:question:create', ctx) || can('content:quiz:edit', ctx);
+        if (action === 'edit') return can('content:question:edit', ctx) || can('content:quiz:edit', ctx);
+        if (action === 'delete') return can('content:question:delete', ctx) || can('content:quiz:delete', ctx);
+    } else if (level === 'projects' || level === 'course_projects') {
+        if (action === 'create') return can('content:project:create', ctx);
+        if (action === 'edit') return can('content:project:edit', ctx) || can('project:edit');
+        if (action === 'delete') return can('content:project:delete', ctx);
+    }
+    return true;
+}
+
 function renderTable() {
     const tbody = document.getElementById('cm-table-body');
     const mobileCards = document.getElementById('cm-mobile-cards-view');
@@ -470,6 +515,8 @@ function renderTable() {
     const rendered = filteredData.map((item, index) => {
         const pk = getPrimaryKey();
         const id = item[pk];
+        const canEditItem = getCmPermission('edit', cmCurrentLevel, item);
+        const canDeleteItem = getCmPermission('delete', cmCurrentLevel, item);
         const titleKey = LEVELS[cmCurrentLevel].title;
         const title = String(item[titleKey] || item.name || item.title || '');
         const icon = LEVELS[cmCurrentLevel].icon;
@@ -699,8 +746,8 @@ function renderTable() {
                         ${reorderBtn}
                         ${previewBtn}
                         ${previewQuizOrProjectBtn}
-                        <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="تعديل"><i class="fas fa-pen text-xs"></i></button>
-                        <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="حذف"><i class="fas fa-trash text-xs"></i></button>
+                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="تعديل"><i class="fas fa-pen text-xs"></i></button>` : ''}
+                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="حذف"><i class="fas fa-trash text-xs"></i></button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -742,12 +789,12 @@ function renderTable() {
                         ${mobileDrillDownBtn}
                         ${mobileReorderBtn}
                         ${mobilePreviewBtn}
-                        <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
+                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
                             <i class="fas fa-pen text-[11px]"></i>
-                        </button>
-                        <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
+                        </button>` : ''}
+                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
                             <i class="fas fa-trash text-[11px]"></i>
-                        </button>
+                        </button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1103,6 +1150,10 @@ function ensureDetailsModalExists() {
 // 🛠️ FULL DATABASE FORMS (نماذج الإدخال)
 // ==========================================
 window.cmOpenModal = async () => {
+    if (!getCmPermission('create', cmCurrentLevel)) {
+        window.showToast?.('ليس لديك صلاحية لإضافة سجل جديد في هذا القسم.', 'error');
+        return;
+    }
     cmCurrentEditId = null;
     document.getElementById('cm-modal-title').innerText = `إضافة سجل جديد`;
     await generateFormFields(null);
@@ -1907,6 +1958,10 @@ async function handleFormSubmit(e) {
 window.cmEditItem = async (id) => {
     const item = rawData.find(r => String(r[getPrimaryKey()]) === String(id));
     if (!item) return;
+    if (!getCmPermission('edit', cmCurrentLevel, item)) {
+        window.showToast?.('ليس لديك صلاحية لتعديل هذا السجل.', 'error');
+        return;
+    }
     cmCurrentEditId = id;
     document.getElementById('cm-modal-title').innerText = `تعديل السجل`;
     document.getElementById('cm-crud-modal').classList.remove('hidden');
@@ -2288,6 +2343,10 @@ window.cmDeleteItem = async (id) => {
     const item = rawData.find(r => String(r[getPrimaryKey()]) === String(id));
     if (!item) {
         window.showToast("لم يتم العثور على العنصر المراد حذفه.", "error");
+        return;
+    }
+    if (!getCmPermission('delete', cmCurrentLevel, item)) {
+        window.showToast?.('ليس لديك صلاحية لحذف هذا السجل.', 'error');
         return;
     }
     
@@ -3875,7 +3934,8 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
+            modal.setAttribute('dir', 'rtl');
             document.body.appendChild(modal);
         }
 
@@ -3886,26 +3946,29 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
             else if (item.type === 'project') icon = 'fa-code';
 
             return `
-                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.content_id}">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
-                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.content_id}">
+                    <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
-                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
-                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">${item.type}</span>
+                        <div class="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                            <span class="text-xs sm:text-sm font-bold text-white break-words whitespace-normal leading-relaxed" dir="auto" title="${item.title}">${item.title}</span>
+                            <span class="text-[9px] uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 font-mono shrink-0">${item.type}</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
-                        <input type="number" value="${item.order_index}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
             `;
         }).join('');
 
         modal.innerHTML = `
-            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
@@ -3917,7 +3980,7 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
                     </button>
                 </div>
                 <!-- List Container -->
-                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-2.5 sm:space-y-3 custom-scroll">
                     ${listItemsHtml}
                 </div>
                 <!-- Footer -->
@@ -4069,33 +4132,37 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
+            modal.setAttribute('dir', 'rtl');
             document.body.appendChild(modal);
         }
 
         let listItemsHtml = courses.map(item => {
             let icon = 'fa-book';
             return `
-                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.course_id}">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
-                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.course_id}">
+                    <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
-                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
-                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">course</span>
+                        <div class="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                            <span class="text-xs sm:text-sm font-bold text-white break-words whitespace-normal leading-relaxed" dir="auto" title="${item.title}">${item.title}</span>
+                            <span class="text-[9px] uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 font-mono shrink-0">course</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
-                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
             `;
         }).join('');
 
         modal.innerHTML = `
-            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
@@ -4107,7 +4174,7 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
                     </button>
                 </div>
                 <!-- List Container -->
-                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-2.5 sm:space-y-3 custom-scroll">
                     ${listItemsHtml}
                 </div>
                 <!-- Footer -->
@@ -4185,33 +4252,37 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 dir-rtl text-right';
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
+            modal.setAttribute('dir', 'rtl');
             document.body.appendChild(modal);
         }
 
         let listItemsHtml = phases.map(item => {
             let icon = 'fa-layer-group';
             return `
-                <div class="reorder-item flex items-center justify-between p-3.5 bg-black/30 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-4" draggable="true" data-id="${item.phase_id}">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-600 group-hover:text-gray-400 cursor-grab shrink-0"><i class="fas fa-grip-vertical"></i></div>
-                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 text-xs shrink-0">
+                <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.phase_id}">
+                    <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
-                        <span class="text-sm font-bold text-white flex-1 min-w-0 break-words whitespace-normal" dir="auto" title="${item.title}">${item.title}</span>
-                        <span class="text-[9px] uppercase tracking-wider text-gray-500 bg-white/5 px-2 py-0.5 rounded border border-white/5 font-mono shrink-0">phase</span>
+                        <div class="flex items-center gap-2 flex-1 min-w-0 flex-wrap sm:flex-nowrap">
+                            <span class="text-xs sm:text-sm font-bold text-white break-words whitespace-normal leading-relaxed" dir="auto" title="${item.title}">${item.title}</span>
+                            <span class="text-[9px] uppercase tracking-wider text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 font-mono shrink-0">phase</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition-colors" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
-                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/10 rounded-lg px-2 py-1 text-center font-mono text-sm text-yellow-500 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
+                    <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
             `;
         }).join('');
 
         modal.innerHTML = `
-            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
@@ -4223,7 +4294,7 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
                     </button>
                 </div>
                 <!-- List Container -->
-                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-6 space-y-3 custom-scroll">
+                <div id="cm-reorder-list" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-2.5 sm:space-y-3 custom-scroll">
                     ${listItemsHtml}
                 </div>
                 <!-- Footer -->

@@ -13,41 +13,12 @@
     <meta name="apple-mobile-web-app-title" content="بوصلة">
     <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        'b-bg': '#000000',
-                        'b-text': '#F6F6F6',
-                        'b-primary': '#006A67',
-                        'b-hl-light': '#22C45D',
-                        'b-hl-medium': '#00dec8',
-                        'b-surface': '#111111',
-                        'b-border': '#222222',
-                    },
-                    fontFamily: { 'cairo': ['Cairo', 'sans-serif'] },
-                    animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'circuit': 'circuit 20s linear infinite',
-                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-                    },
-                    keyframes: {
-                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } },
-                        circuit: { '0%': { backgroundPosition: '0% 50%' }, '100%': { backgroundPosition: '100% 50%' } },
-                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-                    }
-                }
-            }
-        }
-    </script>
-    
+        
     <style>
         body { font-family: 'Cairo', sans-serif; overflow-x: hidden; background-color: #000; }
 

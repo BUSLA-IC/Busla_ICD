@@ -337,17 +337,21 @@ async function renderUsersTable(data) {
         return;
     }
 
-    // Get current logged-in user permissions to hide/show Delete button
-    let isOwner = false;
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && session.user) {
-            const { data: currentAdmin } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-            isOwner = currentAdmin?.role === 'owner';
-        }
-    } catch(e) {}
+    // Permission checks
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
 
-    const mapped = data.map(user => {
+    const canViewStudents = can('users:view') || can('manage_users') || isOwner;
+    const canViewLeaders = can('leaders:view') || can('manage_users') || isOwner;
+
+    // Filter data according to view permissions
+    const visibleData = data.filter(u => {
+        const isLeader = u.role === 'leader' || u.role === 'suspended_leader';
+        if (isLeader) return canViewLeaders;
+        return canViewStudents;
+    });
+
+    const mapped = visibleData.map(user => {
         const photo = resolveImageUrl(user.avatar_url, 'user');
         const roleLabel = getUserRoleLabel(user.role);
         
@@ -391,9 +395,18 @@ async function renderUsersTable(data) {
             statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">بانتظار التفعيل</span>`;
         }
 
-        const deleteButton = isOwner ? `
-            <button onclick="window.deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="حذف الحساب"><i class="fas fa-trash-alt text-xs"></i></button>
-        ` : '';
+        const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
+        const canEdit = isLeader ? (can('leaders:edit') || can('manage_users') || isOwner) : (can('users:edit') || can('manage_users') || isOwner);
+        const canSuspend = isLeader ? (can('leaders:suspend') || can('manage_users') || isOwner) : (can('users:suspend') || can('manage_users') || isOwner);
+        const canNotify = isLeader ? (can('notifications:leader') || can('manage_notifications') || isOwner) : (can('users:notify') || can('notifications:student') || can('manage_notifications') || isOwner);
+        const canResetPwd = !isLeader && (can('users:reset_pwd') || can('manage_users') || isOwner);
+        const canDelete = isLeader ? (can('leaders:delete') || isOwner) : (can('users:delete') || isOwner);
+
+        const editBtn = canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center" title="تعديل البيانات"><i class="fas fa-edit text-xs"></i></button>` : '';
+        const suspendBtn = canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="w-8 h-8 rounded-lg ${uStatus === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500'} hover:text-black transition-all flex items-center justify-center" title="${uStatus === 'suspended' ? 'تفعيل الحساب' : 'إيقاف الحساب'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'} text-xs"></i></button>` : '';
+        const notifyBtn = canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center" title="إرسال إشعار للمستخدم"><i class="fas fa-paper-plane text-xs"></i></button>` : '';
+        const resetPwdBtn = canResetPwd ? `<button onclick="window.resetUserPassword('${user.id}')" class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="إعادة تعيين كلمة المرور"><i class="fas fa-key text-xs"></i></button>` : '';
+        const deleteButton = canDelete ? `<button onclick="window.deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="حذف الحساب"><i class="fas fa-trash-alt text-xs"></i></button>` : '';
 
         const uRank = getRankData(user.total_xp || 0);
 
@@ -403,7 +416,7 @@ async function renderUsersTable(data) {
                 <!-- User Profile info -->
                 <td class="p-4">
                     <div class="flex items-center gap-3">
-                        <img src="${photo}" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(user.full_name || 'User') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div>
                             <div class="font-bold text-white text-sm flex items-center gap-2">
                                 ${user.full_name || 'عضو مجهول'}
@@ -458,12 +471,10 @@ async function renderUsersTable(data) {
                 <td class="p-4">
                     <div class="flex items-center justify-center gap-1.5">
                         <button onclick="window.openUserDetails('${user.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
-                        <button onclick="window.openEditUserModal('${user.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center" title="تعديل البيانات"><i class="fas fa-edit text-xs"></i></button>
-                        <button onclick="window.toggleUserSuspension('${user.id}')" class="w-8 h-8 rounded-lg ${uStatus === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500'} hover:text-black transition-all flex items-center justify-center" title="${uStatus === 'suspended' ? 'تفعيل الحساب' : 'إيقاف الحساب'}">
-                            <i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'} text-xs"></i>
-                        </button>
-                        <button onclick="window.openSendNotificationModal('${user.id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center" title="إرسال إشعار للمستخدم"><i class="fas fa-paper-plane text-xs"></i></button>
-                        <button onclick="window.resetUserPassword('${user.id}')" class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="إعادة تعيين كلمة المرور"><i class="fas fa-key text-xs"></i></button>
+                        ${editBtn}
+                        ${suspendBtn}
+                        ${notifyBtn}
+                        ${resetPwdBtn}
                         <button onclick="window.copyUserProfileLink('${user.id}')" class="w-8 h-8 rounded-lg bg-white/5 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="نسخ رابط الملف الشخصي"><i class="fas fa-copy text-xs"></i></button>
                         ${deleteButton}
                     </div>
@@ -475,7 +486,7 @@ async function renderUsersTable(data) {
                 <!-- Top row: Avatar, Name, Role badge, Status badge -->
                 <div class="flex items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <img src="${photo}" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0" onerror="this.src='../../assets/images/default-avatar.png'">
+                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(user.full_name || 'User') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div class="min-w-0">
                             <div class="font-bold text-white text-sm truncate flex items-center gap-1.5">
                                 <span class="truncate">${user.full_name || 'عضو مجهول'}</span>
@@ -522,11 +533,9 @@ async function renderUsersTable(data) {
                         <i class="fas fa-eye text-[10px]"></i> الملف
                     </button>
                     <div class="flex items-center gap-1">
-                        <button onclick="window.openEditUserModal('${user.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
-                        <button onclick="window.toggleUserSuspension('${user.id}')" class="p-1.5 ${uStatus === 'suspended' ? 'text-green-400 hover:bg-green-500/10' : 'text-yellow-400 hover:bg-yellow-500/10'} rounded-lg text-xs" title="${uStatus === 'suspended' ? 'تفعيل' : 'إيقاف'}">
-                            <i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'}"></i>
-                        </button>
-                        <button onclick="window.openSendNotificationModal('${user.id}')" class="p-1.5 text-purple-400 hover:bg-purple-500/10 rounded-lg text-xs" title="إشعار"><i class="fas fa-paper-plane"></i></button>
+                        ${canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="p-1.5 ${uStatus === 'suspended' ? 'text-green-400 hover:bg-green-500/10' : 'text-yellow-400 hover:bg-yellow-500/10'} rounded-lg text-xs" title="${uStatus === 'suspended' ? 'تفعيل' : 'إيقاف'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'}"></i></button>` : ''}
+                        ${canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="p-1.5 text-purple-400 hover:bg-purple-500/10 rounded-lg text-xs" title="إشعار"><i class="fas fa-paper-plane"></i></button>` : ''}
                         ${deleteButton}
                     </div>
                 </div>
@@ -555,11 +564,29 @@ window.openUserDetails = async (userId) => {
     selectedUser = allUsers.find(u => u.id === userId);
     if (!selectedUser) return;
 
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const isLeader = selectedUser.role === 'leader' || selectedUser.role === 'suspended_leader';
+    const allowed = isLeader ? (can('leaders:view') || can('manage_users') || isOwner) : (can('users:view') || can('manage_users') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لعرض تفاصيل هذا الحساب.', 'error');
+        return;
+    }
+
     selectedUserRole = String(selectedUser.role).trim().toLowerCase();
 
     // Set Modal Header
     const avatar = resolveImageUrl(selectedUser.avatar_url, 'user');
-    document.getElementById('ud-header-avatar').src = avatar;
+    const udHeaderAv = document.getElementById('ud-header-avatar');
+    if (udHeaderAv) {
+        udHeaderAv.referrerPolicy = 'no-referrer';
+        udHeaderAv.onerror = function() {
+            this.onerror = null;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.full_name || 'User')}&background=006A67&color=fff&size=100`;
+        };
+        udHeaderAv.src = avatar;
+    }
     document.getElementById('ud-header-name').innerText = selectedUser.full_name || 'عضو مجهول';
     document.getElementById('ud-header-email').innerText = selectedUser.email || '--';
 
@@ -1591,6 +1618,16 @@ window.openEditUserModal = (userId) => {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
 
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
+    const allowed = isLeader ? (can('leaders:edit') || can('manage_users') || isOwner) : (can('users:edit') || can('manage_users') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لتعديل بيانات هذا الحساب.', 'error');
+        return;
+    }
+
     document.getElementById('edit-user-id').value = userId;
     document.getElementById('edit-user-name').value = user.full_name || '';
     document.getElementById('edit-user-uni').value = user.university || '';
@@ -1608,6 +1645,18 @@ window.openEditUserModal = (userId) => {
 window.saveUserData = async (e) => {
     e.preventDefault();
     const userId = document.getElementById('edit-user-id').value;
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
+    const allowed = isLeader ? (can('leaders:edit') || can('manage_users') || isOwner) : (can('users:edit') || can('manage_users') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لحفظ تعديلات هذا الحساب.', 'error');
+        return;
+    }
     const form = document.getElementById('edit-user-form');
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -1650,6 +1699,13 @@ window.resetUserPassword = async (userId) => {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
 
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('users:reset_pwd') && !can('manage_users') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لإعادة تعيين كلمة المرور للمستخدمين.', 'error');
+        return;
+    }
+
     const confirmed = await window.showCustomConfirm(
         "إعادة تعيين كلمة المرور",
         `هل أنت متأكد من إرسال رابط إعادة تعيين كلمة المرور للمستخدم: ${user.full_name}؟`,
@@ -1676,6 +1732,16 @@ window.resetUserPassword = async (userId) => {
 window.toggleUserSuspension = async (userId) => {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
+
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
+    const allowed = isLeader ? (can('leaders:suspend') || can('manage_users') || isOwner) : (can('users:suspend') || can('manage_users') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لإيقاف أو تفعيل هذا الحساب.', 'error');
+        return;
+    }
 
     const uStatus = getUserStatus(user.role);
     let nextRole = 'student';
@@ -1716,6 +1782,18 @@ window.toggleUserSuspension = async (userId) => {
 // 🔔 NOTIFICATIONS & SHARING ACTIONS
 // ==========================================
 window.openSendNotificationModal = (userId) => {
+    const targetUser = allUsers.find(u => u.id === userId);
+    const isLeader = targetUser && (targetUser.role === 'leader' || targetUser.role === 'suspended_leader');
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const allowed = isLeader 
+        ? (can('notifications:leader') || can('manage_notifications') || isOwner)
+        : (can('users:notify') || can('notifications:student') || can('manage_notifications') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لإرسال إشعارات لهذا المستخدم.', 'error');
+        return;
+    }
     document.getElementById('notif-target-user-id').value = userId;
     document.getElementById('notif-title').value = '';
     document.getElementById('notif-content').value = '';
@@ -1727,6 +1805,18 @@ window.openSendNotificationModal = (userId) => {
 window.sendUserNotification = async (e) => {
     e.preventDefault();
     const userId = document.getElementById('notif-target-user-id').value;
+    const targetUser = allUsers.find(u => u.id === userId);
+    const isLeader = targetUser && (targetUser.role === 'leader' || targetUser.role === 'suspended_leader');
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const allowed = isLeader 
+        ? (can('notifications:leader') || can('manage_notifications') || isOwner)
+        : (can('users:notify') || can('notifications:student') || can('manage_notifications') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لإرسال إشعارات لهذا المستخدم.', 'error');
+        return;
+    }
     const title = document.getElementById('notif-title').value.trim();
     const content = document.getElementById('notif-content').value.trim();
     const type = document.getElementById('notif-type').value;
@@ -1780,6 +1870,16 @@ window.deleteUser = async (userId) => {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
 
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
+    const allowed = isLeader ? (can('leaders:delete') || isOwner) : (can('users:delete') || isOwner);
+
+    if (!allowed) {
+        window.showToast?.('ليس لديك صلاحية لحذف هذا الحساب.', 'error');
+        return;
+    }
+
     const msg = `⚠️ تحذير نهائي: هل أنت متأكد من حذف حساب: ${user.full_name}؟\nسيؤدي هذا إلى مسح سجلات البروفايل الخاص به بالكامل من قاعدة البيانات. لا يمكن التراجع عن هذا الإجراء!`;
 
     const confirmed = await window.showCustomConfirm(
@@ -1800,5 +1900,42 @@ window.deleteUser = async (userId) => {
             console.error("Delete User Error:", err);
             window.showToast("فشل الحذف: " + err.message, "error");
         }
+    }
+};
+
+// ==========================================
+// 📊 EXPORT USERS TO CSV
+// ==========================================
+window.exportUsersToCSV = () => {
+    const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
+    const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
+    if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
+        window.showToast?.('ليس لديك صلاحية لتصدير تقارير وبيانات المستخدمين.', 'error');
+        return;
+    }
+
+    if (!allUsers || allUsers.length === 0) {
+        window.showToast?.('لا توجد بيانات مستخدمين لتصديرها.', 'info');
+        return;
+    }
+
+    const headers = ['الاسم', 'البريد الإلكتروني', 'الدور', 'الجامعة', 'الكلية', 'الفرقة', 'المحافظة', 'نقاط XP', 'الرتبة', 'الحالة'];
+    const rows = allUsers.map(u => [
+        u.full_name || '',
+        u.email || '',
+        u.role || '',
+        u.university || '',
+        u.faculty || '',
+        u.academic_year || '',
+        u.governorate || '',
+        u.total_xp || 0,
+        u.current_rank || '',
+        getUserStatus(u.role)
+    ]);
+
+    if (window.exportToCSV) {
+        window.exportToCSV('busla_users_export.csv', headers, rows);
+    } else {
+        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
     }
 };
