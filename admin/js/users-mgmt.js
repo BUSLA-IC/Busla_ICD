@@ -328,10 +328,12 @@ window.filterUsers = () => {
 // ==========================================
 async function renderUsersTable(data) {
     const tbody = document.getElementById('users-table-body');
-    if (!tbody) return;
+    const mobileCards = document.getElementById('users-mobile-cards');
+    if (!tbody && !mobileCards) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">لا يوجد مستخدمين مطابِقين لفلترة البحث.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">لا يوجد مستخدمين مطابِقين لفلترة البحث.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا يوجد مستخدمين مطابِقين لفلترة البحث.</div>`;
         return;
     }
 
@@ -345,7 +347,7 @@ async function renderUsersTable(data) {
         }
     } catch(e) {}
 
-    tbody.innerHTML = data.map(user => {
+    const mapped = data.map(user => {
         const photo = resolveImageUrl(user.avatar_url, 'user');
         const roleLabel = getUserRoleLabel(user.role);
         
@@ -395,7 +397,8 @@ async function renderUsersTable(data) {
 
         const uRank = getRankData(user.total_xp || 0);
 
-        return `
+        return {
+            tableRow: `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                 <!-- User Profile info -->
                 <td class="p-4">
@@ -466,8 +469,75 @@ async function renderUsersTable(data) {
                     </div>
                 </td>
             </tr>
-        `;
-    }).join('');
+            `,
+            mobileCard: `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
+                <!-- Top row: Avatar, Name, Role badge, Status badge -->
+                <div class="flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <img src="${photo}" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0" onerror="this.src='../../assets/images/default-avatar.png'">
+                        <div class="min-w-0">
+                            <div class="font-bold text-white text-sm truncate flex items-center gap-1.5">
+                                <span class="truncate">${user.full_name || 'عضو مجهول'}</span>
+                                <span class="px-1.5 py-0.5 rounded text-[8px] font-bold border shrink-0 ${roleLabel.color}">${roleLabel.text}</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 font-mono truncate select-all mt-0.5">${user.email || '--'}</div>
+                        </div>
+                    </div>
+                    <div class="shrink-0">
+                        ${statusBadge}
+                    </div>
+                </div>
+
+                <!-- Academic & Team Info -->
+                <div class="grid grid-cols-2 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">الجامعة والكلية</span>
+                        <span class="text-xs font-bold text-gray-200 truncate block mt-0.5">${translateUni(user.university)} - ${user.faculty || '--'}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">الفريق</span>
+                        <span class="text-xs font-bold text-teal-400 truncate block mt-0.5">${teamName}</span>
+                    </div>
+                </div>
+
+                <!-- Progress & XP -->
+                <div class="space-y-1.5 py-1 px-1">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-400 font-bold" style="color: ${uRank.stage_color || '#fff'}"><i class="fas fa-medal text-[10px] ml-1"></i>${uRank.title}</span>
+                        <span class="font-mono text-yellow-500 font-bold text-[11px]">${(user.total_xp || 0).toLocaleString()} XP</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-400">
+                        <span>التقدم الأكاديمي (${avgProgress}%)</span>
+                        <span>${compCount} من ${regCount} كورس مكتمل</span>
+                    </div>
+                    <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-teal-500 h-full rounded-full transition-all" style="width: ${avgProgress}%"></div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
+                    <button onclick="window.openUserDetails('${user.id}')" class="px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-300 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20 flex items-center gap-1">
+                        <i class="fas fa-eye text-[10px]"></i> الملف
+                    </button>
+                    <div class="flex items-center gap-1">
+                        <button onclick="window.openEditUserModal('${user.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
+                        <button onclick="window.toggleUserSuspension('${user.id}')" class="p-1.5 ${uStatus === 'suspended' ? 'text-green-400 hover:bg-green-500/10' : 'text-yellow-400 hover:bg-yellow-500/10'} rounded-lg text-xs" title="${uStatus === 'suspended' ? 'تفعيل' : 'إيقاف'}">
+                            <i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                        </button>
+                        <button onclick="window.openSendNotificationModal('${user.id}')" class="p-1.5 text-purple-400 hover:bg-purple-500/10 rounded-lg text-xs" title="إشعار"><i class="fas fa-paper-plane"></i></button>
+                        ${deleteButton}
+                    </div>
+                </div>
+            </div>
+            `
+        };
+    });
+
+    if (tbody) tbody.innerHTML = mapped.map(r => r.tableRow).join('');
+    if (mobileCards) mobileCards.innerHTML = mapped.map(r => r.mobileCard).join('');
+
 }
 
 // ==========================================

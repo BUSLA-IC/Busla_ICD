@@ -222,10 +222,12 @@ window.filterTeams = () => {
 
 function renderTeamsTable(data) {
     const tbody = document.getElementById('teams-table-body');
-    if (!tbody) return;
+    const mobileCards = document.getElementById('teams-mobile-cards');
+    if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500">لا توجد فرق تطابق محددات البحث.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500">لا توجد فرق تطابق محددات البحث.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد فرق تطابق محددات البحث.</div>`;
         return;
     }
     
@@ -265,7 +267,8 @@ function renderTeamsTable(data) {
             actionButtons += `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="text-red-500 hover:text-red-400 p-1" title="حذف الفريق"><i class="fas fa-trash-can"></i></button>`;
         }
         
-        return `
+        return {
+            tableRow: `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                 <td class="p-4 flex items-center gap-3">
                     <img src="${logo}" class="w-9 h-9 rounded-xl object-cover border border-white/10" referrerPolicy="no-referrer">
@@ -282,8 +285,66 @@ function renderTeamsTable(data) {
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
             </tr>
-        `;
-    }).join('');
+            `,
+            mobileCard: `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <img src="${logo}" class="w-10 h-10 rounded-xl object-cover bg-black/50 border border-white/10 shrink-0" onerror="this.src='../../assets/images/default-avatar.png'">
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-white truncate">${t.name}</h4>
+                            <div class="text-[10px] text-gray-400 truncate flex items-center gap-2 mt-0.5">
+                                <span><i class="fas fa-university text-teal-400/80 ml-1"></i>${t.university || 'غير محدد'}</span>
+                                <span class="text-teal-400 font-semibold">• ${tracksMap[t.specialization] || 'تخصص عام'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        ${statusBadge}
+                        <span class="text-[11px] font-black text-yellow-500 font-mono">${t.total_score || 0} نقطة</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">القائد</span>
+                        <span class="text-xs font-bold text-gray-200 truncate block mt-0.5">${leaderName}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">الأعضاء</span>
+                        <span class="text-xs font-black text-teal-400 block mt-0.5">${membersCount}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">الكورسات/المهام</span>
+                        <span class="text-xs font-bold text-purple-400 block mt-0.5">${coursesCount}/${tasksCount}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="window.openTeamDetails('${t.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i class="fas fa-eye text-[10px]"></i> التفاصيل
+                        </button>
+                        <button onclick="window.openManageMembersModalDirect('${t.id}')" class="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i class="fas fa-users-gear text-[10px]"></i> الأعضاء
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="window.openEditTeamModalDirect('${t.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
+                        ${isFrozen ? 
+                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-play"></i></button>` :
+                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg text-xs" title="تجميد"><i class="fas fa-pause"></i></button>`
+                        }
+                        ${showDeleteBtn ? `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
+                    </div>
+                </div>
+            </div>
+            `
+        };
+    });
+
+    if (tbody) tbody.innerHTML = data.map(r => r.tableRow).join('');
+    if (mobileCards) mobileCards.innerHTML = data.map(r => r.mobileCard).join('');
 }
 
 // ==========================================
@@ -339,10 +400,12 @@ window.filterTeamRequests = () => {
 
 function renderTeamRequestsTable(data) {
     const tbody = document.getElementById('team-requests-table-body');
-    if (!tbody) return;
+    const mobileCards = document.getElementById('team-requests-mobile-cards');
+    if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا توجد طلبات مطابقة للبحث.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا توجد طلبات مطابقة للبحث.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد طلبات مطابقة للبحث.</div>`;
         return;
     }
     
@@ -361,7 +424,8 @@ function renderTeamRequestsTable(data) {
             statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>`;
         }
         
-        return `
+        return {
+            tableRow: `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                 <td class="p-4">
                     <div class="font-bold text-white text-xs">${leaderName}</div>
@@ -377,8 +441,46 @@ function renderTeamRequestsTable(data) {
                     </button>
                 </td>
             </tr>
-        `;
-    }).join('');
+            `,
+            mobileCard: `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">${req.team_name}</h4>
+                        <div class="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
+                            <span><i class="fas fa-university text-teal-400/80 ml-1"></i>${req.university || 'غير محدد'}</span>
+                        </div>
+                    </div>
+                    <div class="shrink-0">${statusBadge}</div>
+                </div>
+
+                <div class="py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-[10px] text-gray-500">القائد:</span>
+                        <span class="font-bold text-gray-200">${leaderName}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                        <span>الإيميل:</span>
+                        <span class="text-gray-400 truncate max-w-[200px]">${req.requester?.email || ''}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-500">
+                        <span>تاريخ التقديم:</span>
+                        <span class="font-mono text-gray-400">${submittedDate}</span>
+                    </div>
+                </div>
+
+                <div class="pt-1 border-t border-white/5 flex justify-end">
+                    <button onclick="window.openTeamRequestDetails('${req.id}')" class="w-full py-2 rounded-xl bg-teal-500/10 text-teal-300 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20 flex items-center justify-center gap-1.5">
+                        <i class="fas fa-eye text-xs"></i> عرض تفاصيل الطلب
+                    </button>
+                </div>
+            </div>
+            `
+        };
+    });
+
+    if (tbody) tbody.innerHTML = data.map(r => r.tableRow).join('');
+    if (mobileCards) mobileCards.innerHTML = data.map(r => r.mobileCard).join('');
 }
 
 window.openTeamRequestDetails = (id) => {
@@ -584,10 +686,12 @@ window.filterTeamInvitations = () => {
 
 function renderInvitationsTable(data) {
     const tbody = document.getElementById('team-invitations-table-body');
-    if (!tbody) return;
+    const mobileCards = document.getElementById('team-invitations-mobile-cards');
+    if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">لا توجد دعوات مطابقة للبحث.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">لا توجد دعوات مطابقة للبحث.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد دعوات مطابقة للبحث.</div>`;
         return;
     }
     
@@ -617,7 +721,8 @@ function renderInvitationsTable(data) {
             <button onclick="window.cancelInvitation('${inv.id}')" class="text-red-500 hover:text-red-400 p-1" title="إلغاء الدعوة"><i class="fas fa-times-circle"></i></button>
         `;
         
-        return `
+        return {
+            tableRow: `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                 <td class="p-4 font-bold text-white text-xs">${teamName}</td>
                 <td class="p-4 text-center text-xs text-gray-300">${sender}</td>
@@ -630,8 +735,42 @@ function renderInvitationsTable(data) {
                 <td class="p-4 text-center text-xs text-gray-400 font-semibold">${responseDateText}</td>
                 <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actions}</div></td>
             </tr>
-        `;
-    }).join('');
+            `,
+            mobileCard: `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">${teamName}</h4>
+                        <div class="text-[10px] text-gray-400 truncate mt-0.5">المرسل: ${sender}</div>
+                    </div>
+                    <div class="shrink-0">${statusBadge}</div>
+                </div>
+
+                <div class="py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-[10px] text-gray-500">المستلم:</span>
+                        <span class="font-bold text-gray-200">${recipientName}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                        <span>الإيميل:</span>
+                        <span class="text-gray-400 truncate max-w-[200px]">${recipientEmail}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-gray-500">
+                        <span>تاريخ الإرسال:</span>
+                        <span class="font-mono text-gray-400">${sentDate}</span>
+                    </div>
+                </div>
+
+                <div class="pt-1 border-t border-white/5 flex items-center justify-end gap-2">
+                    ${actions}
+                </div>
+            </div>
+            `
+        };
+    });
+
+    if (tbody) tbody.innerHTML = data.map(r => r.tableRow).join('');
+    if (mobileCards) mobileCards.innerHTML = data.map(r => r.mobileCard).join('');
 }
 
 window.resendInvitation = async (id) => {

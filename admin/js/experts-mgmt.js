@@ -359,6 +359,7 @@ function updateStats() {
 // ==========================================
 function filterAndRenderAdvices() {
     const tbody = document.getElementById('admin-advices-table-body');
+    const mobileCards = document.getElementById('admin-advices-mobile-cards');
     if (!tbody) return;
 
     let filtered = allAdvices.filter(advice => {
@@ -388,15 +389,24 @@ function filterAndRenderAdvices() {
                 </td>
             </tr>
         `;
+        if (mobileCards) {
+            mobileCards.innerHTML = `
+                <div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">
+                    <i class="fas fa-inbox text-3xl mb-2 text-gray-600 block"></i>
+                    <p class="font-bold text-gray-400">لا توجد نصائح مطابقة للبحث أو الفلتر الحالي.</p>
+                </div>
+            `;
+        }
         return;
     }
 
-    tbody.innerHTML = filtered.map((advice, index) => {
+    const rendered = filtered.map((advice, index) => {
         const catObj = CATEGORIES.find(c => c.id === advice.category);
         const catName = catObj ? catObj.name : (advice.category || 'عام');
         const tags = advice.tags || [];
 
-        return `
+        // Desktop Table Row (100% UNCHANGED)
+        const trHtml = `
             <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                 <td class="p-3 text-center text-gray-500 font-mono text-xs w-16">
                     <div class="flex items-center justify-center gap-1">
@@ -448,7 +458,74 @@ function filterAndRenderAdvices() {
                 </td>
             </tr>
         `;
-    }).join('');
+
+        // Mobile Touch Card
+        const cardHtml = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 shadow-lg flex flex-col gap-2.5 transition-all hover:border-teal-500/30 relative">
+                <!-- Top Header: Title + Status + Order -->
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <span class="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-300 border border-teal-500/20 text-[10px] font-bold">${catName}</span>
+                            <span class="text-[10px] font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">#${advice.order_index ?? index + 1}</span>
+                        </div>
+                        <h4 class="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-2" dir="auto">${advice.title}</h4>
+                    </div>
+                    <button onclick="window.toggleAdvicePublish('${advice.id}', ${!advice.is_published})" class="shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${advice.is_published ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30'}">
+                        ${advice.is_published ? '<i class="fas fa-check-circle ml-0.5"></i>منشور' : '<i class="fas fa-pause-circle ml-0.5"></i>مسودة'}
+                    </button>
+                </div>
+
+                <!-- Summary snippet -->
+                <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 bg-black/40 p-2 rounded-xl border border-white/5">${advice.summary || 'بدون ملخص خارجي'}</p>
+
+                <!-- Tags & Source Strip -->
+                <div class="flex items-center justify-between gap-2 text-[10px] text-gray-400 flex-wrap">
+                    <span class="flex items-center gap-1 text-gray-300 font-medium truncate max-w-[150px]">
+                        <i class="fas fa-user-graduate text-teal-400"></i>
+                        <span class="truncate">${advice.source || 'غير محدد'}</span>
+                    </span>
+                    <div class="flex items-center gap-1">
+                        ${tags.slice(0, 2).map(t => `<span class="px-1.5 py-0.5 rounded bg-white/5 text-gray-400 text-[9px]">${t}</span>`).join('')}
+                        ${tags.length > 2 ? `<span class="text-[9px] text-gray-500">+${tags.length - 2}</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Quick Action Bar -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1">
+                    <!-- Reorder Up/Down -->
+                    <div class="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/5 text-[11px]">
+                        <span class="text-gray-500 text-[10px] font-bold">ترتيب:</span>
+                        <button onclick="window.moveAdviceOrder('${advice.id}', -1)" title="رفع" class="px-1.5 py-0.5 hover:text-teal-400 ${index === 0 ? 'opacity-20 cursor-not-allowed' : ''}">
+                            <i class="fas fa-arrow-up text-[10px]"></i>
+                        </button>
+                        <button onclick="window.moveAdviceOrder('${advice.id}', 1)" title="إنزال" class="px-1.5 py-0.5 hover:text-teal-400 ${index === filtered.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}">
+                            <i class="fas fa-arrow-down text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="window.previewAdviceModal('${advice.id}')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all text-xs font-bold flex items-center gap-1">
+                            <i class="fas fa-eye text-[11px]"></i> <span>معاينة</span>
+                        </button>
+                        <button onclick="window.openEditAdviceModal('${advice.id}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
+                            <i class="fas fa-edit text-[11px]"></i>
+                        </button>
+                        <button onclick="window.deleteAdvice('${advice.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
+                            <i class="fas fa-trash-alt text-[11px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return { trHtml, cardHtml };
+    });
+
+    tbody.innerHTML = rendered.map(r => r.trHtml).join('');
+    if (mobileCards) {
+        mobileCards.innerHTML = rendered.map(r => r.cardHtml).join('');
+    }
 }
 
 // ==========================================

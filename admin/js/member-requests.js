@@ -76,25 +76,30 @@ window.filterApplications = () => {
 
 function renderApplicationsTable(data) {
     const tbody = document.getElementById('applications-table-body');
+    const mobileCards = document.getElementById('applications-mobile-cards');
     if (!tbody) return;
 
     if (data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">لا توجد طلبات مطابقة للبحث.</td></tr>`;
+        if (mobileCards) {
+            mobileCards.innerHTML = `<div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">لا توجد طلبات مطابقة للبحث.</div>`;
+        }
         return;
     }
 
-    tbody.innerHTML = data.map(app => {
+    const rendered = data.map(app => {
         const date = new Date(app.submitted_at).toLocaleDateString('en-GB');
         
         let statusBadge = '';
-        if (app.application_status === 'accepted') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">مقبول</span>';
-        else if (app.application_status === 'rejected') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوض</span>';
-        else if (app.application_status === 'archived') statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">مؤرشف</span>';
-        else statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>';
+        if (app.application_status === 'accepted') statusBadge = '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">مقبول</span>';
+        else if (app.application_status === 'rejected') statusBadge = '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوض</span>';
+        else if (app.application_status === 'archived') statusBadge = '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">مؤرشف</span>';
+        else statusBadge = '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>';
 
         const trackMap = { 'content': 'Content', 'operations': 'Operations', 'academic': 'Academic' };
 
-        return `
+        // Desktop Table Row (100% UNCHANGED)
+        const trHtml = `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                 <td class="p-4">
                     <div class="font-bold text-white text-sm truncate max-w-[150px]">${app.full_name}</div>
@@ -117,7 +122,52 @@ function renderApplicationsTable(data) {
                 </td>
             </tr>
         `;
-    }).join('');
+
+        // Mobile Touch Card
+        const cardHtml = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 shadow-lg flex flex-col gap-2.5 transition-all hover:border-teal-500/30 relative">
+                <!-- Top Header: Name & Status Badge -->
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-white text-xs sm:text-sm leading-snug truncate" dir="auto">${app.full_name}</h4>
+                        <span class="text-[10px] font-mono text-gray-500 truncate block mt-0.5">${app.email}</span>
+                    </div>
+                    <div class="shrink-0">${statusBadge}</div>
+                </div>
+
+                <!-- Academic Info & Track Strip -->
+                <div class="bg-black/40 p-2.5 rounded-xl border border-white/5 flex flex-col gap-1 text-[11px]">
+                    <div class="flex items-center justify-between text-gray-300">
+                        <span class="truncate"><i class="fas fa-university text-teal-400 ml-1 text-[10px]"></i>${app.university}</span>
+                        <span class="font-mono text-teal-400 font-bold">${app.hours_per_week || 0} س/أسبوع</span>
+                    </div>
+                    <div class="flex items-center justify-between text-gray-500 text-[10px] pt-1 border-t border-white/5">
+                        <span class="truncate">${app.faculty || ''} • ${app.status || ''}</span>
+                        <span class="bg-white/5 px-2 py-0.5 rounded text-gray-300 font-medium">${trackMap[app.track] || app.track || '-'}</span>
+                    </div>
+                </div>
+
+                <!-- Footer: Date + View Details Button -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-[10px]">
+                    <span class="text-gray-500 font-mono flex items-center gap-1">
+                        <i class="far fa-clock text-gray-600"></i>
+                        <span>${date}</span>
+                    </span>
+                    <button onclick="openApplicantDetails('${app.id}')" class="px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20 flex items-center gap-1 shadow-sm">
+                        <i class="fas fa-id-card text-[11px]"></i>
+                        <span>عرض التفاصيل</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        return { trHtml, cardHtml };
+    });
+
+    tbody.innerHTML = rendered.map(r => r.trHtml).join('');
+    if (mobileCards) {
+        mobileCards.innerHTML = rendered.map(r => r.cardHtml).join('');
+    }
 }
 
 // 5. فتح بيانات المتقدم بالكامل في الـ Modal (شاملة كافة البيانات)

@@ -1,3 +1,20 @@
+
+window.toggleAuditFilters = function() {
+    const el = document.getElementById('audit-filters-dropdowns');
+    const btn = document.getElementById('audit-toggle-filters-btn');
+    if (!el) return;
+    const isHidden = el.classList.contains('hidden');
+    if (isHidden) {
+        el.classList.remove('hidden');
+        el.classList.add('grid');
+        if (btn) btn.classList.add('bg-white/20', 'text-teal-300');
+    } else {
+        el.classList.add('hidden');
+        el.classList.remove('grid');
+        if (btn) btn.classList.remove('bg-white/20', 'text-teal-300');
+    }
+};
+
 import { supabase } from '../../js/supabase-config.js';
 
 // ============================================================================

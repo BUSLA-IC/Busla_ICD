@@ -853,69 +853,84 @@
 
         <!-- Tab 3: Member Requests -->
         <div id="member-requests" class="tab-content hidden h-full flex flex-col bg-black">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)]">
-                            <i class="fas fa-user-shield"></i>
-                        </div>
-                        إدارة طلبات الأعضاء
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1 ml-14">مراجعة وفرز المتقدمين لفريق Busla Core Team</p>
+            <!-- Header (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)] shrink-0">
+                        <i class="fas fa-user-shield text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة طلبات الأعضاء</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">مراجعة وفرز المتقدمين لفريق Busla Core Team</p>
+                    </div>
                 </div>
                 
-                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0">
-                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">الإجمالي</span>
-                        <span id="stat-total-apps" class="text-xl font-black text-white">0</span>
+                <!-- Quick Stats (Compact 5-column grid on mobile, horizontal on desktop) -->
+                <div class="grid grid-cols-5 sm:flex gap-1.5 sm:gap-3 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold truncate">الإجمالي</span>
+                        <span id="stat-total-apps" class="text-sm sm:text-xl font-black text-white">0</span>
                     </div>
-                    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                        <span class="text-[10px] text-yellow-500/70 font-bold uppercase tracking-wider">قيد المراجعة</span>
-                        <span id="stat-pending-apps" class="text-xl font-black text-yellow-500">0</span>
+                    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-yellow-500/80 font-bold truncate">مراجعة</span>
+                        <span id="stat-pending-apps" class="text-sm sm:text-xl font-black text-yellow-500">0</span>
                     </div>
-                    <div class="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                        <span class="text-[10px] text-green-500/70 font-bold uppercase tracking-wider">مقبول</span>
-                        <span id="stat-accepted-apps" class="text-xl font-black text-green-400">0</span>
+                    <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-green-500/80 font-bold truncate">مقبول</span>
+                        <span id="stat-accepted-apps" class="text-sm sm:text-xl font-black text-green-400">0</span>
                     </div>
-                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                        <span class="text-[10px] text-red-500/70 font-bold uppercase tracking-wider">مرفوض</span>
-                        <span id="stat-rejected-apps" class="text-xl font-black text-red-400">0</span>
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-red-500/80 font-bold truncate">مرفوض</span>
+                        <span id="stat-rejected-apps" class="text-sm sm:text-xl font-black text-red-400">0</span>
                     </div>
-                    <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px]">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">مؤرشف</span>
-                        <span id="stat-archived-apps" class="text-xl font-black text-gray-400">0</span>
+                    <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold truncate">مؤرشف</span>
+                        <span id="stat-archived-apps" class="text-sm sm:text-xl font-black text-gray-400">0</span>
                     </div>
                 </div>
             </div>
 
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row flex-wrap gap-3 shrink-0">
-                <div class="relative flex-1 min-w-[250px]">
-                    <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-                    <input type="text" id="app-filter-search" oninput="filterApplications()" placeholder="بحث بالاسم، الجامعة، أو الإيميل..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner">
+            <!-- Toolbar Controls (High Density & Balanced layout) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-stretch sm:items-center shrink-0">
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <input type="text" id="app-filter-search" oninput="filterApplications()" placeholder="بحث بالاسم، الجامعة، أو الإيميل..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-1.5 sm:py-2 text-xs text-white focus:border-b-primary outline-none transition-colors shadow-inner text-right">
                 </div>
-                <select id="app-filter-status" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                    <option value="all">الحالة: الكل</option>
-                    <option value="pending">قيد المراجعة</option>
-                    <option value="accepted">مقبول</option>
-                    <option value="rejected">مرفوض</option>
-                    <option value="archived">مؤرشف</option>
-                </select>
-                <select id="app-filter-general-track" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                    <option value="all">نوع التقديم: الكل</option>
-                    <option value="content">Content Contributor</option>
-                    <option value="operations">Operations Track</option>
-                    <option value="academic">Academic Oversight</option>
-                </select>
-                <select id="app-filter-academic-track" onchange="filterApplications()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                    <option value="all">المسار التقني: الكل (جاري التحميل...)</option>
-                </select>
-                <button onclick="fetchApplications()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all" title="تحديث البيانات">
-                    <i class="fas fa-sync-alt"></i>
+                <div class="grid grid-cols-3 sm:flex gap-1.5 sm:gap-2">
+                    <select id="app-filter-status" onchange="filterApplications()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الحالة: الكل</option>
+                        <option value="pending">قيد المراجعة</option>
+                        <option value="accepted">مقبول</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="archived">مؤرشف</option>
+                    </select>
+                    <select id="app-filter-general-track" onchange="filterApplications()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">نوع التقديم: الكل</option>
+                        <option value="content">Content</option>
+                        <option value="operations">Operations</option>
+                        <option value="academic">Academic</option>
+                    </select>
+                    <select id="app-filter-academic-track" onchange="filterApplications()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">المسار: الكل</option>
+                    </select>
+                </div>
+                <button onclick="fetchApplications()" class="w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3.5 py-1.5 sm:py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shrink-0" title="تحديث البيانات">
+                    <i class="fas fa-sync-alt text-[11px]"></i>
+                    <span class="sm:hidden">تحديث</span>
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scroll p-6">
-                <div class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
+            <!-- Content Area: Touch Cards for Mobile, Full Table for Desktop -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6">
+                <!-- Mobile Cards Container (Exclusively for Mobile screens < md) -->
+                <div id="applications-mobile-cards" class="md:hidden space-y-3 pb-6">
+                    <div class="p-8 text-center text-gray-500 text-xs"><i class="fas fa-spinner fa-spin text-teal-400 text-xl"></i></div>
+                </div>
+
+                <!-- Desktop Table Container (100% UNCHANGED for Desktop >= md) -->
+                <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
                     <table class="w-full text-right text-sm">
                         <thead class="bg-black/60 text-gray-400 border-b border-white/10 text-[11px] uppercase tracking-wider">
                             <tr>
@@ -938,141 +953,147 @@
 
         <!-- Tab 4: Project Audit -->
         <div id="project-audit" class="tab-content hidden h-full flex flex-col bg-black">
-            <!-- Header -->
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                            <i class="fas fa-check-double"></i>
-                        </div>
-                        إشراف ومراجعة المشاريع
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1 ml-14">مراقبة جودة تصحيح المشاريع، تدقيق تقييمات الليدرز والاعتراضات</p>
+            <!-- Header (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                        <i class="fas fa-check-double text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إشراف ومراجعة المشاريع</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">مراقبة جودة تصحيح المشاريع وتدقيق تقييمات الليدرز</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2.5 p-4 border-b border-white/10 bg-b-surface/30 shrink-0 select-none">
+            <!-- Stats Grid (Compact 3-col on Mobile, 9-col on Desktop) -->
+            <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5 sm:gap-2.5 p-2.5 sm:p-4 border-b border-white/10 bg-b-surface/30 shrink-0 select-none">
                 <!-- Stat 1: Pending Grading -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">بانتظار التصحيح</span>
-                    <span id="stat-pending-grading" class="text-base font-black text-yellow-500 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">بانتظار التصحيح</span>
+                    <span id="stat-pending-grading" class="text-sm sm:text-base font-black text-yellow-500 mt-0.5">0</span>
                 </div>
                 <!-- Stat 2: Pending Review -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">بانتظار المراجعة</span>
-                    <span id="stat-pending-review" class="text-base font-black text-orange-500 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">بانتظار المراجعة</span>
+                    <span id="stat-pending-review" class="text-sm sm:text-base font-black text-orange-500 mt-0.5">0</span>
                 </div>
                 <!-- Stat 3: Approved -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">تم اعتمادها</span>
-                    <span id="stat-approved-projects" class="text-base font-black text-green-400 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">تم اعتمادها</span>
+                    <span id="stat-approved-projects" class="text-sm sm:text-base font-black text-green-400 mt-0.5">0</span>
                 </div>
                 <!-- Stat 4: Rejected -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">تم رفضها</span>
-                    <span id="stat-rejected-projects" class="text-base font-black text-red-400 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">تم رفضها</span>
+                    <span id="stat-rejected-projects" class="text-sm sm:text-base font-black text-red-400 mt-0.5">0</span>
                 </div>
                 <!-- Stat 5: Appeals -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">الاعتراضات</span>
-                    <span id="stat-appeals-count" class="text-base font-black text-purple-400 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">الاعتراضات</span>
+                    <span id="stat-appeals-count" class="text-sm sm:text-base font-black text-purple-400 mt-0.5">0</span>
                 </div>
                 <!-- Stat 6: Random Audits -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">مراجعات عشوائية</span>
-                    <span id="stat-random-audits" class="text-base font-black text-teal-400 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">مراجعات عشوائية</span>
+                    <span id="stat-random-audits" class="text-sm sm:text-base font-black text-teal-400 mt-0.5">0</span>
                 </div>
                 <!-- Stat 7: Avg Grading Time -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">زمن التصحيح</span>
-                    <span id="stat-avg-grading-time" class="text-xs font-black text-blue-400 mt-1.5 truncate">--</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">زمن التصحيح</span>
+                    <span id="stat-avg-grading-time" class="text-xs sm:text-xs font-black text-blue-400 mt-1 truncate">--</span>
                 </div>
                 <!-- Stat 8: Avg Grade -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">متوسط الدرجات</span>
-                    <span id="stat-avg-projects-grade" class="text-base font-black text-cyan-400 mt-1">0%</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">متوسط الدرجات</span>
+                    <span id="stat-avg-projects-grade" class="text-sm sm:text-base font-black text-cyan-400 mt-0.5">0%</span>
                 </div>
                 <!-- Stat 9: Active Leaders -->
-                <div class="bg-black/40 border border-white/5 rounded-xl p-2.5 flex flex-col justify-between">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">الليدرز النشطين</span>
-                    <span id="stat-active-leaders" class="text-base font-black text-pink-400 mt-1">0</span>
+                <div class="bg-black/40 border border-white/5 rounded-xl p-2 sm:p-2.5 flex flex-col justify-between text-center sm:text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase truncate">الليدرز النشطين</span>
+                    <span id="stat-active-leaders" class="text-sm sm:text-base font-black text-pink-400 mt-0.5">0</span>
                 </div>
             </div>
 
-            <!-- Filters Bar -->
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col gap-3 shrink-0 select-none">
-                <!-- Search and Basic Filters -->
-                <div class="flex flex-wrap gap-3 items-center">
-                    <div class="relative flex-1 min-w-[200px]">
-                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-                        <input type="text" id="audit-filter-search" oninput="window.filterAuditSubmissions()" placeholder="بحث باسم الطالب، المشروع أو الفريق..." class="w-full bg-black border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors">
+            <!-- Filters Bar (Collapsible / High Density on Mobile) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col gap-2.5 sm:gap-3 shrink-0 select-none">
+                <!-- Search and Primary Controls -->
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 min-w-0">
+                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="audit-filter-search" oninput="window.filterAuditSubmissions()" placeholder="بحث بالطالب أو المشروع..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
                     </div>
                     
-                    <select id="audit-filter-uni" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">الجامعة: الكل</option>
-                    </select>
-                    <select id="audit-filter-team" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">الفريق: الكل</option>
-                    </select>
-                    <select id="audit-filter-leader" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">الليدر: الكل</option>
-                    </select>
-                    <select id="audit-filter-course" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">الكورس: الكل</option>
-                    </select>
+                    <button onclick="window.toggleAuditFilters()" id="audit-toggle-filters-btn" class="sm:hidden px-3 py-2 bg-white/10 hover:bg-white/15 border border-white/15 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0">
+                        <i class="fas fa-sliders-h text-teal-400"></i>
+                        <span>فلاتر</span>
+                    </button>
                     
-                    <button onclick="window.fetchAuditDashboardData()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all" title="تحديث البيانات">
+                    <button onclick="window.fetchAuditDashboardData()" class="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all text-xs shrink-0" title="تحديث البيانات">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button onclick="window.resetAuditFilters()" class="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 px-4 py-2 rounded-xl text-sm font-bold transition-all">
+                    <button onclick="window.resetAuditFilters()" class="px-2.5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all shrink-0">
                         إعادة تعيين
                     </button>
                 </div>
                 
-                <!-- Advanced Filters -->
-                <div class="flex flex-wrap gap-3 items-center">
-                    <select id="audit-filter-phase" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
+                <!-- Detailed Filters (Collapsible on Mobile, Grid on Desktop) -->
+                <div id="audit-filters-dropdowns" class="hidden sm:grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2 pt-1 border-t sm:border-t-0 border-white/5">
+                    <select id="audit-filter-uni" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الجامعة: الكل</option>
+                    </select>
+                    <select id="audit-filter-team" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الفريق: الكل</option>
+                    </select>
+                    <select id="audit-filter-leader" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الليدر: الكل</option>
+                    </select>
+                    <select id="audit-filter-course" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الكورس: الكل</option>
+                    </select>
+                    <select id="audit-filter-phase" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
                         <option value="all">المرحلة: الكل</option>
                     </select>
-                    <select id="audit-filter-project" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
+                    <select id="audit-filter-project" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
                         <option value="all">المشروع: الكل</option>
                     </select>
-                    <select id="audit-filter-track" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
+                    <select id="audit-filter-track" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
                         <option value="all">المسار: الكل</option>
                     </select>
-                    <select id="audit-filter-status" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">حالة التسليم: الكل</option>
-                        <option value="pending">⏳ معلق (Pending)</option>
-                        <option value="graded">📝 مصحح (Graded)</option>
-                        <option value="approved">✅ معتمد (Approved)</option>
-                        <option value="rejected">❌ مرفوض (Rejected)</option>
-                        <option value="appealed">⚖️ معترض عليه (Appealed)</option>
+                    <select id="audit-filter-status" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الحالة: الكل</option>
+                        <option value="pending">معلق</option>
+                        <option value="graded">مصحح</option>
+                        <option value="approved">معتمد</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="appealed">معترض عليه</option>
                     </select>
-                    <select id="audit-filter-audit" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">حالة التدقيق: الكل</option>
-                        <option value="need_audit">⚠️ يحتاج تدقيق (Needs Audit)</option>
-                        <option value="not_need_audit">✅ لا يحتاج تدقيق</option>
+                    <select id="audit-filter-audit" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">التدقيق: الكل</option>
+                        <option value="need_audit">يحتاج تدقيق</option>
+                        <option value="not_need_audit">لا يحتاج تدقيق</option>
                     </select>
-                    <select id="audit-filter-appeal" onchange="window.filterAuditSubmissions()" class="bg-black border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">وجود اعتراض: الكل</option>
-                        <option value="yes">⚠️ نعم (Has Appeal)</option>
+                    <select id="audit-filter-appeal" onchange="window.filterAuditSubmissions()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-1.5 sm:py-2 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary">
+                        <option value="all">الاعتراض: الكل</option>
+                        <option value="yes">نعم</option>
                         <option value="no">لا</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Sub tabs navigation -->
-            <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0 select-none">
-                <button class="audit-tab-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-all whitespace-nowrap" data-tab="pending-review">Pending Review</button>
-                <button class="audit-tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-reviews">Leader Reviews</button>
-                <button class="audit-tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="audit-queue">Audit Queue</button>
-                <button class="audit-tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-performance">Leader Performance</button>
-                <button class="audit-tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="appeals-tab">Appeals</button>
+            <!-- Sub tabs navigation (Clean Horizontal Scroll) -->
+            <div class="bg-white/5 px-2.5 sm:px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1.5 shrink-0 select-none">
+                <button class="audit-tab-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-white/10 text-white transition-all whitespace-nowrap" data-tab="pending-review">Pending Review</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-reviews">Leader Reviews</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="audit-queue">Audit Queue</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="leader-performance">Leader Performance</button>
+                <button class="audit-tab-btn px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-all whitespace-nowrap" data-tab="appeals-tab">Appeals</button>
             </div>
 
             <!-- Tab Contents Tables -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-6 bg-black/40">
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6 bg-black/40">
                 <!-- Tab 1: Pending Review Table -->
                 <div id="audit-tab-content-pending-review" class="audit-tab-content bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto custom-scroll">
                     <table class="w-full text-right text-sm min-w-[900px]">
@@ -1186,7 +1207,7 @@
         <!-- Tab 6: Unified Team Management Dashboard -->
         <div id="team-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
             <!-- Sub-tab Navigation -->
-            <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
+            <div class="bg-white/5 px-2.5 sm:px-4 py-1.5 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
                 <button class="teams-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-subtab="teams">الفرق المسجلة</button>
                 <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-requests">طلبات الإنشاء</button>
                 <button class="teams-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-subtab="team-invitations">دعوات الانضمام</button>
@@ -1194,75 +1215,85 @@
             </div>
 
             <!-- Sub-tabs Content Container -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-6">
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6">
                 <!-- Sub-tab 1: Teams -->
-                <div id="subtab-teams" class="teams-subtab-content space-y-6">
-                    <!-- Stats / Overview row -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">إجمالي الفرق</span>
-                                <span id="stat-total-teams-count" class="text-3xl font-black text-white mt-1 block">0</span>
+                <div id="subtab-teams" class="teams-subtab-content space-y-4 sm:space-y-6">
+                    <!-- Stats / Overview row (Compact 4-col on Mobile, 4-col Cards on Desktop) -->
+                    <div class="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-6">
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">إجمالي الفرق</span>
+                                <span id="stat-total-teams-count" class="text-sm sm:text-xl md:text-3xl font-black text-white mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-users"></i>
                             </div>
                         </div>
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">الفرق النشطة</span>
-                                <span id="stat-active-teams-count" class="text-3xl font-black text-green-400 mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">الفرق النشطة</span>
+                                <span id="stat-active-teams-count" class="text-sm sm:text-xl md:text-3xl font-black text-green-400 mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-user-check"></i>
                             </div>
                         </div>
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">الفرق المجمدة</span>
-                                <span id="stat-frozen-teams-count" class="text-3xl font-black text-red-400 mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">الفرق المجمدة</span>
+                                <span id="stat-frozen-teams-count" class="text-sm sm:text-xl md:text-3xl font-black text-red-400 mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-user-slash"></i>
                             </div>
                         </div>
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">إجمالي الأعضاء</span>
-                                <span id="stat-team-members-count" class="text-3xl font-black text-purple-400 mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">إجمالي الأعضاء</span>
+                                <span id="stat-team-members-count" class="text-sm sm:text-xl md:text-3xl font-black text-purple-400 mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-user-group"></i>
                             </div>
                         </div>
                     </div>
 
                     <!-- Search and Filters row -->
-                    <div class="flex flex-col lg:flex-row gap-4 justify-between items-center bg-b-surface p-4 rounded-2xl border border-white/5">
-                        <div class="relative w-full lg:w-80">
-                            <i class="fas fa-search absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                            <input type="text" id="teams-search" oninput="window.filterTeams()" placeholder="البحث باسم الفريق، القائد، أو ID..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-10 pl-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all">
+                    <div class="flex flex-col lg:flex-row gap-2.5 sm:gap-4 justify-between items-stretch lg:items-center bg-b-surface p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
+                        <div class="flex items-center gap-2 w-full lg:w-80">
+                            <div class="relative flex-1">
+                                <i class="fas fa-search absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm"></i>
+                                <input type="text" id="teams-search" oninput="window.filterTeams()" placeholder="البحث باسم الفريق، القائد، أو ID..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-9 pl-3 py-2 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all">
+                            </div>
+                            <button onclick="window.fetchTeams()" class="lg:hidden bg-white/5 hover:bg-white/10 border border-white/10 text-white p-2 rounded-xl transition-all shrink-0" title="تحديث البيانات">
+                                <i class="fas fa-sync-alt text-xs"></i>
+                            </button>
                         </div>
-                        <div class="flex flex-wrap gap-3 w-full lg:w-auto">
-                            <select id="teams-uni-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all flex-1 min-w-[120px]">
+                        <div class="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-3 w-full lg:w-auto">
+                            <select id="teams-uni-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-2 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm text-white focus:border-teal-500 outline-none transition-all w-full sm:w-auto">
                                 <option value="all">كل الجامعات</option>
                             </select>
-                            <select id="teams-track-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all flex-1 min-w-[120px]">
+                            <select id="teams-track-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-2 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm text-white focus:border-teal-500 outline-none transition-all w-full sm:w-auto">
                                 <option value="all">كل التراكات</option>
                             </select>
-                            <select id="teams-status-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all flex-1 min-w-[120px]">
+                            <select id="teams-status-filter" onchange="window.filterTeams()" class="bg-black/50 border border-white/10 rounded-xl px-2 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-sm text-white focus:border-teal-500 outline-none transition-all w-full sm:w-auto">
                                 <option value="all">كل الحالات</option>
                                 <option value="active">🟢 نشط</option>
                                 <option value="frozen">🔴 مجمد</option>
                             </select>
-                            <button onclick="window.fetchTeams()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2.5 rounded-xl transition-all" title="تحديث البيانات">
+                            <button onclick="window.fetchTeams()" class="hidden lg:block bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2.5 rounded-xl transition-all shrink-0" title="تحديث البيانات">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Teams Table -->
-                    <div class="bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                    <!-- Mobile Cards View for Registered Teams -->
+                    <div id="teams-mobile-cards" class="md:hidden space-y-3 pb-6">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Teams Table (Desktop) -->
+                    <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-xl">
                         <div class="overflow-x-auto">
                             <table class="w-full text-right text-sm min-w-[1000px]">
                                 <thead class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider select-none">
@@ -1289,60 +1320,70 @@
                 </div>
 
                 <!-- Sub-tab 2: Team Requests -->
-                <div id="subtab-team-requests" class="teams-subtab-content hidden space-y-6">
-                    <!-- Quick Stats row -->
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                        <div class="bg-black/50 border border-white/10 rounded-xl p-4 flex flex-col justify-between">
-                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي الطلبات</span>
-                            <span id="stat-total-teams" class="text-2xl font-black text-white mt-1">0</span>
+                <div id="subtab-team-requests" class="teams-subtab-content hidden space-y-4 sm:space-y-6">
+                    <!-- Quick Stats row (Compact 5-col on Mobile, 5-col Cards on Desktop) -->
+                    <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5 md:gap-6">
+                        <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:p-3 md:p-4 flex flex-col justify-between text-center sm:text-right">
+                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">إجمالي الطلبات</span>
+                            <span id="stat-total-teams" class="text-xs sm:text-lg md:text-2xl font-black text-white mt-0.5 sm:mt-1">0</span>
                         </div>
-                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex flex-col justify-between">
-                            <span class="text-[10px] text-yellow-500/70 font-bold uppercase tracking-wider">قيد المراجعة</span>
-                            <span id="stat-pending-teams" class="text-2xl font-black text-yellow-500 mt-1">0</span>
+                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 sm:p-3 md:p-4 flex flex-col justify-between text-center sm:text-right">
+                            <span class="text-[8px] sm:text-[10px] text-yellow-500/70 font-bold uppercase tracking-wider truncate">قيد المراجعة</span>
+                            <span id="stat-pending-teams" class="text-xs sm:text-lg md:text-2xl font-black text-yellow-500 mt-0.5 sm:mt-1">0</span>
                         </div>
-                        <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex flex-col justify-between">
-                            <span class="text-[10px] text-green-500/70 font-bold uppercase tracking-wider">معتمد</span>
-                            <span id="stat-accepted-teams" class="text-2xl font-black text-green-400 mt-1">0</span>
+                        <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-2 sm:p-3 md:p-4 flex flex-col justify-between text-center sm:text-right">
+                            <span class="text-[8px] sm:text-[10px] text-green-500/70 font-bold uppercase tracking-wider truncate">معتمد</span>
+                            <span id="stat-accepted-teams" class="text-xs sm:text-lg md:text-2xl font-black text-green-400 mt-0.5 sm:mt-1">0</span>
                         </div>
-                        <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex flex-col justify-between">
-                            <span class="text-[10px] text-red-500/70 font-bold uppercase tracking-wider">مرفوض</span>
-                            <span id="stat-rejected-teams" class="text-2xl font-black text-red-400 mt-1">0</span>
+                        <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-2 sm:p-3 md:p-4 flex flex-col justify-between text-center sm:text-right">
+                            <span class="text-[8px] sm:text-[10px] text-red-500/70 font-bold uppercase tracking-wider truncate">مرفوض</span>
+                            <span id="stat-rejected-teams" class="text-xs sm:text-lg md:text-2xl font-black text-red-400 mt-0.5 sm:mt-1">0</span>
                         </div>
-                        <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-4 flex flex-col justify-between">
-                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">مؤرشف</span>
-                            <span id="stat-archived-teams" class="text-2xl font-black text-gray-400 mt-1">0</span>
+                        <div class="bg-gray-500/10 border border-gray-500/20 rounded-xl p-2 sm:p-3 md:p-4 flex flex-col justify-between text-center sm:text-right">
+                            <span class="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">مؤرشف</span>
+                            <span id="stat-archived-teams" class="text-xs sm:text-lg md:text-2xl font-black text-gray-400 mt-0.5 sm:mt-1">0</span>
                         </div>
                     </div>
 
                     <!-- Search and filters -->
-                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 bg-b-surface p-4 rounded-2xl border border-white/5">
-                        <div class="relative flex-1 min-w-[250px]">
-                            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-                            <input type="text" id="team-filter-search" oninput="window.filterTeamRequests()" placeholder="بحث باسم القائد، الفريق، أو الجامعة..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-teal-500 outline-none transition-colors shadow-inner">
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3 bg-b-surface p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
+                        <div class="relative flex-1 min-w-[200px]">
+                            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs sm:text-sm"></i>
+                            <input type="text" id="team-filter-search" oninput="window.filterTeamRequests()" placeholder="بحث باسم القائد، الفريق، أو الجامعة..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-colors shadow-inner">
                         </div>
-                        <select id="team-filter-status" onchange="window.filterTeamRequests()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-teal-500">
-                            <option value="all">الحالة: الكل</option>
-                            <option value="pending">⏳ قيد المراجعة</option>
-                            <option value="approved">✅ معتمد</option>
-                            <option value="rejected">❌ مرفوض</option>
-                            <option value="archived">📦 مؤرشف</option>
-                        </select>
-                        <button onclick="window.fetchTeamRequests()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all" title="تحديث البيانات">
-                            <i class="fas fa-sync-alt"></i>
+                        <div class="grid grid-cols-2 sm:flex gap-1.5 sm:gap-2">
+                            <select id="team-filter-status" onchange="window.filterTeamRequests()" class="bg-black/60 border border-white/10 rounded-xl px-2.5 py-2 text-xs sm:text-sm text-gray-300 outline-none focus:border-teal-500">
+                                <option value="all">الحالة: الكل</option>
+                                <option value="pending">⏳ قيد المراجعة</option>
+                                <option value="approved">✅ معتمد</option>
+                                <option value="rejected">❌ مرفوض</option>
+                                <option value="archived">📦 مؤرشف</option>
+                            </select>
+                            <select id="team-filter-track" onchange="window.filterTeamRequests()" class="bg-black/60 border border-white/10 rounded-xl px-2.5 py-2 text-xs sm:text-sm text-gray-300 outline-none focus:border-teal-500">
+                                <option value="all">المسار: الكل</option>
+                            </select>
+                        </div>
+                        <button onclick="window.fetchTeamRequests()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-2 rounded-xl transition-all self-end sm:self-auto" title="تحديث البيانات">
+                            <i class="fas fa-sync-alt text-xs sm:text-sm"></i>
                         </button>
                     </div>
 
-                    <!-- Requests Table -->
-                    <div class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
+                    <!-- Mobile Cards View for Team Requests -->
+                    <div id="team-requests-mobile-cards" class="md:hidden space-y-3 pb-6">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Requests Table (Desktop) -->
+                    <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
                         <table class="w-full text-right text-sm">
                             <thead class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider">
                                 <tr>
-                                    <th class="p-4 font-bold">مقدم الطلب (Requester)</th>
-                                    <th class="p-4 font-bold text-center">اسم الفريق المقترح</th>
+                                    <th class="p-4 font-bold">القائد ومقدم الطلب</th>
+                                    <th class="p-4 font-bold text-center">اسم الفريق</th>
                                     <th class="p-4 font-bold text-center">الجامعة</th>
                                     <th class="p-4 font-bold text-center">تاريخ التقديم</th>
                                     <th class="p-4 font-bold text-center">الحالة</th>
-                                    <th class="p-4 font-bold text-center">الإجراءات</th>
+                                    <th class="p-4 font-bold text-left">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="team-requests-table-body" class="divide-y divide-white/5">
@@ -1353,26 +1394,33 @@
                 </div>
 
                 <!-- Sub-tab 3: Team Invitations -->
-                <div id="subtab-team-invitations" class="teams-subtab-content hidden space-y-6">
+                <div id="subtab-team-invitations" class="teams-subtab-content hidden space-y-4 sm:space-y-6">
                     <!-- Search and filters -->
-                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 bg-b-surface p-4 rounded-2xl border border-white/5">
-                        <div class="relative flex-1 min-w-[250px]">
-                            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-                            <input type="text" id="team-invitations-search" oninput="window.filterTeamInvitations()" placeholder="بحث بالمرسل، المستلم، أو الفريق..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-teal-500 outline-none transition-colors shadow-inner">
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3 bg-b-surface p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
+                        <div class="relative flex-1 min-w-[200px]">
+                            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs sm:text-sm"></i>
+                            <input type="text" id="team-invitations-search" oninput="window.filterTeamInvitations()" placeholder="بحث بالمرسل، المستلم، أو الفريق..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-colors shadow-inner">
                         </div>
-                        <select id="team-invitations-status" onchange="window.filterTeamInvitations()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-300 outline-none focus:border-teal-500">
-                            <option value="all">الحالة: الكل</option>
-                            <option value="pending">⏳ قيد الانتظار</option>
-                            <option value="accepted">✅ مقبولة</option>
-                            <option value="rejected">❌ مرفوضة</option>
-                        </select>
-                        <button onclick="window.fetchTeamInvitations()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all" title="تحديث البيانات">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <select id="team-invitations-status" onchange="window.filterTeamInvitations()" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-gray-300 outline-none focus:border-teal-500 flex-1 sm:flex-initial">
+                                <option value="all">الحالة: الكل</option>
+                                <option value="pending">⏳ قيد الانتظار</option>
+                                <option value="accepted">✅ مقبولة</option>
+                                <option value="rejected">❌ مرفوضة</option>
+                            </select>
+                            <button onclick="window.fetchTeamInvitations()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-2 rounded-xl transition-all" title="تحديث البيانات">
+                                <i class="fas fa-sync-alt text-xs sm:text-sm"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Invitations Table -->
-                    <div class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
+                    <!-- Mobile Cards View for Invitations -->
+                    <div id="team-invitations-mobile-cards" class="md:hidden space-y-3 pb-6">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Invitations Table (Desktop) -->
+                    <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-hidden">
                         <table class="w-full text-right text-sm">
                             <thead class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider">
                                 <tr>
@@ -1417,7 +1465,7 @@
 
 <div id="student-leader-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
         <div>
             <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
@@ -1538,8 +1586,13 @@
     </div>
 
     <!-- Table Container -->
-    <div class="flex-1 overflow-y-auto custom-scroll p-6">
-        <div class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto">
+    <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6">
+        <!-- Mobile Cards View for Users -->
+        <div id="users-mobile-cards" class="md:hidden space-y-3 pb-6">
+            <!-- Populated by JS -->
+        </div>
+
+        <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto">
             <table class="w-full text-right text-sm min-w-[1300px]">
                 <thead class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider">
                     <tr>
@@ -1581,7 +1634,7 @@
                 <!-- Sub-tab 1: Admin Accounts -->
                 <div id="subtab-admin-accounts" class="users-subtab-content space-y-6">
                     <!-- Stat Cards Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-6">
                         <!-- Card 1: Admins -->
                         <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
                             <div>
@@ -1986,67 +2039,77 @@
 
         <!-- Tab 9: Experts Advice & Insights Dashboard -->
         <div id="experts-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
-            <!-- Header -->
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <span>إدارة نصائح وخبرات المهندسين (Expert Advice Management)</span>
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">إضافة وتعديل وحذف وتنظيم نصائح الخبراء وتنسيق الصناديق والقوائم والمقارنات</p>
+            <!-- Header (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                        <i class="fas fa-user-graduate text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة نصائح وخبرات المهندسين</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">تنظيم وإدارة نصائح الخبراء وتنسيق الصناديق والقوائم والمقارنات</p>
+                    </div>
                 </div>
                 
-                <!-- Quick Stats -->
-                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full lg:w-auto">
-                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">إجمالي النصائح</span>
-                        <span id="stat-advices-total" class="text-lg font-black text-white font-mono mt-0.5">0</span>
+                <!-- Quick Stats (Compact 4-column grid on mobile, horizontal on desktop) -->
+                <div class="grid grid-cols-4 sm:flex gap-1.5 sm:gap-3 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold truncate">النصائح</span>
+                        <span id="stat-advices-total" class="text-sm sm:text-lg font-black text-white font-mono">0</span>
                     </div>
-                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase">المنشورة للطلاب</span>
-                        <span id="stat-advices-published" class="text-lg font-black text-emerald-400 font-mono mt-0.5">0</span>
+                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-emerald-400 font-bold truncate">منشورة</span>
+                        <span id="stat-advices-published" class="text-sm sm:text-lg font-black text-emerald-400 font-mono">0</span>
                     </div>
-                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-yellow-500 font-bold uppercase">المسودات</span>
-                        <span id="stat-advices-draft" class="text-lg font-black text-yellow-500 font-mono mt-0.5">0</span>
+                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-yellow-500 font-bold truncate">مسودات</span>
+                        <span id="stat-advices-draft" class="text-sm sm:text-lg font-black text-yellow-500 font-mono">0</span>
                     </div>
-                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-purple-400 font-bold uppercase">التصنيفات النشطة</span>
-                        <span id="stat-advices-categories" class="text-lg font-black text-purple-400 font-mono mt-0.5">0</span>
+                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-purple-400 font-bold truncate">تصنيفات</span>
+                        <span id="stat-advices-categories" class="text-sm sm:text-lg font-black text-purple-400 font-mono">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Toolbar Controls -->
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0">
-                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <!-- Toolbar Controls (High Density & Balanced layout) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-stretch sm:items-center shrink-0">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-72">
                         <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                        <input type="text" id="admin-advices-search" placeholder="البحث بالعنوان، المصدر، أو الوسوم..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
+                        <input type="text" id="admin-advices-search" placeholder="البحث بالعنوان، المصدر..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-1.5 sm:py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
                     </div>
-                    <select id="admin-advices-category-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">كل التصنيفات</option>
-                    </select>
-                    <select id="admin-advices-status-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">كل الحالات</option>
-                        <option value="published">المنشورة فقط</option>
-                        <option value="draft">المسودات فقط</option>
-                    </select>
+                    <div class="grid grid-cols-2 sm:flex gap-2">
+                        <select id="admin-advices-category-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                            <option value="all">كل التصنيفات</option>
+                        </select>
+                        <select id="admin-advices-status-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                            <option value="all">كل الحالات</option>
+                            <option value="published">منشورة</option>
+                            <option value="draft">مسودات</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <button onclick="window.openAddAdviceModal()" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(20,184,166,0.25)] flex items-center gap-2">
+                <div class="flex items-center gap-2 justify-end">
+                    <button onclick="window.openAddAdviceModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(20,184,166,0.25)] flex items-center justify-center gap-1.5">
                         <i class="fas fa-plus"></i>
                         <span>إضافة نصيحة جديدة</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Table Container -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-6 bg-black">
-                <div class="bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <!-- Content Container: Touch Cards on Mobile, Full Data Table on Desktop -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6 bg-black">
+                <!-- Mobile Cards Container (Exclusively for Mobile screens < md) -->
+                <div id="admin-advices-mobile-cards" class="md:hidden space-y-3 pb-6">
+                    <div class="p-8 text-center text-gray-500 text-xs"><i class="fas fa-spinner fa-spin text-teal-400 text-xl"></i></div>
+                </div>
+
+                <!-- Desktop Table Container (100% UNCHANGED for Desktop >= md) -->
+                <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                     <table class="w-full text-right border-collapse select-text">
                         <thead>
                             <tr class="bg-white/5 border-b border-white/10 text-xs font-bold text-gray-400 select-none">
