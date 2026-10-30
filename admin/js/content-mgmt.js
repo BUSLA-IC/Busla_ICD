@@ -129,7 +129,7 @@ async function buildDynamicFilters() {
     
     // بناء واجهة الفلاتر (الحقول + القوائم المنسدلة)
     let selectsHtml = '';
-    const inputClasses = "w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner placeholder-gray-600";
+    const inputClasses = "w-full bg-black/60 border border-white/10 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner placeholder-gray-600";
     
     // إظهار قوائم الفلترة حسب المستوى الحالي
     if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects'].includes(cmCurrentLevel)) {
@@ -333,7 +333,9 @@ async function loadTableData() {
     const tbody = document.getElementById('cm-table-body');
     const thead = document.getElementById('cm-table-head');
     
-    tbody.innerHTML = `<tr><td colspan="10" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>`;
+    const mobileCards = document.getElementById('cm-mobile-cards-view');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>`;
+    if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-b-primary text-xl"><i class="fas fa-spinner fa-spin"></i><p class="text-xs text-gray-400 mt-2 font-bold">جاري تحميل البيانات...</p></div>`;
 
     try {
         let query;
@@ -457,12 +459,15 @@ function renderTypeBadge(type) {
 
 function renderTable() {
     const tbody = document.getElementById('cm-table-body');
+    const mobileCards = document.getElementById('cm-mobile-cards-view');
+
     if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">لا توجد بيانات مطابقة للبحث أو لم يتم الإضافة بعد.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">لا توجد بيانات مطابقة للبحث أو لم يتم الإضافة بعد.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">لا توجد بيانات مطابقة للبحث أو لم يتم الإضافة بعد.</div>`;
         return;
     }
 
-    tbody.innerHTML = filteredData.map((item, index) => {
+    const rendered = filteredData.map((item, index) => {
         const pk = getPrimaryKey();
         const id = item[pk];
         const titleKey = LEVELS[cmCurrentLevel].title;
@@ -473,14 +478,24 @@ function renderTable() {
         const statusHtml = isActive === undefined 
             ? '-' 
             : isActive 
-                ? '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> مفعل</span>' 
-                : '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> معطل</span>';
+                ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> مفعل</span>' 
+                : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> معطل</span>';
 
+        // Columns for Desktop Table
         let middleColumn = '';
+        // Metadata for Mobile Cards
+        let mobileMetaHtml = '';
+
         if (cmCurrentLevel === 'tracks') {
             middleColumn = `
                 <td class="p-4 text-center text-xs font-mono text-gray-400">${new Date(item.created_at).toLocaleDateString()}</td>
                 <td class="p-4 text-center">${statusHtml}</td>
+            `;
+            mobileMetaHtml = `
+                <div class="flex items-center gap-2 text-[11px] text-gray-400">
+                    <i class="far fa-calendar-alt text-teal-400"></i>
+                    <span>تاريخ الإنشاء: ${new Date(item.created_at).toLocaleDateString()}</span>
+                </div>
             `;
         }
         else if (cmCurrentLevel === 'phases') {
@@ -493,6 +508,14 @@ function renderTable() {
                 </td>
                 <td class="p-4 text-center">${statusHtml}</td>
             `;
+            mobileMetaHtml = `
+                <div class="flex items-center gap-2 text-[11px]">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold truncate max-w-full">
+                        <i class="fas fa-layer-group text-[10px]"></i>
+                        <span class="truncate">المسار: ${item.tracks?.name || 'بدون مسار'}</span>
+                    </span>
+                </div>
+            `;
         }
         else if (cmCurrentLevel === 'courses') {
             middleColumn = `
@@ -504,6 +527,15 @@ function renderTable() {
                 </td>
                 <td class="p-4 text-center">${renderTypeBadge(item.type)}</td>
                 <td class="p-4 text-center">${statusHtml}</td>
+            `;
+            mobileMetaHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold truncate max-w-[200px]">
+                        <i class="fas fa-sitemap text-[10px]"></i>
+                        <span class="truncate">${item.phases?.title || 'بدون مرحلة'}</span>
+                    </span>
+                    ${renderTypeBadge(item.type)}
+                </div>
             `;
         }
         else if (cmCurrentLevel === 'course_materials') {
@@ -520,11 +552,27 @@ function renderTable() {
                 </td>
                 <td class="p-4 text-center">${statusHtml}</td>
             `;
+            mobileMetaHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-bold truncate max-w-[180px]">
+                        <i class="fas fa-book-reader text-[10px]"></i>
+                        <span class="truncate">${item.courses?.title || 'بدون كورس'}</span>
+                    </span>
+                    ${renderTypeBadge(item.type)}
+                    <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">الترتيب: #${item.order_index || 0}</span>
+                </div>
+            `;
         }
         else if (cmCurrentLevel === 'quizzes') {
             middleColumn = `
                 <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span></td>
                 <td class="p-4 text-center"><span class="text-xs font-mono text-gray-300 font-bold">${item.passing_score || 50}%</span></td>
+            `;
+            mobileMetaHtml = `
+                <div class="flex items-center gap-2 text-[11px]">
+                    <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span>
+                    <span class="text-xs font-mono text-gray-300 font-bold bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">درجة النجاح: ${item.passing_score || 50}%</span>
+                </div>
             `;
         }
         else if (cmCurrentLevel === 'quiz_questions') {
@@ -537,11 +585,26 @@ function renderTable() {
                 </td>
                 <td class="p-4 text-center"><span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase font-mono tracking-wider">خيار (${item.correct_answer})</span></td>
             `;
+            mobileMetaHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 font-bold truncate max-w-[200px]">
+                        <i class="fas fa-question text-[10px]"></i>
+                        <span class="truncate">${item.quizzes?.title || 'بدون اختبار'}</span>
+                    </span>
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">خيار (${item.correct_answer})</span>
+                </div>
+            `;
         }
         else if (cmCurrentLevel === 'projects') {
             middleColumn = `
                 <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span></td>
                 <td class="p-4 text-center text-xs font-mono text-gray-400">${item.submission_method || '-'}</td>
+            `;
+            mobileMetaHtml = `
+                <div class="flex items-center gap-2 text-[11px]">
+                    <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span>
+                    <span class="text-xs font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">تسليم: ${item.submission_method || '-'}</span>
+                </div>
             `;
         }
         else if (cmCurrentLevel === 'curriculum_documents') {
@@ -562,35 +625,56 @@ function renderTable() {
                 <td class="p-4 text-center text-xs text-gray-400 font-mono">${item.source_type || '-'}</td>
                 <td class="p-4 text-center text-xs text-purple-400 font-bold uppercase">${item.view_mode || 'embed'}</td>
             `;
+            mobileMetaHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    ${renderTypeBadge(item.document_type || 'PDF')}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-bold truncate max-w-[200px]">
+                        <i class="fas fa-link text-[10px]"></i>
+                        <span class="truncate">${linkTarget}</span>
+                    </span>
+                    <span class="text-purple-400 font-bold uppercase text-[10px] bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">${item.view_mode || 'embed'}</span>
+                </div>
+            `;
         }
 
+        // Action Buttons
         let drillDownBtn = '';
+        let mobileDrillDownBtn = '';
         if (['tracks', 'phases', 'courses', 'quizzes'].includes(cmCurrentLevel)) {
             drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-xs"></i></button>`;
+            mobileDrillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-[11px]"></i> <span>محتوى</span></button>`;
         }
 
         let previewBtn = '';
+        let previewQuizOrProjectBtn = '';
+        let mobilePreviewBtn = '';
+
         if (cmCurrentLevel === 'course_materials' && item.type === 'video' && item.video_id) {
             previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all shadow-sm" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
-        }
-
-        let previewQuizOrProjectBtn = '';
-        if (cmCurrentLevel === 'quizzes') {
+            mobilePreviewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة الفيديو"><i class="fas fa-play text-[11px]"></i> <span>معاينة</span></button>`;
+        } else if (cmCurrentLevel === 'quizzes') {
             previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all shadow-sm" title="معاينة الاختبار"><i class="fas fa-eye text-xs"></i></button>`;
+            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة الاختبار"><i class="fas fa-eye text-[11px]"></i> <span>معاينة</span></button>`;
         } else if (cmCurrentLevel === 'projects') {
             previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="معاينة المشروع"><i class="fas fa-eye text-xs"></i></button>`;
+            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة المشروع"><i class="fas fa-eye text-[11px]"></i> <span>معاينة</span></button>`;
         }
 
         let reorderBtn = '';
+        let mobileReorderBtn = '';
         if (cmCurrentLevel === 'courses') {
             reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
         } else if (cmCurrentLevel === 'phases') {
             reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب الكورسات داخل هذه المرحلة"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب الكورسات"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
         } else if (cmCurrentLevel === 'tracks') {
             reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المراحل داخل هذا المسار"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب المراحل"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
         }
 
-        return `
+        // Desktop Table Row (100% UNCHANGED)
+        const trHtml = `
             <tr class="hover:bg-white/[0.04] transition-colors border-b border-white/5 group">
                 <td class="p-4 text-center text-gray-500 font-mono text-xs">${index + 1}</td>
                 <td class="p-4">
@@ -621,7 +705,59 @@ function renderTable() {
                 </td>
             </tr>
         `;
-    }).join('');
+
+        // Mobile Card (Sleek, Responsive, Touch-Friendly)
+        const mobileCardHtml = `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 shadow-lg flex flex-col gap-3 transition-all hover:border-b-primary/40 relative group">
+                <!-- Top Row: Icon + Title + Index & Status Badge -->
+                <div class="flex items-start justify-between gap-2.5">
+                    <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-b-primary text-sm mt-0.5">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <span class="font-bold text-white text-xs sm:text-sm leading-snug break-words" dir="auto">${title}</span>
+                            <span class="text-[10px] font-mono text-gray-500 mt-1 flex items-center gap-1">
+                                <span class="text-gray-600 font-bold">ID:</span>
+                                <span class="text-gray-400 select-all bg-black/40 px-1.5 py-0.5 rounded border border-white/5 truncate max-w-[140px]">${id}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <span class="text-[10px] font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">#${index + 1}</span>
+                        ${statusHtml}
+                    </div>
+                </div>
+
+                <!-- Metadata Badges Strip -->
+                ${mobileMetaHtml}
+
+                <!-- Quick Action Bar -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1 flex-wrap">
+                    <div class="text-[10px] text-gray-500 font-bold">الإجراءات:</div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <button onclick="window.cmShowInfo('${id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="عرض التفاصيل">
+                            <i class="fas fa-info-circle text-[11px]"></i> <span>تفاصيل</span>
+                        </button>
+                        ${mobileDrillDownBtn}
+                        ${mobileReorderBtn}
+                        ${mobilePreviewBtn}
+                        <button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
+                            <i class="fas fa-pen text-[11px]"></i>
+                        </button>
+                        <button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
+                            <i class="fas fa-trash text-[11px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return { trHtml, mobileCardHtml };
+    });
+
+    if (tbody) tbody.innerHTML = rendered.map(r => r.trHtml).join('');
+    if (mobileCards) mobileCards.innerHTML = rendered.map(r => r.mobileCardHtml).join('');
 }
 
 // ==========================================
@@ -2210,7 +2346,7 @@ window.cmDeleteItem = async (id) => {
 
 
 
-const YOUTUBE_API_KEY = 'AIzaSyDWVNKHpYGyA5BWNKRZE4T8gQvij6o6ats'; 
+const YOUTUBE_API_KEY = 'AIzaSyCWgO83PcbcoWOkZYsBnzsyPHSdrzaaQ7Y'; 
 window.ytImportEngine = {
     state: {
         playlistId: '',

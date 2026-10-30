@@ -202,280 +202,299 @@
         </button>
         
         <!-- Tab 1: Dashboard Overview -->
-        <section id="dashboard" class="tab-content active space-y-6 sm:space-y-8 pb-12">
-            <!-- 👤 Header Section -->
-            <div class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 mb-6">
-                <div class="flex items-center gap-3">
-                    <button onclick="toggleAdminSidebar()" class="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 hover:border-teal-500/40 transition-all shrink-0 cursor-pointer group" title="إظهار / إخفاء القائمة الجانبية (Ctrl + B)">
-                        <i class="fas fa-bars text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
-                    </button>
-                    <div>
-                        <h1 class="text-xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
-                            <i class="fas fa-compass text-teal-500 animate-spin-slow text-base sm:text-2xl"></i>
-                            <span>لوحة التحكم المركزية</span>
-                            <span class="text-[10px] sm:text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full font-mono">Mission Control</span>
-                        </h1>
-                        <p class="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-sm flex items-center gap-2">
-                            <span>مرحباً،</span>
-                            <span id="dash-welcome-name" class="font-bold text-white">جاري التحميل...</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3 sm:gap-4 w-full md:w-auto justify-between md:justify-end">
-                    <!-- Dropdown: المنصة الرئيسية -->
-                    <div class="relative" id="main-site-nav-dropdown">
-                        <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs font-bold transition-all shadow-sm">
-                            <i class="fas fa-compass text-teal-400"></i>
-                            <span class="hidden sm:inline">المنصة الرئيسية</span>
-                            <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+        <section id="dashboard" class="tab-content active space-y-4 sm:space-y-6 md:space-y-8 pb-12">
+            <!-- 👤 Header Section (Ultra-Compact on Mobile, Prestigious & Spacious on Desktop) -->
+            <div class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 md:p-6 shadow-xl flex flex-col md:flex-row justify-between items-stretch md:items-center gap-2.5 sm:gap-4 shrink-0 mb-3 sm:mb-6">
+                <!-- Top / Main Row -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <button onclick="toggleAdminSidebar()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/10 hover:bg-white/10 hover:border-teal-500/40 transition-all shrink-0 cursor-pointer group active:scale-95" title="إظهار / إخفاء القائمة الجانبية (Ctrl + B)">
+                            <i class="fas fa-bars text-xs sm:text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
                         </button>
-                        <!-- Dropdown Menu -->
-                        <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
-                            <div class="px-3 py-1.5 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
-                            <a href="../../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-home text-teal-400 w-4 text-center"></i>
-                                    <span>الرئيسية</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-map-signs text-teal-400 w-4 text-center"></i>
-                                    <span>المسار التعليمي</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i>
-                                    <span>الدورات التدريبية</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-book-reader text-teal-400 w-4 text-center"></i>
-                                    <span>المكتبة العلمية</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-tools text-teal-400 w-4 text-center"></i>
-                                    <span>الأدوات البرمجية</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
-                            <a href="../../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                                <span class="flex items-center gap-2.5">
-                                    <i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i>
-                                    <span>الخبراء</span>
-                                </span>
-                                <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                            </a>
+                        <div class="min-w-0">
+                            <h1 class="text-sm sm:text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-1.5 sm:gap-2.5">
+                                <i class="fas fa-compass text-teal-400 animate-spin-slow text-xs sm:text-lg"></i>
+                                <span class="truncate">لوحة التحكم المركزية</span>
+                                <span class="text-[9px] sm:text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-1.5 py-0.5 rounded-full font-mono hidden sm:inline-block">Mission Control</span>
+                            </h1>
+                            <!-- Desktop greeting shown under title -->
+                            <p class="hidden md:flex text-gray-400 text-xs sm:text-sm items-center gap-2 mt-1">
+                                <span>مرحباً،</span>
+                                <span id="dash-welcome-name" class="font-bold text-white truncate max-w-[200px]">جاري التحميل...</span>
+                            </p>
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <p class="text-xs text-gray-500">آخر تسجيل دخول</p>
-                        <p id="dash-last-login" class="text-sm font-bold text-teal-400 font-mono mt-1">--</p>
+                    <!-- Right Controls on Mobile / Desktop: Portal Dropdown & Desktop Last Login -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <!-- Dropdown: المنصة الرئيسية -->
+                        <div class="relative" id="main-site-nav-dropdown">
+                            <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-[11px] sm:text-xs font-bold transition-all shadow-sm active:scale-95">
+                                <i class="fas fa-compass text-teal-400 text-xs"></i>
+                                <span class="hidden xs:inline sm:inline">المنصة الرئيسية</span>
+                                <i class="fas fa-chevron-down text-[8px] sm:text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
+                            </button>
+                            <!-- Dropdown Menu -->
+                            <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
+                                <div class="px-3 py-1.5 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
+                                <a href="../../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-home text-teal-400 w-4 text-center"></i>
+                                        <span>الرئيسية</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                                <a href="../../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-map-signs text-teal-400 w-4 text-center"></i>
+                                        <span>المسار التعليمي</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                                <a href="../../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i>
+                                        <span>الدورات التدريبية</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                                <a href="../../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-book-reader text-teal-400 w-4 text-center"></i>
+                                        <span>المكتبة العلمية</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                                <a href="../../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-tools text-teal-400 w-4 text-center"></i>
+                                        <span>الأدوات البرمجية</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                                <a href="../../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
+                                    <span class="flex items-center gap-2.5">
+                                        <i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i>
+                                        <span>الخبراء</span>
+                                    </span>
+                                    <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Last Login -->
+                        <div class="hidden md:block text-right">
+                            <p class="text-[10px] text-gray-500">آخر تسجيل دخول</p>
+                            <p id="dash-last-login" class="text-xs font-bold text-teal-400 font-mono mt-0.5">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Sub-bar: Compact Info Line (Greeting & Last Login in 1 thin strip) -->
+                <div class="flex md:hidden items-center justify-between pt-2 border-t border-white/5 text-[10px] text-gray-400">
+                    <div class="flex items-center gap-1.5 truncate max-w-[55%]">
+                        <span>مرحباً،</span>
+                        <span id="dash-welcome-name-mobile" class="font-bold text-gray-200 truncate">--</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-[9px] font-mono text-teal-400/90 truncate">
+                        <i class="fas fa-clock text-[8px] text-gray-500"></i>
+                        <span id="dash-last-login-mobile">--</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 📊 Statistics Cards (KPIs) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- 📊 Statistics Cards (KPIs: 2-column High-Density Mobile Grid, 5-column Desktop Grid) -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
                 <!-- KPI Group 1: Users -->
-                <div class="bg-b-surface border border-white/10 rounded-2xl p-5 space-y-4 hover:border-teal-500/30 transition-all flex flex-col justify-between">
-                    <div class="flex items-center gap-2 text-teal-400 font-bold border-b border-white/5 pb-2 text-sm">
-                        <i class="fas fa-users-viewfinder"></i>
-                        <span>المستخدمون</span>
+                <div class="bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2.5 sm:space-y-4 hover:border-teal-500/30 transition-all flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-teal-400 font-bold border-b border-white/5 pb-1.5 sm:pb-2 text-xs sm:text-sm">
+                        <i class="fas fa-users-viewfinder text-xs sm:text-sm"></i>
+                        <span class="truncate">المستخدمون</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                            <span class="text-[10px] text-gray-400 block">إجمالي الطلاب</span>
-                            <span id="kpi-total-students" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الطلاب</span>
+                            <span id="kpi-total-students" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">النشطون اليوم</span>
-                            <span id="kpi-active-students-today" class="text-lg font-bold text-emerald-400 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">نشط اليوم</span>
+                            <span id="kpi-active-students-today" class="text-base sm:text-lg font-bold text-emerald-400 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">عدد الليدرز</span>
-                            <span id="kpi-total-leaders" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الليدرز</span>
+                            <span id="kpi-total-leaders" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">عدد الأدمنز</span>
-                            <span id="kpi-total-admins" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الأدمنز</span>
+                            <span id="kpi-total-admins" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- KPI Group 2: Teams -->
-                <div class="bg-b-surface border border-white/10 rounded-2xl p-5 space-y-4 hover:border-purple-500/30 transition-all flex flex-col justify-between">
-                    <div class="flex items-center gap-2 text-purple-400 font-bold border-b border-white/5 pb-2 text-sm">
-                        <i class="fas fa-users-rectangle"></i>
-                        <span>الفرق</span>
+                <div class="bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2.5 sm:space-y-4 hover:border-purple-500/30 transition-all flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-purple-400 font-bold border-b border-white/5 pb-1.5 sm:pb-2 text-xs sm:text-sm">
+                        <i class="fas fa-users-rectangle text-xs sm:text-sm"></i>
+                        <span class="truncate">الفرق</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                            <span class="text-[10px] text-gray-400 block">عدد الفرق</span>
-                            <span id="kpi-total-teams" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">إجمالي الفرق</span>
+                            <span id="kpi-total-teams" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">الفرق النشطة</span>
-                            <span id="kpi-active-teams" class="text-lg font-bold text-emerald-400 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الفرق النشطة</span>
+                            <span id="kpi-active-teams" class="text-base sm:text-lg font-bold text-emerald-400 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">طلبات الإنشاء</span>
-                            <span id="kpi-pending-team-requests" class="text-lg font-bold text-yellow-500 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">طلبات الإنشاء</span>
+                            <span id="kpi-pending-team-requests" class="text-base sm:text-lg font-bold text-yellow-500 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">الفرق الموقوفة</span>
-                            <span id="kpi-frozen-teams" class="text-lg font-bold text-red-400 font-mono">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI Group 3: Content -->
-                <div class="bg-b-surface border border-white/10 rounded-2xl p-5 space-y-4 hover:border-blue-500/30 transition-all flex flex-col justify-between">
-                    <div class="flex items-center gap-2 text-blue-400 font-bold border-b border-white/5 pb-2 text-sm">
-                        <i class="fas fa-book-open"></i>
-                        <span>المحتوى</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <span class="text-[9px] text-gray-400 block truncate">Phases</span>
-                            <span id="kpi-total-phases" class="text-sm font-bold text-white font-mono">--</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] text-gray-400 block truncate">الكورسات</span>
-                            <span id="kpi-total-courses" class="text-sm font-bold text-white font-mono">--</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] text-gray-400 block truncate">الفيديوهات</span>
-                            <span id="kpi-total-videos" class="text-sm font-bold text-white font-mono">--</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] text-gray-400 block truncate">الكويزات</span>
-                            <span id="kpi-total-quizzes" class="text-sm font-bold text-white font-mono">--</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] text-gray-400 block truncate">المشاريع</span>
-                            <span id="kpi-total-projects" class="text-sm font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الموقوفة</span>
+                            <span id="kpi-frozen-teams" class="text-base sm:text-lg font-bold text-red-400 font-mono">--</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- KPI Group 4: Activity -->
-                <div class="bg-b-surface border border-white/10 rounded-2xl p-5 space-y-4 hover:border-yellow-500/30 transition-all flex flex-col justify-between">
-                    <div class="flex items-center gap-2 text-yellow-500 font-bold border-b border-white/5 pb-2 text-sm">
-                        <i class="fas fa-pulse"></i>
-                        <span>النشاط</span>
+                <!-- KPI Group 3: Activity -->
+                <div class="bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2.5 sm:space-y-4 hover:border-yellow-500/30 transition-all flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-yellow-500 font-bold border-b border-white/5 pb-1.5 sm:pb-2 text-xs sm:text-sm">
+                        <i class="fas fa-pulse text-xs sm:text-sm"></i>
+                        <span class="truncate">النشاط اليومي</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                            <span class="text-[10px] text-gray-400 block">المتصلون الآن</span>
-                            <span id="kpi-online-now" class="text-lg font-bold text-emerald-400 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">متصل الآن</span>
+                            <span id="kpi-online-now" class="text-base sm:text-lg font-bold text-emerald-400 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">فيديوهات اليوم</span>
-                            <span id="kpi-videos-watched-today" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">فيديوهات</span>
+                            <span id="kpi-videos-watched-today" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">كويزات اليوم</span>
-                            <span id="kpi-quizzes-solved-today" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">كويزات</span>
+                            <span id="kpi-quizzes-solved-today" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">مشاريع اليوم</span>
-                            <span id="kpi-projects-submitted-today" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">مشاريع</span>
+                            <span id="kpi-projects-submitted-today" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- KPI Group 5: Reviews -->
-                <div class="bg-b-surface border border-white/10 rounded-2xl p-5 space-y-4 hover:border-red-500/30 transition-all flex flex-col justify-between">
-                    <div class="flex items-center gap-2 text-red-400 font-bold border-b border-white/5 pb-2 text-sm">
-                        <i class="fas fa-magnifying-glass-chart"></i>
-                        <span>المراجعات</span>
+                <!-- KPI Group 4: Reviews -->
+                <div class="bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2.5 sm:space-y-4 hover:border-red-500/30 transition-all flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-red-400 font-bold border-b border-white/5 pb-1.5 sm:pb-2 text-xs sm:text-sm">
+                        <i class="fas fa-magnifying-glass-chart text-xs sm:text-sm"></i>
+                        <span class="truncate">المراجعات</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                            <span class="text-[10px] text-gray-400 block">بانتظار التصحيح</span>
-                            <span id="kpi-pending-grading" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">تصحيح معلق</span>
+                            <span id="kpi-pending-grading" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">بانتظار المراجعة</span>
-                            <span id="kpi-pending-review" class="text-lg font-bold text-yellow-500 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">مراجعة ليدر</span>
+                            <span id="kpi-pending-review" class="text-base sm:text-lg font-bold text-yellow-500 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">الاعتراضات</span>
-                            <span id="kpi-total-appeals" class="text-lg font-bold text-red-400 font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">الاعتراضات</span>
+                            <span id="kpi-total-appeals" class="text-base sm:text-lg font-bold text-red-400 font-mono">--</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-gray-400 block">مراجعات عشوائية</span>
-                            <span id="kpi-random-audits" class="text-lg font-bold text-white font-mono">--</span>
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 block truncate leading-tight">عشوائية</span>
+                            <span id="kpi-random-audits" class="text-base sm:text-lg font-bold text-white font-mono">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Group 5: Content (Full width on mobile 2-col grid, single col on desktop) -->
+                <div class="col-span-2 lg:col-span-1 bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-2 sm:space-y-4 hover:border-blue-500/30 transition-all flex flex-col justify-between">
+                    <div class="flex items-center gap-1.5 sm:gap-2 text-blue-400 font-bold border-b border-white/5 pb-1.5 sm:pb-2 text-xs sm:text-sm">
+                        <i class="fas fa-book-open text-xs sm:text-sm"></i>
+                        <span class="truncate">محتوى المسار والمناهج</span>
+                    </div>
+                    <div class="grid grid-cols-5 lg:grid-cols-3 gap-1.5 sm:gap-2 text-center lg:text-right">
+                        <div class="p-1 sm:p-0 rounded-lg bg-white/[0.02] lg:bg-transparent">
+                            <span class="text-[8px] sm:text-[9px] text-gray-400 block truncate leading-tight">Phases</span>
+                            <span id="kpi-total-phases" class="text-xs sm:text-sm font-bold text-white font-mono">--</span>
+                        </div>
+                        <div class="p-1 sm:p-0 rounded-lg bg-white/[0.02] lg:bg-transparent">
+                            <span class="text-[8px] sm:text-[9px] text-gray-400 block truncate leading-tight">الكورسات</span>
+                            <span id="kpi-total-courses" class="text-xs sm:text-sm font-bold text-white font-mono">--</span>
+                        </div>
+                        <div class="p-1 sm:p-0 rounded-lg bg-white/[0.02] lg:bg-transparent">
+                            <span class="text-[8px] sm:text-[9px] text-gray-400 block truncate leading-tight">الفيديوهات</span>
+                            <span id="kpi-total-videos" class="text-xs sm:text-sm font-bold text-white font-mono">--</span>
+                        </div>
+                        <div class="p-1 sm:p-0 rounded-lg bg-white/[0.02] lg:bg-transparent">
+                            <span class="text-[8px] sm:text-[9px] text-gray-400 block truncate leading-tight">الكويزات</span>
+                            <span id="kpi-total-quizzes" class="text-xs sm:text-sm font-bold text-white font-mono">--</span>
+                        </div>
+                        <div class="p-1 sm:p-0 rounded-lg bg-white/[0.02] lg:bg-transparent">
+                            <span class="text-[8px] sm:text-[9px] text-gray-400 block truncate leading-tight">المشاريع</span>
+                            <span id="kpi-total-projects" class="text-xs sm:text-sm font-bold text-white font-mono">--</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ⚠️ Action Required Card -->
-            <div id="dash-section-actions-required" class="bg-b-surface border border-red-500/20 hover:border-red-500/40 rounded-2xl p-6 shadow-[0_0_20px_rgba(239,68,68,0.05)] transition-all">
-                <div class="flex items-center gap-3 border-b border-white/10 pb-4 mb-4">
-                    <div class="w-10 h-10 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl flex items-center justify-center text-lg animate-pulse">
+            <div id="dash-section-actions-required" class="bg-b-surface border border-red-500/20 hover:border-red-500/40 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-[0_0_20px_rgba(239,68,68,0.05)] transition-all">
+                <div class="flex items-center gap-2.5 sm:gap-3 border-b border-white/10 pb-2.5 sm:pb-4 mb-2.5 sm:mb-4">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg sm:rounded-xl flex items-center justify-center text-sm sm:text-lg animate-pulse shrink-0">
                         <i class="fas fa-triangle-exclamation"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white">إجراءات مطلوبة فوراً (Action Required)</h3>
-                        <p class="text-xs text-gray-400 mt-0.5">عناصر مهمة تتطلب تدخلاً فورياً من الإدارة العامة للمنصة.</p>
+                        <h3 class="text-sm sm:text-lg font-bold text-white">إجراءات مطلوبة فوراً (Action Required)</h3>
+                        <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">عناصر مهمة تتطلب تدخلاً فورياً من الإدارة العامة للمنصة.</p>
                     </div>
                 </div>
-                <ul id="dash-action-required-list" class="divide-y divide-white/5 space-y-3 pt-1">
+                <ul id="dash-action-required-list" class="divide-y divide-white/5 space-y-2 sm:space-y-3 pt-1">
                     <!-- Dynamic injection of action items -->
                     <li class="py-2 text-center text-gray-500 text-xs">لا توجد تنبيهات معلقة تتطلب إجراءً حالياً.</li>
                 </ul>
             </div>
 
             <!-- 🛠️ Quick Actions -->
-            <div class="bg-b-surface border border-white/10 rounded-2xl p-6 shadow-xl">
-                <h3 class="text-lg font-bold text-white border-b border-white/10 pb-4 mb-4 flex items-center gap-2">
+            <div class="bg-b-surface border border-white/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xl">
+                <h3 class="text-sm sm:text-lg font-bold text-white border-b border-white/10 pb-2.5 sm:pb-4 mb-2.5 sm:mb-4 flex items-center gap-2">
                     <i class="fas fa-bolt text-yellow-500"></i>
                     <span>إجراءات سريعة (Quick Actions)</span>
                 </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                    <button onclick="window.dashQuickAction('add-phase')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-circle-plus text-base"></i>
-                        <span>إضافة Phase</span>
+                <div class="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 sm:gap-3">
+                    <button onclick="window.dashQuickAction('add-phase')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-circle-plus text-sm sm:text-base group-hover:scale-110 transition-transform text-teal-400"></i>
+                        <span class="leading-tight text-center">إضافة مرحلة</span>
                     </button>
-                    <button onclick="window.dashQuickAction('add-course')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-graduation-cap text-base"></i>
-                        <span>إضافة Course</span>
+                    <button onclick="window.dashQuickAction('add-course')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-graduation-cap text-sm sm:text-base group-hover:scale-110 transition-transform text-blue-400"></i>
+                        <span class="leading-tight text-center">إضافة كورس</span>
                     </button>
-                    <button onclick="window.dashQuickAction('add-quiz')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-clipboard-question text-base"></i>
-                        <span>إضافة Quiz</span>
+                    <button onclick="window.dashQuickAction('add-quiz')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-clipboard-question text-sm sm:text-base group-hover:scale-110 transition-transform text-purple-400"></i>
+                        <span class="leading-tight text-center">إضافة كويز</span>
                     </button>
-                    <button onclick="window.dashQuickAction('add-project')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-laptop-code text-base"></i>
-                        <span>إضافة Project</span>
+                    <button onclick="window.dashQuickAction('add-project')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-b-primary/20 hover:text-teal-300 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-laptop-code text-sm sm:text-base group-hover:scale-110 transition-transform text-emerald-400"></i>
+                        <span class="leading-tight text-center">إضافة مشروع</span>
                     </button>
-                    <button onclick="window.dashQuickAction('create-admin')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-user-shield text-base"></i>
-                        <span>إنشاء Admin</span>
+                    <button onclick="window.dashQuickAction('create-admin')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-user-shield text-sm sm:text-base group-hover:scale-110 transition-transform text-teal-400"></i>
+                        <span class="leading-tight text-center">إنشاء أدمن</span>
                     </button>
-                    <button onclick="window.dashQuickAction('create-notif')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-bell text-base"></i>
-                        <span>إنشاء إشعار</span>
+                    <button onclick="window.dashQuickAction('create-notif')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-bell text-sm sm:text-base group-hover:scale-110 transition-transform text-yellow-400"></i>
+                        <span class="leading-tight text-center">إنشاء إشعار</span>
                     </button>
-                    <button onclick="window.dashQuickAction('review-projects')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-check-double text-base"></i>
-                        <span>مراجعة المشاريع</span>
+                    <button onclick="window.dashQuickAction('review-projects')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-check-double text-sm sm:text-base group-hover:scale-110 transition-transform text-teal-300"></i>
+                        <span class="leading-tight text-center">المشاريع</span>
                     </button>
-                    <button onclick="window.dashQuickAction('review-teams')" class="flex flex-col items-center justify-center gap-2.5 p-4 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-xs">
-                        <i class="fas fa-users-gear text-base"></i>
-                        <span>طلبات الفرق</span>
+                    <button onclick="window.dashQuickAction('review-teams')" class="flex flex-col items-center justify-center gap-1 sm:gap-2 p-2 sm:p-3.5 bg-white/5 hover:bg-teal-500/10 hover:text-teal-400 border border-white/5 hover:border-teal-500/20 rounded-xl text-gray-300 font-bold transition-all text-[10px] sm:text-xs group active:scale-95 cursor-pointer">
+                        <i class="fas fa-users-gear text-sm sm:text-base group-hover:scale-110 transition-transform text-purple-400"></i>
+                        <span class="leading-tight text-center">طلبات الفرق</span>
                     </button>
                 </div>
             </div>
@@ -705,74 +724,92 @@
 
         <!-- Tab 2: Content Management -->
         <div id="content-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                            <i class="fas fa-network-wired"></i>
-                        </div>
-                        إدارة المناهج والمحتوى
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1 ml-14">التحكم المركزي في المسارات، الكورسات، والمشاريع</p>
+            <!-- Header Section (Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                        <i class="fas fa-network-wired text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة المناهج والمحتوى</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">التحكم المركزي في المسارات، الكورسات، والمشاريع</p>
+                    </div>
                 </div>
-                <div class="flex flex-wrap gap-3">
-                    <button id="btn-smart-import" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-5 py-2.5 rounded-xl border border-red-500/20 transition-all items-center gap-2">
-                        <i class="fab fa-youtube text-lg"></i> <span id="smart-import-text">استيراد كورس يوتيوب</span>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <button id="btn-smart-import" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-red-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                        <i class="fab fa-youtube text-sm sm:text-lg"></i> <span id="smart-import-text" class="text-xs">استيراد يوتيوب</span>
                     </button>
-                    <button id="btn-ai-quiz" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-5 py-2.5 rounded-xl border border-purple-500/20 transition-all items-center gap-2">
-                        <i class="fas fa-robot text-lg"></i> <span>استيراد كويز ذكي (JSON)</span>
+                    <button id="btn-ai-quiz" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-purple-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                        <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">كويز ذكي</span>
                     </button>
-                    <button id="btn-ai-project" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-5 py-2.5 rounded-xl border border-emerald-500/20 transition-all items-center gap-2">
-                        <i class="fas fa-robot text-lg"></i> <span>استيراد مشروع ذكي (JSON)</span>
+                    <button id="btn-ai-project" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-emerald-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                        <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">مشروع ذكي</span>
                     </button>
-                    <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 hover:-translate-y-1">
-                        <i class="fas fa-plus"></i> إنشاء جديد
+                    <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 cursor-pointer">
+                        <i class="fas fa-plus text-xs"></i> <span>إنشاء جديد</span>
                     </button>
                 </div>
             </div>
 
-            <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-                <button class="cm-nav-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap" data-level="tracks">Tracks</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="phases">Phases</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="courses">Courses</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="course_materials">Course Contents</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="quizzes">Quizzes</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="quiz_questions">Quiz Questions</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="projects">Projects</button>
-                <button class="cm-nav-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap" data-level="curriculum_documents">Documents</button>
+            <!-- Sub-Tabs Navigation Strip -->
+            <div class="bg-white/5 px-2.5 py-1.5 sm:px-4 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
+                <button class="cm-nav-btn active px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap cursor-pointer" data-level="tracks">Tracks</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="phases">Phases</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="courses">Courses</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="course_materials">Course Contents</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quizzes">Quizzes</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quiz_questions">Quiz Questions</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="projects">Projects</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="curriculum_documents">Documents</button>
             </div>
 
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col gap-3 shrink-0">
+            <!-- Filters Bar (Collapsible on Mobile, High-Density) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col gap-2.5 shrink-0">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-white font-bold text-sm"><i class="fas fa-filter text-b-primary mr-2"></i> أدوات الفلترة المتقدمة</h3>
-                    <button onclick="document.getElementById('advanced-filters-wrapper').classList.toggle('hidden')" class="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
-                        <i class="fas fa-sliders-h mr-1"></i> إظهار/إخفاء الفلتر
+                    <h3 class="text-white font-bold text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fas fa-filter text-b-primary text-xs"></i> <span>أدوات الفلترة والبحث</span>
+                    </h3>
+                    <button onclick="document.getElementById('advanced-filters-wrapper').classList.toggle('hidden')" class="text-[11px] sm:text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer">
+                        <i class="fas fa-sliders-h text-[10px]"></i> <span>تصفية متقدمة</span>
                     </button>
                 </div>
 
-                <div id="advanced-filters-wrapper" class="hidden transition-all duration-300 origin-top">
+                <div id="advanced-filters-wrapper" class="hidden transition-all duration-300 origin-top pt-1">
                     <div id="cm-dynamic-filters-container" class="w-full"></div>
-                    <div class="flex flex-wrap justify-between items-center gap-3 border-t border-white/5 pt-3 mt-3">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-xs font-bold text-gray-500"><i class="fas fa-calendar-alt mr-1"></i> من:</span>
-                            <input type="date" id="filter-date-from" class="bg-black border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
-                            <span class="text-xs font-bold text-gray-500 ml-2">إلى:</span>
-                            <input type="date" id="filter-date-to" class="bg-black border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
-                            <select id="filter-status" class="bg-black border border-white/10 rounded-lg px-3 py-1.5 text-xs text-gray-300 outline-none focus:border-b-primary cursor-pointer shadow-inner">
+                    <div class="flex flex-wrap justify-between items-center gap-2 border-t border-white/5 pt-2.5 mt-2.5">
+                        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <div class="flex items-center gap-1 min-w-0">
+                                <span class="text-[10px] sm:text-xs font-bold text-gray-500 shrink-0">من:</span>
+                                <input type="date" id="filter-date-from" class="w-full bg-black border border-white/10 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
+                            </div>
+                            <div class="flex items-center gap-1 min-w-0">
+                                <span class="text-[10px] sm:text-xs font-bold text-gray-500 shrink-0">إلى:</span>
+                                <input type="date" id="filter-date-to" class="w-full bg-black border border-white/10 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary color-scheme-dark">
+                            </div>
+                            <select id="filter-status" class="col-span-1 bg-black border border-white/10 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-gray-300 outline-none focus:border-b-primary cursor-pointer shadow-inner">
                                 <option value="all">الحالة: الكل</option>
                                 <option value="true">مفعل (Active)</option>
                                 <option value="false">معطل (Inactive)</option>
                             </select>
-                            <button onclick="window.cmResetFilters()" class="text-xs text-red-400 hover:text-red-300 font-bold bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg ml-2 transition-colors">
-                                <i class="fas fa-times mr-1"></i> مسح الفلتر
+                            <button onclick="window.cmResetFilters()" class="col-span-1 text-[11px] sm:text-xs text-red-400 hover:text-red-300 font-bold bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer">
+                                <i class="fas fa-times text-[10px]"></i> <span>مسح الفلتر</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scroll p-6 relative">
-                <div id="cm-view-grid" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto custom-scroll">
+            <!-- Content Area: Responsive Card-List for Mobile, Full Data Table for Desktop -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6 relative">
+                <!-- Mobile Card-List View (Exclusively for Mobile screens < md) -->
+                <div id="cm-mobile-cards-view" class="md:hidden space-y-3 pb-6">
+                    <div class="p-8 text-center text-gray-500 text-xs"><i class="fas fa-spinner fa-spin text-b-primary text-xl"></i></div>
+                </div>
+
+                <!-- Desktop Data Table View (Completely Untouched for Desktop >= md) -->
+                <div id="cm-view-grid" class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto custom-scroll">
                     <table class="w-full text-right text-sm min-w-[950px]">
                         <thead id="cm-table-head" class="bg-black/60 text-gray-400 border-b border-white/10 text-xs uppercase tracking-wider"></thead>
                         <tbody id="cm-table-body" class="divide-y divide-white/5">
@@ -785,21 +822,23 @@
 
         <!-- Tab: Learning Roadmap -->
         <div id="learning-roadmap" class="tab-content hidden h-full flex flex-col bg-black">
-            <!-- 👤 Header Section -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)]">
-                            <i class="fas fa-sitemap"></i>
-                        </div>
-                        إدارة شجرة المنهج (Curriculum Roadmap)
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1 ml-14">استعراض وتصميم المسارات التعليمية والمراحل والكورسات بشكل تفاعلي</p>
+            <!-- 👤 Header Section (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-4 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)] shrink-0">
+                        <i class="fas fa-sitemap text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة شجرة المنهج (Roadmap)</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">استعراض وتصميم المسارات التعليمية والمراحل والكورسات بشكل تفاعلي</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Roadmap 70% | Details 30% grid -->
-            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-6 flex-1 w-full relative overflow-hidden bg-black p-6">
+            <!-- Roadmap 70% | Details 30% grid (Optimized padding for Mobile) -->
+            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6 flex-1 w-full relative overflow-hidden bg-black p-3 sm:p-5 md:p-6">
                 <!-- Roadmap tree viewer (70%) -->
                 <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="learning-roadmap-container">
                     <!-- Populated by setupRoadmapHTML -->
@@ -1730,75 +1769,81 @@
 
         <!-- Tab 7: Tools Management Dashboard -->
         <div id="tools-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
-            <!-- Header -->
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                            <i class="fas fa-tools"></i>
-                        </div>
-                        <span>إدارة الأدوات والبرمجيات (Tools Management)</span>
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">إضافة، تعديل، وحذف الأدوات والبرامج والمنصات وتصنيفها وربطها بالمنهج الأكاديمي</p>
+            <!-- Header (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                        <i class="fas fa-tools text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة الأدوات والبرمجيات</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">إضافة وتعديل وحذف الأدوات والبرامج والمنصات وربطها بالمنهج</p>
+                    </div>
                 </div>
                 
-                <!-- Quick Stats -->
-                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full lg:w-auto">
-                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">إجمالي الأدوات</span>
-                        <span id="stat-tools-total" class="text-lg font-black text-white font-mono mt-0.5">0</span>
+                <!-- Quick Stats (Compact 4-column grid on mobile, horizontal cards on desktop) -->
+                <div class="grid grid-cols-4 sm:flex gap-1.5 sm:gap-3 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold truncate">الأدوات</span>
+                        <span id="stat-tools-total" class="text-sm sm:text-lg font-black text-white font-mono">0</span>
                     </div>
-                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase">المنشورة</span>
-                        <span id="stat-tools-published" class="text-lg font-black text-emerald-400 font-mono mt-0.5">0</span>
+                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-emerald-400 font-bold truncate">منشورة</span>
+                        <span id="stat-tools-published" class="text-sm sm:text-lg font-black text-emerald-400 font-mono">0</span>
                     </div>
-                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-yellow-500 font-bold uppercase">المسودات</span>
-                        <span id="stat-tools-draft" class="text-lg font-black text-yellow-500 font-mono mt-0.5">0</span>
+                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-yellow-500 font-bold truncate">مسودات</span>
+                        <span id="stat-tools-draft" class="text-sm sm:text-lg font-black text-yellow-500 font-mono">0</span>
                     </div>
-                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-purple-400 font-bold uppercase">إجمالي الضغطات</span>
-                        <span id="stat-tools-clicks" class="text-lg font-black text-purple-400 font-mono mt-0.5">0</span>
+                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-purple-400 font-bold truncate">ضغطات</span>
+                        <span id="stat-tools-clicks" class="text-sm sm:text-lg font-black text-purple-400 font-mono">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Toolbar Controls -->
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0">
-                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <!-- Toolbar Controls (High Density & Balanced layout) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-stretch sm:items-center shrink-0">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-72">
                         <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                        <input type="text" id="admin-tools-search" placeholder="البحث بالاسم، التصنيف، أو الكلمات المفتاحية..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
+                        <input type="text" id="admin-tools-search" placeholder="البحث بالاسم أو التصنيف..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-1.5 sm:py-2 text-xs text-white focus:border-b-primary outline-none transition-colors text-right">
                     </div>
-                    <select id="admin-tools-type-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">كل الأنواع</option>
-                    </select>
-                    <select id="admin-tools-status-filter" class="bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
-                        <option value="all">كل الحالات</option>
-                        <option value="Published">Published</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Archived">Archived</option>
-                        <option value="Hidden">Hidden</option>
-                    </select>
+                    <div class="grid grid-cols-2 sm:flex gap-2">
+                        <select id="admin-tools-type-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                            <option value="all">كل الأنواع</option>
+                        </select>
+                        <select id="admin-tools-status-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                            <option value="all">كل الحالات</option>
+                            <option value="Published">Published</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Archived">Archived</option>
+                            <option value="Hidden">Hidden</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex gap-2 w-full sm:w-auto justify-end">
-                    <button id="btn-admin-tools-grid" class="p-2 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all text-xs" title="عرض شبكي">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button id="btn-admin-tools-table" class="p-2 border border-teal-500/20 bg-teal-500/10 rounded-xl text-teal-400 hover:text-white transition-all text-xs" title="عرض جدول">
-                        <i class="fas fa-list"></i>
-                    </button>
-                    <button id="btn-add-tool" onclick="window.openAddToolModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0">
-                        <i class="fas fa-plus"></i> أداة جديدة
+                <div class="flex items-center gap-2 justify-between sm:justify-end">
+                    <div class="flex items-center gap-1.5">
+                        <button id="btn-admin-tools-grid" class="p-2 border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all text-xs" title="عرض بطاقات">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button id="btn-admin-tools-table" class="p-2 border border-teal-500/20 bg-teal-500/10 rounded-xl text-teal-400 hover:text-white transition-all text-xs" title="عرض جدول">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <button id="btn-add-tool" onclick="window.openAddToolModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0">
+                        <i class="fas fa-plus"></i> <span>أداة جديدة</span>
                     </button>
                 </div>
             </div>
 
             <!-- List Container (Table / Grid Switchable) -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-6">
-                <!-- Table View -->
-                <div id="admin-tools-table-container" class="bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto">
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6">
+                <!-- Table View (Hidden on mobile by default in favor of touch-friendly cards) -->
+                <div id="admin-tools-table-container" class="hidden md:block bg-b-surface border border-white/10 rounded-2xl shadow-xl overflow-x-auto">
                     <table class="w-full text-right border-collapse">
                         <thead>
                             <tr class="border-b border-white/10 bg-white/5 text-gray-300 text-xs font-bold">
@@ -1827,97 +1872,91 @@
 
         <!-- Tab 8: References & Research Library Dashboard -->
         <div id="references-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
-            <!-- Header -->
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <span>إدارة المراجع والمكتبة العلمية (References Library)</span>
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">إضافة، تعديل، وحذف الكتب والأوراق البحثية والمقالات وتصنيفها وربطها بالمنهج الأكاديمي</p>
+            <!-- Header (Ultra-Compact on Mobile, Spacious on Desktop) -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                        <i class="fas fa-book text-sm sm:text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                            <span>إدارة المراجع والمكتبة العلمية</span>
+                        </h2>
+                        <p class="text-gray-400 text-[10px] sm:text-xs truncate">إضافة وتصنيف الكتب والأوراق البحثية والمقالات وربطها بالمنهج</p>
+                    </div>
                 </div>
                 
-                <!-- Quick Stats -->
-                <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full lg:w-auto">
-                    <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">إجمالي المراجع</span>
-                        <span id="stat-refs-total" class="text-lg font-black text-white font-mono mt-0.5">0</span>
+                <!-- Quick Stats (Compact 4-column grid on mobile, horizontal on desktop) -->
+                <div class="grid grid-cols-4 sm:flex gap-1.5 sm:gap-3 w-full lg:w-auto">
+                    <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold truncate">المراجع</span>
+                        <span id="stat-refs-total" class="text-sm sm:text-lg font-black text-white font-mono">0</span>
                     </div>
-                    <div class="bg-blue-500/15 border border-blue-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-blue-400 font-bold uppercase">أوراق بحثية</span>
-                        <span id="stat-refs-papers" class="text-lg font-black text-blue-400 font-mono mt-0.5">0</span>
+                    <div class="bg-blue-500/15 border border-blue-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-blue-400 font-bold truncate">أوراق</span>
+                        <span id="stat-refs-papers" class="text-sm sm:text-lg font-black text-blue-400 font-mono">0</span>
                     </div>
-                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-emerald-400 font-bold uppercase">كتب ومستندات</span>
-                        <span id="stat-refs-books" class="text-lg font-black text-emerald-400 font-mono mt-0.5">0</span>
+                    <div class="bg-emerald-500/15 border border-emerald-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-emerald-400 font-bold truncate">كتب</span>
+                        <span id="stat-refs-books" class="text-sm sm:text-lg font-black text-emerald-400 font-mono">0</span>
                     </div>
-                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-yellow-500 font-bold uppercase">مقالات علمية</span>
-                        <span id="stat-refs-articles" class="text-lg font-black text-yellow-500 font-mono mt-0.5">0</span>
-                    </div>
-                    <div class="bg-purple-500/15 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] text-center shrink-0">
-                        <span class="text-[10px] text-purple-400 font-bold uppercase">الأكثر مشاهدة</span>
-                        <span id="stat-refs-most-viewed" class="text-xs font-black text-white truncate max-w-[120px] mt-1">---</span>
-                    </div>
-                    <div class="bg-cyan-500/15 border border-cyan-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[100px] text-center shrink-0">
-                        <span class="text-[10px] text-cyan-400 font-bold uppercase">المؤلف الأكبر</span>
-                        <span id="stat-refs-top-author" class="text-xs font-black text-white truncate max-w-[100px] mt-1">---</span>
+                    <div class="bg-yellow-500/15 border border-yellow-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col items-center justify-center text-center">
+                        <span class="text-[9px] sm:text-[10px] text-yellow-500 font-bold truncate">مقالات</span>
+                        <span id="stat-refs-articles" class="text-sm sm:text-lg font-black text-yellow-500 font-mono">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Toolbar Controls -->
-            <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0">
+            <!-- Toolbar Controls (High Density & Balanced layout) -->
+            <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-stretch sm:items-center shrink-0">
                 <!-- Search & Filters -->
-                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                     <div class="relative w-full sm:w-64">
-                        <input type="text" id="admin-references-search" placeholder="بحث بالاسم، المؤلف، أو الكلمات المفتاحية..." class="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-teal-500 outline-none text-right">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="admin-references-search" placeholder="بحث بالاسم أو المؤلف..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-1.5 sm:py-2 text-xs text-white focus:border-teal-500 outline-none text-right">
+                        <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
                     </div>
 
-                    <div class="relative w-full sm:w-44">
-                        <select id="admin-references-type-filter" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
-                            <option value="all">كل الأنواع</option>
-                        </select>
-                        <i class="fas fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
-                    </div>
+                    <div class="grid grid-cols-2 sm:flex gap-2">
+                        <div class="relative w-full sm:w-44">
+                            <select id="admin-references-type-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
+                                <option value="all">كل الأنواع</option>
+                            </select>
+                        </div>
 
-                    <div class="relative w-full sm:w-36">
-                        <select id="admin-references-status-filter" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
-                            <option value="all">كل الحالات</option>
-                            <option value="Published">منشور (Published)</option>
-                            <option value="Draft">مسودة (Draft)</option>
-                            <option value="Hidden">مخفي (Hidden)</option>
-                            <option value="Archived">مؤرشف (Archived)</option>
-                        </select>
-                        <i class="fas fa-eye absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] pointer-events-none"></i>
+                        <div class="relative w-full sm:w-36">
+                            <select id="admin-references-status-filter" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-white focus:border-teal-500 outline-none cursor-pointer text-right">
+                                <option value="all">كل الحالات</option>
+                                <option value="Published">منشور</option>
+                                <option value="Draft">مسودة</option>
+                                <option value="Hidden">مخفي</option>
+                                <option value="Archived">مؤرشف</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <!-- View Toggle & Add Button -->
-                <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <div class="flex items-center gap-2 justify-between sm:justify-end">
                     <div class="flex border border-white/10 rounded-xl overflow-hidden shrink-0">
-                        <button id="btn-admin-references-table" class="px-3 py-2 border-l border-white/10 bg-teal-500/10 text-teal-400 transition-all text-xs" title="عرض جدول">
+                        <button id="btn-admin-references-table" class="px-2.5 py-2 border-l border-white/10 bg-teal-500/10 text-teal-400 transition-all text-xs" title="عرض جدول">
                             <i class="fas fa-list"></i>
                         </button>
-                        <button id="btn-admin-references-grid" class="px-3 py-2 text-gray-400 hover:text-white transition-all text-xs" title="عرض بطاقات">
+                        <button id="btn-admin-references-grid" class="px-2.5 py-2 text-gray-400 hover:text-white transition-all text-xs" title="عرض بطاقات">
                             <i class="fas fa-th-large"></i>
                         </button>
                     </div>
 
-                    <button onclick="window.openAddReferenceModal()" class="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-teal-900/20 shrink-0">
+                    <button onclick="window.openAddReferenceModal()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-teal-900/20 shrink-0">
                         <i class="fas fa-plus"></i>
-                        <span>إضافة مرجع جديد</span>
+                        <span>مرجع جديد</span>
                     </button>
                 </div>
             </div>
 
             <!-- List Workspace Area -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-6 bg-black/40">
-                <!-- Table View -->
-                <div id="admin-references-table-container" class="bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6 bg-black/40">
+                <!-- Table View (Hidden on mobile by default in favor of touch-friendly cards) -->
+                <div id="admin-references-table-container" class="hidden md:block bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                     <table class="w-full text-right border-collapse select-text">
                         <thead>
                             <tr class="bg-white/5 border-b border-white/10 text-xs font-bold text-gray-400 select-none">

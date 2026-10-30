@@ -12,7 +12,7 @@ let selectedTracks = new Set();
 let selectedPhases = new Set();
 let selectedCourses = new Set();
 
-let referencesViewMode = 'table'; // 'table' or 'grid'
+let referencesViewMode = (typeof window !== 'undefined' && window.innerWidth < 768) ? 'grid' : 'table';
 
 // ==========================================
 // 🚀 INITIALIZATION

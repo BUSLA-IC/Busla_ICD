@@ -1364,10 +1364,7 @@ function setupTabNavigation() {
 
             // Auto-close sidebar on mobile
             if (window.innerWidth < 768) {
-                const sidebar = document.getElementById('admin-sidebar');
-                const overlay = document.getElementById('mobile-overlay');
-                if (sidebar) sidebar.classList.add('translate-x-full');
-                if (overlay) overlay.classList.add('hidden');
+                window.closeAdminSidebar();
             }
 
             // Adjust main panel layout for roadmap tab (needs to be full-screen, no padding/scroll)
@@ -1397,8 +1394,17 @@ function setupTabNavigation() {
 window.closeAdminSidebar = function() {
     const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
+    const reopenBtn = document.getElementById('admin-sidebar-reopen-btn');
     if (sidebar) sidebar.classList.add('translate-x-full');
     if (overlay) overlay.classList.add('hidden');
+    if (window.innerWidth < 768 && reopenBtn) {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id !== 'dashboard') {
+            reopenBtn.classList.remove('hidden');
+        } else {
+            reopenBtn.classList.add('hidden');
+        }
+    }
 };
 
 window.toggleAdminSidebar = function() {
@@ -1408,8 +1414,16 @@ window.toggleAdminSidebar = function() {
     if (!sidebar) return;
 
     if (window.innerWidth < 768) {
-        sidebar.classList.toggle('translate-x-full');
+        const isClosed = sidebar.classList.toggle('translate-x-full');
         if (overlay) overlay.classList.toggle('hidden');
+        if (reopenBtn) {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (isClosed && activeTab && activeTab.id !== 'dashboard') {
+                reopenBtn.classList.remove('hidden');
+            } else {
+                reopenBtn.classList.add('hidden');
+            }
+        }
     } else {
         const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
         localStorage.setItem('busla_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
@@ -1766,18 +1780,21 @@ async function renderDashboardOverview() {
         const roleLower = (adminProfile?.role || '').toLowerCase().trim();
         const isMasterOrOwner = ['owner', 'master admin'].includes(roleLower);
 
-        // 1. Welcome Message & Last Login
+        // 1. Welcome Message & Last Login (Desktop & Mobile)
+        const adminDisplayName = adminProfile?.full_name || adminProfile?.email || 'الأدمن';
+        const formattedLastLogin = adminProfile?.last_login 
+            ? new Date(adminProfile.last_login).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })
+            : 'أول تسجيل دخول';
+
         const welcomeNameEl = document.getElementById('dash-welcome-name');
-        if (welcomeNameEl) {
-            welcomeNameEl.innerText = adminProfile?.full_name || adminProfile?.email || 'الأدمن';
-        }
+        if (welcomeNameEl) welcomeNameEl.innerText = adminDisplayName;
+        const welcomeNameMobileEl = document.getElementById('dash-welcome-name-mobile');
+        if (welcomeNameMobileEl) welcomeNameMobileEl.innerText = adminDisplayName;
 
         const lastLoginEl = document.getElementById('dash-last-login');
-        if (lastLoginEl) {
-            lastLoginEl.innerText = adminProfile?.last_login 
-                ? new Date(adminProfile.last_login).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })
-                : 'أول تسجيل دخول لك';
-        }
+        if (lastLoginEl) lastLoginEl.innerText = formattedLastLogin;
+        const lastLoginMobileEl = document.getElementById('dash-last-login-mobile');
+        if (lastLoginMobileEl) lastLoginMobileEl.innerText = formattedLastLogin;
 
         // 2. Fetch required metrics in background if not fully loaded
         const startOfToday = new Date();

@@ -10,7 +10,7 @@ let allCourses = [];
 let selectedTracks = new Set();
 let selectedPhases = new Set();
 
-let toolsViewMode = 'table'; // 'table' or 'grid'
+let toolsViewMode = (typeof window !== 'undefined' && window.innerWidth < 768) ? 'grid' : 'table';
 
 // ==========================================
 // 🚀 INITIALIZATION
