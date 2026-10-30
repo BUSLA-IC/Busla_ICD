@@ -725,7 +725,7 @@
         <!-- Tab 2: Content Management -->
         <div id="content-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
             <!-- Header Section (Compact on Mobile, Spacious on Desktop) -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-4 p-2.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
                 <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
                         <i class="fas fa-network-wired text-sm sm:text-base"></i>
@@ -737,32 +737,32 @@
                         <p class="text-gray-400 text-[10px] sm:text-xs truncate">التحكم المركزي في المسارات، الكورسات، والمشاريع</p>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                    <button id="btn-smart-import" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-red-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-end">
+                    <button id="btn-smart-import" onclick="ytImportEngine.openWizard()" class="hidden bg-red-600/10 hover:bg-red-600/20 text-red-500 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-red-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fab fa-youtube text-sm sm:text-lg"></i> <span id="smart-import-text" class="text-xs">استيراد يوتيوب</span>
                     </button>
-                    <button id="btn-ai-quiz" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-purple-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                    <button id="btn-ai-quiz" onclick="quizAiEngine.openWizard()" class="hidden bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-purple-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">كويز ذكي</span>
                     </button>
-                    <button id="btn-ai-project" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-emerald-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
+                    <button id="btn-ai-project" onclick="projectAiEngine.openWizard()" class="hidden bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 font-bold px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl border border-emerald-500/20 transition-all items-center gap-1.5 text-xs active:scale-95 cursor-pointer">
                         <i class="fas fa-robot text-sm sm:text-lg"></i> <span class="text-xs">مشروع ذكي</span>
                     </button>
-                    <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 cursor-pointer">
+                    <button onclick="window.cmOpenModal()" class="bg-b-primary hover:bg-teal-600 text-white font-bold px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all flex items-center gap-1.5 text-xs sm:text-sm active:scale-95 cursor-pointer">
                         <i class="fas fa-plus text-xs"></i> <span>إنشاء جديد</span>
                     </button>
                 </div>
             </div>
 
             <!-- Sub-Tabs Navigation Strip -->
-            <div class="bg-white/5 px-2.5 py-1.5 sm:px-4 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-                <button class="cm-nav-btn active px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap cursor-pointer" data-level="tracks">Tracks</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="phases">Phases</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="courses">Courses</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="course_materials">Course Contents</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quizzes">Quizzes</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quiz_questions">Quiz Questions</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="projects">Projects</button>
-                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="curriculum_documents">Documents</button>
+            <div class="bg-white/5 px-2 py-1.5 sm:px-4 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
+                <button class="cm-nav-btn active px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap cursor-pointer" data-level="tracks">المسارات (Tracks)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="phases">المراحل (Phases)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="courses">الكورسات (Courses)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="course_materials">المحتويات (Contents)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quizzes">الاختبارات (Quizzes)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="quiz_questions">أسئلة الكويزات (Questions)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="projects">المشاريع (Projects)</button>
+                <button class="cm-nav-btn px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap cursor-pointer" data-level="curriculum_documents">المستندات (Docs)</button>
             </div>
 
             <!-- Filters Bar (Collapsible on Mobile, High-Density) -->
@@ -802,7 +802,7 @@
             </div>
 
             <!-- Content Area: Responsive Card-List for Mobile, Full Data Table for Desktop -->
-            <div class="flex-1 overflow-y-auto custom-scroll p-3 sm:p-5 md:p-6 relative">
+            <div class="flex-1 overflow-y-auto custom-scroll p-2 sm:p-5 md:p-6 relative">
                 <!-- Mobile Card-List View (Exclusively for Mobile screens < md) -->
                 <div id="cm-mobile-cards-view" class="md:hidden space-y-3 pb-6">
                     <div class="p-8 text-center text-gray-500 text-xs"><i class="fas fa-spinner fa-spin text-b-primary text-xl"></i></div>
@@ -823,13 +823,13 @@
         <!-- Tab: Learning Roadmap -->
         <div id="learning-roadmap" class="tab-content hidden h-full flex flex-col bg-black">
             <!-- 👤 Header Section (Ultra-Compact on Mobile, Spacious on Desktop) -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-4 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)] shrink-0">
-                        <i class="fas fa-sitemap text-sm sm:text-base"></i>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 p-2.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.2)] shrink-0">
+                        <i class="fas fa-sitemap text-xs sm:text-base"></i>
                     </div>
                     <div class="min-w-0">
-                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
+                        <h2 class="text-sm sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 truncate">
                             <span>إدارة شجرة المنهج (Roadmap)</span>
                         </h2>
                         <p class="text-gray-400 text-[10px] sm:text-xs truncate">استعراض وتصميم المسارات التعليمية والمراحل والكورسات بشكل تفاعلي</p>
@@ -838,9 +838,9 @@
             </div>
 
             <!-- Roadmap 70% | Details 30% grid (Optimized padding for Mobile) -->
-            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6 flex-1 w-full relative overflow-hidden bg-black p-3 sm:p-5 md:p-6">
+            <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-2 sm:gap-6 flex-1 w-full relative overflow-hidden bg-black p-1.5 sm:p-5 md:p-6">
                 <!-- Roadmap tree viewer (70%) -->
-                <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="learning-roadmap-container">
+                <div class="lg:col-span-7 bg-b-surface rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="learning-roadmap-container">
                     <!-- Populated by setupRoadmapHTML -->
                 </div>
                 
@@ -1465,117 +1465,118 @@
 
 <div id="student-leader-mgmt" class="tab-content hidden h-full flex flex-col bg-black">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-3.5 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
-        <div>
-            <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                    <i class="fas fa-users-cog"></i>
-                </div>
-                إدارة المستخدمين
-            </h2>
-            <p class="text-gray-400 text-sm mt-1 ml-14">إدارة ومتابعة جميع حسابات الطلاب والقادة وتفاصيلهم الأكاديمية</p>
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2.5 sm:gap-4 p-3 sm:p-5 md:p-6 border-b border-white/10 bg-b-surface shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-b-primary/20 flex items-center justify-center text-b-primary shadow-[0_0_15px_rgba(0,106,103,0.3)] shrink-0">
+                <i class="fas fa-users-cog text-sm sm:text-base"></i>
+            </div>
+            <div class="min-w-0">
+                <h2 class="text-base sm:text-xl md:text-2xl font-bold text-white truncate">إدارة المستخدمين</h2>
+                <p class="text-gray-400 text-[10px] sm:text-xs truncate">إدارة ومتابعة حسابات الطلاب والقادة وتفاصيلهم الأكاديمية</p>
+            </div>
         </div>
         
         <!-- Quick Stats -->
-        <div class="flex gap-3 overflow-x-auto custom-scroll pb-2 lg:pb-0 w-full max-w-full lg:max-w-[70%]">
-            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي الطلاب</span>
-                <span id="stat-mgmt-students" class="text-xl font-black text-white">0</span>
+        <div class="flex gap-2 sm:gap-3 overflow-x-auto custom-scroll pb-1.5 lg:pb-0 w-full max-w-full lg:max-w-[70%] select-none">
+            <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">إجمالي الطلاب</span>
+                <span id="stat-mgmt-students" class="text-sm sm:text-xl font-black text-white mt-0.5">0</span>
             </div>
-            <div class="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">إجمالي الليدرز</span>
-                <span id="stat-mgmt-leaders" class="text-xl font-black text-white">0</span>
+            <div class="bg-black/50 border border-white/10 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">إجمالي الليدرز</span>
+                <span id="stat-mgmt-leaders" class="text-sm sm:text-xl font-black text-white mt-0.5">0</span>
             </div>
-            <div class="bg-teal-500/10 border border-teal-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-teal-400 font-bold uppercase tracking-wider">الطلاب النشطون</span>
-                <span id="stat-mgmt-active-students" class="text-xl font-black text-teal-400">0</span>
+            <div class="bg-teal-500/10 border border-teal-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-teal-400 font-bold uppercase tracking-wider truncate">الطلاب النشطون</span>
+                <span id="stat-mgmt-active-students" class="text-sm sm:text-xl font-black text-teal-400 mt-0.5">0</span>
             </div>
-            <div class="bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">الليدرز النشطون</span>
-                <span id="stat-mgmt-active-leaders" class="text-xl font-black text-purple-400">0</span>
+            <div class="bg-purple-500/10 border border-purple-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-purple-400 font-bold uppercase tracking-wider truncate">الليدرز النشطون</span>
+                <span id="stat-mgmt-active-leaders" class="text-sm sm:text-xl font-black text-purple-400 mt-0.5">0</span>
             </div>
-            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-yellow-500 font-bold uppercase tracking-wider">طلاب بدون فريق</span>
-                <span id="stat-mgmt-students-no-team" class="text-xl font-black text-yellow-500">0</span>
+            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-yellow-500 font-bold uppercase tracking-wider truncate">طلاب بدون فريق</span>
+                <span id="stat-mgmt-students-no-team" class="text-sm sm:text-xl font-black text-yellow-500 mt-0.5">0</span>
             </div>
-            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-blue-400 font-bold uppercase tracking-wider">ليدرز بفرق</span>
-                <span id="stat-mgmt-leaders-with-team" class="text-xl font-black text-blue-400">0</span>
+            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-blue-400 font-bold uppercase tracking-wider truncate">ليدرز بفرق</span>
+                <span id="stat-mgmt-leaders-with-team" class="text-sm sm:text-xl font-black text-blue-400 mt-0.5">0</span>
             </div>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2 flex flex-col min-w-[120px] shrink-0">
-                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">المستخدمون الجدد</span>
-                <span id="stat-mgmt-new-users" class="text-xl font-black text-emerald-400">0</span>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 sm:px-4 sm:py-2 flex flex-col min-w-[95px] sm:min-w-[120px] shrink-0 text-center sm:text-right">
+                <span class="text-[9px] sm:text-[10px] text-emerald-400 font-bold uppercase tracking-wider truncate">المستخدمون الجدد</span>
+                <span id="stat-mgmt-new-users" class="text-sm sm:text-xl font-black text-emerald-400 mt-0.5">0</span>
             </div>
         </div>
     </div>
 
     <!-- Main Navigation Tabs: Students / Leaders -->
-    <div class="bg-white/5 px-4 py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
-        <button id="btn-users-tab-students" onclick="window.switchUsersTab('student')" class="users-tab-btn active px-4 py-2 rounded-lg text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap">الطلاب (Students)</button>
-        <button id="btn-users-tab-leaders" onclick="window.switchUsersTab('leader')" class="users-tab-btn px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">القادة (Leaders)</button>
+    <div class="bg-white/5 px-2.5 sm:px-4 py-1.5 sm:py-2 border-b border-white/10 flex overflow-x-auto custom-scroll gap-1 shrink-0">
+        <button id="btn-users-tab-students" onclick="window.switchUsersTab('student')" class="users-tab-btn active px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold bg-white/10 text-white transition-colors whitespace-nowrap">الطلاب (Students)</button>
+        <button id="btn-users-tab-leaders" onclick="window.switchUsersTab('leader')" class="users-tab-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-gray-400 hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap">القادة (Leaders)</button>
     </div>
 
     <!-- Search & Filters Container -->
-    <div class="p-4 border-b border-white/5 bg-black/40 flex flex-col gap-3 shrink-0">
-        <div class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1 min-w-[250px]">
-                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-                <input type="text" id="users-filter-search" oninput="window.filterUsers()" placeholder="بحث بالاسم، البريد الإلكتروني، أو الـ ID..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-9 pl-4 py-2 text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner">
+    <div class="p-2.5 sm:p-4 border-b border-white/5 bg-black/40 flex flex-col gap-2.5 shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="relative flex-1 min-w-0">
+                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs sm:text-sm"></i>
+                <input type="text" id="users-filter-search" oninput="window.filterUsers()" placeholder="بحث بالاسم، البريد، أو الـ ID..." class="w-full bg-black/60 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs sm:text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner text-right">
             </div>
-            <button onclick="document.getElementById('users-advanced-filters').classList.toggle('hidden')" class="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 px-4 py-2 rounded-xl transition-colors shrink-0">
-                <i class="fas fa-sliders-h mr-1"></i> فلاتر متقدمة
+            <button onclick="document.getElementById('users-advanced-filters').classList.toggle('hidden')" class="text-xs bg-white/10 hover:bg-white/15 border border-white/15 text-white px-3 py-2 rounded-xl transition-colors shrink-0 flex items-center gap-1.5 font-bold">
+                <i class="fas fa-sliders-h text-teal-400"></i>
+                <span>فلاتر</span>
             </button>
-            <button onclick="window.fetchUsersData()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-2 rounded-xl transition-all shrink-0" title="تحديث البيانات">
-                <i class="fas fa-sync-alt"></i>
+            <button onclick="window.fetchUsersData()" class="p-2 sm:px-4 sm:py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all shrink-0" title="تحديث البيانات">
+                <i class="fas fa-sync-alt text-xs sm:text-sm"></i>
             </button>
         </div>
 
-        <div id="users-advanced-filters" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 transition-all duration-300 pt-2 border-t border-white/5">
+        <div id="users-advanced-filters" class="hidden grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 transition-all duration-300 pt-2 border-t border-white/5">
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">الجامعة</label>
-                <select id="filter-user-uni" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-uni" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">الكلية</label>
-                <select id="filter-user-faculty" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-faculty" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">القسم</label>
-                <select id="filter-user-dept" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-dept" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">السنة الدراسية</label>
-                <select id="filter-user-year" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-year" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">المحافظة</label>
-                <select id="filter-user-gov" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-gov" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">الفريق</label>
-                <select id="filter-user-team" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-team" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">الرتبة</label>
-                <select id="filter-user-rank" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-rank" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                 </select>
             </div>
             <div>
                 <label class="text-[10px] text-gray-500 font-bold mb-1 block">حالة الحساب</label>
-                <select id="filter-user-status" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
+                <select id="filter-user-status" onchange="window.filterUsers()" class="w-full bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 sm:py-2 text-xs text-gray-300 outline-none focus:border-b-primary">
                     <option value="all">الكل</option>
                     <option value="active">نشط (Active)</option>
                     <option value="suspended">موقوف (Suspended)</option>
@@ -1632,62 +1633,73 @@
             <!-- Sub-tab contents -->
             <div class="flex-1 overflow-y-auto custom-scroll p-6">
                 <!-- Sub-tab 1: Admin Accounts -->
-                <div id="subtab-admin-accounts" class="users-subtab-content space-y-6">
-                    <!-- Stat Cards Row -->
+                <div id="subtab-admin-accounts" class="users-subtab-content space-y-4 sm:space-y-6">
+                    <!-- Stat Cards Row (Compact 3-col on Mobile, 3-col Cards on Desktop) -->
                     <div class="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-6">
                         <!-- Card 1: Admins -->
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">حسابات الإدارة</span>
-                                <span id="badge-admin-count" class="text-3xl font-black text-white mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">حسابات الإدارة</span>
+                                <span id="badge-admin-count" class="text-sm sm:text-xl md:text-3xl font-black text-white mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-users-cog"></i>
                             </div>
                         </div>
                         <!-- Card 2: Roles -->
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">الأدوار الأساسية</span>
-                                <span id="badge-roles-count" class="text-3xl font-black text-white mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">الأدوار الأساسية</span>
+                                <span id="badge-roles-count" class="text-sm sm:text-xl md:text-3xl font-black text-white mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-shield-halved"></i>
                             </div>
                         </div>
                         <!-- Card 3: Permissions -->
-                        <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                            <div>
-                                <span class="text-xs font-bold text-gray-400 block uppercase tracking-wider">صلاحيات النظام</span>
-                                <span id="badge-perms-count" class="text-3xl font-black text-white mt-1 block">0</span>
+                        <div class="bg-b-surface border border-white/10 rounded-xl md:rounded-2xl p-2 sm:p-3.5 md:p-5 flex flex-col md:flex-row items-center md:justify-between text-center md:text-right shadow-xl">
+                            <div class="w-full">
+                                <span class="text-[9px] sm:text-xs font-bold text-gray-400 block uppercase tracking-wider truncate">صلاحيات النظام</span>
+                                <span id="badge-perms-count" class="text-sm sm:text-xl md:text-3xl font-black text-white mt-0.5 md:mt-1 block">0</span>
                             </div>
-                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-lg">
+                            <div class="hidden md:flex w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 items-center justify-center text-lg shrink-0">
                                 <i class="fas fa-key"></i>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-b-surface p-4 rounded-2xl border border-white/5">
-                        <div class="relative w-full md:w-80">
-                            <i class="fas fa-search absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                            <input type="text" id="admin-search" placeholder="البحث بالاسم أو البريد الإلكتروني..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-10 pl-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all">
+                    <!-- Search and Filters row -->
+                    <div class="flex flex-col md:flex-row gap-2.5 sm:gap-4 justify-between items-stretch md:items-center bg-b-surface p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5">
+                        <!-- Row 1: Search + Add Admin Button -->
+                        <div class="flex items-center gap-2 w-full md:w-80">
+                            <div class="relative flex-1">
+                                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm"></i>
+                                <input type="text" id="admin-search" placeholder="البحث بالاسم أو البريد..." class="w-full bg-black/50 border border-white/10 rounded-xl pr-8 pl-3 py-2 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all">
+                            </div>
+                            <button id="btn-add-admin" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0" title="إضافة حساب أدمن">
+                                <i class="fas fa-user-plus text-xs"></i> <span>إضافة أدمن</span>
+                            </button>
                         </div>
-                        <div class="flex gap-3 w-full md:w-auto">
-                            <select id="admin-role-filter" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all flex-1 md:flex-none">
+                        <!-- Row 2: Filters -->
+                        <div class="grid grid-cols-2 md:flex gap-1.5 sm:gap-3 w-full md:w-auto">
+                            <select id="admin-role-filter" class="w-full md:w-auto bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all">
                                 <option value="all">كل الأدوار</option>
                             </select>
-                            <select id="admin-status-filter" class="bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-all flex-1 md:flex-none">
+                            <select id="admin-status-filter" class="w-full md:w-auto bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-white focus:border-teal-500 outline-none transition-all">
                                 <option value="all">كل الحالات</option>
                                 <option value="active">نشط</option>
                                 <option value="disabled">معطل</option>
                             </select>
-                            <button id="btn-add-admin" class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10 shrink-0">
-                                <i class="fas fa-user-plus"></i> إضافة حساب أدمن
-                            </button>
                         </div>
                     </div>
 
-                    <div class="bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                    <!-- Mobile Cards View for Admin Accounts -->
+                    <div id="admins-mobile-cards" class="md:hidden space-y-3 pb-6">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Admin Accounts Table (Desktop) -->
+                    <div class="hidden md:block bg-b-surface border border-white/10 rounded-2xl overflow-hidden shadow-xl">
                         <div class="overflow-x-auto custom-scroll">
                             <table class="w-full text-right border-collapse">
                                 <thead>
@@ -1702,8 +1714,8 @@
                                         <th class="p-4 text-left">الإجراءات</th>
                                     </tr>
                                 </thead>
-                                <tbody id="admins-table-body" class="divide-y divide-white/5 text-sm">
-                                    <tr><td colspan="8" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>جاري تحميل حسابات الإدارة...</p></td></tr>
+                                <tbody id="admins-table-body" class="divide-y divide-white/5">
+                                    <tr><td colspan="8" class="p-8 text-center text-gray-500">جاري تحميل حسابات الإدارة...</td></tr>
                                 </tbody>
                             </table>
                         </div>

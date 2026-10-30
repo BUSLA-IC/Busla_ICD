@@ -655,30 +655,81 @@
     }
 }
 
+@media (min-width: 768px) {
+    .roadmap-toolbar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.75rem !important;
+    }
+    .roadmap-toolbar-row1 {
+        display: contents !important;
+    }
+    #roadmap-track-selector-wrapper {
+        order: 1 !important;
+        flex: 0 1 auto !important;
+    }
+    .roadmap-legend {
+        order: 2 !important;
+        flex: 0 1 auto !important;
+        padding: 6px 10px !important;
+        gap: 8px !important;
+        font-size: 11px !important;
+    }
+    #rm-export-wrapper {
+        order: 3 !important;
+        flex-shrink: 0 !important;
+    }
+}
+
 @media (max-width: 767px) {
     /* Mobile sizes: Compact Tree Container */
     #roadmap-tree-container,
     #learning-roadmap-container {
-        height: 52vh !important;
-        min-height: 320px !important;
+        height: calc(100dvh - 140px) !important;
+        min-height: 480px !important;
         border-radius: 14px !important;
     }
 
     .roadmap-toolbar {
+        display: flex !important;
+        flex-direction: column !important;
         padding: 0.45rem 0.6rem !important;
         gap: 0.45rem !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         border-radius: 12px !important;
     }
 
+    .roadmap-toolbar-row1 {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
     .roadmap-legend {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
         padding: 5px 8px !important;
-        gap: 5px 8px !important;
         font-size: 10px !important;
         border-radius: 10px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+    .roadmap-legend::-webkit-scrollbar {
+        display: none !important;
     }
 
     .roadmap-legend-item {
+        flex-shrink: 0 !important;
         font-size: 9.5px !important;
         gap: 4px !important;
     }
@@ -689,9 +740,10 @@
     }
 
     #rm-export-btn {
-        padding: 0.35rem 0.6rem !important;
+        padding: 0.4rem 0.75rem !important;
         font-size: 11px !important;
         border-radius: 10px !important;
+        white-space: nowrap !important;
     }
 
     .roadmap-controls {

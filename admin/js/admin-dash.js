@@ -288,7 +288,8 @@ function populateFilterDropdowns() {
 // Tab 1: Render Admin Accounts Table
 function renderAdminAccounts() {
     const tbody = document.getElementById('admins-table-body');
-    if (!tbody) return;
+    const mobileCards = document.getElementById('admins-mobile-cards');
+    if (!tbody && !mobileCards) return;
 
     const searchQuery = document.getElementById('admin-search')?.value.toLowerCase() || '';
     const roleFilter = document.getElementById('admin-role-filter')?.value || 'all';
@@ -304,11 +305,12 @@ function renderAdminAccounts() {
     });
 
     if (filteredAdmins.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">لا توجد حسابات إدارة مطابقة للفلتر.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">لا توجد حسابات إدارة مطابقة للفلتر.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد حسابات إدارة مطابقة للفلتر.</div>`;
         return;
     }
 
-    tbody.innerHTML = filteredAdmins.map(admin => {
+    const mapped = filteredAdmins.map(admin => {
         const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
         const lastLogin = admin.last_login ? new Date(admin.last_login).toLocaleString('ar-EG') : 'لم يدخل بعد';
         const lastActivity = admin.last_activity ? new Date(admin.last_activity).toLocaleString('ar-EG') : 'لا يوجد نشاط';
@@ -331,7 +333,7 @@ function renderAdminAccounts() {
 
         // Build Actions
         let actionButtons = `
-            <button onclick="viewAdminDetails('${admin.id}')" class="text-teal-400 hover:text-teal-300 p-1 title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
+            <button onclick="viewAdminDetails('${admin.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
             <button onclick="openEditAdminModal('${admin.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل"><i class="fas fa-edit"></i></button>
             <button onclick="openPermissionsDrawer('${admin.id}')" class="text-yellow-500 hover:text-yellow-400 p-1" title="إدارة الصلاحيات"><i class="fas fa-key"></i></button>
         `;
@@ -346,7 +348,8 @@ function renderAdminAccounts() {
             actionButtons += `<button onclick="deleteAdminAccount('${admin.id}')" class="text-red-500 hover:text-red-400 p-1" title="حذف الحساب"><i class="fas fa-trash-can"></i></button>`;
         }
 
-        return `
+        return {
+            tableRow: `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
                     <img src="${avatarUrl}" class="w-9 h-9 rounded-full object-cover border border-white/10">
@@ -360,8 +363,59 @@ function renderAdminAccounts() {
                 <td class="p-4"><span class="border text-[10px] font-bold px-2 py-0.5 rounded-md ${statusClass}">${statusText}</span></td>
                 <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
             </tr>
-        `;
-    }).join('');
+            `,
+            mobileCard: `
+            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-white truncate">${admin.full_name || 'بلا اسم'}</h4>
+                            <div class="text-[10px] text-gray-400 font-mono truncate select-all mt-0.5">${admin.email}</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <span class="border text-[10px] font-bold px-2 py-0.5 rounded-md ${statusClass}">${statusText}</span>
+                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded-full font-bold">${admin.role}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">الصلاحيات الممنوحة</span>
+                        <span class="text-xs font-black text-teal-400 block mt-0.5">${permsCount} صلاحية</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 block">آخر نشاط</span>
+                        <span class="text-xs font-bold text-gray-300 truncate block mt-0.5">${lastActivity}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="viewAdminDetails('${admin.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i class="fas fa-eye text-[10px]"></i> التفاصيل
+                        </button>
+                        <button onclick="openPermissionsDrawer('${admin.id}')" class="px-2.5 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 text-yellow-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i class="fas fa-key text-[10px]"></i> الصلاحيات
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="openEditAdminModal('${admin.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
+                        ${admin.status === 'disabled' ? 
+                            `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-user-check"></i></button>` :
+                            `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="p-1.5 text-orange-400 hover:bg-orange-500/10 rounded-lg text-xs" title="تعطيل"><i class="fas fa-user-slash"></i></button>`
+                        }
+                        ${(isOwner && !isTargetOwner) ? `<button onclick="deleteAdminAccount('${admin.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
+                    </div>
+                </div>
+            </div>
+            `
+        };
+    });
+
+    if (tbody) tbody.innerHTML = mapped.map(r => r.tableRow).join('');
+    if (mobileCards) mobileCards.innerHTML = mapped.map(r => r.mobileCard).join('');
 }
 
 // Tab 2: Render Roles Grid

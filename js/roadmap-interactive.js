@@ -110,8 +110,8 @@ function setupRoadmapHTML(container) {
 
     const hasSelector = !!document.getElementById('roadmap-track-selector');
     const trackSelectorHtml = hasSelector ? '' : `
-        <div class="flex items-center gap-2">
-            <select id="roadmap-track-selector" class="bg-black/50 border border-white/10 text-xs text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
+        <div class="flex-1 min-w-0" id="roadmap-track-selector-wrapper">
+            <select id="roadmap-track-selector" class="w-full bg-black/50 border border-white/10 text-xs text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
                 <option value="">اختر المسار التعليمي...</option>
             </select>
         </div>`;
@@ -121,8 +121,37 @@ function setupRoadmapHTML(container) {
  
             <!-- ── Toolbar ── -->
             <div class="roadmap-toolbar" style="flex-shrink:0;">
-                <!-- Track Selector -->
-                ${trackSelectorHtml}
+                <div class="roadmap-toolbar-row1 flex items-center justify-between gap-2 w-full md:w-auto">
+                    <!-- Track Selector -->
+                    ${trackSelectorHtml}
+
+                    <!-- Export button -->
+                    <div class="relative shrink-0" id="rm-export-wrapper">
+                        <button id="rm-export-btn"
+                                class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-white hover:border-white/25 transition-all">
+                            <i class="fas fa-download text-[10px]"></i> تصدير
+                        </button>
+                        <div id="rm-export-menu"
+                             class="hidden absolute left-0 top-full mt-1 z-50 bg-[#0e0e0e] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[160px]">
+                            <button onclick="window._rmExport('svg')"
+                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-bezier-curve text-cyan-400"></i> تصدير SVG
+                            </button>
+                            <button onclick="window._rmExport('png1')"
+                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — جودة عادية (1x)
+                            </button>
+                            <button onclick="window._rmExport('png2')"
+                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — جودة عالية (2x)
+                            </button>
+                            <button onclick="window._rmExport('png4')"
+                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — جودة ممتازة (4x)
+                            </button>
+                        </div>
+                    </div>
+                </div>
  
                 <!-- Legend -->
                 <div class="roadmap-legend">
@@ -132,33 +161,6 @@ function setupRoadmapHTML(container) {
                     <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-video)"></span><span>درس</span></div>
                     <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-quiz)"></span><span>كويز</span></div>
                     <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-project)"></span><span>مشروع</span></div>
-                </div>
-
-                <!-- Export button -->
-                <div class="relative" id="rm-export-wrapper">
-                    <button id="rm-export-btn"
-                            class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-white hover:border-white/25 transition-all">
-                        <i class="fas fa-download text-[10px]"></i> تصدير
-                    </button>
-                    <div id="rm-export-menu"
-                         class="hidden absolute left-0 top-full mt-1 z-50 bg-[#0e0e0e] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[160px]">
-                        <button onclick="window._rmExport('svg')"
-                                class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-bezier-curve text-cyan-400"></i> تصدير SVG
-                        </button>
-                        <button onclick="window._rmExport('png1')"
-                                class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — جودة عادية (1x)
-                        </button>
-                        <button onclick="window._rmExport('png2')"
-                                class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — جودة عالية (2x)
-                        </button>
-                        <button onclick="window._rmExport('png4')"
-                                class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                            <i class="fas fa-image text-green-400"></i> PNG — جودة ممتازة (4x)
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -396,12 +398,12 @@ function renderPlaceholder(msg) {
 
     if (overlay) {
         overlay.innerHTML = `
-            <div class="max-w-md mx-auto flex flex-col items-center justify-center">
-                <div class="w-16 h-16 bg-[#006A67]/15 text-[#00F5FF] rounded-full flex items-center justify-center text-2xl mb-4 border border-[#006A67]/30 shadow-[0_0_15px_rgba(0,245,255,0.2)]">
+            <div class="max-w-xs sm:max-w-md mx-auto flex flex-col items-center justify-center p-3 sm:p-6 text-center">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-[#006A67]/15 text-[#00F5FF] rounded-full flex items-center justify-center text-xl sm:text-2xl mb-2 sm:mb-4 border border-[#006A67]/30 shadow-[0_0_15px_rgba(0,245,255,0.2)] shrink-0">
                     <i class="fas fa-map-signs"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white mb-2">${msg}</h3>
-                <p class="text-xs text-gray-400 leading-relaxed">الرجاء اختيار أحد المسارات التعليمية المتاحة مثل (Digital IC Design) من القائمة المنسدلة أعلاه لبدء تصفح خريطة التعلم التفاعلية.</p>
+                <h3 class="font-bold text-sm sm:text-lg text-white mb-1.5 sm:mb-2">${msg}</h3>
+                <p class="text-[11px] sm:text-xs text-gray-400 leading-relaxed">الرجاء اختيار أحد المسارات التعليمية المتاحة مثل (Digital IC Design) من القائمة المنسدلة أعلاه لبدء تصفح خريطة التعلم التفاعلية.</p>
             </div>
         `;
         overlay.classList.remove('hidden');
