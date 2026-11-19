@@ -1,4 +1,10 @@
 import { supabase } from './supabase-config.js';
+import {
+    mergeCurriculumLinks,
+    buildCoursePlayerStructure,
+    resolveTargetPlayableItem,
+} from './curriculum-links-core.js';
+import { fetchCourseCurriculumLinks } from './curriculum-links-service.js';
 
 // ==========================================
 // 1. CONFIGURATION & GLOBAL STATE
@@ -35,6 +41,8 @@ window.awardXp = async (amount, reason) => {
 
 let courseData = null;
 let courseContents = [];
+let coursePlayerStructure = null;
+let courseFlatPlayable = [];
 let currentUserData = null;
 let currentTeamId = null;
 
@@ -450,10 +458,18 @@ async function initPlayer() {
             
             if (!matErr) materials = mats || [];
         }
-        courseContents = materials;
+        // Fetch multi-links for this course and all of its lessons (gracefully falls back if table not yet created)
+        const materialIds = materials.map(m => m.content_id).filter(Boolean);
+        const { tableLinks, tableReady } = courseId
+            ? await fetchCourseCurriculumLinks(supabase, courseId, materialIds)
+            : { tableLinks: [], tableReady: false };
 
-        // Fetch documents for the course
+        // Fetch documents linked via legacy course_id OR via curriculum_links
         let documents = [];
+        const linkedDocIds = Array.from(new Set(
+            (tableLinks || []).filter(l => l.item_type === 'document' && l.item_id).map(l => String(l.item_id))
+        ));
+
         if (courseId) {
             const { data: docsData } = await supabase
                 .from('curriculum_documents')
@@ -463,63 +479,84 @@ async function initPlayer() {
             documents = docsData || [];
         }
 
-        if (isDocOnlyMode && docData && documents.findIndex(d => d.id === docData.id) === -1) {
+        const existingDocIds = new Set(documents.map(d => String(d.id)));
+        const missingDocIds = linkedDocIds.filter(id => !existingDocIds.has(id));
+        if (missingDocIds.length > 0) {
+            const { data: extraDocs } = await supabase
+                .from('curriculum_documents')
+                .select('*, tracks(name), phases(title)')
+                .in('id', missingDocIds);
+            if (extraDocs && extraDocs.length > 0) {
+                documents = [...documents, ...extraDocs];
+            }
+        }
+
+        if (isDocOnlyMode && docData && documents.findIndex(d => String(d.id) === String(docData.id)) === -1) {
             documents.push(docData);
         }
 
-        // Merge documents into courseContents
-        if (documents.length > 0) {
-            const docItems = documents.map(d => ({
-                content_id: `doc_${d.id}`,
-                course_id: courseId,
-                title: d.title,
-                type: 'document',
-                order_index: d.order_index || 0,
-                base_xp: d.xp_reward,
-                rawDoc: d
-            }));
-            
-            const lessonDocs = docItems.filter(d => d.rawDoc.lesson_id);
-            const courseDocs = docItems.filter(d => !d.rawDoc.lesson_id);
-            
-            let merged = [...courseContents];
-            
-            lessonDocs.forEach(docItem => {
-                const idx = merged.findIndex(m => m.content_id === docItem.rawDoc.lesson_id);
-                if (idx !== -1) {
-                    merged.splice(idx + 1, 0, docItem);
-                } else {
-                    courseDocs.push(docItem);
-                }
-            });
-            
-            courseDocs.sort((a, b) => a.order_index - b.order_index);
-            merged = [...merged, ...courseDocs];
-            
-            courseContents = merged;
+        const mergedLinks = mergeCurriculumLinks({
+            tableLinks,
+            materials,
+            documents,
+            tableReady,
+        });
+
+        // Gather ALL quiz & project IDs from both legacy columns and multi-links
+        const quizIdSet = new Set(materials.map(c => c.ref_quiz_id).filter(Boolean).map(String));
+        const projectIdSet = new Set(materials.map(c => c.ref_project_id).filter(Boolean).map(String));
+        mergedLinks.forEach(l => {
+            if (l.item_type === 'quiz' && l.item_id) quizIdSet.add(String(l.item_id));
+            if (l.item_type === 'project' && l.item_id) projectIdSet.add(String(l.item_id));
+        });
+
+        const quizIds = Array.from(quizIdSet);
+        const projectIds = Array.from(projectIdSet);
+
+        if (quizIds.length > 0) {
+            const { data: qData } = await supabase.from('quizzes').select('quiz_id, title, max_xp').in('quiz_id', quizIds);
+            if (qData) quizzesLookup = qData.reduce((acc, q) => ({ ...acc, [q.quiz_id]: q }), {});
+        }
+        if (projectIds.length > 0) {
+            const { data: pData } = await supabase.from('projects').select('id, title, max_points').in('id', projectIds);
+            if (pData) projectsLookup = pData.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
         }
 
-        if (isDocOnlyMode && courseContents.length === 0 && docData) {
-            courseContents = [{
+        const documentsLookup = documents.reduce((acc, d) => {
+            acc[d.id] = d;
+            return acc;
+        }, {});
+
+        coursePlayerStructure = buildCoursePlayerStructure({
+            courseId,
+            materials,
+            mergedLinks,
+            quizzesLookup,
+            projectsLookup,
+            documentsLookup,
+        });
+
+        courseContents = coursePlayerStructure.orderedMaterials;
+        courseFlatPlayable = coursePlayerStructure.flatPlayable;
+
+        if (isDocOnlyMode && courseFlatPlayable.length === 0 && docData) {
+            const standaloneDoc = {
                 content_id: `doc_${docData.id}`,
+                unique_playlist_id: `doc_${docData.id}`,
                 course_id: null,
                 title: docData.title,
                 type: 'document',
                 base_xp: docData.xp_reward,
-                rawDoc: docData
-            }];
-        }
-
-        const quizIds = courseContents.map(c => c.ref_quiz_id).filter(Boolean);
-        const projectIds = courseContents.map(c => c.ref_project_id).filter(Boolean);
-
-        if (quizIds.length > 0) {
-            const { data: qData } = await supabase.from('quizzes').select('quiz_id, title, max_xp').in('quiz_id', quizIds);
-            if (qData) quizzesLookup = qData.reduce((acc, q) => ({...acc, [q.quiz_id]: q}), {});
-        }
-        if (projectIds.length > 0) {
-            const { data: pData } = await supabase.from('projects').select('id, title, max_points').in('id', projectIds);
-            if (pData) projectsLookup = pData.reduce((acc, p) => ({...acc, [p.id]: p}), {});
+                rawDoc: docData,
+            };
+            courseContents = [standaloneDoc];
+            courseFlatPlayable = [standaloneDoc];
+            coursePlayerStructure = {
+                orderedMaterials: [standaloneDoc],
+                lessonAttachmentsMap: {},
+                courseAttachments: { quizzes: [], projects: [], documents: [] },
+                flatPlayable: [standaloneDoc],
+            };
         }
 
         await ensureUserEnrolled();
@@ -547,57 +584,20 @@ async function initPlayer() {
             }
         }
 
-        // SMART RESOLVER: Identify target content type
+        // SMART RESOLVER: Identify target content across videos, multi-linked quizzes/projects/docs, and course-level attachments
         if (targetContentId) {
-            let foundDirect = courseContents.find(c => String(c.content_id) === String(targetContentId));
-            
-            if (foundDirect) {
-                currentContent = foundDirect;
-            } else {
-                let parentWithQuiz = courseContents.find(c => String(c.ref_quiz_id) === String(targetContentId));
-                if (parentWithQuiz) {
-                    const qData = quizzesLookup[parentWithQuiz.ref_quiz_id] || {};
-                    currentContent = {
-                        content_id: parentWithQuiz.content_id + '_quiz',
-                        ref_quiz_id: parentWithQuiz.ref_quiz_id,
-                        title: 'اختبار: ' + (qData.title || 'تقييم الدرس'),
-                        type: 'quiz',
-                        base_xp: qData.max_xp || 0,
-                        Author: parentWithQuiz.Author
-                    };
-                } else {
-                    let parentWithProject = courseContents.find(c => String(c.ref_project_id) === String(targetContentId));
-                    if (parentWithProject) {
-                        const pData = projectsLookup[parentWithProject.ref_project_id] || {};
-                        currentContent = {
-                            content_id: parentWithProject.content_id + '_project',
-                            ref_project_id: parentWithProject.ref_project_id,
-                            title: 'مشروع: ' + (pData.title || 'تطبيق عملي'),
-                            type: 'project',
-                            base_xp: pData.max_points || 0,
-                            Author: parentWithProject.Author
-                        };
-                    } else {
-                        courseContents.forEach(item => {
-                            if (targetContentId === item.content_id + '_quiz') {
-                                const qData = quizzesLookup[item.ref_quiz_id] || {};
-                                currentContent = { content_id: item.content_id + '_quiz', ref_quiz_id: item.ref_quiz_id, type: 'quiz', title: 'اختبار: ' + (qData.title || 'تقييم الدرس'), base_xp: qData.max_xp || 0 };
-                            } else if (targetContentId === item.content_id + '_project') {
-                                const pData = projectsLookup[item.ref_project_id] || {};
-                                currentContent = { content_id: item.content_id + '_project', ref_project_id: item.ref_project_id, type: 'project', title: 'مشروع: ' + (pData.title || 'تطبيق عملي'), base_xp: pData.max_points || 0 };
-                            }
-                        });
-                    }
-                }
+            const resolved = resolveTargetPlayableItem(courseFlatPlayable, targetContentId);
+            if (resolved) {
+                currentContent = resolved;
             }
         }
 
-        if (!currentContent && courseContents.length > 0) {
-            currentContent = courseContents[0];
+        if (!currentContent && courseFlatPlayable.length > 0) {
+            currentContent = courseFlatPlayable[0];
         }
 
         await renderSidebar();
-        
+
         if (currentContent) {
             await loadContent(currentContent);
         }
@@ -689,10 +689,12 @@ function isContentLocked(item) {
     if (currentUserData && ['leader', 'admin', 'owner', 'master admin', 'content manager'].includes(String(currentUserData.role).toLowerCase())) {
         return false;
     }
-    const currentIndex = courseContents.findIndex(c => c.content_id === item.content_id);
+    const list = courseFlatPlayable.length > 0 ? courseFlatPlayable : courseContents;
+    const itemKey = item.unique_playlist_id || item.content_id;
+    const currentIndex = list.findIndex(c => (c.unique_playlist_id || c.content_id) === itemKey);
     if (currentIndex <= 0) return false;
     for (let i = 0; i < currentIndex; i++) {
-        const prev = courseContents[i];
+        const prev = list[i];
         if (prev.type === 'section') continue;
         if (!isContentCompleted(prev)) {
             return true;
@@ -725,24 +727,37 @@ async function renderSidebar() {
     let completedCount = 0;
     let mainIndex = 1;
 
+    const lessonAttMap = coursePlayerStructure?.lessonAttachmentsMap || {};
+    const courseAtt = coursePlayerStructure?.courseAttachments || { quizzes: [], projects: [], documents: [] };
+
+    const isItemActiveMatch = (candidate) => {
+        if (!currentContent || !candidate) return false;
+        const currKey = currentContent.unique_playlist_id || currentContent.content_id;
+        const candKey = candidate.unique_playlist_id || candidate.content_id;
+        return String(currKey) === String(candKey);
+    };
+
     // 💡 المسار الافتراضي للفيديوهات (لكي يعمل بشكل طبيعي مع الكورسات القديمة بدون سكاشن)
-    let currentSectionBody = container; 
+    let currentSectionBody = container;
 
     courseContents.forEach((item, index) => {
-        
         // =====================================
         // 💡 1. رسم العناوين (Sections)
         // =====================================
         if (item.type === 'section') {
             const sectionId = `section-${item.content_id}`;
-            
-            // ذكاء الواجهة: فحص ما إذا كان الفيديو الذي يشاهده الطالب الآن موجوداً داخل هذا الفولدر لفتحه تلقائياً
+
             let hasActiveContent = false;
             for (let i = index; i < courseContents.length; i++) {
-                if (i !== index && courseContents[i].type === 'section') break; // وصلنا لـ Section جديد
-                if (currentContent && courseContents[i].content_id === currentContent.content_id) hasActiveContent = true;
-                if (currentContent && currentContent.ref_quiz_id && courseContents[i].ref_quiz_id === currentContent.ref_quiz_id) hasActiveContent = true;
-                if (currentContent && currentContent.ref_project_id && courseContents[i].ref_project_id === currentContent.ref_project_id) hasActiveContent = true;
+                if (i !== index && courseContents[i].type === 'section') break;
+                const mat = courseContents[i];
+                if (isItemActiveMatch(mat)) hasActiveContent = true;
+                const att = lessonAttMap[mat.content_id];
+                if (att) {
+                    if ([...att.documents, ...att.quizzes, ...att.projects].some(isItemActiveMatch)) {
+                        hasActiveContent = true;
+                    }
+                }
             }
 
             const shouldBeOpen = hasActiveContent || index === 0;
@@ -765,61 +780,91 @@ async function renderSidebar() {
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', sectionHTML);
-            
-            // تحويل مسار الرسم ليكون داخل هذا الـ Section الجديد
             currentSectionBody = document.getElementById(`body-${sectionId}`);
-            
-            // 💡 تم حذف (return;) من هنا لكي يكمل الكود رسم الفيديو نفسه ليكون قابلاً للتشغيل!
         }
 
         // =====================================
         // 💡 2. رسم الدروس أو المستندات
         // =====================================
-        const isCompleted = completedMaterialIds.includes(item.content_id);
-        const isChild = currentSectionBody !== container; // لو هو جوه فولدر، نعطيه تنسيق الابن (Child)
-        
+        const isCompleted = isContentCompleted(item);
+        const isChild = currentSectionBody !== container;
+
         renderSidebarItem(currentSectionBody, item, mainIndex, isCompleted, isChild);
-        
+
         totalItemsCount++;
         if (isCompleted) completedCount++;
         mainIndex++;
 
         // =====================================
-        // 💡 3. رسم الكويزات التابعة للدرس
+        // 💡 3. رسم كافة المرفقات المرتبطة بهذا الدرس (مستندات، كويزات، مشاريع — بدون حد أقصى)
         // =====================================
-        if (item.ref_quiz_id) {
-            const qData = quizzesLookup[item.ref_quiz_id] || {};
-            const quizItem = {
-                content_id: item.content_id + '_quiz',
-                ref_quiz_id: item.ref_quiz_id,
-                title: 'اختبار: ' + (qData.title || 'تقييم الدرس'),
-                type: 'quiz',
-                base_xp: qData.max_xp || 0
-            };
-            const isQuizCompleted = completedQuizIds.includes(item.ref_quiz_id);
-            renderSidebarItem(currentSectionBody, quizItem, '', isQuizCompleted, true);
-            totalItemsCount++; 
-            if (isQuizCompleted) completedCount++;
-        }
+        const att = lessonAttMap[item.content_id];
+        if (att) {
+            (att.documents || []).forEach(docItem => {
+                const isDocCompleted = isContentCompleted(docItem);
+                renderSidebarItem(currentSectionBody, docItem, '', isDocCompleted, true);
+                totalItemsCount++;
+                if (isDocCompleted) completedCount++;
+            });
 
-        // =====================================
-        // 💡 4. رسم المشاريع التابعة للدرس
-        // =====================================
-        if (item.ref_project_id) {
-            const pData = projectsLookup[item.ref_project_id] || {};
-            const projectItem = {
-                content_id: item.content_id + '_project',
-                ref_project_id: item.ref_project_id,
-                title: 'مشروع: ' + (pData.title || 'تطبيق عملي'),
-                type: 'project',
-                base_xp: pData.max_points || 0
-            };
-            const isProjectCompleted = completedProjectIds.includes(item.ref_project_id);
-            renderSidebarItem(currentSectionBody, projectItem, '', isProjectCompleted, true);
-            totalItemsCount++;
-            if (isProjectCompleted) completedCount++;
+            (att.quizzes || []).forEach(quizItem => {
+                const isQuizCompleted = isContentCompleted(quizItem);
+                renderSidebarItem(currentSectionBody, quizItem, '', isQuizCompleted, true);
+                totalItemsCount++;
+                if (isQuizCompleted) completedCount++;
+            });
+
+            (att.projects || []).forEach(projectItem => {
+                const isProjectCompleted = isContentCompleted(projectItem);
+                renderSidebarItem(currentSectionBody, projectItem, '', isProjectCompleted, true);
+                totalItemsCount++;
+                if (isProjectCompleted) completedCount++;
+            });
         }
     });
+
+    // =====================================
+    // 💡 4. رسم المرفقات والاختبارات والمشاريع المرتبطة بالكورس ككل (Course-level)
+    // =====================================
+    const allCourseAttachments = [
+        ...(courseAtt.documents || []),
+        ...(courseAtt.quizzes || []),
+        ...(courseAtt.projects || []),
+    ];
+
+    if (allCourseAttachments.length > 0) {
+        const sectionId = `section-course-attachments-${courseId || 'global'}`;
+        const hasActiveCourseAtt = allCourseAttachments.some(isItemActiveMatch);
+        const shouldBeOpen = hasActiveCourseAtt || courseContents.length === 0 || true;
+
+        const courseAttHtml = `
+            <div class="mt-5 mb-2 animate-fade-in" data-testid="course-level-attachments-section">
+                <button type="button" onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-l from-b-primary/15 to-black/70 border border-b-primary/30 hover:border-b-primary/60 rounded-xl transition-all group shadow-md">
+                    <span class="font-bold text-white text-xs group-hover:text-teal-300 transition-colors flex items-center gap-2.5 text-right leading-tight">
+                        <div class="w-7 h-7 rounded-lg bg-b-primary/20 text-teal-300 flex items-center justify-center text-xs border border-b-primary/30 shrink-0">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <span>مرفقات وتقييمات الكورس (${allCourseAttachments.length})</span>
+                    </span>
+                    <div class="w-7 h-7 shrink-0 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300 ${shouldBeOpen ? 'rotate-180' : ''}" id="icon-${sectionId}"></i>
+                    </div>
+                </button>
+                <div id="body-${sectionId}" class="section-body mt-2.5 space-y-1.5 transition-all overflow-hidden ${shouldBeOpen ? '' : 'hidden'}">
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', courseAttHtml);
+        const courseAttBody = document.getElementById(`body-${sectionId}`);
+
+        allCourseAttachments.forEach(attItem => {
+            const isAttCompleted = isContentCompleted(attItem);
+            renderSidebarItem(courseAttBody, attItem, mainIndex, isAttCompleted, false);
+            totalItemsCount++;
+            if (isAttCompleted) completedCount++;
+            mainIndex++;
+        });
+    }
 
     updateProgressBar(completedCount, totalItemsCount);
 }
@@ -837,15 +882,17 @@ window.togglePlaylistSection = (sectionId) => {
 function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
     let isActive = false;
     if (currentContent) {
-        if (currentContent.content_id === item.content_id) isActive = true;
-        if (item.type === 'quiz' && currentContent.ref_quiz_id === item.ref_quiz_id) isActive = true;
-        if (item.type === 'project' && currentContent.ref_project_id === item.ref_project_id) isActive = true;
+        const currKey = currentContent.unique_playlist_id || currentContent.content_id;
+        const itemKey = item.unique_playlist_id || item.content_id;
+        if (String(currKey) === String(itemKey)) {
+            isActive = true;
+        }
     }
 
-    let icon = "fa-play"; 
+    let icon = "fa-play";
     let typeColor = "text-gray-400";
-    let typeLabel = "فيديو"; 
-    
+    let typeLabel = "فيديو";
+
     if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; typeLabel = "كويز"; }
     if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; typeLabel = "مشروع"; }
     if (item.type === 'document') { icon = "fa-file-pdf"; typeColor = "text-cyan-400"; typeLabel = "مستند"; }
@@ -2088,9 +2135,18 @@ function renderProjectUI(projectData, submissionData) {
             }
         });
     } else {
-        const relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
+        let relatedLesson = null;
+        if (currentContent?.parent_content_id) {
+            relatedLesson = courseContents.find(c => String(c.content_id) === String(currentContent.parent_content_id));
+        }
+        if (!relatedLesson && !currentContent?.is_course_level) {
+            relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
+        }
         if (relatedLesson) {
             lessonTag.innerText = `تابع لدرس: ${relatedLesson.title}`;
+            lessonTag.classList.remove('hidden');
+        } else if (currentContent?.is_course_level && courseData?.title) {
+            lessonTag.innerText = `تابع للكورس: ${courseData.title}`;
             lessonTag.classList.remove('hidden');
         } else {
             lessonTag.classList.add('hidden');

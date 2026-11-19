@@ -1,4 +1,28 @@
 import { supabase } from '../../js/supabase-config.js';
+import {
+    mergeCurriculumLinks,
+    getAttachmentsForTarget,
+    getTargetsForItem,
+    itemMatchesHierarchicalFilters,
+} from '../../js/curriculum-links-core.js';
+import {
+    fetchAllCurriculumLinks,
+    syncTargetAttachments,
+    syncItemTargets,
+    appendItemTargets,
+    deleteLinksForTarget,
+    deleteLinksForItem,
+} from '../../js/curriculum-links-service.js';
+import {
+    renderTargetAttachmentsSummaryHtml,
+    renderItemLinkedTargetsHtml,
+    mountTargetAttachmentsEditor,
+    getTargetAttachmentsValue,
+    mountItemTargetsEditor,
+    getItemTargetsValue,
+    openQuickAttachmentsModal,
+    renderMigrationBanner,
+} from './content-links-ui.js';
 
 // ==========================================
 // 🧠 STATE MANAGEMENT & CONFIGURATION
@@ -103,21 +127,33 @@ let hierarchyCache = null; // تخزين مؤقت للبيانات الهرمي�
 
 async function fetchHierarchyData() {
     if (hierarchyCache) return hierarchyCache;
-    const [tracks, phases, courses, contents, quizzes, projects] = await Promise.all([
+    const [tracks, phases, courses, contents, quizzes, projects, documents, linksRes] = await Promise.all([
         supabase.from('tracks').select('id, name').order('created_at'),
         supabase.from('phases').select('phase_id, title, track_id'),
         supabase.from('courses').select('course_id, title, phase_id'),
-        supabase.from('course_materials').select('content_id, title, course_id, ref_quiz_id, ref_project_id'),
-        supabase.from('quizzes').select('quiz_id, title'),
-        supabase.from('projects').select('id, title')
+        supabase.from('course_materials').select('content_id, title, course_id, type, ref_quiz_id, ref_project_id'),
+        supabase.from('quizzes').select('quiz_id, title, max_xp'),
+        supabase.from('projects').select('id, title, max_points'),
+        supabase.from('curriculum_documents').select('id, title, document_type, track_id, phase_id, course_id, lesson_id, order_index'),
+        fetchAllCurriculumLinks(supabase)
     ]);
-    hierarchyCache = { 
-        tracks: tracks.data || [], 
-        phases: phases.data || [], 
-        courses: courses.data || [], 
-        contents: contents.data || [], 
+    const mergedLinks = mergeCurriculumLinks({
+        tableLinks: linksRes.tableLinks,
+        materials: contents.data || [],
+        documents: documents.data || [],
+        tableReady: linksRes.tableReady,
+    });
+    renderMigrationBanner(linksRes.tableReady);
+    hierarchyCache = {
+        tracks: tracks.data || [],
+        phases: phases.data || [],
+        courses: courses.data || [],
+        contents: contents.data || [],
         quizzes: quizzes.data || [],
-        projects: projects.data || []
+        projects: projects.data || [],
+        documents: documents.data || [],
+        links: mergedLinks,
+        linksTableReady: linksRes.tableReady,
     };
     return hierarchyCache;
 }
@@ -132,16 +168,16 @@ async function buildDynamicFilters() {
     const inputClasses = "w-full bg-black/60 border border-white/10 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner placeholder-gray-600";
     
     // إظهار قوائم الفلترة حسب المستوى الحالي
-    if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects'].includes(cmCurrentLevel)) {
+    if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         selectsHtml += `<select id="filter-track" class="${inputClasses}"><option value="all">🌍 كل المسارات (Tracks)</option>${hData.tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>`;
     }
-    if (['courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects'].includes(cmCurrentLevel)) {
+    if (['courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         selectsHtml += `<select id="filter-phase" class="${inputClasses}"><option value="all">📚 كل المراحل (Phases)</option>${hData.phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('')}</select>`;
     }
-    if (['course_materials', 'quizzes', 'quiz_questions', 'projects'].includes(cmCurrentLevel)) {
+    if (['course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         selectsHtml += `<select id="filter-course" class="${inputClasses}"><option value="all">🎥 كل الكورسات (Courses)</option>${hData.courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('')}</select>`;
     }
-    if (['quizzes', 'quiz_questions', 'projects'].includes(cmCurrentLevel)) {
+    if (['quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         selectsHtml += `<select id="filter-content" class="${inputClasses}"><option value="all">🎬 كل المحتويات (Contents)</option>${hData.contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('')}</select>`;
     }
     if (['quiz_questions'].includes(cmCurrentLevel)) {
@@ -207,9 +243,12 @@ function updateCascadingFilters(level, value, hData) {
     } else if (level === 'content') {
         const quizSelect = document.getElementById('filter-quiz');
         if(quizSelect) {
-            // إذا اخترنا محتوى محدد، نظهر الـ Quiz المرتبط به فقط
-            const selectedContent = hData.contents.find(c => String(c.content_id) === String(value));
-            const quizzes = (selectedContent && selectedContent.ref_quiz_id) ? hData.quizzes.filter(q => String(q.quiz_id) === String(selectedContent.ref_quiz_id)) : hData.quizzes;
+            // إذا اخترنا محتوى محدد، نظهر كل الاختبارات المرتبطة به
+            let quizzes = hData.quizzes;
+            if (value !== 'all') {
+                const att = getAttachmentsForTarget(hData.links || [], 'content', value);
+                quizzes = hData.quizzes.filter(q => att.quizzes.includes(String(q.quiz_id)));
+            }
             quizSelect.innerHTML = `<option value="all">📝 كل الاختبارات (Quizzes)</option>` + quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('');
             quizSelect.value = 'all';
         }
@@ -287,28 +326,33 @@ function applyFilters() {
                 itemTrackId = parentPhase?.track_id;
             }
             else if (cmCurrentLevel === 'quizzes' || cmCurrentLevel === 'quiz_questions') {
-                itemQuizId = item.quiz_id || item.id; // quiz_questions has quiz_id
-                if(cmCurrentLevel === 'quizzes') itemQuizId = item.quiz_id;
-                
-                // البحث العكسي: إيجاد المحتوى الذي يرتبط بهذا الكويز
-                const relatedContent = hierarchyCache.contents.find(c => String(c.ref_quiz_id) === String(itemQuizId));
-                if (relatedContent) {
-                    itemContentId = relatedContent.content_id; itemCourseId = relatedContent.course_id;
-                    const parentCourse = hierarchyCache.courses.find(c => c.course_id === itemCourseId);
-                    itemPhaseId = parentCourse?.phase_id;
-                    const parentPhase = hierarchyCache.phases.find(p => p.phase_id === itemPhaseId);
-                    itemTrackId = parentPhase?.track_id;
-                }
+                itemQuizId = cmCurrentLevel === 'quizzes' ? item.quiz_id : item.quiz_id;
+                if (quizVal !== 'all' && String(itemQuizId) !== quizVal) return false;
+                return itemMatchesHierarchicalFilters(
+                    'quiz',
+                    itemQuizId,
+                    { trackVal, phaseVal, courseVal, contentVal },
+                    hierarchyCache,
+                    hierarchyCache.links || []
+                );
             }
             else if (cmCurrentLevel === 'projects') {
-                const relatedContent = hierarchyCache.contents.find(c => String(c.ref_project_id) === String(item.id));
-                if (relatedContent) {
-                    itemContentId = relatedContent.content_id; itemCourseId = relatedContent.course_id;
-                    const parentCourse = hierarchyCache.courses.find(c => c.course_id === itemCourseId);
-                    itemPhaseId = parentCourse?.phase_id;
-                    const parentPhase = hierarchyCache.phases.find(p => p.phase_id === itemPhaseId);
-                    itemTrackId = parentPhase?.track_id;
-                }
+                return itemMatchesHierarchicalFilters(
+                    'project',
+                    item.id,
+                    { trackVal, phaseVal, courseVal, contentVal },
+                    hierarchyCache,
+                    hierarchyCache.links || []
+                );
+            }
+            else if (cmCurrentLevel === 'curriculum_documents') {
+                return itemMatchesHierarchicalFilters(
+                    'document',
+                    item.id,
+                    { trackVal, phaseVal, courseVal, contentVal },
+                    hierarchyCache,
+                    hierarchyCache.links || []
+                );
             }
         }
 
@@ -360,30 +404,33 @@ async function loadTableData() {
         } else if (cmCurrentLevel === 'courses') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[320px]">الكورس (Course)</th>
-                <th class="p-4 text-center min-w-[280px]">المرحلة المرتبطة</th>
-                <th class="p-4 text-center min-w-[140px]">النوع</th>
-                <th class="p-4 text-center min-w-[120px]">الحالة</th>
-                <th class="p-4 text-center min-w-[200px]">إجراءات</th>
+                <th class="p-4 text-right min-w-[300px]">الكورس (Course)</th>
+                <th class="p-4 text-center min-w-[220px]">المرحلة المرتبطة</th>
+                <th class="p-4 text-center min-w-[200px]">المرفقات (كويز/مشروع/مستند)</th>
+                <th class="p-4 text-center min-w-[120px]">النوع</th>
+                <th class="p-4 text-center min-w-[110px]">الحالة</th>
+                <th class="p-4 text-center min-w-[210px]">إجراءات</th>
             </tr>`;
             query = supabase.from('courses').select('*, phases(title)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'course_materials') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[300px]">المحتوى (Content)</th>
-                <th class="p-4 text-center min-w-[260px]">الكورس المرتبط</th>
-                <th class="p-4 text-center min-w-[130px]">النوع</th>
-                <th class="p-4 text-center min-w-[100px]">الترتيب</th>
-                <th class="p-4 text-center min-w-[120px]">الحالة</th>
-                <th class="p-4 text-center min-w-[200px]">إجراءات</th>
+                <th class="p-4 text-right min-w-[280px]">المحتوى (Content)</th>
+                <th class="p-4 text-center min-w-[220px]">الكورس المرتبط</th>
+                <th class="p-4 text-center min-w-[210px]">المرفقات (كويز/مشروع/مستند)</th>
+                <th class="p-4 text-center min-w-[110px]">النوع</th>
+                <th class="p-4 text-center min-w-[90px]">الترتيب</th>
+                <th class="p-4 text-center min-w-[110px]">الحالة</th>
+                <th class="p-4 text-center min-w-[210px]">إجراءات</th>
             </tr>`;
             query = supabase.from('course_materials').select('*, courses(title)').order('order_index', { ascending: true });
         } else if (cmCurrentLevel === 'quizzes') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[300px]">عنوان الاختبار (Quiz)</th>
-                <th class="p-4 text-center min-w-[130px]">النقاط (XP)</th>
-                <th class="p-4 text-center min-w-[130px]">درجة النجاح</th>
+                <th class="p-4 text-right min-w-[280px]">عنوان الاختبار (Quiz)</th>
+                <th class="p-4 text-center min-w-[250px]">الربط بالمنهج</th>
+                <th class="p-4 text-center min-w-[120px]">النقاط (XP)</th>
+                <th class="p-4 text-center min-w-[120px]">درجة النجاح</th>
                 <th class="p-4 text-center min-w-[180px]">إجراءات</th>
             </tr>`;
             query = supabase.from('quizzes').select('*').order('created_at', { ascending: false });
@@ -399,21 +446,22 @@ async function loadTableData() {
         } else if (cmCurrentLevel === 'projects') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[300px]">عنوان المشروع (Project)</th>
-                <th class="p-4 text-center min-w-[130px]">النقاط (XP)</th>
-                <th class="p-4 text-center min-w-[150px]">طريقة التسليم</th>
+                <th class="p-4 text-right min-w-[280px]">عنوان المشروع (Project)</th>
+                <th class="p-4 text-center min-w-[250px]">الربط بالمنهج</th>
+                <th class="p-4 text-center min-w-[120px]">النقاط (XP)</th>
+                <th class="p-4 text-center min-w-[140px]">طريقة التسليم</th>
                 <th class="p-4 text-center min-w-[180px]">إجراءات</th>
             </tr>`;
             query = supabase.from('projects').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'curriculum_documents') {
             thead.innerHTML = `<tr>
-                <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[300px]">اسم المستند (Document)</th>
-                <th class="p-4 text-center min-w-[130px]">النوع</th>
-                <th class="p-4 text-center min-w-[240px]">الربط بالمنهج</th>
-                <th class="p-4 text-center min-w-[140px]">المصدر</th>
-                <th class="p-4 text-center min-w-[120px]">العرض</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-3 w-10 text-center text-gray-400 font-bold">#</th>
+                <th class="p-3 text-right min-w-[200px]">اسم المستند (Document)</th>
+                <th class="p-3 text-center min-w-[80px]">النوع</th>
+                <th class="p-3 text-center min-w-[180px]">الربط بالمنهج</th>
+                <th class="p-3 text-center min-w-[90px]">المصدر</th>
+                <th class="p-3 text-center min-w-[80px]">العرض</th>
+                <th class="p-3 text-center min-w-[125px]">إجراءات</th>
             </tr>`;
             query = supabase.from('curriculum_documents').select('*').order('created_at', { ascending: false });
         }
@@ -565,6 +613,7 @@ function renderTable() {
             `;
         }
         else if (cmCurrentLevel === 'courses') {
+            const attHtml = renderTargetAttachmentsSummaryHtml('course', id, title, hierarchyCache?.links || []);
             middleColumn = `
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-blue-500/15 transition-colors">
@@ -572,6 +621,7 @@ function renderTable() {
                         <span dir="auto" class="break-words">${item.phases?.title || 'بدون مرحلة'}</span>
                     </span>
                 </td>
+                <td class="p-4 text-center">${attHtml}</td>
                 <td class="p-4 text-center">${renderTypeBadge(item.type)}</td>
                 <td class="p-4 text-center">${statusHtml}</td>
             `;
@@ -582,10 +632,12 @@ function renderTable() {
                         <span class="truncate">${item.phases?.title || 'بدون مرحلة'}</span>
                     </span>
                     ${renderTypeBadge(item.type)}
+                    <div class="w-full pt-1">${attHtml}</div>
                 </div>
             `;
         }
         else if (cmCurrentLevel === 'course_materials') {
+            const attHtml = renderTargetAttachmentsSummaryHtml('content', id, title, hierarchyCache?.links || []);
             middleColumn = `
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-red-500/15 transition-colors">
@@ -593,6 +645,7 @@ function renderTable() {
                         <span dir="auto" class="break-words">${item.courses?.title || 'بدون كورس'}</span>
                     </span>
                 </td>
+                <td class="p-4 text-center">${attHtml}</td>
                 <td class="p-4 text-center">${renderTypeBadge(item.type)}</td>
                 <td class="p-4 text-center">
                     <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20 inline-block shadow-sm">${item.order_index || 0}</span>
@@ -607,18 +660,22 @@ function renderTable() {
                     </span>
                     ${renderTypeBadge(item.type)}
                     <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">الترتيب: #${item.order_index || 0}</span>
+                    <div class="w-full pt-1">${attHtml}</div>
                 </div>
             `;
         }
         else if (cmCurrentLevel === 'quizzes') {
+            const linksHtml = renderItemLinkedTargetsHtml('quiz', id, hierarchyCache?.links || [], hierarchyCache);
             middleColumn = `
+                <td class="p-4 text-center">${linksHtml}</td>
                 <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span></td>
                 <td class="p-4 text-center"><span class="text-xs font-mono text-gray-300 font-bold">${item.passing_score || 50}%</span></td>
             `;
             mobileMetaHtml = `
-                <div class="flex items-center gap-2 text-[11px]">
+                <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span>
                     <span class="text-xs font-mono text-gray-300 font-bold bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">درجة النجاح: ${item.passing_score || 50}%</span>
+                    <div class="w-full pt-1">${linksHtml}</div>
                 </div>
             `;
         }
@@ -643,43 +700,33 @@ function renderTable() {
             `;
         }
         else if (cmCurrentLevel === 'projects') {
+            const linksHtml = renderItemLinkedTargetsHtml('project', id, hierarchyCache?.links || [], hierarchyCache);
             middleColumn = `
+                <td class="p-4 text-center">${linksHtml}</td>
                 <td class="p-4 text-center"><span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span></td>
                 <td class="p-4 text-center text-xs font-mono text-gray-400">${item.submission_method || '-'}</td>
             `;
             mobileMetaHtml = `
-                <div class="flex items-center gap-2 text-[11px]">
+                <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span>
                     <span class="text-xs font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">تسليم: ${item.submission_method || '-'}</span>
+                    <div class="w-full pt-1">${linksHtml}</div>
                 </div>
             `;
         }
         else if (cmCurrentLevel === 'curriculum_documents') {
-            let linkTarget = 'غير مرتبط';
-            if (item.lesson_id) linkTarget = `درس: ${item.lesson_id}`;
-            else if (item.course_id) linkTarget = `كورس: ${item.course_id}`;
-            else if (item.phase_id) linkTarget = `مرحلة: ${item.phase_id}`;
-            else if (item.track_id) linkTarget = `مسار: ${item.track_id}`;
-            
+            const linksHtml = renderItemLinkedTargetsHtml('document', id, hierarchyCache?.links || [], hierarchyCache);
             middleColumn = `
-                <td class="p-4 text-center">${renderTypeBadge(item.document_type || 'PDF')}</td>
-                <td class="p-4 text-center">
-                    <span class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold leading-snug text-center shadow-sm">
-                        <i class="fas fa-link text-[10px] opacity-70"></i>
-                        <span dir="auto" class="break-words">${linkTarget}</span>
-                    </span>
-                </td>
-                <td class="p-4 text-center text-xs text-gray-400 font-mono">${item.source_type || '-'}</td>
-                <td class="p-4 text-center text-xs text-purple-400 font-bold uppercase">${item.view_mode || 'embed'}</td>
+                <td class="px-2.5 py-3 text-center">${renderTypeBadge(item.document_type || 'PDF')}</td>
+                <td class="px-2.5 py-3 text-center">${linksHtml}</td>
+                <td class="px-2.5 py-3 text-center text-xs text-gray-400 font-mono">${item.source_type || '-'}</td>
+                <td class="px-2.5 py-3 text-center text-xs text-purple-400 font-bold uppercase">${item.view_mode || 'embed'}</td>
             `;
             mobileMetaHtml = `
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
                     ${renderTypeBadge(item.document_type || 'PDF')}
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-bold truncate max-w-[200px]">
-                        <i class="fas fa-link text-[10px]"></i>
-                        <span class="truncate">${linkTarget}</span>
-                    </span>
                     <span class="text-purple-400 font-bold uppercase text-[10px] bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">${item.view_mode || 'embed'}</span>
+                    <div class="w-full pt-1">${linksHtml}</div>
                 </div>
             `;
         }
@@ -720,7 +767,16 @@ function renderTable() {
             mobileReorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب المراحل"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
         }
 
-        // Desktop Table Row (100% UNCHANGED)
+        let attachBtn = '';
+        let mobileAttachBtn = '';
+        if (cmCurrentLevel === 'courses' || cmCurrentLevel === 'course_materials') {
+            const targetType = cmCurrentLevel === 'courses' ? 'course' : 'content';
+            const safeTitleArg = title.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            attachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all shadow-sm" title="إدارة المرفقات (كويزات/مشاريع/مستندات)"><i class="fas fa-paperclip text-xs"></i></button>`;
+            mobileAttachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إدارة المرفقات"><i class="fas fa-paperclip text-[11px]"></i> <span>مرفقات</span></button>`;
+        }
+
+        // Desktop Table Row
         const trHtml = `
             <tr class="hover:bg-white/[0.04] transition-colors border-b border-white/5 group">
                 <td class="p-4 text-center text-gray-500 font-mono text-xs">${index + 1}</td>
@@ -742,6 +798,7 @@ function renderTable() {
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
                         <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="عرض التفاصيل"><i class="fas fa-info-circle text-xs"></i></button>
+                        ${attachBtn}
                         ${drillDownBtn}
                         ${reorderBtn}
                         ${previewBtn}
@@ -786,6 +843,7 @@ function renderTable() {
                         <button onclick="window.cmShowInfo('${id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="عرض التفاصيل">
                             <i class="fas fa-info-circle text-[11px]"></i> <span>تفاصيل</span>
                         </button>
+                        ${mobileAttachBtn}
                         ${mobileDrillDownBtn}
                         ${mobileReorderBtn}
                         ${mobilePreviewBtn}
@@ -1176,12 +1234,25 @@ async function generateFormFields(data = null) {
     const buildOpts = (items, valKey, textKey, selectedVal) => items.filter(i => i && i[valKey] !== undefined && i[valKey] !== null && String(i[valKey]).trim() !== '').map(i => `<option value="${i[valKey]}" ${String(i[valKey]) === String(selectedVal) ? 'selected' : ''}>${i[textKey]}</option>`).join('');
 
     // --- اكتشاف المسار العكسي (لتسهيل التعديل) ---
-    let initTrack = '', initPhase = '', initCourse = '', initContent = '';
+    let initTrack = '', initPhase = '', initCourse = '', initContent = '', initQuiz = '';
     if (data) {
         if (cmCurrentLevel === 'phases') initTrack = data.track_id;
         if (cmCurrentLevel === 'courses') { initPhase = data.phase_id; initTrack = hData.phases.find(p => p.phase_id === initPhase)?.track_id; }
         if (cmCurrentLevel === 'course_materials') { initCourse = data.course_id; initPhase = hData.courses.find(c => c.course_id === initCourse)?.phase_id; initTrack = hData.phases.find(p => p.phase_id === initPhase)?.track_id; }
-        if (cmCurrentLevel === 'quiz_questions') { initQuiz = data.quiz_id; const relCnt = hData.contents.find(c => String(c.ref_quiz_id) === String(initQuiz)); if(relCnt){ initContent = relCnt.content_id; initCourse = relCnt.course_id; initPhase = hData.courses.find(c => c.course_id === initCourse)?.phase_id; initTrack = hData.phases.find(p => p.phase_id === initPhase)?.track_id; } }
+        if (cmCurrentLevel === 'quiz_questions') {
+            initQuiz = data.quiz_id;
+            const quizTargets = getTargetsForItem(hData.links || [], 'quiz', initQuiz);
+            const firstContentTarget = quizTargets.find(t => t.target_type === 'content');
+            if (firstContentTarget) {
+                const relCnt = hData.contents.find(c => String(c.content_id) === String(firstContentTarget.target_id));
+                if (relCnt) {
+                    initContent = relCnt.content_id;
+                    initCourse = relCnt.course_id;
+                    initPhase = hData.courses.find(c => c.course_id === initCourse)?.phase_id;
+                    initTrack = hData.phases.find(p => p.phase_id === initPhase)?.track_id;
+                }
+            }
+        }
     }
 
     if (cmCurrentLevel === 'tracks') {
@@ -1351,6 +1422,8 @@ async function generateFormFields(data = null) {
                         <input type="checkbox" id="f-auto-sync" ${!data || data?.auto_sync ? 'checked' : ''} class="w-5 h-5 rounded text-blue-500 bg-black border-white/20">
                     </div>
                 </div>
+                <!-- Unlimited Course-Level Attachments (Quizzes, Projects, Documents) -->
+                <div id="cm-course-attachments-slot" class="md:col-span-3"></div>
             </div>
         `;
     }
@@ -1473,23 +1546,8 @@ async function generateFormFields(data = null) {
                     </div>
                 </div>
 
-                <!-- Related Quiz & Project -->
-                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="${labelStyle}">اختبار مرتبط بالدرس (اختياري)</label>
-                        <select id="f-ref-quiz" class="${inputStyle}">
-                            <option value="">-- بدون اختبار --</option>
-                            ${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.ref_quiz_id)}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="${labelStyle}">مشروع مرتبط بالدرس (اختياري)</label>
-                        <select id="f-ref-project" class="${inputStyle}">
-                            <option value="">-- بدون مشروع --</option>
-                            ${buildOpts(hData.projects, 'id', 'title', data?.ref_project_id)}
-                        </select>
-                    </div>
-                </div>
+                <!-- Unlimited Related Quizzes, Projects & Documents -->
+                <div id="cm-content-attachments-slot" class="md:col-span-3"></div>
 
                 <!-- Active Toggle -->
                 <div class="md:col-span-3 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5">
@@ -1561,44 +1619,7 @@ async function generateFormFields(data = null) {
         html += `
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
                 ${coreFields}
-                <div class="md:col-span-3 mt-3 p-5 bg-purple-900/10 border border-purple-500/20 rounded-2xl space-y-4">
-                    <div class="flex items-center justify-between border-b border-purple-500/10 pb-3">
-                        <h4 class="text-purple-400 font-bold text-sm flex items-center gap-2">
-                            <i class="fas fa-link"></i> تعيين مباشر لدرس / محتوى تعليمي (اختياري لتوفير الوقت)
-                        </h4>
-                        <span class="text-xs text-gray-400">تصفية سريعة للربط المباشر مع درس في الكورس</span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label class="${labelStyle}">تصفية المسار</label>
-                            <select id="modal-filter-track" class="${inputStyle}">
-                                <option value="">-- كل المسارات --</option>
-                                ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="${labelStyle}">تصفية المرحلة</label>
-                            <select id="modal-filter-phase" class="${inputStyle}">
-                                <option value="">-- كل المراحل --</option>
-                                ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="${labelStyle}">تصفية الكورس</label>
-                            <select id="modal-filter-course" class="${inputStyle}">
-                                <option value="">-- كل الكورسات --</option>
-                                ${buildOpts(hData.courses, 'course_id', 'title', initCourse)}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="${labelStyle}">المحتوى الهدف (الدرس)</label>
-                            <select id="f-link-content" class="${inputStyle} border-purple-500/50">
-                                <option value="">-- اختر الدرس للربط --</option>
-                                ${buildOpts(hData.contents, 'content_id', 'title', '')}
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                <div id="cm-item-targets-slot" class="md:col-span-3 mt-2"></div>
             </div>
         `;
     }
@@ -1718,14 +1739,8 @@ async function generateFormFields(data = null) {
                     <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
                 </div>
 
-                <!-- Linking -->
-                <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
-                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-link"></i> ربط الوثيقة بالمنهج التعليمي (اختياري)</h4>
-                </div>
-                <div><label class="${labelStyle}">المسار المرتبط (Track)</label><select id="f-track-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}</select></div>
-                <div><label class="${labelStyle}">المرحلة المرتبطة (Phase)</label><select id="f-phase-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.phases.filter(p => !data?.track_id || p.track_id === data.track_id), 'phase_id', 'title', data?.phase_id)}</select></div>
-                <div><label class="${labelStyle}">الكورس المرتبط (Course)</label><select id="f-course-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.courses.filter(c => !data?.phase_id || c.phase_id === data.phase_id), 'course_id', 'title', data?.course_id)}</select></div>
-                <div class="md:col-span-3"><label class="${labelStyle}">الدرس المرتبط (Lesson/Content)</label><select id="f-lesson-id" class="${inputStyle}"><option value="">-- بدون ارتباط --</option>${buildOpts(hData.contents.filter(c => !data?.course_id || c.course_id === data.course_id), 'content_id', 'title', data?.lesson_id)}</select></div>
+                <!-- Multi-Target Curriculum Linking -->
+                <div id="cm-item-targets-slot" class="md:col-span-3 pt-2"></div>
 
                 <!-- Source & View Mode -->
                 <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
@@ -1800,9 +1815,31 @@ async function generateFormFields(data = null) {
     container.innerHTML = html;
     bindModalCascading(hData); // تفعيل الفلاتر المتسلسلة داخل المودال
 
-    // 💡 تفعيل الجلب التلقائي الذكي لبيانات الفيديو ومدته
-    if (cmCurrentLevel === 'course_materials') {
+    // Mount unlimited multi-attachment / multi-target linking editors
+    if (cmCurrentLevel === 'courses') {
+        const slot = document.getElementById('cm-course-attachments-slot');
+        const initAtt = data?.course_id
+            ? getAttachmentsForTarget(hData.links || [], 'course', data.course_id)
+            : { quizzes: [], projects: [], documents: [] };
+        mountTargetAttachmentsEditor(slot, { targetType: 'course', initialAttachments: initAtt, hData });
+    } else if (cmCurrentLevel === 'course_materials') {
+        const slot = document.getElementById('cm-content-attachments-slot');
+        const initAtt = data?.content_id
+            ? getAttachmentsForTarget(hData.links || [], 'content', data.content_id)
+            : { quizzes: [], projects: [], documents: [] };
+        mountTargetAttachmentsEditor(slot, { targetType: 'content', initialAttachments: initAtt, hData });
         bindVideoMetadataAutoFetch();
+    } else if (cmCurrentLevel === 'quizzes' || cmCurrentLevel === 'projects' || cmCurrentLevel === 'curriculum_documents') {
+        const slot = document.getElementById('cm-item-targets-slot');
+        const itemType = cmCurrentLevel === 'quizzes' ? 'quiz' : cmCurrentLevel === 'projects' ? 'project' : 'document';
+        const itemId = cmCurrentLevel === 'quizzes' ? data?.quiz_id : data?.id;
+        const initTargets = itemId ? getTargetsForItem(hData.links || [], itemType, itemId) : [];
+        mountItemTargetsEditor(slot, {
+            itemType,
+            initialTargets: initTargets,
+            hData,
+            allowTrackPhase: cmCurrentLevel === 'curriculum_documents',
+        });
     }
 }
 
@@ -1855,8 +1892,8 @@ function bindModalCascading(hData) {
         const v = e.target.value;
         if(qSel) qSel.innerHTML = '<option value="">-- اختر الاختبار --</option>' + hData.quizzes.filter(x => {
             if(!v) return true;
-            const refContent = hData.contents.find(c => String(c.content_id) === String(v));
-            return refContent && String(refContent.ref_quiz_id) === String(x.quiz_id);
+            const att = getAttachmentsForTarget(hData.links || [], 'content', v);
+            return att.quizzes.includes(String(x.quiz_id));
         }).map(x => `<option value="${x.quiz_id}">${x.title}</option>`).join('');
     });
 }
@@ -1883,14 +1920,43 @@ async function handleFormSubmit(e) {
         let payload = {};
         const pk = getPrimaryKey();
 
+        const hData = await fetchHierarchyData();
+        let pendingTargetAttachments = null;
+        let pendingItemTargets = null;
+
         if (cmCurrentLevel === 'tracks') { payload = { name: document.getElementById('f-name').value, description: document.getElementById('f-desc').value, is_active: document.getElementById('f-active').checked }; } 
         else if (cmCurrentLevel === 'phases') { payload = { phase_id: document.getElementById('f-phase-id').value, track_id: document.getElementById('f-track-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, image_url: document.getElementById('f-img-url').value, 'Module Time': document.getElementById('f-module-time').value, prerequisites: document.getElementById('f-prereq').value, will_learn: document.getElementById('f-will-learn').value, is_active: document.getElementById('f-active').checked }; } 
-        else if (cmCurrentLevel === 'courses') { payload = { course_id: document.getElementById('f-course-id').value, phase_id: document.getElementById('f-phase-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, type: document.getElementById('f-type').value, playlist_id: document.getElementById('f-playlist').value, image_url: document.getElementById('f-img-url').value, related_with: document.getElementById('f-related').value || null, auto_sync: document.getElementById('f-auto-sync').checked, is_active: document.getElementById('f-active').checked }; }
-        else if (cmCurrentLevel === 'course_materials') { payload = { content_id: document.getElementById('f-content-id').value, course_id: document.getElementById('f-course-id').value, title: document.getElementById('f-title').value, type: document.getElementById('f-type').value, video_id: document.getElementById('f-video-id').value, duration: Math.round(parseFloat(document.getElementById('f-duration').value) * 60) || 0, order_index: parseInt(document.getElementById('f-order').value) || 0, base_xp: parseInt(document.getElementById('f-base-xp').value) || 0, ref_quiz_id: document.getElementById('f-ref-quiz').value || null, ref_project_id: document.getElementById('f-ref-project').value || null, status: document.getElementById('f-status').checked }; }
-        else if (cmCurrentLevel === 'quizzes') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, passing_score: parseInt(document.getElementById('f-pass').value) || 50, max_xp: parseInt(document.getElementById('f-max-xp').value) || 50, attempts_allowed: parseInt(document.getElementById('f-attempts').value) || 3, questions_to_show: document.getElementById('f-q-show').value ? parseInt(document.getElementById('f-q-show').value) : null }; }
+        else if (cmCurrentLevel === 'courses') {
+            payload = { course_id: document.getElementById('f-course-id').value, phase_id: document.getElementById('f-phase-id').value, title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, type: document.getElementById('f-type').value, playlist_id: document.getElementById('f-playlist').value, image_url: document.getElementById('f-img-url').value, related_with: document.getElementById('f-related').value || null, auto_sync: document.getElementById('f-auto-sync').checked, is_active: document.getElementById('f-active').checked };
+            pendingTargetAttachments = getTargetAttachmentsValue(document.getElementById('cm-course-attachments-slot'));
+        }
+        else if (cmCurrentLevel === 'course_materials') {
+            pendingTargetAttachments = getTargetAttachmentsValue(document.getElementById('cm-content-attachments-slot'));
+            payload = {
+                content_id: document.getElementById('f-content-id').value,
+                course_id: document.getElementById('f-course-id').value,
+                title: document.getElementById('f-title').value,
+                type: document.getElementById('f-type').value,
+                video_id: document.getElementById('f-video-id').value,
+                duration: Math.round(parseFloat(document.getElementById('f-duration').value) * 60) || 0,
+                order_index: parseInt(document.getElementById('f-order').value) || 0,
+                base_xp: parseInt(document.getElementById('f-base-xp').value) || 0,
+                ref_quiz_id: pendingTargetAttachments.quizIds[0] || null,
+                ref_project_id: pendingTargetAttachments.projectIds[0] || null,
+                status: document.getElementById('f-status').checked
+            };
+        }
+        else if (cmCurrentLevel === 'quizzes') {
+            payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, passing_score: parseInt(document.getElementById('f-pass').value) || 50, max_xp: parseInt(document.getElementById('f-max-xp').value) || 50, attempts_allowed: parseInt(document.getElementById('f-attempts').value) || 3, questions_to_show: document.getElementById('f-q-show').value ? parseInt(document.getElementById('f-q-show').value) : null };
+            pendingItemTargets = getItemTargetsValue(document.getElementById('cm-item-targets-slot'));
+        }
         else if (cmCurrentLevel === 'quiz_questions') { payload = { quiz_id: document.getElementById('f-quiz-id').value, question_text: document.getElementById('f-q-text').value, option_a: document.getElementById('f-opt-a').value, option_b: document.getElementById('f-opt-b').value, option_c: document.getElementById('f-opt-c').value, option_d: document.getElementById('f-opt-d').value, correct_answer: document.getElementById('f-correct').value, hint: document.getElementById('f-hint').value }; }
-        else if (cmCurrentLevel === 'projects') { payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value }; }
+        else if (cmCurrentLevel === 'projects') {
+            payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value };
+            pendingItemTargets = getItemTargetsValue(document.getElementById('cm-item-targets-slot'));
+        }
         else if (cmCurrentLevel === 'curriculum_documents') {
+            pendingItemTargets = getItemTargetsValue(document.getElementById('cm-item-targets-slot'));
             payload = {
                 title: document.getElementById('f-title').value,
                 short_title: document.getElementById('f-short-title').value || null,
@@ -1899,10 +1965,10 @@ async function handleFormSubmit(e) {
                 thumbnail_url: document.getElementById('f-thumbnail-url').value || null,
                 document_type: document.getElementById('f-doc-type').value,
                 importance: document.getElementById('f-importance').value,
-                track_id: document.getElementById('f-track-id').value || null,
-                phase_id: document.getElementById('f-phase-id').value || null,
-                course_id: document.getElementById('f-course-id').value || null,
-                lesson_id: document.getElementById('f-lesson-id').value || null,
+                track_id: null,
+                phase_id: null,
+                course_id: null,
+                lesson_id: null,
                 source_type: document.getElementById('f-source-type').value,
                 source_url: document.getElementById('f-source-url').value,
                 view_mode: document.getElementById('f-view-mode').value,
@@ -1932,17 +1998,23 @@ async function handleFormSubmit(e) {
             if (inserted && inserted.length > 0) insertedId = inserted[0][pk];
         }
 
-        // 💡 تحديث الربط المباشر (الكويزات والمشاريع) إن وُجد
-        const linkContentId = document.getElementById('f-link-content')?.value;
-        if (linkContentId && insertedId && !cmCurrentEditId) {
-            let linkPayload = {};
-            if (cmCurrentLevel === 'quizzes') linkPayload = { ref_quiz_id: insertedId };
-            else if (cmCurrentLevel === 'projects') linkPayload = { ref_project_id: insertedId };
-            
-            await supabase.from('course_materials').update(linkPayload).eq('content_id', linkContentId);
+        // 💡 حفظ الروابط المتعددة (الكورسات والمحتويات <-> الكويزات والمشاريع والمستندات)
+        let migrationWarn = false;
+        if (insertedId && pendingTargetAttachments && (cmCurrentLevel === 'courses' || cmCurrentLevel === 'course_materials')) {
+            const targetType = cmCurrentLevel === 'courses' ? 'course' : 'content';
+            const res = await syncTargetAttachments(supabase, targetType, insertedId, pendingTargetAttachments, hData);
+            if (res.needsMigrationForExtraLinks) migrationWarn = true;
+        } else if (insertedId && pendingItemTargets && ['quizzes', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
+            const itemType = cmCurrentLevel === 'quizzes' ? 'quiz' : cmCurrentLevel === 'projects' ? 'project' : 'document';
+            const res = await syncItemTargets(supabase, itemType, insertedId, pendingItemTargets, hData);
+            if (res.needsMigrationForExtraLinks) migrationWarn = true;
         }
 
-        window.showToast(cmCurrentEditId ? "تم التحديث بنجاح!" : "تمت الإضافة بنجاح!", "success");
+        if (migrationWarn) {
+            window.showToast("تم حفظ السجل، لكن لحفظ الروابط المتعددة يرجى تشغيل ملف docs/create_curriculum_links.sql في Supabase أولاً.", "warning");
+        } else {
+            window.showToast(cmCurrentEditId ? "تم التحديث وحفظ جميع الروابط بنجاح!" : "تمت الإضافة وحفظ جميع الروابط بنجاح!", "success");
+        }
         window.cmCloseModal();
         hierarchyCache = null; // تفريغ الذاكرة لضمان تحديث القوائم في الإضافات القادمة
         loadTableData(); 
@@ -1967,6 +2039,33 @@ window.cmEditItem = async (id) => {
     document.getElementById('cm-crud-modal').classList.remove('hidden');
     await generateFormFields(item);
     if (window.initSearchableSelects) window.initSearchableSelects();
+};
+
+// 💡 نافذة الإدارة السريعة للمرفقات (لأي كورس أو درس/فيديو بدون فتح نموذج التعديل الكامل)
+window.cmOpenAttachmentsModal = async (targetType, targetId, targetTitle) => {
+    const level = targetType === 'course' ? 'courses' : 'course_materials';
+    if (!getCmPermission('edit', level)) {
+        window.showToast?.('ليس لديك صلاحية لتعديل مرفقات هذا العنصر.', 'error');
+        return;
+    }
+    const hData = await fetchHierarchyData();
+    openQuickAttachmentsModal({
+        targetType,
+        targetId,
+        targetTitle,
+        hData,
+        allLinks: hData.links || [],
+        onSave: async (values) => {
+            const res = await syncTargetAttachments(supabase, targetType, targetId, values, hData);
+            if (res.needsMigrationForExtraLinks) {
+                window.showToast?.('تم تحديث الارتباطات الأساسية، ولتفعيل حفظ الروابط المتعددة يرجى تشغيل docs/create_curriculum_links.sql في Supabase.', 'warning');
+            } else {
+                window.showToast?.('تم حفظ وتنظيم المرفقات بنجاح!', 'success');
+            }
+            hierarchyCache = null;
+            await loadTableData();
+        },
+    });
 };
 
 // --- Advanced Cascading Delete Logic ---
@@ -2151,7 +2250,8 @@ async function deleteQuizCascade(quizId) {
     const { error: errQuestions } = await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
     if (errQuestions) throw errQuestions;
 
-    // 4. remove references in course_materials
+    // 4. remove references in course_materials & curriculum_links
+    await deleteLinksForItem(supabase, 'quiz', quizId);
     const { error: errMat } = await supabase.from('course_materials').update({ ref_quiz_id: null }).eq('ref_quiz_id', quizId);
     if (errMat) console.warn("Could not unlink ref_quiz_id from course_materials:", errMat);
 
@@ -2166,7 +2266,8 @@ async function deleteProjectCascade(projectId) {
     const { error: errSub } = await supabase.from('project_submissions').delete().eq('project_id', projectId);
     if (errSub) console.warn("Could not delete project_submissions:", errSub);
 
-    // 2. remove references in course_materials
+    // 2. remove references in course_materials & curriculum_links
+    await deleteLinksForItem(supabase, 'project', projectId);
     const { error: errMat } = await supabase.from('course_materials').update({ ref_project_id: null }).eq('ref_project_id', projectId);
     if (errMat) console.warn("Could not unlink ref_project_id from course_materials:", errMat);
 
@@ -2183,6 +2284,11 @@ async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true,
         .select('ref_quiz_id, ref_project_id')
         .eq('content_id', contentId)
         .maybeSingle();
+
+    const hData = await fetchHierarchyData();
+    const att = getAttachmentsForTarget(hData.links || [], 'content', contentId);
+    const linkedQuizIds = Array.from(new Set([...(att.quizzes || []), ...(material?.ref_quiz_id ? [String(material.ref_quiz_id)] : [])]));
+    const linkedProjIds = Array.from(new Set([...(att.projects || []), ...(material?.ref_project_id ? [String(material.ref_project_id)] : [])]));
         
     if (material) {
         // 1. completed_materials
@@ -2193,19 +2299,24 @@ async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true,
         const { error: errTasks } = await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
         if (errTasks) console.warn("Could not unlink team_tasks content_id:", errTasks);
 
-        // 3. curriculum_documents
+        // 3. curriculum_documents & curriculum_links
         try {
             await supabase.from('curriculum_documents').delete().eq('lesson_id', contentId);
         } catch (_) {}
+        await deleteLinksForTarget(supabase, 'content', contentId);
         
-        // 4. Delete linked quiz if requested
-        if (selections.deleteQuiz && material.ref_quiz_id) {
-            await deleteQuizCascade(material.ref_quiz_id);
+        // 4. Delete linked quizzes if requested
+        if (selections.deleteQuiz) {
+            for (const qId of linkedQuizIds) {
+                await deleteQuizCascade(qId);
+            }
         }
         
-        // 5. Delete linked project if requested
-        if (selections.deleteProject && material.ref_project_id) {
-            await deleteProjectCascade(material.ref_project_id);
+        // 5. Delete linked projects if requested
+        if (selections.deleteProject) {
+            for (const pId of linkedProjIds) {
+                await deleteProjectCascade(pId);
+            }
         }
     }
     
@@ -2230,10 +2341,11 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
     // 3. Unlink team_tasks
     await supabase.from('team_tasks').update({ course_id: null }).eq('course_id', courseId);
 
-    // 4. Delete curriculum_documents linked to this course
+    // 4. Delete curriculum_documents & curriculum_links linked to this course
     try {
         await supabase.from('curriculum_documents').delete().eq('course_id', courseId);
     } catch (_) {}
+    await deleteLinksForTarget(supabase, 'course', courseId);
     
     if (selections.deleteMaterials) {
         // Find materials
@@ -2243,6 +2355,7 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
             
         if (materials && materials.length > 0) {
             const matIds = materials.map(m => m.content_id);
+            const hData = await fetchHierarchyData();
             // Delete completed_materials for these
             await supabase.from('completed_materials').delete().in('material_id', matIds);
             await supabase.from('team_tasks').update({ content_id: null }).in('content_id', matIds);
@@ -2250,18 +2363,25 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
                 await supabase.from('curriculum_documents').delete().in('lesson_id', matIds);
             } catch (_) {}
             
+            const allQuizIds = new Set(materials.map(m => m.ref_quiz_id).filter(Boolean).map(String));
+            const allProjIds = new Set(materials.map(m => m.ref_project_id).filter(Boolean).map(String));
+            for (const mid of matIds) {
+                const att = getAttachmentsForTarget(hData.links || [], 'content', mid);
+                att.quizzes.forEach(q => allQuizIds.add(String(q)));
+                att.projects.forEach(p => allProjIds.add(String(p)));
+                await deleteLinksForTarget(supabase, 'content', mid);
+            }
+
             // Delete quizzes if checked
             if (selections.deleteQuizzes) {
-                const quizIds = materials.map(m => m.ref_quiz_id).filter(Boolean);
-                for (const qId of quizIds) {
+                for (const qId of allQuizIds) {
                     await deleteQuizCascade(qId);
                 }
             }
             
             // Delete projects if checked
             if (selections.deleteProjects) {
-                const projIds = materials.map(m => m.ref_project_id).filter(Boolean);
-                for (const pId of projIds) {
+                for (const pId of allProjIds) {
                     await deleteProjectCascade(pId);
                 }
             }
@@ -2284,10 +2404,11 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
 async function deletePhaseCascade(phaseId, selections = { deleteCourses: true }) {
     if (!phaseId) return;
 
-    // 1. Delete curriculum_documents linked to this phase
+    // 1. Delete curriculum_documents & links linked to this phase
     try {
         await supabase.from('curriculum_documents').delete().eq('phase_id', phaseId);
     } catch (_) {}
+    await deleteLinksForTarget(supabase, 'phase', phaseId);
     
     if (selections.deleteCourses) {
         const { data: courses } = await supabase.from('courses')
@@ -2313,10 +2434,11 @@ async function deletePhaseCascade(phaseId, selections = { deleteCourses: true })
 async function deleteTrackCascade(trackId, selections = { deletePhases: true }) {
     if (!trackId) return;
 
-    // 1. Delete curriculum_documents linked to this track
+    // 1. Delete curriculum_documents & links linked to this track
     try {
         await supabase.from('curriculum_documents').delete().eq('track_id', trackId);
     } catch (_) {}
+    await deleteLinksForTarget(supabase, 'track', trackId);
     
     if (selections.deletePhases) {
         const { data: phases } = await supabase.from('phases')
@@ -2371,6 +2493,10 @@ window.cmDeleteItem = async (id) => {
             await deleteQuizCascade(id);
         } else if (cmCurrentLevel === 'projects') {
             await deleteProjectCascade(id);
+        } else if (cmCurrentLevel === 'curriculum_documents') {
+            await deleteLinksForItem(supabase, 'document', id);
+            const { error } = await supabase.from('curriculum_documents').delete().eq('id', id);
+            if (error) throw error;
         } else {
             // For other levels (quiz_questions, etc.), delete directly
             const { error } = await supabase.from(cmCurrentLevel).delete().eq(getPrimaryKey(), id);
@@ -2741,7 +2867,8 @@ const coursePayload = {
 window.initSearchableSelects = () => {
     const selects = document.querySelectorAll('#cm-form-fields select, #yt-step-2 select, #quiz-ai-review-container select, #project-ai-review-container select');
     selects.forEach(select => {
-        // تجاهل القوائم التي تم تحويلها مسبقاً
+        // تجاهل القوائم المخصصة لإدارة المرفقات المتعددة أو المحولة مسبقاً
+        if (select.getAttribute('data-no-custom-select') === 'true') return;
         if (select.nextElementSibling && select.nextElementSibling.classList.contains('custom-select-ui')) return;
 
         // إخفاء القائمة الأصلية بطريقة آمنة لا تعطل تركيز المتصفح أو الـ HTML5 validation
@@ -3003,15 +3130,7 @@ processJSON: async () => {
         const buildOpts = (items, valKey, textKey) => items.map(i => `<option value="${i[valKey]}">${i[textKey]}</option>`).join('');
 
         let html = `
-            <div class="bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
-                <h3 class="text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-link mr-2"></i> ربط الاختبار بدرس (اختياري)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية المسار</label><select id="ai-q-track" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.tracks, 'id', 'name')}</select></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية المرحلة</label><select id="ai-q-phase" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.phases, 'phase_id', 'title')}</select></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية الكورس</label><select id="ai-q-course" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.courses, 'course_id', 'title')}</select></div>
-                    <div><label class="text-xs text-green-400 mb-1 block font-bold">الدرس الهدف (Content)</label><select id="ai-q-content" class="${inputStyle} border-green-500/50"><option value="">-- بدون ربط --</option>${buildOpts(hData.contents, 'content_id', 'title')}</select></div>
-                </div>
-            </div>
+            <div id="ai-quiz-targets-slot" class="mb-6"></div>
 
             <div class="bg-black/40 border border-white/10 rounded-2xl p-6">
                 <h3 class="text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs mr-2"></i> إعدادات الاختبار</h3>
@@ -3063,26 +3182,12 @@ processJSON: async () => {
         html += `</div>`;
         container.innerHTML = html;
 
-        // 💡 تفعيل الفلترة الهرمية (Cascading) لقوائم الربط
-        const tSel = document.getElementById('ai-q-track');
-        const pSel = document.getElementById('ai-q-phase');
-        const cSel = document.getElementById('ai-q-course');
-        const cntSel = document.getElementById('ai-q-content');
-
-        tSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            pSel.innerHTML = '<option value="">-- الكل --</option>' + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
-            pSel.dispatchEvent(new Event('change'));
-        });
-        pSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            cSel.innerHTML = '<option value="">-- الكل --</option>' + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
-            cSel.dispatchEvent(new Event('change'));
-        });
-        cSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            cntSel.innerHTML = '<option value="">-- بدون ربط --</option>' + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
-            cntSel.dispatchEvent(new Event('change'));
+        // 💡 تفعيل محرر الربط المتعدد (بكورس أو درس/فيديو أو أكثر)
+        mountItemTargetsEditor(document.getElementById('ai-quiz-targets-slot'), {
+            itemType: 'quiz',
+            initialTargets: [],
+            hData,
+            allowTrackPhase: false,
         });
 
         // 💡 تفعيل محرك البحث للقوائم التي تم إنشاؤها
@@ -3096,7 +3201,7 @@ processJSON: async () => {
     saveAll: async () => {
         const btn = document.getElementById('btn-quiz-ai-save');
         const title = document.getElementById('ai-q-title').value.trim();
-        const linkContentId = document.getElementById('ai-q-content')?.value; // 💡 التقاط الدرس الهدف
+        const selectedTargets = getItemTargetsValue(document.getElementById('ai-quiz-targets-slot'));
         
         if (!title) return window.showToast("يجب إدخال عنوان الاختبار", "error");
 
@@ -3134,14 +3239,15 @@ processJSON: async () => {
             const { error: qErr } = await supabase.from('quiz_questions').insert(questionsPayload);
             if (qErr) throw qErr;
 
-            // 3. 💡 ربط الكويز بالدرس (إن وجد)
-            if (linkContentId) {
-                const { error: linkErr } = await supabase.from('course_materials').update({ ref_quiz_id: newQuizId }).eq('content_id', linkContentId);
-                if (linkErr) console.error("Error linking quiz:", linkErr);
+            // 3. 💡 إضافة روابط الكويز بدون مسح الكويزات السابقة
+            if (selectedTargets.length > 0) {
+                const hData = await fetchHierarchyData();
+                await appendItemTargets(supabase, 'quiz', newQuizId, selectedTargets, hData);
             }
 
             window.showToast("🎉 تم استيراد الاختبار وجميع الأسئلة بنجاح!", "success");
             quizAiEngine.closeWizard();
+            hierarchyCache = null;
             
             if(typeof loadTableData === 'function') loadTableData();
 
@@ -3227,15 +3333,7 @@ window.projectAiEngine = {
         const buildOpts = (items, valKey, textKey) => items.map(i => `<option value="${i[valKey]}">${i[textKey]}</option>`).join('');
 
         let html = `
-            <div class="bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
-                <h3 class="text-xl font-bold text-emerald-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-link mr-2"></i> ربط المشروع بدرس (اختياري)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية المسار</label><select id="ai-p-track" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.tracks, 'id', 'name')}</select></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية المرحلة</label><select id="ai-p-phase" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.phases, 'phase_id', 'title')}</select></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">تصفية الكورس</label><select id="ai-p-course" class="${inputStyle}"><option value="">-- الكل --</option>${buildOpts(hData.courses, 'course_id', 'title')}</select></div>
-                    <div><label class="text-xs text-emerald-400 mb-1 block font-bold">الدرس الهدف (Content)</label><select id="ai-p-content" class="${inputStyle} border-emerald-500/50"><option value="">-- بدون ربط --</option>${buildOpts(hData.contents, 'content_id', 'title')}</select></div>
-                </div>
-            </div>
+            <div id="ai-project-targets-slot" class="mb-6"></div>
 
             <div class="bg-black/40 border border-white/10 rounded-2xl p-6">
                 <h3 class="text-xl font-bold text-emerald-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs mr-2"></i> تفاصيل المشروع الأساسية</h3>
@@ -3270,26 +3368,11 @@ window.projectAiEngine = {
         html += `</div>`;
         container.innerHTML = html;
 
-        // 💡 تفعيل الفلترة الهرمية (Cascading)
-        const tSel = document.getElementById('ai-p-track');
-        const pSel = document.getElementById('ai-p-phase');
-        const cSel = document.getElementById('ai-p-course');
-        const cntSel = document.getElementById('ai-p-content');
-
-        tSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            pSel.innerHTML = '<option value="">-- الكل --</option>' + hData.phases.filter(x => !v || String(x.track_id) === String(v)).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
-            pSel.dispatchEvent(new Event('change'));
-        });
-        pSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            cSel.innerHTML = '<option value="">-- الكل --</option>' + hData.courses.filter(x => !v || String(x.phase_id) === String(v)).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
-            cSel.dispatchEvent(new Event('change'));
-        });
-        cSel.addEventListener('change', (e) => {
-            const v = e.target.value;
-            cntSel.innerHTML = '<option value="">-- بدون ربط --</option>' + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
-            cntSel.dispatchEvent(new Event('change'));
+        mountItemTargetsEditor(document.getElementById('ai-project-targets-slot'), {
+            itemType: 'project',
+            initialTargets: [],
+            hData,
+            allowTrackPhase: false,
         });
 
         if (window.initSearchableSelects) window.initSearchableSelects();
@@ -3302,7 +3385,7 @@ window.projectAiEngine = {
     saveAll: async () => {
         const btn = document.getElementById('btn-project-ai-save');
         const title = document.getElementById('ai-p-title').value.trim();
-        const linkContentId = document.getElementById('ai-p-content')?.value; 
+        const selectedTargets = getItemTargetsValue(document.getElementById('ai-project-targets-slot'));
         
         if (!title) return window.showToast("يجب إدخال عنوان المشروع", "error");
 
@@ -3334,14 +3417,15 @@ window.projectAiEngine = {
             if (projErr) throw projErr;
             const newProjectId = newProject[0].id;
 
-            // 2. ربط المشروع بالدرس (إن وجد)
-            if (linkContentId) {
-                const { error: linkErr } = await supabase.from('course_materials').update({ ref_project_id: newProjectId }).eq('content_id', linkContentId);
-                if (linkErr) console.error("Error linking project:", linkErr);
+            // 2. إضافة روابط المشروع بدون مسح المشاريع السابقة
+            if (selectedTargets.length > 0) {
+                const hData = await fetchHierarchyData();
+                await appendItemTargets(supabase, 'project', newProjectId, selectedTargets, hData);
             }
 
             window.showToast("🎉 تم استيراد المشروع بنجاح!", "success");
             projectAiEngine.closeWizard();
+            hierarchyCache = null;
             
             if(typeof loadTableData === 'function') loadTableData();
 

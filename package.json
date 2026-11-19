@@ -3,10 +3,17 @@
   "version": "1.0.0",
   "description": "Busla Platform - Vanilla JS + Supabase + Tailwind CSS",
   "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "npm run build:css",
+    "lint": "node --check server.js",
     "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.min.css --minify",
     "dev:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.min.css --watch"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
   }
 }

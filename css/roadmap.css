@@ -101,60 +101,87 @@
 
 /* Vertical backbone between Track → Phase and Phase → Phase */
 .roadmap-link.link-backbone {
-    stroke: rgba(0, 245, 255, 0.35);
-    stroke-width: 3px;
+    stroke: rgba(0, 245, 255, 0.72);
+    stroke-width: 3.5px;
     stroke-dasharray: none;
+    filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.3));
 }
 
-/* L-shaped elbow from Phase right edge → Course */
+/* Smooth Bezier branch from Phase right edge → Course */
 .roadmap-link.link-phase-branch {
-    stroke: rgba(59, 130, 246, 0.55);
-    stroke-width: 2px;
+    stroke: rgba(59, 130, 246, 0.85);
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.28));
 }
 
-/* L-shaped elbow from Course right edge → Material (Course → first mat) */
+/* Smooth Bezier branch from Course right edge → Material */
 .roadmap-link.link-course-branch {
+    stroke: rgba(34, 196, 93, 0.85);
+    stroke-width: 2.75px;
+    filter: drop-shadow(0 0 5px rgba(34, 196, 93, 0.25));
+}
+
+/* Vertical chain between sequential materials (legacy alias) */
+.roadmap-link.link-mat-chain {
     stroke: rgba(34, 196, 93, 0.55);
     stroke-width: 2px;
-}
-
-/* Vertical chain between sequential materials: Mat1 → Mat2 → Mat3 … */
-.roadmap-link.link-mat-chain {
-    stroke: rgba(34, 196, 93, 0.40);
-    stroke-width: 1.5px;
     stroke-dasharray: 6 4;
 }
 
 /* Curved dependency arc */
 .roadmap-link.link-dependency {
-    stroke: rgba(0, 245, 255, 0.5);
-    stroke-width: 2.5px;
+    stroke: rgba(0, 245, 255, 0.72);
+    stroke-width: 2.75px;
     stroke-dasharray: 8 5;
 }
 
 /* Legacy class aliases */
 .roadmap-link.link-prereq {
-    stroke: rgba(255, 255, 255, 0.18);
-    stroke-width: 2px;
+    stroke: rgba(255, 255, 255, 0.28);
+    stroke-width: 2.25px;
 }
 .roadmap-link.link-dep {
-    stroke: rgba(0, 245, 255, 0.4);
-    stroke-width: 2.5px;
+    stroke: rgba(0, 245, 255, 0.65);
+    stroke-width: 2.75px;
 }
 .roadmap-link.link-recommended {
-    stroke: rgba(139, 92, 246, 0.4);
-    stroke-width: 2px;
-    stroke-dasharray: 6 6;
+    stroke: rgba(167, 139, 250, 0.88);
+    stroke-width: 2.5px;
+    stroke-dasharray: 8 5;
+    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.25));
 }
 .roadmap-link.link-optional {
-    stroke: rgba(249, 115, 22, 0.4);
-    stroke-width: 2px;
-    stroke-dasharray: 4 4;
+    stroke: rgba(251, 146, 60, 0.88);
+    stroke-width: 2.5px;
+    stroke-dasharray: 8 5;
+    filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.25));
+}
+.roadmap-link.link-subnode-document {
+    stroke: rgba(34, 211, 238, 0.88);
+    stroke-width: 2.5px;
+    stroke-dasharray: 8 5;
+    filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.25));
+}
+.roadmap-link.link-subnode-trunk {
+    stroke: rgba(20, 184, 166, 0.8);
+    stroke-width: 2.5px;
+}
+.roadmap-link.link-related-branch {
+    stroke: rgba(0, 245, 255, 0.75);
+    stroke-width: 2.5px;
+    stroke-dasharray: 7 4;
+    filter: drop-shadow(0 0 4px rgba(0, 245, 255, 0.24));
 }
 .roadmap-link.link-core {
     stroke: var(--color-course);
     stroke-width: 3px;
-    opacity: 0.7;
+    opacity: 0.85;
+}
+
+.roadmap-port-dot {
+    stroke: #050505;
+    stroke-width: 2px;
+    filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
 }
 
 .roadmap-link.highlighted-link {

@@ -1,4 +1,7 @@
 import { supabase } from './supabase-config.js';
+import { mergeCurriculumLinks, getAttachmentsForTarget } from './curriculum-links-core.js';
+import { fetchAllCurriculumLinks } from './curriculum-links-service.js';
+import { computeRoadmapLayout, buildRoadmapEdgeGeometry } from './roadmap-layout-core.js';
 
 function getAssetPrefix() {
     const loc = window.location.pathname;
@@ -356,14 +359,8 @@ async function renderInteractiveRoadmapTree() {
     // Build lists of nodes and connection links
     buildGraphStructure(graphData);
 
-    // Calculate layout coordinates (X, Y)
-    calculateGraphLayout();
-
-    // Render nodes
-    renderHtmlNodes();
-
-    // Render SVG connecting lines
-    renderSvgLines();
+    // Layout -> Mount HTML -> Refine with real DOM card heights -> Draw exact SVG lines
+    layoutAndRenderRoadmap();
 
     // Register global helpers for info panel and export
     initInfoPanelGlobals();
@@ -433,14 +430,15 @@ function hidePlaceholder() {
  */
 async function fetchGraphData(trackId) {
     try {
-        const [trackRes, phasesRes, coursesRes, materialsRes, quizzesRes, projectsRes, documentsRes] = await Promise.all([
+        const [trackRes, phasesRes, coursesRes, materialsRes, quizzesRes, projectsRes, documentsRes, linksRes] = await Promise.all([
             supabase.from('tracks').select('*').eq('id', trackId).single(),
             supabase.from('phases').select('*').eq('track_id', trackId).order('order_index', { ascending: true }).order('created_at', { ascending: true }),
             supabase.from('courses').select('*').order('order_index', { ascending: true }),
             supabase.from('course_materials').select('*').order('order_index', { ascending: true }),
             supabase.from('quizzes').select('*'),
             supabase.from('projects').select('*'),
-            supabase.from('curriculum_documents').select('*').order('order_index', { ascending: true })
+            supabase.from('curriculum_documents').select('*').order('order_index', { ascending: true }),
+            fetchAllCurriculumLinks(supabase)
         ]);
 
         if (phasesRes.error) throw phasesRes.error;
@@ -452,6 +450,13 @@ async function fetchGraphData(trackId) {
         const courseIds = courses.map(c => c.course_id);
 
         const materials = (materialsRes.data || []).filter(m => courseIds.includes(m.course_id));
+        const documents = documentsRes.data || [];
+        const mergedLinks = mergeCurriculumLinks({
+            tableLinks: linksRes?.tableLinks || linksRes?.links || [],
+            materials,
+            documents,
+            tableReady: !!linksRes?.tableReady,
+        });
 
         return {
             track: trackRes.data,
@@ -460,7 +465,8 @@ async function fetchGraphData(trackId) {
             materials,
             quizzes: quizzesRes.data || [],
             projects: projectsRes.data || [],
-            documents: documentsRes.data || []
+            documents,
+            links: mergedLinks,
         };
     } catch (e) {
         console.error("Error fetching graph data:", e);
@@ -500,6 +506,22 @@ function buildGraphStructure(data) {
         const isRelatedCollapsed = !expandedRelated.has(courseNodeId);
         const isCourseHidden = isParentHidden;
         
+        const courseMaterials = data.materials.filter(m => m.course_id === course.course_id);
+        const allLinks = data.links || [];
+        const courseAtt = getAttachmentsForTarget(allLinks, 'course', course.course_id);
+
+        const courseQuizCount = new Set([
+            ...courseMaterials.filter(m => m.type === 'quiz').map(m => String(m.ref_quiz_id || m.content_id)),
+            ...courseMaterials.flatMap(m => getAttachmentsForTarget(allLinks, 'content', m.content_id).quizzes.map(String)),
+            ...courseAtt.quizzes.map(String),
+        ]).size;
+
+        const courseProjectCount = new Set([
+            ...courseMaterials.filter(m => m.type === 'project').map(m => String(m.ref_project_id || m.content_id)),
+            ...courseMaterials.flatMap(m => getAttachmentsForTarget(allLinks, 'content', m.content_id).projects.map(String)),
+            ...courseAtt.projects.map(String),
+        ]).size;
+
         const courseNode = {
             id: courseNodeId,
             dbId: course.course_id,
@@ -512,9 +534,9 @@ function buildGraphStructure(data) {
             trackId: data.track.id,
             difficulty: course.type || 'Intermediate',
             status: getCourseStatus(course, data.materials),
-            videosCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'video').length,
-            quizzesCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'quiz').length,
-            projectsCount: data.materials.filter(m => m.course_id === course.course_id && m.type === 'project').length,
+            videosCount: courseMaterials.filter(m => m.type === 'video' || m.type === 'section').length,
+            quizzesCount: courseQuizCount,
+            projectsCount: courseProjectCount,
             prerequisites: course.prerequisites || [],
             rawItem: course,
             isCollapsed: isCourseCollapsed,
@@ -545,31 +567,54 @@ function buildGraphStructure(data) {
             });
         }
 
-        // Materials and course-level documents of this course
-        const courseMaterials = data.materials.filter(m => m.course_id === course.course_id);
-        const courseDocs = (data.documents || []).filter(d => d.course_id === course.course_id && !d.lesson_id);
+        // Materials and course-level attachments (documents, quizzes, projects) of this course
+        const courseDocIds = new Set(courseAtt.documents.map(String));
+        const courseDocs = courseAtt.documents
+            .map(dId => (data.documents || []).find(d => String(d.id) === String(dId)))
+            .filter(Boolean);
+        // Include any legacy course-level docs not already matched
+        (data.documents || []).forEach(d => {
+            if (String(d.course_id) === String(course.course_id) && !d.lesson_id && !d.content_id && !courseDocIds.has(String(d.id))) {
+                courseDocIds.add(String(d.id));
+                courseDocs.push(d);
+            }
+        });
+
+        const courseLevelQuizzes = courseAtt.quizzes
+            .map(qId => (data.quizzes || []).find(q => String(q.quiz_id) === String(qId)))
+            .filter(Boolean);
+
+        const courseLevelProjects = courseAtt.projects
+            .map(pId => (data.projects || []).find(p => String(p.id) === String(pId)))
+            .filter(Boolean);
 
         const combinedItems = [
             ...courseMaterials.map(m => ({ itemType: 'material', order: m.order_index || 0, data: m })),
-            ...courseDocs.map(d => ({ itemType: 'document', order: d.order_index || 0, data: d }))
+            ...courseDocs.map(d => ({ itemType: 'document', order: (d.order_index || 0) + 10000, data: d })),
+            ...courseLevelQuizzes.map((q, idx) => ({ itemType: 'course_quiz', order: 20000 + idx, data: q })),
+            ...courseLevelProjects.map((p, idx) => ({ itemType: 'course_project', order: 30000 + idx, data: p })),
         ].sort((a, b) => a.order - b.order);
 
         let lastMatNodeId = courseNode.id;
-        
+
         combinedItems.forEach((item) => {
             const isMatHidden = isCourseHidden || isCourseCollapsed;
-            
+
             if (item.itemType === 'material') {
                 const mat = item.data;
-                
-                // Subnodes (quizzes/projects/documents linked to this material)
+
+                // Subnodes (ALL quizzes/projects/documents linked to this material)
                 const subNodes = [];
-                if (mat.ref_quiz_id) {
-                    const quizObj = data.quizzes.find(q => q.quiz_id === mat.ref_quiz_id);
+                const matAtt = getAttachmentsForTarget(allLinks, 'content', mat.content_id);
+
+                matAtt.quizzes.forEach((quizId) => {
+                    if (mat.type === 'quiz' && String(mat.ref_quiz_id) === String(quizId)) return;
+                    const quizObj = data.quizzes.find(q => String(q.quiz_id) === String(quizId));
                     if (quizObj) {
                         subNodes.push({
-                            id: `quiz-${quizObj.quiz_id}`,
+                            id: `quiz-${mat.content_id}-${quizObj.quiz_id}`,
                             dbId: quizObj.quiz_id,
+                            playerContentId: `${mat.content_id}_quiz_${quizObj.quiz_id}`,
                             type: 'quiz',
                             title: quizObj.title,
                             description: quizObj.description,
@@ -580,13 +625,16 @@ function buildGraphStructure(data) {
                             isHidden: isMatHidden
                         });
                     }
-                }
-                if (mat.ref_project_id) {
-                    const projObj = data.projects.find(p => p.id === mat.ref_project_id);
+                });
+
+                matAtt.projects.forEach((projId) => {
+                    if (mat.type === 'project' && String(mat.ref_project_id) === String(projId)) return;
+                    const projObj = data.projects.find(p => String(p.id) === String(projId));
                     if (projObj) {
                         subNodes.push({
-                            id: `project-${projObj.id}`,
+                            id: `project-${mat.content_id}-${projObj.id}`,
                             dbId: projObj.id,
+                            playerContentId: `${mat.content_id}_project_${projObj.id}`,
                             type: 'project',
                             title: projObj.title,
                             description: projObj.description,
@@ -597,27 +645,29 @@ function buildGraphStructure(data) {
                             isHidden: isMatHidden
                         });
                     }
-                }
-                
-                // Add lesson-level documents
-                const linkedDocs = (data.documents || []).filter(d => d.lesson_id === mat.content_id);
-                linkedDocs.forEach(docObj => {
-                    subNodes.push({
-                        id: `doc-${docObj.id}`,
-                        dbId: docObj.id,
-                        type: 'document',
-                        title: docObj.title,
-                        description: docObj.description,
-                        docType: docObj.document_type || 'PDF',
-                        status: userProgress.completedMats.has(`doc_${docObj.id}`) ? 'completed' : 'current',
-                        baseXp: docObj.xp_reward || 10,
-                        parentMaterialId: mat.content_id,
-                        courseId: course.course_id,
-                        isHidden: isMatHidden,
-                        rawItem: docObj
-                    });
                 });
-                
+
+                matAtt.documents.forEach((docId) => {
+                    const docObj = (data.documents || []).find(d => String(d.id) === String(docId));
+                    if (docObj) {
+                        subNodes.push({
+                            id: `doc-${mat.content_id}-${docObj.id}`,
+                            dbId: docObj.id,
+                            playerContentId: `doc_${docObj.id}`,
+                            type: 'document',
+                            title: docObj.title,
+                            description: docObj.description,
+                            docType: docObj.document_type || 'PDF',
+                            status: userProgress.completedMats.has(`doc_${docObj.id}`) ? 'completed' : 'current',
+                            baseXp: docObj.xp_reward || 10,
+                            parentMaterialId: mat.content_id,
+                            courseId: course.course_id,
+                            isHidden: isMatHidden,
+                            rawItem: docObj
+                        });
+                    }
+                });
+
                 const matNode = {
                     id: `material-${mat.content_id}`,
                     dbId: mat.content_id,
@@ -642,7 +692,7 @@ function buildGraphStructure(data) {
                     to: matNode.id,
                     relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
                 });
-                
+
                 subNodes.forEach(subNode => {
                     computedNodes.push(subNode);
                     computedLinks.push({
@@ -651,16 +701,70 @@ function buildGraphStructure(data) {
                         relationType: 'material-to-subnode'
                     });
                 });
-                
+
                 lastMatNodeId = matNode.id;
+            } else if (item.itemType === 'course_quiz') {
+                const quizObj = item.data;
+                const qNode = {
+                    id: `quiz-course-${course.course_id}-${quizObj.quiz_id}`,
+                    dbId: quizObj.quiz_id,
+                    playerContentId: `course_${course.course_id}_quiz_${quizObj.quiz_id}`,
+                    courseId: course.course_id,
+                    phaseId: course.phase_id,
+                    isCourseAttachment: true,
+                    type: 'quiz',
+                    title: quizObj.title,
+                    description: quizObj.description,
+                    baseXp: quizObj.max_xp || 50,
+                    status: userProgress.passedQuizzes.has(quizObj.quiz_id) ? 'completed' : 'current',
+                    difficulty: courseNode.difficulty,
+                    isCollapsed: false,
+                    isHidden: isMatHidden,
+                    subNodesCount: 0
+                };
+                computedNodes.push(qNode);
+                computedLinks.push({
+                    from: courseNode.id,
+                    to: qNode.id,
+                    relationType: 'course-branch'
+                });
+                lastMatNodeId = qNode.id;
+            } else if (item.itemType === 'course_project') {
+                const projObj = item.data;
+                const pNode = {
+                    id: `project-course-${course.course_id}-${projObj.id}`,
+                    dbId: projObj.id,
+                    playerContentId: `course_${course.course_id}_project_${projObj.id}`,
+                    courseId: course.course_id,
+                    phaseId: course.phase_id,
+                    isCourseAttachment: true,
+                    type: 'project',
+                    title: projObj.title,
+                    description: projObj.description,
+                    baseXp: projObj.max_points || 100,
+                    status: userProgress.completedProjects.has(projObj.id) ? 'completed' : 'current',
+                    difficulty: courseNode.difficulty,
+                    isCollapsed: false,
+                    isHidden: isMatHidden,
+                    subNodesCount: 0
+                };
+                computedNodes.push(pNode);
+                computedLinks.push({
+                    from: courseNode.id,
+                    to: pNode.id,
+                    relationType: 'course-branch'
+                });
+                lastMatNodeId = pNode.id;
             } else {
                 // Course-level Document
                 const doc = item.data;
                 const docNode = {
-                    id: `doc-${doc.id}`,
+                    id: `doc-course-${course.course_id}-${doc.id}`,
                     dbId: doc.id,
+                    playerContentId: `doc_${doc.id}`,
                     courseId: course.course_id,
                     phaseId: course.phase_id,
+                    isCourseAttachment: true,
                     type: 'document',
                     title: doc.title,
                     duration: doc.estimated_reading_time ? `${doc.estimated_reading_time} دقيقة` : null,
@@ -676,9 +780,9 @@ function buildGraphStructure(data) {
                 computedNodes.push(docNode);
 
                 computedLinks.push({
-                    from: lastMatNodeId,
+                    from: courseNode.id,
                     to: docNode.id,
-                    relationType: lastMatNodeId === courseNode.id ? 'course-to-first-mat' : 'mat-chain'
+                    relationType: 'course-branch'
                 });
 
                 lastMatNodeId = docNode.id;
@@ -701,7 +805,7 @@ function buildGraphStructure(data) {
             id: phaseNodeId,
             dbId: phase.phase_id,
             type: 'phase',
-            title: phase.title,
+            title: phase.title || phase.name || '',
             description: phase.description,
             orderIndex: phaseIdx + 1,
             time: phase['Module Time'] || phase.module_time,
@@ -715,25 +819,43 @@ function buildGraphStructure(data) {
 
         lastPhaseNodeId = phaseNode.id;
 
-        // Get courses and documents in this phase (not inside courses)
+        // Get courses and phase-level documents in this phase (from both legacy columns and curriculum_links)
         const phaseCourses = data.courses.filter(c => c.phase_id === phase.phase_id && !c.related_with);
-        const phaseDocs = (data.documents || []).filter(d => d.phase_id === phase.phase_id && !d.course_id);
-        
+        const phaseAtt = getAttachmentsForTarget(data.links || [], 'phase', phase.phase_id);
+        const phaseDocIdSet = new Set(phaseAtt.documents.map(String));
+        const phaseDocs = phaseAtt.documents
+            .map(dId => (data.documents || []).find(d => String(d.id) === String(dId)))
+            .filter(Boolean);
+        (data.documents || []).forEach(d => {
+            if (String(d.phase_id) === String(phase.phase_id) && !d.course_id && !d.lesson_id && !d.content_id && !phaseDocIdSet.has(String(d.id))) {
+                phaseDocIdSet.add(String(d.id));
+                phaseDocs.push(d);
+            }
+        });
+
         // Merge and sort them
         const phaseItems = [
             ...phaseCourses.map(c => ({ itemType: 'course', order: c.order_index || 0, data: c })),
-            ...phaseDocs.map(d => ({ itemType: 'document', order: d.order_index || 0, data: d }))
+            ...phaseDocs.map(d => ({ itemType: 'document', order: (d.order_index || 0) + 1000, data: d }))
         ].sort((a, b) => a.order - b.order);
-        
+
         phaseItems.forEach(item => {
             if (item.itemType === 'course') {
                 addCourseAndSubtree(item.data, isPhaseCollapsed);
+                computedLinks.push({
+                    from: phaseNode.id,
+                    to: `course-${item.data.course_id}`,
+                    relationType: 'phase-branch'
+                });
             } else {
                 // Add Phase-level Document Node
-                const docNodeId = `doc-${item.data.id}`;
+                const docNodeId = `doc-phase-${phase.phase_id}-${item.data.id}`;
                 const docNode = {
                     id: docNodeId,
                     dbId: item.data.id,
+                    playerContentId: `doc_${item.data.id}`,
+                    phaseId: phase.phase_id,
+                    isPhaseLevel: true,
                     type: 'document',
                     title: item.data.title,
                     description: item.data.description,
@@ -744,183 +866,78 @@ function buildGraphStructure(data) {
                     rawItem: item.data
                 };
                 computedNodes.push(docNode);
+                computedLinks.push({
+                    from: phaseNode.id,
+                    to: docNodeId,
+                    relationType: 'phase-branch'
+                });
             }
         });
     });
 
-    // 5. Build the main vertical backbone connecting visible track, phase, course, and document nodes in sequence
-    const visibleMainNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase' || (n.type === 'course' && !n.relatedWith) || n.type === 'document') && !n.isHidden);
-    for (let i = 0; i < visibleMainNodes.length - 1; i++) {
+    // 5. Build the main vertical spine strictly connecting Track -> Phase 1 -> Phase 2 -> ...
+    // Courses and documents branch cleanly off the side of their owning Phase/Course/Material (never interrupt the spine!)
+    const spineNodes = computedNodes.filter(n => (n.type === 'track' || n.type === 'phase') && !n.isHidden);
+    for (let i = 0; i < spineNodes.length - 1; i++) {
         computedLinks.push({
-            from: visibleMainNodes[i].id,
-            to: visibleMainNodes[i+1].id,
+            from: spineNodes[i].id,
+            to: spineNodes[i + 1].id,
             relationType: 'core'
         });
     }
 }
 
 /**
- * Calculates (X, Y) coordinates of nodes dynamically to prevent overlaps.
- *
- * Layout strategy:
- *  - All positions are relative to a CANVAS_PADDING offset (top + left margins).
- *  - Each hierarchy level is indented further RIGHT to create a clear visual hierarchy.
- *  - Generous vertical gaps ensure connections are clearly visible.
- *  - Canvas dimensions are set AFTER all nodes are placed (accurate sizing).
+ * Measures real rendered DOM width & height of all visible roadmap cards.
  */
-function calculateGraphLayout() {
-    // 1. Find max depth of related courses to adjust X_CENTER and prevent clipping on the left
-    let maxDepth = 0;
+function measureRenderedNodeSizes() {
+    const sizes = new Map();
     computedNodes.forEach(node => {
-        if (node.type === 'course' && !node.isHidden) {
-            let depth = 0;
-            let temp = node;
-            while (temp.parentCourseId) {
-                depth++;
-                const parent = computedNodes.find(n => n.id === `course-${temp.parentCourseId}`);
-                if (!parent) break;
-                temp = parent;
-            }
-            if (depth > maxDepth) maxDepth = depth;
+        if (node.isHidden) return;
+        const el = document.getElementById(`node-${node.id}`);
+        if (el && el.offsetWidth > 0 && el.offsetHeight > 0) {
+            sizes.set(node.id, { width: el.offsetWidth, height: el.offsetHeight });
         }
     });
+    return sizes;
+}
 
-    // Canvas padding on all sides
-    const PAD = 250;
-
-    // Dynamic X_CENTER to make space for left-branching related courses
-    const X_CENTER = maxDepth > 0 ? (PAD + 960 + (maxDepth - 1) * 990) : (PAD + 250);
-
-    // Card heights
-    const H = { track: 96, phase: 72, course: 104, material: 74 };
-
-    // Vertical gaps between nodes
-    const GAP = {
-        afterTrack:           90,
-        beforePhase:          60,
-        phaseToFirstCourse:   60,
-        betweenCourses:       75,
-        betweenMaterials:     40,
-        afterPhaseBlock:     100,
-    };
-
-    let y = PAD;
-
-    function placeNode(height) {
-        const cy = y + height / 2;
-        y += height;
-        return cy;
-    }
-
-    // Recursive layout function for a course block
-    function layoutCourse(courseNode, startY, depth) {
-        courseNode.x = (depth === 0) ? X_CENTER : (X_CENTER - 330 - (depth - 1) * 990);
-        courseNode.y = startY + H.course / 2;
-        
-        const nextY = startY + H.course;
-        let materialsBottom = courseNode.y + H.course / 2;
-        
-        // 1. Layout materials if not collapsed
-        if (!courseNode.isCollapsed) {
-            const materials = computedNodes.filter(n => n.courseId === courseNode.dbId && n.type !== 'course' && !n.parentMaterialId && !n.isHidden);
-            let matY = courseNode.y;
-            materials.forEach((mat, mi) => {
-                mat.x = (depth === 0) ? (courseNode.x + 330) : (courseNode.x - 330);
-                mat.y = matY;
-                
-                // Subnodes (quizzes/projects linked to this material)
-                const subNodes = computedNodes.filter(n => n.parentMaterialId === mat.dbId && !n.isHidden);
-                if (subNodes.length > 0) {
-                    let subY = matY;
-                    subNodes.forEach((sub, si) => {
-                        sub.x = (depth === 0) ? (mat.x + 300) : (mat.x - 300);
-                        sub.y = subY;
-                        if (si < subNodes.length - 1) {
-                            subY += H.material + GAP.betweenMaterials;
-                        }
-                    });
-                    const subNodesBottom = subY + H.material / 2;
-                    materialsBottom = Math.max(materialsBottom, subNodesBottom);
-                    matY = Math.max(matY + H.material + GAP.betweenMaterials, subY + H.material + GAP.betweenMaterials);
-                } else {
-                    materialsBottom = Math.max(materialsBottom, matY + H.material / 2);
-                    matY += H.material + GAP.betweenMaterials;
-                }
-            });
-        }
-        
-        // 2. Layout related courses if not collapsed
-        let relatedBottom = courseNode.y + H.course / 2;
-        if (!courseNode.isRelatedCollapsed) {
-            const related = computedNodes.filter(n => n.parentCourseId === courseNode.dbId && n.type === 'course' && !n.isHidden);
-            let relY = nextY + GAP.betweenCourses;
-            related.forEach((relCourse) => {
-                const childBottom = layoutCourse(relCourse, relY, depth + 1);
-                relatedBottom = Math.max(relatedBottom, childBottom);
-                relY = childBottom + GAP.betweenCourses;
-            });
-        }
-        
-        const blockBottom = Math.max(courseNode.y + H.course / 2, materialsBottom, relatedBottom);
-        return blockBottom;
-    }
-
-    // ── Track ────────────────────────────────────────────────────────────────
-    const trackNode = computedNodes.find(n => n.type === 'track');
-    if (trackNode) {
-        trackNode.x = X_CENTER;
-        trackNode.y = placeNode(H.track);
-        y += GAP.afterTrack;
-    }
-
-    // ── Phases ───────────────────────────────────────────────────────────────
-    const phases = computedNodes.filter(n => n.type === 'phase');
-    phases.forEach((phase, pi) => {
-        if (pi > 0) y += GAP.beforePhase;
-
-        phase.x = X_CENTER;
-        phase.y = placeNode(H.phase);
-
-        if (phase.isCollapsed) {
-            y += GAP.afterPhaseBlock / 4;
-            return;
-        }
-
-        const courses = computedNodes.filter(n =>
-            n.type === 'course' && n.phaseId === phase.dbId && !n.isHidden && !n.relatedWith);
-
-        if (courses.length === 0) {
-            y += GAP.afterPhaseBlock / 2;
-            return;
-        }
-
-        y += GAP.phaseToFirstCourse;
-
-        courses.forEach((course, ci) => {
-            if (ci > 0) y += GAP.betweenCourses;
-            const courseBottom = layoutCourse(course, y, 0);
-            y = courseBottom;
-        });
-
-        y += GAP.afterPhaseBlock;
-    });
-
-    // Set canvas dimensions AFTER all nodes are placed
-    let maxX = X_CENTER;
-    const visibleNodes = computedNodes.filter(n => !n.isHidden);
-    visibleNodes.forEach(node => {
-        const hw = (node.type === 'track') ? 160 : (node.type === 'phase') ? 150 : (node.type === 'course') ? 130 : 120;
-        if (node.x + hw > maxX) maxX = node.x + hw;
-    });
-
-    const totalHeight = y + PAD;
-    const totalWidth  = maxX + PAD;
-
+/**
+ * Computes hierarchical overlap-free coordinates via `computeRoadmapLayout`
+ * and updates canvas dimensions.
+ */
+function calculateGraphLayout(measuredSizes = null) {
+    const { width, height } = computeRoadmapLayout(computedNodes, measuredSizes);
     const canvas = document.getElementById('roadmap-canvas');
     if (canvas) {
-        canvas.style.height = `${totalHeight}px`;
-        canvas.style.width  = `${totalWidth}px`;
+        canvas.style.height = `${height}px`;
+        canvas.style.width = `${width}px`;
     }
+}
+
+/**
+ * Full 2-pass layout + render:
+ * 1. Initial layout with safe default card sizes -> mount HTML cards.
+ * 2. Measure real DOM card widths/heights -> refine exact coordinates so zero cards overlap -> draw exact SVG connectors.
+ */
+function layoutAndRenderRoadmap() {
+    calculateGraphLayout(null);
+    renderHtmlNodes();
+
+    const measured = measureRenderedNodeSizes();
+    if (measured.size > 0) {
+        calculateGraphLayout(measured);
+        computedNodes.forEach(node => {
+            if (node.isHidden) return;
+            const el = document.getElementById(`node-${node.id}`);
+            if (el) {
+                el.style.left = `${node.x}px`;
+                el.style.top = `${node.y}px`;
+            }
+        });
+    }
+
+    renderSvgLines(measured);
 }
 
 
@@ -940,9 +957,15 @@ function renderHtmlNodes() {
         const nodeEl = document.createElement('div');
         nodeEl.id = `node-${node.id}`;
 
+        const hasExpandableChildren = node.type === 'phase'
+            ? (node.coursesCount > 0 || computedNodes.some(d => d.isPhaseLevel && String(d.phaseId) === String(node.dbId)))
+            : node.type === 'course'
+                ? (Boolean(node.dbId) && computedNodes.some(m => m.type !== 'track' && m.type !== 'phase' && m.type !== 'course' && !m.isPhaseLevel && !m.parentMaterialId && Boolean(m.courseId) && String(m.courseId) === String(node.dbId)))
+                : false;
+
         let typeClass = `node-${node.type}`;
         let lockedClass = (node.status === 'locked' && currentRole === 'student') ? 'node-locked' : '';
-        let collapsedClass = node.isCollapsed ? 'node-collapsed' : '';
+        let collapsedClass = (node.isCollapsed && hasExpandableChildren) ? 'node-collapsed' : '';
         let activeClass = (activeNode && activeNode.id === node.id) ? 'node-active-selection' : '';
         nodeEl.className = `roadmap-node ${typeClass} ${lockedClass} ${collapsedClass} ${activeClass}`.trim();
         nodeEl.style.left = `${node.x}px`;
@@ -951,8 +974,8 @@ function renderHtmlNodes() {
         // Build card HTML with collapse toggles for course nodes
         let collapseBtn = '';
         if (node.type === 'course') {
-            const hasMaterials = currentGraphData && currentGraphData.materials.some(m => m.course_id === node.dbId);
-            const hasRelated = currentGraphData && currentGraphData.courses.some(c => c.related_with === node.dbId);
+            const hasMaterials = hasExpandableChildren;
+            const hasRelated = Boolean(node.dbId) && currentGraphData && currentGraphData.courses.some(c => c.related_with && String(c.related_with) === String(node.dbId));
             
             let matBtn = '';
             if (hasMaterials) {
@@ -1051,9 +1074,7 @@ function renderHtmlNodes() {
             expandedRelated.add(nodeId);    // expand it
         }
         buildGraphStructure(currentGraphData);
-        calculateGraphLayout();
-        renderHtmlNodes();
-        renderSvgLines();
+        layoutAndRenderRoadmap();
         const targetNode = computedNodes.find(n => n.id === nodeId);
         if (targetNode) smartFocusOnNodes([targetNode]);
         requestAnimationFrame(updateMinimap);
@@ -1081,9 +1102,7 @@ function handleRoadmapNodeClick(node, openDetails = true) {
         selectNode(node, false, openDetails);
 
         buildGraphStructure(currentGraphData);
-        calculateGraphLayout();
-        renderHtmlNodes();
-        renderSvgLines();
+        layoutAndRenderRoadmap();
 
         requestAnimationFrame(() => {
             if (willExpand) {
@@ -1100,6 +1119,19 @@ function handleRoadmapNodeClick(node, openDetails = true) {
     }
 
     if (node.type === 'course') {
+        const hasChildren = Boolean(node.dbId) && computedNodes.some(
+            m => m.type !== 'track' && m.type !== 'phase' && m.type !== 'course' &&
+                 !m.isPhaseLevel && !m.parentMaterialId &&
+                 Boolean(m.courseId) && String(m.courseId) === String(node.dbId)
+        );
+
+        // If this course has no materials/attachments yet, just select & show details without altering tree layout
+        if (!hasChildren) {
+            selectNode(node, false, openDetails);
+            smartFocusOnNodes([node]);
+            return;
+        }
+
         const willExpand = !expandedNodes.has(node.id);
 
         // Ensure parent phase is open
@@ -1116,14 +1148,17 @@ function handleRoadmapNodeClick(node, openDetails = true) {
         selectNode(node, false, openDetails);
 
         buildGraphStructure(currentGraphData);
-        calculateGraphLayout();
-        renderHtmlNodes();
-        renderSvgLines();
+        layoutAndRenderRoadmap();
 
         requestAnimationFrame(() => {
             if (willExpand) {
                 // Smart Focus: Center camera on Course + all its materials
-                const family = computedNodes.filter(n => !n.isHidden && (n.id === node.id || n.courseId === node.dbId));
+                const family = computedNodes.filter(
+                    n => !n.isHidden && (
+                        n.id === node.id ||
+                        (Boolean(n.courseId) && Boolean(node.dbId) && String(n.courseId) === String(node.dbId))
+                    )
+                );
                 smartFocusOnNodes(family);
             } else {
                 const refreshed = computedNodes.find(n => n.id === node.id) || node;
@@ -1296,31 +1331,18 @@ function getNodeInnerHtml(node) {
 }
 
 /**
- * Draws the SVG paths linking the nodes together.
- *
- * IMPORTANT: node.x is the LEFT EDGE of the card (set via style.left in renderHtmlNodes).
- *            node.y is the VERTICAL CENTER of the card.
- *            Card widths: track=320, phase=320, course=260, material=240.
+ * Draws crisp, strictly orthogonal SVG paths and junction dots linking nodes together
+ * using exact measured card dimensions from `buildRoadmapEdgeGeometry`.
  */
-function renderSvgLines() {
+function renderSvgLines(measuredSizes = null) {
     const svg = document.getElementById('roadmap-svg');
     if (!svg) return;
     svg.innerHTML = '';
 
-    // ── Full card widths (px) — must match CSS .node-* width rules ──
-    const CW = { track: 320, phase: 320, course: 260, material: 240 };
-    // ── Card half-heights (exact math based on height: H/2) ──
-    const HH = { track: 48, phase: 36, course: 52, material: 37 };
-
-    // Helper: get horizontal CENTER of a node (node.x is already the center)
-    const cx = (node) => node.x;
-    // Helper: get right edge of a node
-    const rx = (node) => node.x + (CW[node.type] || 260) / 2;
-    // Helper: get left edge of a node
-    const lx = (node) => node.x - (CW[node.type] || 260) / 2;
+    const ns = 'http://www.w3.org/2000/svg';
 
     // ── Marker defs ──
-    const defsEl = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const defsEl = document.createElementNS(ns, 'defs');
     defsEl.innerHTML = `
         <marker id="rm-arrow" viewBox="0 0 10 10" refX="8" refY="5"
                 markerWidth="5" markerHeight="5" orient="auto-start-reverse">
@@ -1328,116 +1350,24 @@ function renderSvgLines() {
         </marker>`;
     svg.appendChild(defsEl);
 
-    // ── Helper: append a <path> ──
-    function addPath(d, className, useArrow) {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const { paths, junctions } = buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredSizes);
+
+    paths.forEach(({ d, className, useArrow }) => {
+        const p = document.createElementNS(ns, 'path');
         p.setAttribute('d', d);
-        p.setAttribute('class', `roadmap-link ${className} roadmap-link-animated`);
+        p.setAttribute('class', `roadmap-link ${className}`);
         if (useArrow) p.setAttribute('marker-end', 'url(#rm-arrow)');
         svg.appendChild(p);
+    });
 
-        // Dynamically set stroke-dasharray and stroke-dashoffset to prevent clipping on long paths
-        const isDashedOrBackbone = 
-            className.includes('link-dependency') || 
-            className.includes('link-recommended') || 
-            className.includes('link-optional') || 
-            className.includes('link-mat-chain') || 
-            className.includes('link-backbone');
-            
-        if (!isDashedOrBackbone) {
-            try {
-                const length = Math.ceil(p.getTotalLength());
-                if (length > 0) {
-                    p.style.strokeDasharray = length;
-                    p.style.strokeDashoffset = length;
-                }
-            } catch (e) {
-                console.warn("Could not calculate path length:", e);
-            }
-        }
-        return p;
-    }
-
-    // ── Helper: vertical-then-horizontal-then-vertical elbow (for cross-column links) ──
-    function elbowVH(fromCx, fromBottomY, toCx, toTopY, className) {
-        const midY = fromBottomY + Math.round((toTopY - fromBottomY) * 0.5);
-        addPath(`M ${fromCx} ${fromBottomY} V ${midY} H ${toCx} V ${toTopY}`, className, false);
-    }
-
-    computedLinks.forEach(link => {
-        const fn = computedNodes.find(n => n.id === link.from);
-        const tn = computedNodes.find(n => n.id === link.to);
-        if (!fn || !tn || fn.isHidden || tn.isHidden) return;
-
-        const fnCx = cx(fn), tnCx = cx(tn);
-        const fnHH = HH[fn.type] || 40, tnHH = HH[tn.type] || 40;
-        const fnBottom = fn.y + fnHH;   // bottom edge of from-node
-        const tnTop    = tn.y - tnHH;   // top    edge of to-node
-
-        // ── Backbone Core Path: Track → Phase → Course → Course → Phase ──
-        if (link.relationType === 'core') {
-            addPath(`M ${fnCx} ${fnBottom} V ${tnTop}`, 'link-backbone', false);
-            return;
-        }
-
-        // ── Related Course connection elbow ──
-        if (link.relationType === 'related-course') {
-            const startX = lx(fn); // left edge of parent
-            const endX = rx(tn);   // right edge of child
-            const midX = Math.round((startX + endX) / 2);
-            addPath(`M ${startX} ${fn.y} H ${midX} V ${tn.y} H ${endX}`, 'link-course-branch', false);
-            return;
-        }
-
-        // ── Course → First Material (branch elbow backbone + first leaf) ──
-        if (link.relationType === 'course-to-first-mat') {
-            const isToLeft = tn.x < fn.x;
-            const startX = isToLeft ? lx(fn) : rx(fn);
-            const branchLineX = isToLeft ? (fn.x - 170) : (fn.x + 170);
-            const matEdgeX = isToLeft ? rx(tn) : lx(tn);
-
-            const materials = computedNodes.filter(m => m.courseId === fn.dbId && !m.parentMaterialId && !m.isHidden);
-            const lastMatY = materials.length > 0 ? Math.max(...materials.map(m => m.y)) : fn.y;
-
-            // 1. Draw Course branch backbone
-            addPath(`M ${startX} ${fn.y} H ${branchLineX} V ${lastMatY}`, 'link-course-branch', false);
-
-            // 2. Draw first leaf connection
-            addPath(`M ${branchLineX} ${tn.y} H ${matEdgeX}`, 'link-course-branch', false);
-            return;
-        }
-
-        // ── Material → Material (subsequent leaves of the branch) ──
-        if (link.relationType === 'mat-chain') {
-            const parentCourse = computedNodes.find(n => n.dbId === tn.courseId && n.type === 'course');
-            const isToLeftFromCourse = parentCourse ? (tn.x < parentCourse.x) : false;
-            
-            const branchLineX = isToLeftFromCourse ? (tn.x + 160) : (tn.x - 160);
-            const matEdgeX = isToLeftFromCourse ? rx(tn) : lx(tn);
-            
-            addPath(`M ${branchLineX} ${tn.y} H ${matEdgeX}`, 'link-course-branch', false);
-            return;
-        }
-
-        // ── Material → Subnode (Quiz/Project linked to video) ──
-        if (link.relationType === 'material-to-subnode') {
-            const isChildToLeft = tn.x < fn.x;
-            const startX = isChildToLeft ? lx(fn) : rx(fn);
-            const endX = isChildToLeft ? rx(tn) : lx(tn);
-            const midX = Math.round((startX + endX) / 2);
-            const linkClass = tn.type === 'quiz' ? 'link-recommended' : 'link-optional';
-            addPath(`M ${startX} ${fn.y} H ${midX} V ${tn.y} H ${endX}`, linkClass, false);
-            return;
-        }
-
-        // ── Prerequisite / Dependency — orthogonal cross-column elbow ──
-        if (link.relationType === 'prerequisite' || link.relationType === 'dependency') {
-            elbowVH(fnCx, fnBottom, tnCx, tnTop, 'link-dependency');
-            return;
-        }
-
-        // ── Fallback: simple vertical line ──
-        addPath(`M ${fnCx} ${fnBottom} V ${tnTop}`, 'link-core', false);
+    junctions.forEach(({ x, y, color, r }) => {
+        const dot = document.createElementNS(ns, 'circle');
+        dot.setAttribute('cx', x);
+        dot.setAttribute('cy', y);
+        dot.setAttribute('r', r || 3.8);
+        dot.setAttribute('fill', color || '#00F5FF');
+        dot.setAttribute('class', 'roadmap-port-dot');
+        svg.appendChild(dot);
     });
 }
 
@@ -2709,8 +2639,9 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
         `;
 
         if (currentRole === 'student' || currentRole === 'leader') {
+            const targetQuizParam = node.playerContentId || node.parentMaterialId || node.dbId;
             actionButtonsHtml += `
-                <a href="course-player.html?id=${node.courseId}&content=${node.parentMaterialId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                <a href="course-player.html?id=${node.courseId}&content=${encodeURIComponent(targetQuizParam)}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-pencil-alt"></i> ابدأ الاختبار الآن
                 </a>
             `;
@@ -2795,8 +2726,9 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
         `;
 
         if (currentRole === 'student' || currentRole === 'leader') {
+            const targetProjParam = node.playerContentId || node.parentMaterialId || node.dbId;
             actionButtonsHtml += `
-                <a href="course-player.html?id=${node.courseId}&content=${node.parentMaterialId}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
+                <a href="course-player.html?id=${node.courseId}&content=${encodeURIComponent(targetProjParam)}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                     <i class="fas fa-upload"></i> تسليم المشروع العملي
                 </a>
             `;
@@ -3266,9 +3198,7 @@ window.selectRoadmapNodeById = (nodeId) => {
         
         if (changed) {
             buildGraphStructure(currentGraphData);
-            calculateGraphLayout();
-            renderHtmlNodes();
-            renderSvgLines();
+            layoutAndRenderRoadmap();
             requestAnimationFrame(updateMinimap);
         }
         
