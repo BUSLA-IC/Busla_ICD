@@ -6,6 +6,7 @@ import {
 } from './curriculum-links-core.js';
 import { fetchCourseCurriculumLinks } from './curriculum-links-service.js';
 import { parseProjectLinks } from './quiz-prompt-core.js';
+import { formatPlaybackTime } from './time-format-core.js';
 
 // ==========================================
 // 1. CONFIGURATION & GLOBAL STATE
@@ -1416,6 +1417,8 @@ function onPlayerReady(event, savedSpeed) {
     player.setPlaybackRate(savedSpeed);
     player.setPlaybackQuality(selectedQuality);
     currentVideoDuration = player.getDuration() || 100;
+    const durEl = document.getElementById('time-duration');
+    if (durEl) durEl.innerText = formatTime(currentVideoDuration);
 
     clearInterval(progressInterval);
     clearInterval(dbSaveInterval);
@@ -2572,10 +2575,7 @@ function resolveImageUrl(url, type = 'course') {
 }
 
 function formatTime(seconds) {
-    if (!seconds) return "00:00";
-    const min = Math.floor(seconds / 60);
-    const sec = Math.floor(seconds % 60);
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    return formatPlaybackTime(seconds);
 }
 
 window.showToast = (message, type = 'info') => {
@@ -3896,9 +3896,7 @@ function renderPdfCompletionBtn(item) {
             const reqSec = docData.completion_time_seconds || (docData.estimated_reading_time || 5) * 60;
             const remaining = Math.max(0, reqSec - pdfTimeSpent);
             if (remaining > 0) {
-                const minutes = Math.floor(remaining / 60);
-                const seconds = remaining % 60;
-                textParts.push(`Read for ${minutes}:${seconds < 10 ? '0' : ''}${seconds} more`);
+                textParts.push(`Read for ${formatTime(remaining)} more`);
             } else {
                 textParts.push(`Required reading time met!`);
             }

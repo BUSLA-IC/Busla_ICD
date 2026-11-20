@@ -4,7 +4,7 @@
  * Desktop & Mobile Support with Instant Auto-Updates
  */
 
-const CACHE_VERSION = 'zdc-pwa-v2.2.1';
+const CACHE_VERSION = 'zdc-pwa-v2.2.3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 

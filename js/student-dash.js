@@ -7,6 +7,7 @@ import { initLeaderboard } from './leaderboard-handler.js';
 import { initNotificationsSystem } from './notifications-handler.js';
 import { RANKS_DATA } from './badges-data.js';
 import { TEAM_RANKS_DATA } from './team-badges-data.js';
+import { formatDurationString } from './time-format-core.js';
 
 // ==========================================
 // 1. GLOBAL STATE & CONFIGURATION
@@ -2169,32 +2170,7 @@ function formatSecondsToTime(totalSeconds) {
 }
 
 function formatDuration(rawTime) {
-    if (!rawTime) return '';
-    const str = String(rawTime);
-
-    if (!str.includes(':') && !isNaN(str)) {
-        return formatSecondsToTime(parseInt(str));
-    }
-
-    if (str.includes('T')) {
-        const match = str.match(/T(\d{2}):(\d{2}):(\d{2})/);
-        if (match) {
-            let h = parseInt(match[1]);
-            let m = parseInt(match[2]);
-            let s = parseInt(match[3]);
-            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            return `${m}:${s.toString().padStart(2, '0')}`;
-        }
-    }
-
-    if (str.includes(':')) {
-        const parts = str.split(':').map(Number);
-        if (parts.length === 3 && parts[0] === 0) {
-            return `${parts[1]}:${parts[2].toString().padStart(2, '0')}`;
-        }
-        return str.replace(/^00:/, '').replace(/^0/, '');
-    }
-    return str;
+    return formatDurationString(rawTime);
 }
 
 function resolveImageUrl(url, type = 'course') {
