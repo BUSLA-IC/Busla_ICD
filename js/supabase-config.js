@@ -462,8 +462,29 @@ export const StorageService = {
 
 // Automatic fallback handler for external image hosts (LinkedIn, Imgur, etc.)
 if (typeof document !== 'undefined') {
+    const normalizeUiAvatarUrl = (url) => {
+        if (!url || !url.includes('ui-avatars.com')) return url;
+        try {
+            const parsed = new URL(url);
+            parsed.searchParams.set('background', '222222');
+            parsed.searchParams.set('color', 'EFECE6');
+            return parsed.toString();
+        } catch {
+            return url
+                .replace(/background=[0-9a-fA-F]{3,6}/gi, 'background=222222')
+                .replace(/color=[0-9a-fA-F]{3,6}/gi, 'color=EFECE6');
+        }
+    };
+
     const handleExternalImage = (img) => {
         if (!img) return;
+
+        if (img.src && img.src.includes('ui-avatars.com')) {
+            const monoUrl = normalizeUiAvatarUrl(img.src);
+            if (monoUrl !== img.src) {
+                img.src = monoUrl;
+            }
+        }
 
         if (img.src && (img.src.includes('licdn.com') || img.src.includes('imgur.com') || img.src.includes('googleusercontent.com'))) {
             if (img.referrerPolicy !== 'no-referrer') {
@@ -476,8 +497,8 @@ if (typeof document !== 'undefined') {
             img.addEventListener('error', function onImgError() {
                 if (!this.dataset.fallbackDone) {
                     this.dataset.fallbackDone = 'true';
-                    const fallback = this.dataset.fallback || 'https://ui-avatars.com/api/?name=User&background=006A67&color=fff&size=100';
-                    this.src = fallback;
+                    const rawFallback = this.dataset.fallback || 'https://ui-avatars.com/api/?name=User&background=222222&color=EFECE6&size=100';
+                    this.src = normalizeUiAvatarUrl(rawFallback);
                 }
             }, { once: true });
         }

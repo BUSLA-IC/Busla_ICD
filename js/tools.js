@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get category icon
     function getCategoryIcon(category) {
         const icons = {
-            'أساسيات ومحاكاة': '<i class="fas fa-cube fa-lg text-b-hl-green"></i>',
-            'كتابة ومحاكاة HDL': '<i class="fas fa-code fa-lg text-b-hl-yellow"></i>',
-            'أدوات FPGA': '<i class="fas fa-microchip fa-lg text-b-hl-light"></i>',
-            'أدوات التصنيع (ASIC)': '<i class="fas fa-industry fa-lg text-purple-400"></i>',
-            'أدوات التحقق (Verification)': '<i class="fas fa-check-circle fa-lg text-blue-400"></i>',
-            'أدوات مساعدة': '<i class="fas fa-tools fa-lg text-orange-400"></i>'
+            'Fundamentals & Simulation': '<i class="fas fa-cube fa-lg text-b-hl-green"></i>',
+            'HDL Coding & Simulation': '<i class="fas fa-code fa-lg text-b-hl-yellow"></i>',
+            'FPGA Tools': '<i class="fas fa-microchip fa-lg text-b-hl-light"></i>',
+            'ASIC Design Tools': '<i class="fas fa-industry fa-lg text-purple-400"></i>',
+            'Verification Tools': '<i class="fas fa-check-circle fa-lg text-blue-400"></i>',
+            'Utility Tools': '<i class="fas fa-tools fa-lg text-orange-400"></i>'
         };
         return icons[category] || '<i class="fas fa-wrench fa-lg text-gray-400"></i>';
     }
@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${moreBadgesHtml}
                     </div>
                     <button class="w-full py-2 bg-b-primary text-white rounded-lg hover:bg-b-hl-medium hover:text-black transition-all font-semibold">
-                        <i class="fas fa-info-circle ml-1"></i>
-                        عرض التفاصيل
+                        <i class="fas fa-info-circle mr-1"></i>
+                        View Details
                     </button>
                 </div>
             `;
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tool.pros && tool.pros.length > 0) {
             modalPros.innerHTML = tool.pros.map(pro => `
                 <li class="flex items-start text-gray-300 text-lg">
-                    <i class="fas fa-check-circle text-green-400 mt-1 ml-2 flex-shrink-0"></i>
+                    <i class="fas fa-check-circle text-green-400 mt-1 mr-2 flex-shrink-0"></i>
                     <span>${pro}</span>
                 </li>
             `).join('');
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tool.cons && tool.cons.length > 0) {
             modalCons.innerHTML = tool.cons.map(con => `
                 <li class="flex items-start text-gray-300 text-lg">
-                    <i class="fas fa-minus-circle text-yellow-400 mt-1 ml-2 flex-shrink-0"></i>
+                    <i class="fas fa-minus-circle text-yellow-400 mt-1 mr-2 flex-shrink-0"></i>
                     <span>${con}</span>
                 </li>
             `).join('');
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
         } catch (error) {
             console.error("Fetch error: ", error);
-            grid.innerHTML = '<p class="text-red-500 text-center col-span-full">فشل تحميل بيانات الأدوات. برجاء المحاولة لاحقاً.</p>';
+            grid.innerHTML = '<p class="text-red-500 text-center col-span-full">Failed to load tools data. Please try again later.</p>';
         }
     }
 

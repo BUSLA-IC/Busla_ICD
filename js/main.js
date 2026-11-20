@@ -94,26 +94,26 @@ function validateForm(formId) {
         
         // Validate name
         if (!name.value.trim()) {
-            showError(name, 'الرجاء إدخال الاسم');
+            showError(name, 'Please enter your name');
             isValid = false;
         }
         
         // Validate email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email.value.trim() || !emailRegex.test(email.value)) {
-            showError(email, 'الرجاء إدخال بريد إلكتروني صحيح');
+            showError(email, 'Please enter a valid email address');
             isValid = false;
         }
         
         // Validate message
         if (!message.value.trim() || message.value.trim().length < 10) {
-            showError(message, 'الرجاء إدخال رسالة تحتوي على 10 أحرف على الأقل');
+            showError(message, 'Please enter a message with at least 10 characters');
             isValid = false;
         }
         
         if (isValid) {
             // Show success message
-            showSuccessMessage('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً.');
+            showSuccessMessage('Your message has been sent successfully! We will contact you soon.');
             form.reset();
         }
     });
@@ -224,7 +224,7 @@ function initProgressTracker() {
                 
                 if (this.checked) {
                     item.classList.add('completed');
-                    showSuccessMessage('✅ تم تحديد هذه المرحلة كمكتملة');
+                    showSuccessMessage('Stage marked as completed');
                 } else {
                     item.classList.remove('completed');
                 }
@@ -269,7 +269,7 @@ function initCopyButtons() {
                 
                 navigator.clipboard.writeText(text).then(() => {
                     const originalText = this.textContent;
-                    this.textContent = '✓ تم النسخ';
+                    this.textContent = '✓ Copied';
                     this.classList.add('bg-green-500');
                     
                     setTimeout(() => {
@@ -442,6 +442,6 @@ function exportProgress() {
 exportProgress();
 
 // ==================== CONSOLE LOG ====================
-console.log('%c🎯 Digital IC Learning Platform', 'color: #CFFFE2; font-size: 20px; font-weight: bold;');
-console.log('%cمرحباً بك في منصة تعلم تصميم الدوائر المتكاملة الرقمية', 'color: #A2D5C6; font-size: 14px;');
-console.log('%cإذا كنت تريد المساهمة في المشروع، تواصل معنا!', 'color: #006A67; font-size: 12px;');
+console.log('%cZDC — Zagazig Digital Community', 'color: #CFFFE2; font-size: 20px; font-weight: bold;');
+console.log('%cWelcome to the Digital IC & Embedded Engineering Learning Platform', 'color: #A2D5C6; font-size: 14px;');
+console.log('%cWant to contribute to ZDC? Reach out to our team!', 'color: #006A67; font-size: 12px;');

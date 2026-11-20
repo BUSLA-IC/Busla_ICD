@@ -78,12 +78,12 @@ function setupDetailTabs() {
             const targetTab = newBtn.getAttribute('data-tab');
             
             document.querySelectorAll('.td-nav-btn').forEach(b => {
-                b.classList.remove('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500', 'active');
+                b.classList.remove('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500', 'active');
                 b.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
             });
             document.querySelectorAll('.td-pane').forEach(p => p.classList.add('hidden'));
             
-            newBtn.classList.add('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500', 'active');
+            newBtn.classList.add('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500', 'active');
             newBtn.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
             
             const pane = document.getElementById(`td-pane-${targetTab}`);
@@ -130,14 +130,14 @@ function populateTrackDropdowns() {
         editTrackSelect.innerHTML = tracksList.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     }
     if (filterTrackSelect) {
-        filterTrackSelect.innerHTML = '<option value="all">كل التراكات</option>' + 
+        filterTrackSelect.innerHTML = '<option value="all">All Tracks</option>' + 
             tracksList.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     }
 }
 
 // 3. Imgur Helper
 function resolveImageUrl(url) {
-    if (!url) return `https://ui-avatars.com/api/?name=Team&background=006A67&color=fff&size=100`;
+    if (!url) return `https://ui-avatars.com/api/?name=Team&background=222222&color=EFECE6&size=100`;
     return url;
 }
 
@@ -169,7 +169,7 @@ window.fetchTeams = async () => {
         window.filterTeams();
     } catch (err) {
         console.error("Fetch Teams Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-red-500">حدث خطأ أثناء جلب بيانات الفرق.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-red-500">An error occurred while fetching teams data.</td></tr>`;
     }
 };
 
@@ -190,7 +190,7 @@ function populateUniDropdownFilter() {
     if (!select) return;
     
     const unis = [...new Set(allTeams.map(t => t.university).filter(Boolean))];
-    select.innerHTML = '<option value="all">كل الجامعات</option>' + 
+    select.innerHTML = '<option value="all">All Universities</option>' + 
         unis.map(u => `<option value="${u}">${u}</option>`).join('');
 }
 
@@ -226,16 +226,16 @@ function renderTeamsTable(data) {
     if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500">لا توجد فرق تطابق محددات البحث.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد فرق تطابق محددات البحث.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="p-10 text-center text-gray-500">No teams match the search criteria.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">No teams match the search criteria.</div>`;
         return;
     }
     
     tbody.innerHTML = data.map(t => {
         const logo = resolveImageUrl(t.logo_url);
-        const leaderName = t.leader?.full_name || 'بدون قائد';
+        const leaderName = t.leader?.full_name || 'No Leader';
         const membersCount = profilesList.filter(p => p.team_id === t.id).length;
-        const createdDate = new Date(t.created_at).toLocaleDateString('ar-EG');
+        const createdDate = new Date(t.created_at).toLocaleDateString('en-US');
         
         // Count active courses and tasks
         const coursesCount = Array.isArray(t.courses_plan) ? t.courses_plan.length : 0;
@@ -243,8 +243,8 @@ function renderTeamsTable(data) {
         
         const isFrozen = t.status === 'frozen';
         const statusBadge = isFrozen ? 
-            `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مجمد</span>` :
-            `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">نشط</span>`;
+            `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Frozen</span>` :
+            `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Active</span>`;
             
         // Permission checks
         const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
@@ -255,25 +255,25 @@ function renderTeamsTable(data) {
         const showDeleteBtn = can('teams:delete') || isAdminOwner;
         
         let actionButtons = `
-            <button onclick="window.openTeamDetails('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
+            <button onclick="window.openTeamDetails('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="View Details"><i class="fas fa-eye"></i></button>
         `;
         if (canEditTeam) {
-            actionButtons += `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل البيانات"><i class="fas fa-edit"></i></button>`;
+            actionButtons += `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="Edit Details"><i class="fas fa-edit"></i></button>`;
         }
         if (canChangeLeader || canEditTeam) {
-            actionButtons += `<button onclick="window.openManageMembersModalDirect('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="إدارة الأعضاء"><i class="fas fa-users-gear"></i></button>`;
+            actionButtons += `<button onclick="window.openManageMembersModalDirect('${t.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="Manage Members"><i class="fas fa-users-gear"></i></button>`;
         }
         
         if (canFreezeTeam) {
             if (isFrozen) {
-                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل النشاط"><i class="fas fa-play"></i></button>`;
+                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="Activate Team"><i class="fas fa-play"></i></button>`;
             } else {
-                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="text-red-500 hover:text-red-400 p-1" title="تجميد النشاط"><i class="fas fa-pause"></i></button>`;
+                actionButtons += `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="text-red-500 hover:text-red-400 p-1" title="Freeze Team"><i class="fas fa-pause"></i></button>`;
             }
         }
         
         if (showDeleteBtn) {
-            actionButtons += `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="text-red-500 hover:text-red-400 p-1" title="حذف الفريق"><i class="fas fa-trash-can"></i></button>`;
+            actionButtons += `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="text-red-500 hover:text-red-400 p-1" title="Delete Team"><i class="fas fa-trash-can"></i></button>`;
         }
         
         return {
@@ -285,46 +285,46 @@ function renderTeamsTable(data) {
                 </td>
                 <td class="p-4 text-center font-semibold text-gray-300 text-xs">${leaderName}</td>
                 <td class="p-4 text-center text-gray-300 text-xs">${t.university || '--'}</td>
-                <td class="p-4 text-center font-bold text-white text-xs">${membersCount} أعضاء</td>
-                <td class="p-4 text-center text-teal-400 font-bold text-xs">${tracksMap[t.specialization] || 'تخصص عام'}</td>
+                <td class="p-4 text-center font-bold text-white text-xs">${membersCount} members</td>
+                <td class="p-4 text-center text-teal-400 font-bold text-xs">${tracksMap[t.specialization] || 'General Track'}</td>
                 <td class="p-4 text-center font-mono font-bold text-yellow-500 text-xs">${t.total_score || 0}</td>
-                <td class="p-4 text-center font-semibold text-gray-300 text-xs">${coursesCount} كورس</td>
-                <td class="p-4 text-center font-semibold text-gray-300 text-xs">${tasksCount} مهام</td>
+                <td class="p-4 text-center font-semibold text-gray-300 text-xs">${coursesCount} courses</td>
+                <td class="p-4 text-center font-semibold text-gray-300 text-xs">${tasksCount} tasks</td>
                 <td class="p-4 text-center font-mono text-gray-500 text-xs">${createdDate}</td>
                 <td class="p-4 text-center">${statusBadge}</td>
-                <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
+                <td class="p-4 text-right"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
             </tr>
             `,
             mobileCard: `
             <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
                 <div class="flex items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <img src="${logo}" class="w-10 h-10 rounded-xl object-cover bg-black/50 border border-white/10 shrink-0" onerror="this.src='../../assets/images/default-avatar.png'">
+                        <img src="${logo}" class="w-10 h-10 rounded-xl object-cover bg-black/50 border border-white/10 shrink-0" onerror="this.src='../../assets/icons/zdc-icon-192.png'">
                         <div class="min-w-0">
                             <h4 class="text-sm font-bold text-white truncate">${t.name}</h4>
                             <div class="text-[10px] text-gray-400 truncate flex items-center gap-2 mt-0.5">
-                                <span><i class="fas fa-university text-teal-400/80 ml-1"></i>${t.university || 'غير محدد'}</span>
-                                <span class="text-teal-400 font-semibold">• ${tracksMap[t.specialization] || 'تخصص عام'}</span>
+                                <span><i class="fas fa-university text-teal-400/80 mr-1"></i>${t.university || 'Unspecified'}</span>
+                                <span class="text-teal-400 font-semibold">• ${tracksMap[t.specialization] || 'General Track'}</span>
                             </div>
                         </div>
                     </div>
                     <div class="flex flex-col items-end gap-1 shrink-0">
                         ${statusBadge}
-                        <span class="text-[11px] font-black text-yellow-500 font-mono">${t.total_score || 0} نقطة</span>
+                        <span class="text-[11px] font-black text-yellow-500 font-mono">${t.total_score || 0} pts</span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
                     <div>
-                        <span class="text-[9px] text-gray-500 block">القائد</span>
+                        <span class="text-[9px] text-gray-500 block">Leader</span>
                         <span class="text-xs font-bold text-gray-200 truncate block mt-0.5">${leaderName}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] text-gray-500 block">الأعضاء</span>
+                        <span class="text-[9px] text-gray-500 block">Members</span>
                         <span class="text-xs font-black text-teal-400 block mt-0.5">${membersCount}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] text-gray-500 block">الكورسات/المهام</span>
+                        <span class="text-[9px] text-gray-500 block">Courses/Tasks</span>
                         <span class="text-xs font-bold text-purple-400 block mt-0.5">${coursesCount}/${tasksCount}</span>
                     </div>
                 </div>
@@ -332,19 +332,19 @@ function renderTeamsTable(data) {
                 <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
                     <div class="flex items-center gap-1.5">
                         <button onclick="window.openTeamDetails('${t.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                            <i class="fas fa-eye text-[10px]"></i> التفاصيل
+                            <i class="fas fa-eye text-[10px]"></i> Details
                         </button>
                         ${(canChangeLeader || canEditTeam) ? `<button onclick="window.openManageMembersModalDirect('${t.id}')" class="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                            <i class="fas fa-users-gear text-[10px]"></i> الأعضاء
+                            <i class="fas fa-users-gear text-[10px]"></i> Members
                         </button>` : ''}
                     </div>
                     <div class="flex items-center gap-1">
-                        ${canEditTeam ? `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canEditTeam ? `<button onclick="window.openEditTeamModalDirect('${t.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="Edit"><i class="fas fa-edit"></i></button>` : ''}
                         ${canFreezeTeam ? (isFrozen ? 
-                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-play"></i></button>` :
-                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg text-xs" title="تجميد"><i class="fas fa-pause"></i></button>`
+                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="Activate"><i class="fas fa-play"></i></button>` :
+                            `<button onclick="window.toggleTeamFreezeStatusDirect('${t.id}', 'frozen')" class="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg text-xs" title="Freeze"><i class="fas fa-pause"></i></button>`
                         ) : ''}
-                        ${showDeleteBtn ? `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
+                        ${showDeleteBtn ? `<button onclick="window.deleteTeamAccountDirect('${t.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="Delete"><i class="fas fa-trash-can"></i></button>` : ''}
                     </div>
                 </div>
             </div>
@@ -377,7 +377,7 @@ window.fetchTeamRequests = async () => {
         window.filterTeamRequests();
     } catch (err) {
         console.error("Fetch Team Requests Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">حدث خطأ أثناء جلب الطلبات.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">An error occurred while fetching team requests.</td></tr>`;
     }
 };
 
@@ -413,24 +413,24 @@ function renderTeamRequestsTable(data) {
     if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا توجد طلبات مطابقة للبحث.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد طلبات مطابقة للبحث.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">No requests match your search.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">No requests match your search.</div>`;
         return;
     }
     
     tbody.innerHTML = data.map(req => {
-        const submittedDate = new Date(req.submitted_at).toLocaleDateString('ar-EG');
-        const leaderName = req.requester?.full_name || 'غير معروف';
+        const submittedDate = new Date(req.submitted_at).toLocaleDateString('en-US');
+        const leaderName = req.requester?.full_name || 'Unknown';
         
         let statusBadge = '';
         if (req.status === 'approved') {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">معتمد</span>`;
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Approved</span>`;
         } else if (req.status === 'rejected') {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوض</span>`;
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Rejected</span>`;
         } else if (req.status === 'archived') {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">مؤرشف</span>`;
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">Archived</span>`;
         } else {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>`;
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">Pending Review</span>`;
         }
         
         return {
@@ -446,7 +446,7 @@ function renderTeamRequestsTable(data) {
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center">
                     <button onclick="window.openTeamRequestDetails('${req.id}')" class="px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20">
-                        عرض التفاصيل
+                        View Details
                     </button>
                 </td>
             </tr>
@@ -457,7 +457,7 @@ function renderTeamRequestsTable(data) {
                     <div class="min-w-0">
                         <h4 class="text-sm font-bold text-white truncate">${req.team_name}</h4>
                         <div class="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
-                            <span><i class="fas fa-university text-teal-400/80 ml-1"></i>${req.university || 'غير محدد'}</span>
+                            <span><i class="fas fa-university text-teal-400/80 mr-1"></i>${req.university || 'Unspecified'}</span>
                         </div>
                     </div>
                     <div class="shrink-0">${statusBadge}</div>
@@ -465,22 +465,22 @@ function renderTeamRequestsTable(data) {
 
                 <div class="py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl space-y-1">
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-[10px] text-gray-500">القائد:</span>
+                        <span class="text-[10px] text-gray-500">Leader:</span>
                         <span class="font-bold text-gray-200">${leaderName}</span>
                     </div>
                     <div class="flex items-center justify-between text-[10px] text-gray-500 font-mono">
-                        <span>الإيميل:</span>
+                        <span>Email:</span>
                         <span class="text-gray-400 truncate max-w-[200px]">${req.requester?.email || ''}</span>
                     </div>
                     <div class="flex items-center justify-between text-[10px] text-gray-500">
-                        <span>تاريخ التقديم:</span>
+                        <span>Submitted:</span>
                         <span class="font-mono text-gray-400">${submittedDate}</span>
                     </div>
                 </div>
 
                 <div class="pt-1 border-t border-white/5 flex justify-end">
                     <button onclick="window.openTeamRequestDetails('${req.id}')" class="w-full py-2 rounded-xl bg-teal-500/10 text-teal-300 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20 flex items-center justify-center gap-1.5">
-                        <i class="fas fa-eye text-xs"></i> عرض تفاصيل الطلب
+                        <i class="fas fa-eye text-xs"></i> View Request Details
                     </button>
                 </div>
             </div>
@@ -498,7 +498,7 @@ window.openTeamRequestDetails = (id) => {
     
     document.getElementById('modal-current-team-req-id').value = id;
     document.getElementById('modal-team-req-name').innerText = req.team_name;
-    document.getElementById('modal-team-req-leader-email').innerText = req.requester?.email || 'بدون إيميل';
+    document.getElementById('modal-team-req-leader-email').innerText = req.requester?.email || 'No Email';
     
     const badge = document.getElementById('modal-team-req-status-badge');
     badge.className = `px-3 py-1 rounded-lg text-xs font-bold ${
@@ -507,9 +507,9 @@ window.openTeamRequestDetails = (id) => {
         req.status === 'archived' ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20' :
         'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
     }`;
-    badge.innerText = req.status === 'approved' ? 'معتمد' : 
-                      req.status === 'rejected' ? 'مرفوض' : 
-                      req.status === 'archived' ? 'مؤرشف' : 'قيد المراجعة';
+    badge.innerText = req.status === 'approved' ? 'Approved' : 
+                      req.status === 'rejected' ? 'Rejected' : 
+                      req.status === 'archived' ? 'Archived' : 'Pending Review';
                       
     const previewImg = document.getElementById('modal-team-req-logo-preview');
     previewImg.src = resolveImageUrl(req.logo_url);
@@ -522,12 +522,12 @@ window.openTeamRequestDetails = (id) => {
         logoLink.classList.add('hidden');
     }
     
-    document.getElementById('modal-team-req-leader-name').innerText = req.requester?.full_name || 'غير معروف';
-    document.getElementById('modal-team-req-date').innerText = new Date(req.submitted_at).toLocaleString('ar-EG');
+    document.getElementById('modal-team-req-leader-name').innerText = req.requester?.full_name || 'Unknown';
+    document.getElementById('modal-team-req-date').innerText = new Date(req.submitted_at).toLocaleString('en-US');
     document.getElementById('modal-team-req-uni').innerText = req.university || '--';
     document.getElementById('modal-team-req-gov').innerText = req.governorate || '--';
     document.getElementById('modal-team-req-spec').innerText = tracksMap[req.specialization] || req.specialization || '--';
-    document.getElementById('modal-team-req-size').innerText = req.expected_size ? `${req.expected_size} أفراد` : '--';
+    document.getElementById('modal-team-req-size').innerText = req.expected_size ? `${req.expected_size} members` : '--';
     document.getElementById('modal-team-req-gpa').innerText = req.leader_gpa || '--';
     document.getElementById('modal-team-req-reason').innerText = req.reason || '--';
     document.getElementById('modal-team-req-notes').value = req.rejection_reason || '';
@@ -540,11 +540,11 @@ window.updateTeamRequestStatus = async (newStatus) => {
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     
     if (newStatus === 'approved' && !can('teams:approve') && !can('manage_requests') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية اعتماد وتأسيس الفريق.', 'error');
+        window.showToast?.('You do not have permission to approve and establish teams.', 'error');
         return;
     }
     if (newStatus === 'rejected' && !can('teams:reject') && !can('manage_requests') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية رفض طلب تأسيس الفريق.', 'error');
+        window.showToast?.('You do not have permission to reject team requests.', 'error');
         return;
     }
     
@@ -557,7 +557,7 @@ window.updateTeamRequestStatus = async (newStatus) => {
     
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("لم يتم العثور على جلسة المشرف الفعالة");
+        if (!user) throw new Error("No active administrator session found");
         
         if (newStatus === 'approved') {
             // Check if specialization exists as a valid track UUID
@@ -600,9 +600,9 @@ window.updateTeamRequestStatus = async (newStatus) => {
             const welcomePost = {
                 team_id: teamData.id,
                 type: 'announcement',
-                title: 'مرحباً بكم في الفريق! 🚀',
-                content: `تم اعتماد وتأسيس الفريق الإرشادي بقيادة ${req.requester?.full_name || 'القائد المقترح'}. نتمنى لكم مسيرة تعليمية ممتازة ومليئة بالإنجازات والتقدم في المجالات الهندسية!`,
-                creator_name: 'إدارة منصة بُصْلَة',
+                title: 'Welcome to the Team! 🚀',
+                content: `This study team has been officially approved under the leadership of ${req.requester?.full_name || 'your Team Leader'}. We wish you an outstanding engineering journey filled with achievements and continuous growth!`,
+                creator_name: 'ZDC Administration',
                 is_pinned: true,
                 target_members: ['all']
             };
@@ -611,12 +611,12 @@ window.updateTeamRequestStatus = async (newStatus) => {
             // 4. Send leader notification
             await supabase.from('system_notifications').insert([{
                 user_id: req.requester_id,
-                title: '✅ تم اعتماد طلب تأسيس فريقك!',
-                message: `تهانينا! تمت الموافقة على تأسيس فريق "${req.team_name}" وتعيينك قائداً له. يمكنك الآن البدء في دعوة الطلاب وإسناد الكورسات وإدارة الفريق من لوحتك.`,
+                title: '✅ Your Team Request Has Been Approved!',
+                message: `Congratulations! Your request to establish "${req.team_name}" has been approved and you have been appointed as Team Leader. You can now invite students, assign courses, and manage your team from your dashboard.`,
                 type: 'success'
             }]);
         } else if (newStatus === 'rejected' && !notes) {
-            alert("يجب كتابة سبب الرفض في خانة الملاحظات.");
+            alert("Please enter the rejection reason in the notes field.");
             return;
         }
         
@@ -637,8 +637,8 @@ window.updateTeamRequestStatus = async (newStatus) => {
         if (newStatus === 'rejected') {
             await supabase.from('system_notifications').insert([{
                 user_id: req.requester_id,
-                title: '❌ تم رفض طلب تأسيس الفريق',
-                message: `نعتذر منك، لقد تم رفض طلب تأسيس فريقك للسبب التالي: ${notes}`,
+                title: '❌ Team Request Rejected',
+                message: `We regret to inform you that your team request has been declined for the following reason: ${notes}`,
                 type: 'error'
             }]);
         }
@@ -650,12 +650,12 @@ window.updateTeamRequestStatus = async (newStatus) => {
             `Requester: ${req.requester?.full_name || ''}. Notes: ${notes}`
         );
         
-        alert("تم تحديث حالة الطلب بنجاح.");
+        alert("Request status updated successfully.");
         document.getElementById('team-request-details-modal').classList.add('hidden');
         window.fetchTeamRequests();
     } catch (err) {
         console.error("Update Request Error:", err);
-        alert("فشل تحديث الطلب: " + err.message);
+        alert("Failed to update request: " + err.message);
     }
 };
 
@@ -679,7 +679,7 @@ window.fetchTeamInvitations = async () => {
         window.filterTeamInvitations();
     } catch (err) {
         console.error("Fetch Invitations Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">حدث خطأ أثناء جلب دعوات الانضمام.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">An error occurred while fetching team invitations.</td></tr>`;
     }
 };
 
@@ -711,35 +711,35 @@ function renderInvitationsTable(data) {
     if (!tbody && !mobileCards) return;
     
     if (data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">لا توجد دعوات مطابقة للبحث.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد دعوات مطابقة للبحث.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">No invitations match your search.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">No invitations match your search.</div>`;
         return;
     }
     
     tbody.innerHTML = data.map(inv => {
-        const sentDate = new Date(inv.created_at).toLocaleDateString('ar-EG');
-        const teamName = inv.teams?.name || 'فريق محذوف';
-        const sender = inv.leader?.full_name || 'ليدر غير معروف';
+        const sentDate = new Date(inv.created_at).toLocaleDateString('en-US');
+        const teamName = inv.teams?.name || 'Deleted Team';
+        const sender = inv.leader?.full_name || 'Unknown Leader';
         
-        const recipientName = inv.invitee?.full_name || inv.to_name || 'طالب مسجل حديثاً';
+        const recipientName = inv.invitee?.full_name || inv.to_name || 'Newly Registered Student';
         const recipientEmail = inv.invitee?.email || inv.to_email || '';
         
         let statusBadge = '';
         let responseDateText = '--';
         
         if (inv.status === 'accepted') {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">مقبولة</span>`;
-            responseDateText = 'تم القبول';
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Accepted</span>`;
+            responseDateText = 'Accepted';
         } else if (inv.status === 'rejected') {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوضة</span>`;
-            responseDateText = 'تم الرفض';
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Rejected</span>`;
+            responseDateText = 'Rejected';
         } else {
-            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد الانتظار</span>`;
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">Pending</span>`;
         }
         
         const actions = `
-            <button onclick="window.resendInvitation('${inv.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="إعادة إرسال"><i class="fas fa-sync-alt"></i></button>
-            <button onclick="window.cancelInvitation('${inv.id}')" class="text-red-500 hover:text-red-400 p-1" title="إلغاء الدعوة"><i class="fas fa-times-circle"></i></button>
+            <button onclick="window.resendInvitation('${inv.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="Resend Invitation"><i class="fas fa-sync-alt"></i></button>
+            <button onclick="window.cancelInvitation('${inv.id}')" class="text-red-500 hover:text-red-400 p-1" title="Cancel Invitation"><i class="fas fa-times-circle"></i></button>
         `;
         
         return {
@@ -754,7 +754,7 @@ function renderInvitationsTable(data) {
                 <td class="p-4 text-center text-xs font-mono text-gray-500">${sentDate}</td>
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center text-xs text-gray-400 font-semibold">${responseDateText}</td>
-                <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actions}</div></td>
+                <td class="p-4 text-right"><div class="flex items-center justify-end gap-2.5">${actions}</div></td>
             </tr>
             `,
             mobileCard: `
@@ -762,22 +762,22 @@ function renderInvitationsTable(data) {
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <h4 class="text-sm font-bold text-white truncate">${teamName}</h4>
-                        <div class="text-[10px] text-gray-400 truncate mt-0.5">المرسل: ${sender}</div>
+                        <div class="text-[10px] text-gray-400 truncate mt-0.5">Sender: ${sender}</div>
                     </div>
                     <div class="shrink-0">${statusBadge}</div>
                 </div>
 
                 <div class="py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl space-y-1">
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-[10px] text-gray-500">المستلم:</span>
+                        <span class="text-[10px] text-gray-500">Recipient:</span>
                         <span class="font-bold text-gray-200">${recipientName}</span>
                     </div>
                     <div class="flex items-center justify-between text-[10px] text-gray-500 font-mono">
-                        <span>الإيميل:</span>
+                        <span>Email:</span>
                         <span class="text-gray-400 truncate max-w-[200px]">${recipientEmail}</span>
                     </div>
                     <div class="flex items-center justify-between text-[10px] text-gray-500">
-                        <span>تاريخ الإرسال:</span>
+                        <span>Sent Date:</span>
                         <span class="font-mono text-gray-400">${sentDate}</span>
                     </div>
                 </div>
@@ -803,18 +803,18 @@ window.resendInvitation = async (id) => {
             
         if (error) throw error;
         
-        alert("تمت إعادة إرسال الدعوة وتحديث تاريخها بنجاح.");
+        alert("Invitation resent and timestamp updated successfully.");
         window.fetchTeamInvitations();
     } catch (err) {
         console.error("Resend Invitation Error:", err);
-        alert("فشل إعادة إرسال الدعوة: " + err.message);
+        alert("Failed to resend invitation: " + err.message);
     }
 };
 
 window.cancelInvitation = async (id) => {
     const confirmed = await window.showCustomConfirm(
-        "إلغاء وحذف الدعوة",
-        "هل أنت متأكد من إلغاء وحذف هذه الدعوة؟",
+        "Cancel & Delete Invitation",
+        "Are you sure you want to cancel and delete this invitation?",
         null,
         null,
         'danger'
@@ -828,11 +828,11 @@ window.cancelInvitation = async (id) => {
             
         if (error) throw error;
         
-        alert("تم إلغاء وحذف الدعوة بنجاح.");
+        alert("Invitation cancelled and deleted successfully.");
         window.fetchTeamInvitations();
     } catch (err) {
         console.error("Cancel Invitation Error:", err);
-        alert("فشل إلغاء الدعوة: " + err.message);
+        alert("Failed to cancel invitation: " + err.message);
     }
 };
 
@@ -842,7 +842,7 @@ window.cancelInvitation = async (id) => {
 
 window.fetchTeamActivities = async () => {
     const list = document.getElementById('team-activity-list');
-    if (list) list.innerHTML = `<div class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-2xl mr-2"></i> جاري تحميل سجل الأنشطة...</div>`;
+    if (list) list.innerHTML = `<div class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-2xl mr-2"></i> Loading activity log...</div>`;
     
     try {
         // Fetch audit logs that relate to teams
@@ -859,7 +859,7 @@ window.fetchTeamActivities = async () => {
         window.filterTeamActivities();
     } catch (err) {
         console.error("Fetch Activities Error:", err);
-        if (list) list.innerHTML = `<div class="text-center p-8 text-red-500">حدث خطأ أثناء تحميل سجل الأنشطة.</div>`;
+        if (list) list.innerHTML = `<div class="text-center p-8 text-red-500">An error occurred while loading the activity log.</div>`;
     }
 };
 
@@ -886,13 +886,13 @@ function renderTeamActivitiesTimeline(data) {
     if (!container) return;
     
     if (data.length === 0) {
-        container.innerHTML = `<div class="text-center p-8 text-gray-500">لا يوجد أنشطة مطابقة للبحث حالياً.</div>`;
+        container.innerHTML = `<div class="text-center p-8 text-gray-500">No activities match your search right now.</div>`;
         return;
     }
     
     container.innerHTML = data.map(log => {
-        const time = new Date(log.created_at).toLocaleString('ar-EG');
-        const admin = log.admin_name || 'مشرف النظام';
+        const time = new Date(log.created_at).toLocaleString('en-US');
+        const admin = log.admin_name || 'System Admin';
         
         let actionIcon = '<i class="fas fa-circle-dot text-teal-500"></i>';
         let actionColor = 'text-teal-400';
@@ -912,20 +912,20 @@ function renderTeamActivitiesTimeline(data) {
         }
         
         return `
-            <div class="relative pl-6 pb-6 border-r border-white/10 last:pb-0">
+            <div class="relative pl-6 pb-6 border-l border-white/10 last:pb-0">
                 <!-- Marker -->
-                <div class="absolute -right-[11px] top-1.5 w-5 h-5 rounded-full bg-black border-2 border-white/20 flex items-center justify-center text-[10px]">
+                <div class="absolute -left-[11px] top-1.5 w-5 h-5 rounded-full bg-black border-2 border-white/20 flex items-center justify-center text-[10px]">
                     ${actionIcon}
                 </div>
                 <!-- Content -->
-                <div class="bg-white/5 border border-white/5 rounded-xl p-4 mr-2">
+                <div class="bg-white/5 border border-white/5 rounded-xl p-4 ml-2">
                     <div class="flex justify-between items-start gap-4">
                         <span class="text-xs font-bold ${actionColor}">${log.action}</span>
                         <span class="text-[10px] text-gray-500 font-mono">${time}</span>
                     </div>
-                    <div class="text-xs text-white font-bold mt-2">المستهدف: ${log.target}</div>
-                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">${log.details || 'لا توجد تفاصيل إضافية.'}</p>
-                    <div class="text-[9px] text-gray-500 mt-2 font-semibold">بواسطة: ${admin}</div>
+                    <div class="text-xs text-white font-bold mt-2">Target: ${log.target}</div>
+                    <p class="text-xs text-gray-400 mt-1 leading-relaxed">${log.details || 'No additional details.'}</p>
+                    <div class="text-[9px] text-gray-500 mt-2 font-semibold">By: ${admin}</div>
                 </div>
             </div>
         `;
@@ -946,19 +946,19 @@ window.openTeamDetails = async (teamId) => {
     const logo = resolveImageUrl(selectedTeam.logo_url);
     document.getElementById('td-logo').src = logo;
     document.getElementById('td-name').innerText = selectedTeam.name;
-    document.getElementById('td-track').innerText = tracksMap[selectedTeam.specialization] || 'تخصص عام / تراك غير محدد';
+    document.getElementById('td-track').innerText = tracksMap[selectedTeam.specialization] || 'General Track / Unspecified';
     
     // Clear details first
     document.querySelectorAll('.td-pane').forEach(p => p.classList.add('hidden'));
     document.querySelectorAll('.td-nav-btn').forEach(b => {
-        b.classList.remove('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500', 'active');
+        b.classList.remove('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500', 'active');
         b.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
     });
     
     // Trigger Info tab by default
     const infoBtn = document.querySelector('.td-nav-btn[data-tab="info"]');
     if (infoBtn) {
-        infoBtn.classList.add('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500', 'active');
+        infoBtn.classList.add('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500', 'active');
         infoBtn.classList.remove('text-gray-400');
     }
     document.getElementById('td-pane-info').classList.remove('hidden');
@@ -975,12 +975,12 @@ async function loadTeamDetailTabContent(tab) {
     if (!teamId || !selectedTeam) return;
     
     if (tab === 'info') {
-        const leaderName = selectedTeam.leader?.full_name || 'بدون قائد';
+        const leaderName = selectedTeam.leader?.full_name || 'No Leader';
         const membersCount = profilesList.filter(p => p.team_id === teamId).length;
-        const createdDate = new Date(selectedTeam.created_at).toLocaleDateString('ar-EG');
+        const createdDate = new Date(selectedTeam.created_at).toLocaleDateString('en-US');
         
         const isFrozen = selectedTeam.status === 'frozen';
-        const statusText = isFrozen ? '🔴 مجمد وموقوف النشاط' : '🟢 نشط فعال';
+        const statusText = isFrozen ? '🔴 Frozen & Inactive' : '🟢 Active';
         const statusColor = isFrozen ? 'text-red-400' : 'text-green-400';
         
         // Find team leaderboard rank
@@ -998,8 +998,8 @@ async function loadTeamDetailTabContent(tab) {
         }
         
         setText('td-info-leader', leaderName);
-        setText('td-info-rank', rankIndex > 0 ? `# ${rankIndex} على المنصة` : '--');
-        setText('td-info-members', `${membersCount} أعضاء`);
+        setText('td-info-rank', rankIndex > 0 ? `# ${rankIndex} on Platform` : '--');
+        setText('td-info-members', `${membersCount} members`);
         setText('td-info-score', `${selectedTeam.total_score || 0} XP`);
         
         // Toggle action freeze button layout
@@ -1007,10 +1007,10 @@ async function loadTeamDetailTabContent(tab) {
         if (freezeBtn) {
             if (isFrozen) {
                 freezeBtn.className = "px-4 py-2 bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white border border-green-500/20 rounded-xl text-xs font-bold transition-all";
-                freezeBtn.innerHTML = '<i class="fas fa-play ml-1"></i> إعادة تنشيط وتفعيل الفريق';
+                freezeBtn.innerHTML = '<i class="fas fa-play mr-1"></i> Reactivate Team';
             } else {
                 freezeBtn.className = "px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-xs font-bold transition-all";
-                freezeBtn.innerHTML = '<i class="fas fa-pause ml-1"></i> تجميد نشاط الفريق';
+                freezeBtn.innerHTML = '<i class="fas fa-pause mr-1"></i> Freeze Team Activity';
             }
         }
         
@@ -1028,7 +1028,7 @@ async function loadTeamDetailTabContent(tab) {
         
     } else if (tab === 'members') {
         const tbody = document.getElementById('td-members-table-body');
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> جاري تحميل الأعضاء...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> Loading members...</td></tr>`;
         
         try {
             // Load enrollments progress to compute progress
@@ -1045,38 +1045,38 @@ async function loadTeamDetailTabContent(tab) {
             }
             
             if (teamMembers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">لا يوجد أعضاء مضافين للفريق حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-gray-500">No members added to this team yet.</td></tr>`;
                 return;
             }
             
             tbody.innerHTML = teamMembers.map(m => {
-                const avatar = m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name || 'S')}&background=006A67&color=fff&size=100`;
+                const avatar = m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name || 'S')}&background=222222&color=EFECE6&size=100`;
                 
                 // Get progress rate
                 const userEnrolls = enrolls.filter(e => e.user_id === m.id);
                 const avgProgress = userEnrolls.length > 0 ? 
                     Math.round(userEnrolls.reduce((sum, e) => sum + (e.progress || 0), 0) / userEnrolls.length) : 0;
                     
-                const lastActivity = m.last_activity ? new Date(m.last_activity).toLocaleDateString('ar-EG') : 'بلا نشاط';
+                const lastActivity = m.last_activity ? new Date(m.last_activity).toLocaleDateString('en-US') : 'No activity';
                 
                 let isLeaderBadge = m.id === selectedTeam.leader_id ? 
-                    `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[9px] px-1.5 py-0.5 rounded font-bold mr-2">قائد</span>` : '';
+                    `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[9px] px-1.5 py-0.5 rounded font-bold ml-2">Leader</span>` : '';
                     
                 const isSuspended = (m.role || '').startsWith('suspended');
                 const statusBadge = isSuspended ? 
-                    `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">موقوف</span>` :
-                    `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">نشط</span>`;
+                    `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Suspended</span>` :
+                    `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Active</span>`;
                     
                 const actions = `
-                    <button onclick="window.removeTeamMemberDirect('${m.id}')" class="px-2.5 py-1 text-xs bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-lg border border-red-500/20 font-bold transition-all">إزالة</button>
-                    ${m.id !== selectedTeam.leader_id ? `<button onclick="window.makeLeaderDirect('${m.id}')" class="px-2.5 py-1 text-xs bg-yellow-500/10 hover:bg-yellow-500 hover:text-white text-yellow-500 rounded-lg border border-yellow-500/20 font-bold transition-all mr-1.5">تعيين قائد</button>` : ''}
+                    <button onclick="window.removeTeamMemberDirect('${m.id}')" class="px-2.5 py-1 text-xs bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-lg border border-red-500/20 font-bold transition-all">Remove</button>
+                    ${m.id !== selectedTeam.leader_id ? `<button onclick="window.makeLeaderDirect('${m.id}')" class="px-2.5 py-1 text-xs bg-yellow-500/10 hover:bg-yellow-500 hover:text-white text-yellow-500 rounded-lg border border-yellow-500/20 font-bold transition-all ml-1.5">Make Leader</button>` : ''}
                 `;
                 
                 return `
                     <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                         <td class="p-4 flex items-center gap-3">
                             <img src="${avatar}" class="w-8 h-8 rounded-full object-cover border border-white/10" referrerPolicy="no-referrer">
-                            <span class="font-bold text-white text-xs">${m.full_name || 'بلا اسم'} ${isLeaderBadge}</span>
+                            <span class="font-bold text-white text-xs">${m.full_name || 'Unnamed'} ${isLeaderBadge}</span>
                         </td>
                         <td class="p-4 text-center text-xs text-gray-300 font-bold">${m.current_rank || 'Newbie'}</td>
                         <td class="p-4 text-center text-xs text-yellow-500 font-mono font-bold">${m.total_xp || 0}</td>
@@ -1090,18 +1090,18 @@ async function loadTeamDetailTabContent(tab) {
                         </td>
                         <td class="p-4 text-center text-xs text-gray-500 font-mono">${lastActivity}</td>
                         <td class="p-4 text-center">${statusBadge}</td>
-                        <td class="p-4 text-left"><div class="flex items-center justify-end gap-1.5">${actions}</div></td>
+                        <td class="p-4 text-right"><div class="flex items-center justify-end gap-1.5">${actions}</div></td>
                     </tr>
                 `;
             }).join('');
         } catch (err) {
             console.error("Load Members Error:", err);
-            tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">فشل تحميل قائمة الأعضاء.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">Failed to load members list.</td></tr>`;
         }
         
     } else if (tab === 'courses') {
         const tbody = document.getElementById('td-courses-table-body');
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> جاري تحميل الكورسات...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> Loading courses...</td></tr>`;
         
         try {
             const courseIds = Array.isArray(selectedTeam.courses_plan) ? selectedTeam.courses_plan : [];
@@ -1119,14 +1119,14 @@ async function loadTeamDetailTabContent(tab) {
             }
             
             if (courseIds.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500">لم يتم إسناد أي كورس لخطة الفريق الدراسية بعد.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500">No courses have been assigned to this team's study plan yet.</td></tr>`;
                 return;
             }
             
             tbody.innerHTML = courseIds.map(cId => {
                 const course = coursesList.find(c => c.id === cId || c.course_id === cId);
-                const cName = course ? course.name : 'كورس غير معروف';
-                const cTrack = course ? (tracksMap[course.track_id] || 'مسار عام') : '--';
+                const cName = course ? (course.title || course.name) : 'Unknown Course';
+                const cTrack = course ? (tracksMap[course.track_id] || 'General Track') : '--';
                 
                 // Stats
                 const courseEnrolls = enrolls.filter(e => e.course_id === cId);
@@ -1138,7 +1138,7 @@ async function loadTeamDetailTabContent(tab) {
                     <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                         <td class="p-4 font-bold text-white text-xs">${cName}</td>
                         <td class="p-4 text-center text-xs text-teal-400 font-bold">${cTrack}</td>
-                        <td class="p-4 text-center text-xs text-gray-300 font-bold">${enrolledCount} طلاب</td>
+                        <td class="p-4 text-center text-xs text-gray-300 font-bold">${enrolledCount} students</td>
                         <td class="p-4 text-center">
                             <div class="flex items-center justify-center gap-2">
                                 <div class="w-16 bg-white/10 rounded-full h-1.5 overflow-hidden">
@@ -1153,12 +1153,12 @@ async function loadTeamDetailTabContent(tab) {
             }).join('');
         } catch (err) {
             console.error("Load Courses Error:", err);
-            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">فشل تحميل قائمة الكورسات.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Failed to load courses list.</td></tr>`;
         }
         
     } else if (tab === 'tasks') {
         const tbody = document.getElementById('td-tasks-table-body');
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> جاري تحميل المهام...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> Loading tasks...</td></tr>`;
         
         try {
             const { data, error } = await supabase
@@ -1170,13 +1170,13 @@ async function loadTeamDetailTabContent(tab) {
             if (error) throw error;
             
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا توجد مهام مسندة للفريق حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">No tasks assigned to this team yet.</td></tr>`;
                 return;
             }
             
             tbody.innerHTML = data.map(task => {
-                const assignedDate = new Date(task.created_at).toLocaleDateString('ar-EG');
-                const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('ar-EG') : 'بلا موعد تسليم';
+                const assignedDate = new Date(task.created_at).toLocaleDateString('en-US');
+                const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('en-US') : 'No deadline';
                 
                 // Calculate completion rate from stats JSON
                 const stats = task.stats || {};
@@ -1208,7 +1208,7 @@ async function loadTeamDetailTabContent(tab) {
                                 <span class="text-xs font-bold text-gray-300 font-mono">${rate}%</span>
                             </div>
                         </td>
-                        <td class="p-4 text-left">
+                        <td class="p-4 text-right">
                             <button onclick="window.deleteTeamTaskDirect('${task.id}')" class="px-2 py-1 text-xs bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 border border-red-500/20 font-bold rounded-lg transition-all"><i class="fas fa-trash-can"></i></button>
                         </td>
                     </tr>
@@ -1216,12 +1216,12 @@ async function loadTeamDetailTabContent(tab) {
             }).join('');
         } catch (err) {
             console.error("Load Tasks Error:", err);
-            tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">فشل تحميل المهام.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">Failed to load tasks.</td></tr>`;
         }
         
     } else if (tab === 'posts') {
         const tbody = document.getElementById('td-posts-table-body');
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> جاري تحميل الإعلانات...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> Loading announcements...</td></tr>`;
         
         try {
             const { data, error } = await supabase
@@ -1233,14 +1233,14 @@ async function loadTeamDetailTabContent(tab) {
             if (error) throw error;
             
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500">لا يوجد إعلانات منشورة داخل الفريق حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500">No announcements posted in this team yet.</td></tr>`;
                 return;
             }
             
             tbody.innerHTML = data.map(post => {
-                const date = new Date(post.created_at).toLocaleDateString('ar-EG');
+                const date = new Date(post.created_at).toLocaleDateString('en-US');
                 const seenCount = Array.isArray(post.seen_by) ? post.seen_by.length : 0;
-                const author = post.creator_name || 'مشرف النظام';
+                const author = post.creator_name || 'System Admin';
                 
                 return `
                     <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
@@ -1249,8 +1249,8 @@ async function loadTeamDetailTabContent(tab) {
                         </td>
                         <td class="p-4 text-center text-xs font-mono text-gray-500">${date}</td>
                         <td class="p-4 text-center text-xs text-teal-400 font-bold">${author}</td>
-                        <td class="p-4 text-center text-xs text-gray-300 font-bold">${seenCount} مشاهدة</td>
-                        <td class="p-4 text-left">
+                        <td class="p-4 text-center text-xs text-gray-300 font-bold">${seenCount} views</td>
+                        <td class="p-4 text-right">
                             <button onclick="window.deleteTeamPostDirect('${post.id}')" class="px-2 py-1 text-xs bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 border border-red-500/20 font-bold rounded-lg transition-all"><i class="fas fa-trash-can"></i></button>
                         </td>
                     </tr>
@@ -1258,7 +1258,7 @@ async function loadTeamDetailTabContent(tab) {
             }).join('');
         } catch (err) {
             console.error("Load Posts Error:", err);
-            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">فشل تحميل الإعلانات.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Failed to load announcements.</td></tr>`;
         }
         
     } else if (tab === 'stats') {
@@ -1310,21 +1310,21 @@ async function loadTeamDetailTabContent(tab) {
             setText('td-stat-rank', rankIndex > 0 ? `# ${rankIndex}` : '--');
             setText('td-stat-points', `${selectedTeam.total_score || 0} XP`);
             setText('td-stat-avg-progress', `${avgProgress}%`);
-            setText('td-stat-projects', `${projectsCount} مشروع`);
-            setText('td-stat-quizzes', `${quizzesCount} كويز`);
-            setText('td-stat-videos', `${completedVideos} فيديو`);
-            setText('td-stat-members', `${teamMembers.length} أعضاء`);
+            setText('td-stat-projects', `${projectsCount} projects`);
+            setText('td-stat-quizzes', `${quizzesCount} quizzes`);
+            setText('td-stat-videos', `${completedVideos} videos`);
+            setText('td-stat-members', `${teamMembers.length} members`);
             
             // Count tasks
             const { data: tasks } = await supabase.from('team_tasks').select('id').eq('team_id', teamId);
-            setText('td-stat-tasks', `${tasks ? tasks.length : 0} مهمة`);
+            setText('td-stat-tasks', `${tasks ? tasks.length : 0} tasks`);
         } catch (err) {
             console.error("Load Stats Error:", err);
         }
         
     } else if (tab === 'timeline') {
         const timelineList = document.getElementById('td-timeline-list');
-        timelineList.innerHTML = `<div class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> جاري تحميل الجدول الزمني...</div>`;
+        timelineList.innerHTML = `<div class="text-center p-8 text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-xl mr-2"></i> Loading timeline...</div>`;
         
         try {
             const { data: logs, error } = await supabase
@@ -1337,21 +1337,21 @@ async function loadTeamDetailTabContent(tab) {
             if (error) throw error;
             
             if (!logs || logs.length === 0) {
-                timelineList.innerHTML = `<div class="text-center p-8 text-gray-500">لا يوجد أحداث مسجلة لهذا الفريق.</div>`;
+                timelineList.innerHTML = `<div class="text-center p-8 text-gray-500">No events recorded for this team.</div>`;
                 return;
             }
             
             timelineList.innerHTML = logs.map(log => {
-                const time = new Date(log.created_at).toLocaleString('ar-EG');
-                const admin = log.admin_name || 'مشرف النظام';
+                const time = new Date(log.created_at).toLocaleString('en-US');
+                const admin = log.admin_name || 'System Admin';
                 
                 return `
-                    <div class="relative pl-6 pb-6 border-r border-white/10 last:pb-0">
-                        <div class="absolute -right-[7px] top-1.5 w-3 h-3 rounded-full bg-teal-500 border-2 border-black"></div>
-                        <div class="mr-2 text-xs">
+                    <div class="relative pl-6 pb-6 border-l border-white/10 last:pb-0">
+                        <div class="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-teal-500 border-2 border-black"></div>
+                        <div class="ml-2 text-xs">
                             <div class="flex justify-between items-center text-gray-500 font-mono text-[10px]">
                                 <span>${time}</span>
-                                <span>بواسطة: ${admin}</span>
+                                <span>By: ${admin}</span>
                             </div>
                             <div class="font-bold text-white mt-1">${log.action}</div>
                             <p class="text-gray-400 mt-0.5 leading-relaxed">${log.details || ''}</p>
@@ -1361,7 +1361,7 @@ async function loadTeamDetailTabContent(tab) {
             }).join('');
         } catch (err) {
             console.error("Load Timeline Error:", err);
-            timelineList.innerHTML = `<div class="text-center p-8 text-red-500">فشل تحميل الجدول الزمني.</div>`;
+            timelineList.innerHTML = `<div class="text-center p-8 text-red-500">Failed to load timeline.</div>`;
         }
     }
 }
@@ -1389,17 +1389,17 @@ window.toggleTeamFreezeStatusDirect = async (teamId, status) => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('teams:freeze') && !can('manage_requests') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتجميد أو تفعيل هذا الفريق.', 'error');
+        window.showToast?.('You do not have permission to freeze or activate this team.', 'error');
         return;
     }
     const targetTeam = allTeams.find(t => t.id === teamId);
-    const teamName = targetTeam ? targetTeam.name : 'فريق';
+    const teamName = targetTeam ? targetTeam.name : 'Team';
     const promptMsg = status === 'frozen' ? 
-        `هل أنت متأكد من تجميد فريق "${teamName}" بالكامل؟ سيتم تعطيل إمكانية إسناد كورس أو إضافة مهام.` :
-        `هل تريد تفعيل نشاط فريق "${teamName}" وإلغاء التجميد؟`;
+        `Are you sure you want to freeze team "${teamName}"? Course assignment and task creation will be disabled.` :
+        `Do you want to reactivate team "${teamName}" and unfreeze its activity?`;
         
     const confirmed = await window.showCustomConfirm(
-        status === 'frozen' ? "تجميد الفريق" : "تنشيط الفريق",
+        status === 'frozen' ? "Freeze Team" : "Activate Team",
         promptMsg,
         null,
         null,
@@ -1416,7 +1416,7 @@ window.toggleTeamFreezeStatusDirect = async (teamId, status) => {
         if (error) {
             // Check if column not found
             if (error.message.includes('column') && error.message.includes('status')) {
-                alert("عذراً، يجب أولاً إضافة عمود الحالة لقاعدة البيانات. يرجى تشغيل هذا الاستعلام في لوحة سوبابيس (SQL Editor):\n\nALTER TABLE public.teams ADD COLUMN status text DEFAULT 'active';");
+                alert("Please add the status column to the database first by running this query in Supabase SQL Editor:\n\nALTER TABLE public.teams ADD COLUMN status text DEFAULT 'active';");
             } else {
                 throw error;
             }
@@ -1426,10 +1426,10 @@ window.toggleTeamFreezeStatusDirect = async (teamId, status) => {
         await window.logAdminAction(
             status === 'frozen' ? 'teams:freeze' : 'teams:activate',
             teamName,
-            status === 'frozen' ? 'تجميد نشاط الفريق بالكامل' : 'إعادة تفعيل نشاط الفريق'
+            status === 'frozen' ? 'Frozen all team activity' : 'Reactivated team activity'
         );
         
-        alert("تم تحديث حالة الفريق بنجاح.");
+        alert("Team status updated successfully.");
         
         // Refresh details modal if it is open
         if (selectedTeam && selectedTeam.id === teamId) {
@@ -1441,7 +1441,7 @@ window.toggleTeamFreezeStatusDirect = async (teamId, status) => {
         window.fetchTeams();
     } catch (err) {
         console.error("Freeze Status Error:", err);
-        alert("فشل تغيير حالة تجميد الفريق: " + err.message);
+        alert("Failed to update team freeze status: " + err.message);
     }
 };
 
@@ -1455,7 +1455,7 @@ window.openEditTeamModalDirect = (teamId) => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('teams:edit') && !can('manage_requests') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتعديل بيانات الفريق.', 'error');
+        window.showToast?.('You do not have permission to edit team details.', 'error');
         return;
     }
     const team = allTeams.find(t => t.id === teamId);
@@ -1478,7 +1478,7 @@ window.saveTeamData = async (e) => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('teams:edit') && !can('manage_requests') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتعديل بيانات الفريق.', 'error');
+        window.showToast?.('You do not have permission to edit team details.', 'error');
         return;
     }
     const teamId = document.getElementById('edit-team-id').value;
@@ -1510,10 +1510,10 @@ window.saveTeamData = async (e) => {
         await window.logAdminAction(
             'teams:edit',
             name,
-            `تعديل بيانات الفريق الأساسية. الجامعة: ${university}.`
+            `Updated core team details. University: ${university}.`
         );
         
-        alert("تم حفظ بيانات الفريق بنجاح.");
+        alert("Team details saved successfully.");
         document.getElementById('edit-team-modal').classList.add('hidden');
         
         // Refresh details modal if it is open
@@ -1526,14 +1526,14 @@ window.saveTeamData = async (e) => {
             
             document.getElementById('td-logo').src = resolveImageUrl(logoUrl);
             document.getElementById('td-name').innerText = name;
-            document.getElementById('td-track').innerText = tracksMap[specialization] || 'عام';
+            document.getElementById('td-track').innerText = tracksMap[specialization] || 'General';
             await loadTeamDetailTabContent('info');
         }
         
         window.fetchTeams();
     } catch (err) {
         console.error("Save Team Error:", err);
-        alert("فشل حفظ التغييرات: " + err.message);
+        alert("Failed to save changes: " + err.message);
     }
 };
 
@@ -1554,20 +1554,20 @@ window.openManageMembersModalDirect = async (teamId) => {
     // Leader Select
     const leaderSelect = document.getElementById('mm-leader-select');
     leaderSelect.innerHTML = teamMembers.map(m => 
-        `<option value="${m.id}" ${m.id === team.leader_id ? 'selected' : ''}>${m.full_name || 'طالب'}</option>`
+        `<option value="${m.id}" ${m.id === team.leader_id ? 'selected' : ''}>${m.full_name || 'Student'}</option>`
     ).join('');
     
     // Current Members list UI
     const listContainer = document.getElementById('mm-members-list');
     if (teamMembers.length === 0) {
-        listContainer.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">لا يوجد أعضاء في هذا الفريق بعد.</div>';
+        listContainer.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">No members in this team yet.</div>';
     } else {
         listContainer.innerHTML = teamMembers.map(m => `
             <div class="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg text-xs">
-                <span class="font-bold text-white">${m.full_name || 'بلا اسم'}</span>
+                <span class="font-bold text-white">${m.full_name || 'Unnamed'}</span>
                 <div class="flex items-center gap-2">
                     <span class="text-gray-500">${m.email}</span>
-                    <button onclick="window.removeTeamMemberDirect('${m.id}')" class="text-red-500 hover:text-red-400 p-1 font-bold">إزالة</button>
+                    <button onclick="window.removeTeamMemberDirect('${m.id}')" class="text-red-500 hover:text-red-400 p-1 font-bold">Remove</button>
                 </div>
             </div>
         `).join('');
@@ -1576,8 +1576,8 @@ window.openManageMembersModalDirect = async (teamId) => {
     // Add Member Select (students without team_id)
     const addSelect = document.getElementById('mm-add-member-select');
     const availableStudents = profilesList.filter(p => p.team_id === null && p.role === 'student');
-    addSelect.innerHTML = '<option value="">اختر طالباً لإضافته...</option>' + 
-        availableStudents.map(s => `<option value="${s.id}">${s.full_name || 'طالب'} (${s.email})</option>`).join('');
+    addSelect.innerHTML = '<option value="">Select a student to add...</option>' + 
+        availableStudents.map(s => `<option value="${s.id}">${s.full_name || 'Student'} (${s.email})</option>`).join('');
         
     document.getElementById('manage-members-modal').classList.remove('hidden');
 };
@@ -1586,7 +1586,7 @@ window.submitChangeLeader = async () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('leaders:change_team') && !can('teams:edit') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتغيير قائد الفريق.', 'error');
+        window.showToast?.('You do not have permission to change the team leader.', 'error');
         return;
     }
     const teamId = document.getElementById('mm-team-id').value;
@@ -1597,7 +1597,7 @@ window.submitChangeLeader = async () => {
     if (!team) return;
     
     if (team.leader_id === newLeaderId) {
-        alert("هذا الطالب هو القائد الفعلي للفريق حالياً.");
+        alert("This student is already the current leader of the team.");
         return;
     }
     
@@ -1624,10 +1624,10 @@ window.submitChangeLeader = async () => {
         await window.logAdminAction(
             'teams:change_leader',
             team.name,
-            `تغيير القائد من ليدر قديم لليدر جديد.`
+            `Changed team leader to new leader.`
         );
         
-        alert("تم تغيير القائد بنجاح.");
+        alert("Team leader updated successfully.");
         
         // Reload modal data
         selectedTeam = allTeams.find(t => t.id === teamId);
@@ -1642,7 +1642,7 @@ window.submitChangeLeader = async () => {
         }
     } catch (err) {
         console.error("Change Leader Error:", err);
-        alert("فشل تغيير قائد الفريق: " + err.message);
+        alert("Failed to change team leader: " + err.message);
     }
 };
 
@@ -1650,7 +1650,7 @@ window.makeLeaderDirect = async (memberId) => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('leaders:change_team') && !can('teams:edit') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتغيير قائد الفريق.', 'error');
+        window.showToast?.('You do not have permission to change the team leader.', 'error');
         return;
     }
     const teamId = document.getElementById('td-current-team-id').value;
@@ -1660,8 +1660,8 @@ window.makeLeaderDirect = async (memberId) => {
     if (!team) return;
     
     const confirmed = await window.showCustomConfirm(
-        "تعيين قائد للفريق",
-        `هل أنت متأكد من جعل هذا العضو قائداً للفريق؟`,
+        "Assign Team Leader",
+        `Are you sure you want to appoint this member as the Team Leader?`,
         null,
         null,
         'warning'
@@ -1677,8 +1677,8 @@ window.makeLeaderDirect = async (memberId) => {
             await supabase.from('profiles').update({ role: 'student' }).eq('id', oldLeaderId);
         }
         
-        await window.logAdminAction('teams:change_leader', team.name, 'تغيير قائد الفريق');
-        alert("تم تغيير القائد بنجاح.");
+        await window.logAdminAction('teams:change_leader', team.name, 'Changed team leader');
+        alert("Team leader updated successfully.");
         
         // Refresh local memory and views
         const { data: updatedTeams } = await supabase.from('teams').select('*, leader:profiles!teams_leader_id_fkey(id, full_name, email)');
@@ -1690,7 +1690,7 @@ window.makeLeaderDirect = async (memberId) => {
         window.fetchTeams();
     } catch (err) {
         console.error(err);
-        alert("فشل تعيين القائد.");
+        alert("Failed to assign team leader.");
     }
 };
 
@@ -1698,7 +1698,7 @@ window.submitAddTeamMember = async () => {
     const teamId = document.getElementById('mm-team-id').value;
     const memberId = document.getElementById('mm-add-member-select').value;
     if (!teamId || !memberId) {
-        alert("يرجى اختيار طالب أولاً لإضافته للفريق.");
+        alert("Please select a student first to add to the team.");
         return;
     }
     
@@ -1716,10 +1716,10 @@ window.submitAddTeamMember = async () => {
         await window.logAdminAction(
             'teams:add_member',
             team.name,
-            `إضافة عضو جديد للفريق`
+            `Added new member to team`
         );
         
-        alert("تمت إضافة العضو للفريق بنجاح.");
+        alert("Member added to the team successfully.");
         
         // Refresh data
         const { data: profs } = await supabase.from('profiles').select('*');
@@ -1734,7 +1734,7 @@ window.submitAddTeamMember = async () => {
         }
     } catch (err) {
         console.error("Add Member Error:", err);
-        alert("فشل إضافة العضو: " + err.message);
+        alert("Failed to add member: " + err.message);
     }
 };
 
@@ -1744,11 +1744,11 @@ window.removeTeamMemberDirect = async (memberId) => {
     
     const team = allTeams.find(t => t.id === teamId);
     const member = profilesList.find(p => p.id === memberId);
-    const mName = member ? member.full_name : 'العضو';
+    const mName = member ? member.full_name : 'Member';
     
     const confirmed = await window.showCustomConfirm(
-        "إزالة عضو من الفريق",
-        `هل أنت متأكد من إزالة "${mName}" من الفريق نهائياً؟`,
+        "Remove Team Member",
+        `Are you sure you want to permanently remove "${mName}" from the team?`,
         null,
         null,
         'danger'
@@ -1777,11 +1777,11 @@ window.removeTeamMemberDirect = async (memberId) => {
         
         await window.logAdminAction(
             'teams:remove_member',
-            team ? team.name : 'فريق',
-            `إزالة العضو ${mName} من الفريق`
+            team ? team.name : 'Team',
+            `Removed member ${mName} from team`
         );
         
-        alert("تمت إزالة العضو من الفريق بنجاح.");
+        alert("Member removed from the team successfully.");
         
         // Refresh
         const { data: profs } = await supabase.from('profiles').select('*');
@@ -1805,7 +1805,7 @@ window.removeTeamMemberDirect = async (memberId) => {
         window.fetchTeams();
     } catch (err) {
         console.error("Remove Member Error:", err);
-        alert("فشل إزالة العضو: " + err.message);
+        alert("Failed to remove member: " + err.message);
     }
 };
 
@@ -1822,15 +1822,15 @@ window.openManageCoursesModal = () => {
     const list = document.getElementById('mc-courses-list');
     list.innerHTML = coursesList.map(c => {
         const isChecked = assignedCourses.includes(c.id) || assignedCourses.includes(c.course_id);
-        const name = c.name || 'كورس';
-        const track = tracksMap[c.track_id] || 'عام';
+        const name = c.title || c.name || 'Course';
+        const track = tracksMap[c.track_id] || 'General';
         
         return `
-            <label class="flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5 hover:bg-white/10 transition-all text-xs cursor-pointer select-none text-right">
+            <label class="flex items-center gap-3 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5 hover:bg-white/10 transition-all text-xs cursor-pointer select-none text-left">
                 <input type="checkbox" name="mc-course" value="${c.id}" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 accent-teal-500 cursor-pointer">
                 <div>
                     <div class="font-bold text-white">${name}</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">التراك: ${track}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">Track: ${track}</div>
                 </div>
             </label>
         `;
@@ -1860,10 +1860,10 @@ window.submitSaveTeamCourses = async () => {
         await window.logAdminAction(
             'teams:assign_courses',
             team.name,
-            `تحديث الخطة الدراسية للفريق وإسناد الكورسات.`
+            `Updated team study plan and assigned courses.`
         );
         
-        alert("تم حفظ الخطة الدراسية وتعديل الكورسات بنجاح.");
+        alert("Study plan saved and courses updated successfully.");
         document.getElementById('manage-courses-modal').classList.add('hidden');
         
         // Refresh details modal if it is open
@@ -1876,7 +1876,7 @@ window.submitSaveTeamCourses = async () => {
         window.fetchTeams();
     } catch (err) {
         console.error("Save Courses Plan Error:", err);
-        alert("فشل حفظ خطة الكورسات: " + err.message);
+        alert("Failed to save courses plan: " + err.message);
     }
 };
 
@@ -1901,7 +1901,7 @@ window.openManageTasksModal = () => {
 
 async function loadTeamTasksList(teamId) {
     const container = document.getElementById('mt-tasks-list');
-    container.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">جاري تحميل المهام المسندة...</div>';
+    container.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">Loading assigned tasks...</div>';
     
     try {
         const { data, error } = await supabase
@@ -1913,26 +1913,26 @@ async function loadTeamTasksList(teamId) {
         if (error) throw error;
         
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">لا توجد مهام مسندة لهذا الفريق بعد.</div>';
+            container.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">No tasks assigned to this team yet.</div>';
             return;
         }
         
         container.innerHTML = data.map(task => {
-            const due = task.due_date ? new Date(task.due_date).toLocaleDateString('ar-EG') : 'بلا تسليم';
+            const due = task.due_date ? new Date(task.due_date).toLocaleDateString('en-US') : 'No deadline';
             
             return `
                 <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5 text-xs">
                     <div>
                         <div class="font-bold text-white">${task.title}</div>
-                        <div class="text-[10px] text-gray-500 mt-1">النوع: ${task.type} | التسليم: ${due}</div>
+                        <div class="text-[10px] text-gray-500 mt-1">Type: ${task.type} | Due: ${due}</div>
                     </div>
-                    <button onclick="window.deleteTeamTaskDirect('${task.id}')" class="text-red-500 hover:text-red-400 p-1 font-bold" title="حذف المهمة"><i class="fas fa-trash-can"></i></button>
+                    <button onclick="window.deleteTeamTaskDirect('${task.id}')" class="text-red-500 hover:text-red-400 p-1 font-bold" title="Delete Task"><i class="fas fa-trash-can"></i></button>
                 </div>
             `;
         }).join('');
     } catch (err) {
         console.error("Load Tasks List Error:", err);
-        container.innerHTML = '<div class="text-xs text-red-500 text-center py-4">فشل تحميل قائمة المهام.</div>';
+        container.innerHTML = '<div class="text-xs text-red-500 text-center py-4">Failed to load tasks list.</div>';
     }
 }
 
@@ -1951,18 +1951,18 @@ window.onTaskTypeChange = () => {
     select.setAttribute('required', 'required');
     
     if (type === 'course_project') {
-        select.innerHTML = projectsList.map(p => `<option value="${p.id}">${p.title || 'مشروع'}</option>`).join('');
+        select.innerHTML = projectsList.map(p => `<option value="${p.id}">${p.title || 'Project'}</option>`).join('');
     } else if (type === 'quiz') {
-        select.innerHTML = quizzesList.map(q => `<option value="${q.quiz_id}">${q.title || 'كويز'}</option>`).join('');
+        select.innerHTML = quizzesList.map(q => `<option value="${q.quiz_id}">${q.title || 'Quiz'}</option>`).join('');
     } else if (type === 'video') {
         // Find course materials that are videos
         const videos = coursesList.flatMap(c => Array.isArray(c.materials) ? c.materials : [])
             .filter(m => m.type === 'video' || m.format === 'video');
             
         if (videos.length === 0) {
-            select.innerHTML = '<option value="">لا يوجد فيديوهات مسجلة بالنظام</option>';
+            select.innerHTML = '<option value="">No videos registered in the system</option>';
         } else {
-            select.innerHTML = videos.map(v => `<option value="${v.id}">${v.title || 'فيديو تعليمي'}</option>`).join('');
+            select.innerHTML = videos.map(v => `<option value="${v.id}">${v.title || 'Educational Video'}</option>`).join('');
         }
     }
 };
@@ -1988,7 +1988,7 @@ window.submitAssignTask = async (e) => {
     
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("لم يتم العثور على جلسة المشرف الفعالة");
+        if (!user) throw new Error("No active administrator session found");
         
         // 1. Create task row in team_tasks
         const teamMembers = profilesList.filter(p => p.team_id === teamId);
@@ -2026,8 +2026,8 @@ window.submitAssignTask = async (e) => {
         if (teamMembers.length > 0) {
             const notifs = teamMembers.map(m => ({
                 user_id: m.id,
-                title: `📋 مهمة جديدة للفريق: ${title}`,
-                message: `تم إسناد مهمة جديدة لفريقك من قبل الإدارة. يرجى المتابعة والتسليم قبل الموعد المحدد.`,
+                title: `📋 New Team Task: ${title}`,
+                message: `A new task has been assigned to your team by ZDC Administration. Please review and complete it before the deadline.`,
                 type: 'info'
             }));
             await supabase.from('system_notifications').insert(notifs);
@@ -2036,10 +2036,10 @@ window.submitAssignTask = async (e) => {
         await window.logAdminAction(
             'teams:assign_task',
             team.name,
-            `إسناد مهمة جديدة للفريق: ${title}`
+            `Assigned new task to team: ${title}`
         );
         
-        alert("تم إسناد وتعيين المهمة بنجاح.");
+        alert("Task assigned to the team successfully.");
         
         // Refresh list
         loadTeamTasksList(teamId);
@@ -2052,14 +2052,14 @@ window.submitAssignTask = async (e) => {
         window.fetchTeams();
     } catch (err) {
         console.error("Assign Task Error:", err);
-        alert("فشل تعيين المهمة: " + err.message);
+        alert("Failed to assign task: " + err.message);
     }
 };
 
 window.deleteTeamTaskDirect = async (taskId) => {
     const confirmed = await window.showCustomConfirm(
-        "حذف المهمة",
-        "هل أنت متأكد من حذف وإلغاء هذه المهمة للفريق؟",
+        "Delete Task",
+        "Are you sure you want to delete and cancel this team task?",
         null,
         null,
         'danger'
@@ -2087,11 +2087,11 @@ window.deleteTeamTaskDirect = async (taskId) => {
         
         await window.logAdminAction(
             'teams:delete_task',
-            team ? team.name : 'فريق',
-            `حذف مهمة للفريق`
+            team ? team.name : 'Team',
+            `Deleted team task`
         );
         
-        alert("تم حذف المهمة بنجاح.");
+        alert("Task deleted successfully.");
         
         const modal = document.getElementById('manage-tasks-modal');
         if (modal && !modal.classList.contains('hidden')) {
@@ -2105,15 +2105,15 @@ window.deleteTeamTaskDirect = async (taskId) => {
         window.fetchTeams();
     } catch (err) {
         console.error("Delete Task Error:", err);
-        alert("فشل حذف المهمة: " + err.message);
+        alert("Failed to delete task: " + err.message);
     }
 };
 
 // --- Delete Announcement ---
 window.deleteTeamPostDirect = async (postId) => {
     const confirmed = await window.showCustomConfirm(
-        "حذف الإعلان",
-        "هل تريد حذف هذا الإعلان نهائياً من الفريق؟",
+        "Delete Announcement",
+        "Do you want to permanently delete this announcement from the team?",
         null,
         null,
         'danger'
@@ -2129,13 +2129,13 @@ window.deleteTeamPostDirect = async (postId) => {
             
         if (error) throw error;
         
-        alert("تم حذف الإعلان بنجاح.");
+        alert("Announcement deleted successfully.");
         if (selectedTeam && selectedTeam.id === teamId) {
             loadTeamDetailTabContent('posts');
         }
     } catch (err) {
         console.error(err);
-        alert("فشل حذف الإعلان.");
+        alert("Failed to delete announcement.");
     }
 };
 
@@ -2167,7 +2167,7 @@ window.submitSendTeamNotification = async (e) => {
     try {
         const teamMembers = profilesList.filter(p => p.team_id === teamId);
         if (teamMembers.length === 0) {
-            alert("لا يوجد أعضاء في هذا الفريق لإرسال التنبيه لهم.");
+            alert("There are no members in this team to send a notification to.");
             return;
         }
         
@@ -2190,7 +2190,7 @@ window.submitSendTeamNotification = async (e) => {
                 type: 'announcement',
                 title,
                 content: message,
-                creator_name: 'إدارة منصة بُصْلَة',
+                creator_name: 'ZDC Administration',
                 is_pinned: false,
                 target_members: ['all']
             }]);
@@ -2199,10 +2199,10 @@ window.submitSendTeamNotification = async (e) => {
         await window.logAdminAction(
             'teams:send_notification',
             team.name,
-            `إرسال تنبيه جماعي للأعضاء: "${title}"`
+            `Sent broadcast notification to members: "${title}"`
         );
         
-        alert("تم إرسال التنبيه الجماعي بنجاح.");
+        alert("Team notification sent successfully.");
         document.getElementById('send-team-notification-modal').classList.add('hidden');
         
         if (selectedTeam && selectedTeam.id === teamId && type === 'announcement') {
@@ -2210,7 +2210,7 @@ window.submitSendTeamNotification = async (e) => {
         }
     } catch (err) {
         console.error("Send Notification Error:", err);
-        alert("فشل إرسال التنبيه: " + err.message);
+        alert("Failed to send notification: " + err.message);
     }
 };
 
@@ -2229,13 +2229,13 @@ window.deleteTeamAccountDirect = async (teamId) => {
     const hasDeletePerm = window.hasPermission('teams:delete');
     
     if (!isAdminOwner && !hasDeletePerm) {
-        alert("عذراً، لا تمتلك الصلاحية الكافية لحذف الفريق.");
+        alert("Sorry, you do not have sufficient permissions to delete a team.");
         return;
     }
     
-    const promptMsg = `⚠️ تحذير شديد الخطورة:\nهل أنت متأكد من حذف فريق "${team.name}" نهائياً من المنصة؟\n\nسيؤدي هذا الإجراء إلى:\n1. إزالة جميع الطلاب من هذا الفريق وتصفير انتمائهم.\n2. حذف جميع مهام وإعلانات ودعوات الفريق.\n3. لا يمكن التراجع عن هذا الإجراء أبداً.`;
+    const promptMsg = `⚠️ Critical Warning:\nAre you sure you want to permanently delete team "${team.name}" from the platform?\n\nThis action will:\n1. Remove all students from this team and reset their team membership.\n2. Delete all tasks, announcements, and invitations for this team.\n3. This action cannot be undone.`;
     const confirmed = await window.showCustomConfirm(
-        "حذف الفريق نهائياً",
+        "Permanently Delete Team",
         promptMsg,
         null,
         null,
@@ -2278,10 +2278,10 @@ window.deleteTeamAccountDirect = async (teamId) => {
         await window.logAdminAction(
             'teams:delete',
             team.name,
-            `حذف الفريق بالكامل وإزالة انتماء الأعضاء`
+            `Permanently deleted team and cleared member affiliations`
         );
         
-        alert("تم حذف الفريق بالكامل بنجاح.");
+        alert("Team deleted completely.");
         
         // Close modals if open
         document.getElementById('team-details-modal').classList.add('hidden');
@@ -2291,7 +2291,7 @@ window.deleteTeamAccountDirect = async (teamId) => {
         window.fetchTeams();
     } catch (err) {
         console.error("Delete Team Error:", err);
-        alert("فشل حذف الفريق: " + err.message);
+        alert("Failed to delete team: " + err.message);
     }
 };
 
@@ -2302,30 +2302,30 @@ window.exportTeamsToCSV = () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتصدير تقارير وبيانات الفرق.', 'error');
+        window.showToast?.('You do not have permission to export team reports and data.', 'error');
         return;
     }
 
     if (!allTeams || allTeams.length === 0) {
-        window.showToast?.('لا توجد بيانات فرق لتصديرها.', 'info');
+        window.showToast?.('No team data available to export.', 'info');
         return;
     }
 
-    const headers = ['اسم الفريق', 'القائد', 'الجامعة', 'المحافظة', 'التراك', 'النقاط', 'الحالة', 'تاريخ الإنشاء'];
+    const headers = ['Team Name', 'Leader', 'University', 'Governorate', 'Track', 'Score', 'Status', 'Created At'];
     const rows = allTeams.map(t => [
         t.name || '',
-        t.leader_name || '',
+        t.leader_name || t.leader?.full_name || '',
         t.university || '',
         t.governorate || '',
         typeof tracksMap !== 'undefined' ? (tracksMap[t.specialization] || t.specialization || '') : (t.specialization || ''),
         t.total_score || 0,
-        t.status === 'frozen' ? 'مجمد' : 'نشط',
-        t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB') : ''
+        t.status === 'frozen' ? 'Frozen' : 'Active',
+        t.created_at ? new Date(t.created_at).toLocaleDateString('en-US') : ''
     ]);
 
     if (window.exportToCSV) {
-        window.exportToCSV('busla_teams_export.csv', headers, rows);
+        window.exportToCSV('zdc_teams_export.csv', headers, rows);
     } else {
-        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
+        window.showToast?.('Export prepared successfully.', 'success');
     }
 };

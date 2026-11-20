@@ -33,25 +33,25 @@ let leaderComparisonSortAsc = true;
 // ==========================================
 function resolveImageUrl(url, type) {
     if (url && url.startsWith('http')) return url;
-    if (type === 'user') return '../../assets/icons/BUSLA-icon.png';
-    return '../../assets/icons/BUSLA-icon.png';
+    if (type === 'user') return '../../assets/icons/zdc-icon-192.png';
+    return '../../assets/icons/zdc-icon-192.png';
 }
 
 function translateUni(val) {
     if (window.translateUni) return window.translateUni(val);
-    return val || 'غير محدد';
+    return val || 'Unspecified';
 }
 
 // Map user role to text & CSS color class
 function getUserRoleLabel(role) {
     const r = String(role).trim().toLowerCase();
-    if (r === 'student') return { text: 'طالب', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' };
-    if (r === 'leader') return { text: 'قائد فريق', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' };
-    if (r === 'admin') return { text: 'مشرف', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' };
-    if (r === 'owner') return { text: 'المالك', color: 'text-red-400 bg-red-500/10 border-red-500/20' };
-    if (r === 'pending') return { text: 'قيد التفعيل', color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' };
-    if (r.startsWith('suspended')) return { text: 'موقوف', color: 'text-red-500 bg-red-500/10 border-red-500/20' };
-    return { text: role || 'غير معروف', color: 'text-gray-400 bg-gray-500/10 border-gray-500/20' };
+    if (r === 'student') return { text: 'Student', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' };
+    if (r === 'leader') return { text: 'Team Leader', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' };
+    if (r === 'admin') return { text: 'Admin', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' };
+    if (r === 'owner') return { text: 'Owner', color: 'text-red-400 bg-red-500/10 border-red-500/20' };
+    if (r === 'pending') return { text: 'Pending Activation', color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' };
+    if (r.startsWith('suspended')) return { text: 'Suspended', color: 'text-red-500 bg-red-500/10 border-red-500/20' };
+    return { text: role || 'Unknown', color: 'text-gray-400 bg-gray-500/10 border-gray-500/20' };
 }
 
 // Get user status classification: 'active', 'suspended', 'pending'
@@ -106,7 +106,7 @@ window.initUsersMgmt = async () => {
         await window.fetchUsersData();
     } catch (err) {
         console.error("Initialization Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">حدث خطأ أثناء تحميل البيانات المنهجية.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">An error occurred while loading curriculum data.</td></tr>`;
     }
 };
 
@@ -149,7 +149,7 @@ window.fetchUsersData = async () => {
         window.filterUsers();
     } catch (err) {
         console.error("Fetch Users Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">حدث خطأ أثناء تحميل حسابات المستخدمين.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">An error occurred while loading user accounts.</td></tr>`;
     }
 };
 
@@ -221,7 +221,7 @@ function populateFilterDropdowns() {
     const populate = (id, items) => {
         const select = document.getElementById(id);
         if (!select) return;
-        select.innerHTML = '<option value="all">الكل</option>';
+        select.innerHTML = '<option value="all">All</option>';
         [...items].sort().forEach(item => {
             const translated = id === 'filter-user-uni' ? translateUni(item) : item;
             select.innerHTML += `<option value="${item}">${translated}</option>`;
@@ -238,7 +238,7 @@ function populateFilterDropdowns() {
     // Populate Teams filter
     const teamSelect = document.getElementById('filter-user-team');
     if (teamSelect) {
-        teamSelect.innerHTML = '<option value="all">الكل</option>';
+        teamSelect.innerHTML = '<option value="all">All</option>';
         globalTeams.forEach(t => {
             teamSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
         });
@@ -332,8 +332,8 @@ async function renderUsersTable(data) {
     if (!tbody && !mobileCards) return;
 
     if (data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">لا يوجد مستخدمين مطابِقين لفلترة البحث.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا يوجد مستخدمين مطابِقين لفلترة البحث.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">No users match the current search filter.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">No users match the current search filter.</div>`;
         return;
     }
 
@@ -376,23 +376,23 @@ async function renderUsersTable(data) {
                 }
             });
             if (maxDate) {
-                lastActivity = maxDate.toLocaleDateString('en-GB') + ' ' + maxDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                lastActivity = maxDate.toLocaleDateString('en-GB') + ' ' + maxDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             }
         }
 
         // 2. Fetch Team Name
         const teamObj = globalTeams.find(t => t.id === user.team_id);
-        const teamName = teamObj ? teamObj.name : 'لا يوجد فريق';
+        const teamName = teamObj ? teamObj.name : 'No Team';
 
         // 3. Status Badge
         const uStatus = getUserStatus(user.role);
         let statusBadge = '';
         if (uStatus === 'active') {
-            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">نشط</span>`;
+            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Active</span>`;
         } else if (uStatus === 'suspended') {
-            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">موقوف</span>`;
+            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Suspended</span>`;
         } else {
-            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">بانتظار التفعيل</span>`;
+            statusBadge = `<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">Pending Activation</span>`;
         }
 
         const isLeader = user.role === 'leader' || user.role === 'suspended_leader';
@@ -402,13 +402,14 @@ async function renderUsersTable(data) {
         const canResetPwd = !isLeader && (can('users:reset_pwd') || can('manage_users') || isOwner);
         const canDelete = isLeader ? (can('leaders:delete') || isOwner) : (can('users:delete') || isOwner);
 
-        const editBtn = canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center" title="تعديل البيانات"><i class="fas fa-edit text-xs"></i></button>` : '';
-        const suspendBtn = canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="w-8 h-8 rounded-lg ${uStatus === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500'} hover:text-black transition-all flex items-center justify-center" title="${uStatus === 'suspended' ? 'تفعيل الحساب' : 'إيقاف الحساب'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'} text-xs"></i></button>` : '';
-        const notifyBtn = canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center" title="إرسال إشعار للمستخدم"><i class="fas fa-paper-plane text-xs"></i></button>` : '';
-        const resetPwdBtn = canResetPwd ? `<button onclick="window.resetUserPassword('${user.id}')" class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="إعادة تعيين كلمة المرور"><i class="fas fa-key text-xs"></i></button>` : '';
-        const deleteButton = canDelete ? `<button onclick="window.deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="حذف الحساب"><i class="fas fa-trash-alt text-xs"></i></button>` : '';
+        const editBtn = canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center" title="Edit Details"><i class="fas fa-edit text-xs"></i></button>` : '';
+        const suspendBtn = canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="w-8 h-8 rounded-lg ${uStatus === 'suspended' ? 'bg-green-500/10 text-green-400 hover:bg-green-500' : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500'} hover:text-black transition-all flex items-center justify-center" title="${uStatus === 'suspended' ? 'Activate Account' : 'Suspend Account'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'} text-xs"></i></button>` : '';
+        const notifyBtn = canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center" title="Send Notification"><i class="fas fa-paper-plane text-xs"></i></button>` : '';
+        const resetPwdBtn = canResetPwd ? `<button onclick="window.resetUserPassword('${user.id}')" class="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="Reset Password"><i class="fas fa-key text-xs"></i></button>` : '';
+        const deleteButton = canDelete ? `<button onclick="window.deleteUser('${user.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center" title="Delete Account"><i class="fas fa-trash-alt text-xs"></i></button>` : '';
 
         const uRank = getRankData(user.total_xp || 0);
+        const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&background=222222&color=EFECE6&size=100`;
 
         return {
             tableRow: `
@@ -416,10 +417,10 @@ async function renderUsersTable(data) {
                 <!-- User Profile info -->
                 <td class="p-4">
                     <div class="flex items-center gap-3">
-                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(user.full_name || 'User') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${fallbackAvatarUrl}'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div>
                             <div class="font-bold text-white text-sm flex items-center gap-2">
-                                ${user.full_name || 'عضو مجهول'}
+                                ${user.full_name || 'Unknown Member'}
                                 <span class="px-1.5 py-0.5 rounded text-[8px] font-bold border ${roleLabel.color}">${roleLabel.text}</span>
                             </div>
                             <div class="text-[10px] text-gray-500 font-mono mt-0.5 select-all">${user.email || '--'}</div>
@@ -470,12 +471,12 @@ async function renderUsersTable(data) {
                 <!-- Actions -->
                 <td class="p-4">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="window.openUserDetails('${user.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
+                        <button onclick="window.openUserDetails('${user.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="View Details"><i class="fas fa-eye"></i></button>
                         ${editBtn}
                         ${suspendBtn}
                         ${notifyBtn}
                         ${resetPwdBtn}
-                        <button onclick="window.copyUserProfileLink('${user.id}')" class="w-8 h-8 rounded-lg bg-white/5 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="نسخ رابط الملف الشخصي"><i class="fas fa-copy text-xs"></i></button>
+                        <button onclick="window.copyUserProfileLink('${user.id}')" class="w-8 h-8 rounded-lg bg-white/5 text-gray-400 hover:bg-white hover:text-black transition-all flex items-center justify-center" title="Copy Profile Link"><i class="fas fa-copy text-xs"></i></button>
                         ${deleteButton}
                     </div>
                 </td>
@@ -486,10 +487,10 @@ async function renderUsersTable(data) {
                 <!-- Top row: Avatar, Name, Role badge, Status badge -->
                 <div class="flex items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(user.full_name || 'User') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <img src="${photo}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${fallbackAvatarUrl}'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div class="min-w-0">
                             <div class="font-bold text-white text-sm truncate flex items-center gap-1.5">
-                                <span class="truncate">${user.full_name || 'عضو مجهول'}</span>
+                                <span class="truncate">${user.full_name || 'Unknown Member'}</span>
                                 <span class="px-1.5 py-0.5 rounded text-[8px] font-bold border shrink-0 ${roleLabel.color}">${roleLabel.text}</span>
                             </div>
                             <div class="text-[10px] text-gray-500 font-mono truncate select-all mt-0.5">${user.email || '--'}</div>
@@ -503,11 +504,11 @@ async function renderUsersTable(data) {
                 <!-- Academic & Team Info -->
                 <div class="grid grid-cols-2 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
                     <div>
-                        <span class="text-[9px] text-gray-500 block">الجامعة والكلية</span>
+                        <span class="text-[9px] text-gray-500 block">University & Faculty</span>
                         <span class="text-xs font-bold text-gray-200 truncate block mt-0.5">${translateUni(user.university)} - ${user.faculty || '--'}</span>
                     </div>
                     <div>
-                        <span class="text-[9px] text-gray-500 block">الفريق</span>
+                        <span class="text-[9px] text-gray-500 block">Team</span>
                         <span class="text-xs font-bold text-teal-400 truncate block mt-0.5">${teamName}</span>
                     </div>
                 </div>
@@ -515,12 +516,12 @@ async function renderUsersTable(data) {
                 <!-- Progress & XP -->
                 <div class="space-y-1.5 py-1 px-1">
                     <div class="flex items-center justify-between text-xs">
-                        <span class="text-gray-400 font-bold" style="color: ${uRank.stage_color || '#fff'}"><i class="fas fa-medal text-[10px] ml-1"></i>${uRank.title}</span>
+                        <span class="text-gray-400 font-bold" style="color: ${uRank.stage_color || '#fff'}"><i class="fas fa-medal text-[10px] mr-1"></i>${uRank.title}</span>
                         <span class="font-mono text-yellow-500 font-bold text-[11px]">${(user.total_xp || 0).toLocaleString()} XP</span>
                     </div>
                     <div class="flex items-center justify-between text-[10px] text-gray-400">
-                        <span>التقدم الأكاديمي (${avgProgress}%)</span>
-                        <span>${compCount} من ${regCount} كورس مكتمل</span>
+                        <span>Academic Progress (${avgProgress}%)</span>
+                        <span>${compCount} of ${regCount} courses completed</span>
                     </div>
                     <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                         <div class="bg-teal-500 h-full rounded-full transition-all" style="width: ${avgProgress}%"></div>
@@ -530,12 +531,12 @@ async function renderUsersTable(data) {
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
                     <button onclick="window.openUserDetails('${user.id}')" class="px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-300 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20 flex items-center gap-1">
-                        <i class="fas fa-eye text-[10px]"></i> الملف
+                        <i class="fas fa-eye text-[10px]"></i> Profile
                     </button>
                     <div class="flex items-center gap-1">
-                        ${canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
-                        ${canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="p-1.5 ${uStatus === 'suspended' ? 'text-green-400 hover:bg-green-500/10' : 'text-yellow-400 hover:bg-yellow-500/10'} rounded-lg text-xs" title="${uStatus === 'suspended' ? 'تفعيل' : 'إيقاف'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'}"></i></button>` : ''}
-                        ${canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="p-1.5 text-purple-400 hover:bg-purple-500/10 rounded-lg text-xs" title="إشعار"><i class="fas fa-paper-plane"></i></button>` : ''}
+                        ${canEdit ? `<button onclick="window.openEditUserModal('${user.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="Edit"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canSuspend ? `<button onclick="window.toggleUserSuspension('${user.id}')" class="p-1.5 ${uStatus === 'suspended' ? 'text-green-400 hover:bg-green-500/10' : 'text-yellow-400 hover:bg-yellow-500/10'} rounded-lg text-xs" title="${uStatus === 'suspended' ? 'Activate' : 'Suspend'}"><i class="fas ${uStatus === 'suspended' ? 'fa-user-check' : 'fa-user-slash'}"></i></button>` : ''}
+                        ${canNotify ? `<button onclick="window.openSendNotificationModal('${user.id}')" class="p-1.5 text-purple-400 hover:bg-purple-500/10 rounded-lg text-xs" title="Notify"><i class="fas fa-paper-plane"></i></button>` : ''}
                         ${deleteButton}
                     </div>
                 </div>
@@ -570,7 +571,7 @@ window.openUserDetails = async (userId) => {
     const allowed = isLeader ? (can('leaders:view') || can('manage_users') || isOwner) : (can('users:view') || can('manage_users') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لعرض تفاصيل هذا الحساب.', 'error');
+        window.showToast?.('You do not have permission to view this account.', 'error');
         return;
     }
 
@@ -583,11 +584,11 @@ window.openUserDetails = async (userId) => {
         udHeaderAv.referrerPolicy = 'no-referrer';
         udHeaderAv.onerror = function() {
             this.onerror = null;
-            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.full_name || 'User')}&background=006A67&color=fff&size=100`;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.full_name || 'User')}&background=222222&color=EFECE6&size=100`;
         };
         udHeaderAv.src = avatar;
     }
-    document.getElementById('ud-header-name').innerText = selectedUser.full_name || 'عضو مجهول';
+    document.getElementById('ud-header-name').innerText = selectedUser.full_name || 'Unknown Member';
     document.getElementById('ud-header-email').innerText = selectedUser.email || '--';
 
     const roleLabel = getUserRoleLabel(selectedUser.role);
@@ -599,7 +600,7 @@ window.openUserDetails = async (userId) => {
             uStatus === 'suspended' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
             'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
         }`;
-        sBadge.innerText = uStatus === 'active' ? 'نشط' : uStatus === 'suspended' ? 'موقوف' : 'بانتظار التفعيل';
+        sBadge.innerText = uStatus === 'active' ? 'Active' : uStatus === 'suspended' ? 'Suspended' : 'Pending Activation';
     }
 
     // Toggle Leader tab visibility
@@ -646,7 +647,7 @@ window.openUserDetails = async (userId) => {
 
     } catch (err) {
         console.error("Error lazy-loading user details:", err);
-        window.showToast("حدث خطأ أثناء تحميل تفاصيل العضو", "error");
+        window.showToast("An error occurred while loading member details.", "error");
     }
 };
 
@@ -658,13 +659,13 @@ window.switchUserDetailsTab = (tabId) => {
     btns.forEach(btn => {
         const clickFn = btn.getAttribute('onclick');
         if (clickFn && clickFn.includes(`'${tabId}'`)) {
-            btn.className = "ud-tab-btn active w-full flex items-center gap-3 p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold text-right text-sm transition-all";
+            btn.className = "ud-tab-btn active w-full flex items-center gap-3 p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold text-left text-sm transition-all";
         } else {
             // Keep disabled buttons looking disabled
             if (btn.hasAttribute('disabled')) {
-                btn.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400/30 cursor-not-allowed text-right text-sm transition-all";
+                btn.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400/30 cursor-not-allowed text-left text-sm transition-all";
             } else {
-                btn.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-right text-sm transition-all";
+                btn.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-left text-sm transition-all";
             }
         }
     });
@@ -729,7 +730,7 @@ function renderTabPersonal() {
     setText('ud-p-faculty', selectedUser.faculty);
     setText('ud-p-dept', selectedUser.department);
     setText('ud-p-year', selectedUser.academic_year);
-    setText('ud-p-team', teamObj ? teamObj.name : 'لا يوجد فريق');
+    setText('ud-p-team', teamObj ? teamObj.name : 'No Team');
     setText('ud-p-rank', getRankData(selectedUser.total_xp || 0).title);
     setText('ud-p-xp', (selectedUser.total_xp || 0).toLocaleString() + ' XP');
 
@@ -790,7 +791,7 @@ function renderTabProgress() {
     document.getElementById('ud-prog-percent-bar').style.width = `${avgProgress}%`;
 
     document.getElementById('ud-prog-courses').innerText = `${compCount} / ${regCount}`;
-    document.getElementById('ud-prog-videos').innerText = `${compVideos} / ${remainingVideos} متبقي`;
+    document.getElementById('ud-prog-videos').innerText = `${compVideos} / ${remainingVideos} remaining`;
     document.getElementById('ud-prog-assessments').innerText = `${quizScores.length} / ${projectGrades.length}`;
 
     document.getElementById('ud-avg-quiz').innerText = `${avgQuizScore}%`;
@@ -802,13 +803,13 @@ function renderTabProgress() {
     const overallEl = document.getElementById('ud-prog-overall-badge');
     if (avgProgress >= 80) {
         overallEl.className = "mt-3 px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-bold";
-        overallEl.innerText = "نشط ومتفوق جداً 🔥";
+        overallEl.innerText = "Highly Active & Excelling 🔥";
     } else if (avgProgress >= 40) {
         overallEl.className = "mt-3 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold";
-        overallEl.innerText = "مستمر بالتقدم ⚡";
+        overallEl.innerText = "Making Steady Progress ⚡";
     } else {
         overallEl.className = "mt-3 px-4 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-bold";
-        overallEl.innerText = "يتطلب متابعة وتشجيع ⚠️";
+        overallEl.innerText = "Needs Follow-up & Support ⚠️";
     }
 }
 
@@ -820,7 +821,7 @@ function renderTabCourses() {
     if (!tbody) return;
 
     if (detailEnrollments.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">لا يوجد كورسات مسجلة للمستخدم حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">No enrolled courses for this user currently.</td></tr>`;
         return;
     }
 
@@ -849,22 +850,22 @@ function renderTabCourses() {
         if (projectMaterial) {
             const submission = detailProjectSubmissions.find(ps => ps.project_id === projectMaterial.ref_project_id);
             if (submission) {
-                projectText = submission.status === 'graded' ? `${submission.grade}/${submission.grade ? 100 : ''}` : 'تم التسليم';
+                projectText = submission.status === 'graded' ? `${submission.grade}/${submission.grade ? 100 : ''}` : 'Submitted';
             } else {
-                projectText = 'لم يسلم';
+                projectText = 'Not Submitted';
             }
         }
 
         const lastAccess = enrol.last_accessed_at ? new Date(enrol.last_accessed_at).toLocaleDateString('en-GB') : '--';
         const progress = enrol.progress_percent || 0;
 
-        let statusText = 'مستمر';
+        let statusText = 'In Progress';
         let statusClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
         if (enrol.is_completed) {
-            statusText = 'مكتمل';
+            statusText = 'Completed';
             statusClass = 'bg-green-500/10 text-green-400 border-green-500/20';
         } else if (progress === 0) {
-            statusText = 'لم يبدأ';
+            statusText = 'Not Started';
             statusClass = 'bg-gray-500/10 text-gray-400 border-gray-500/20';
         }
 
@@ -903,7 +904,7 @@ window.viewUserCourseDetails = (courseId) => {
     // Enable Tab 4
     const btnTab = document.getElementById('ud-tab-btn-course-details');
     btnTab.disabled = false;
-    btnTab.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-right text-sm transition-all";
+    btnTab.className = "ud-tab-btn w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white text-left text-sm transition-all";
 
     // Switch to Tab 4
     window.switchUserDetailsTab('course-details');
@@ -914,7 +915,7 @@ window.viewUserCourseDetails = (courseId) => {
     
     const vids = courseMaterials.filter(m => m.type === 'video' || m.type === 'section');
     if (vids.length === 0) {
-        videosList.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">لا يوجد فيديوهات في هذا الكورس.</div>`;
+        videosList.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">No videos in this course.</div>`;
     } else {
         videosList.innerHTML = vids.map(vid => {
             const isCompleted = detailCompletedMaterials.some(m => m.material_id === vid.id);
@@ -927,11 +928,11 @@ window.viewUserCourseDetails = (courseId) => {
                 <div class="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-black/30 hover:bg-white/5 transition-colors">
                     <div>
                         <p class="font-bold text-white text-xs">${vid.title}</p>
-                        <p class="text-[10px] text-gray-500 mt-1"><i class="fas fa-clock ml-1"></i> المدة: ${vid.duration ? Math.round(vid.duration/60) + ' دقيقة' : '--'} | آخر فتح: ${completedDate}</p>
+                        <p class="text-[10px] text-gray-500 mt-1"><i class="fas fa-clock mr-1"></i> Duration: ${vid.duration ? Math.round(vid.duration/60) + ' mins' : '--'} | Last opened: ${completedDate}</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] font-bold font-mono text-gray-400">${watchPercent}%</span>
-                        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isCompleted ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-white/5 text-gray-400 border border-white/10'}">${isCompleted ? 'تمت المشاهدة' : 'لم يشاهد'}</span>
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isCompleted ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-white/5 text-gray-400 border border-white/10'}">${isCompleted ? 'Watched' : 'Unwatched'}</span>
                     </div>
                 </div>
             `;
@@ -942,7 +943,7 @@ window.viewUserCourseDetails = (courseId) => {
     const quizzesList = document.getElementById('ud-cd-quizzes-list');
     const quizzes = courseMaterials.filter(m => m.ref_quiz_id);
     if (quizzes.length === 0) {
-        quizzesList.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">لا توجد كويزات في هذا الكورس.</div>`;
+        quizzesList.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">No quizzes in this course.</div>`;
     } else {
         quizzesList.innerHTML = quizzes.map(q => {
             const attempts = detailQuizAttempts.filter(qa => qa.quiz_id === q.ref_quiz_id);
@@ -954,10 +955,10 @@ window.viewUserCourseDetails = (courseId) => {
                 <div class="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-black/30 hover:bg-white/5 transition-colors">
                     <div>
                         <p class="font-bold text-white text-xs">${q.title}</p>
-                        <p class="text-[10px] text-gray-500 mt-1"><i class="fas fa-redo ml-1"></i> المحاولات: ${attemptCount} | تاريخ الحل: ${solveDate}</p>
+                        <p class="text-[10px] text-gray-500 mt-1"><i class="fas fa-redo mr-1"></i> Attempts: ${attemptCount} | Solved Date: ${solveDate}</p>
                     </div>
-                    <div class="text-left">
-                        <span class="text-xs font-bold ${bestAttempt?.passed ? 'text-green-400' : 'text-red-400'}">${bestAttempt ? bestAttempt.score + '%' : 'غير محلول'}</span>
+                    <div class="text-right">
+                        <span class="text-xs font-bold ${bestAttempt?.passed ? 'text-green-400' : 'text-red-400'}">${bestAttempt ? bestAttempt.score + '%' : 'Unsolved'}</span>
                     </div>
                 </div>
             `;
@@ -968,28 +969,28 @@ window.viewUserCourseDetails = (courseId) => {
     const projContainer = document.getElementById('ud-cd-project-details');
     const projMaterial = courseMaterials.find(m => m.ref_project_id);
     if (!projMaterial) {
-        projContainer.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">لا يوجد مشروع في هذا الكورس.</div>`;
+        projContainer.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">No project in this course.</div>`;
     } else {
         const sub = detailProjectSubmissions.find(ps => ps.project_id === projMaterial.ref_project_id);
         if (sub) {
             const subDate = new Date(sub.submitted_at).toLocaleString('en-GB');
-            const gradeText = sub.status === 'graded' ? `${sub.grade} / 100` : 'بانتظار التقييم';
+            const gradeText = sub.status === 'graded' ? `${sub.grade} / 100` : 'Pending Evaluation';
             const grader = sub.graded_by_name || '--';
 
             projContainer.innerHTML = `
                 <div class="p-3 bg-black/30 rounded-lg border border-white/5 space-y-2">
-                    <div class="flex justify-between"><span>العنوان:</span> <span class="font-bold text-white">${projMaterial.title}</span></div>
-                    <div class="flex justify-between"><span>رابط التسليم:</span> <a href="${sub.submission_link}" target="_blank" class="text-teal-400 hover:underline truncate max-w-[180px]">${sub.submission_link}</a></div>
-                    <div class="flex justify-between"><span>تاريخ الرفع:</span> <span class="font-mono">${subDate}</span></div>
-                    <div class="flex justify-between"><span>الدرجة:</span> <span class="font-bold text-yellow-500">${gradeText}</span></div>
-                    <div class="flex justify-between"><span>المصحح:</span> <span class="font-bold text-white">${grader}</span></div>
+                    <div class="flex justify-between"><span>Title:</span> <span class="font-bold text-white">${projMaterial.title}</span></div>
+                    <div class="flex justify-between"><span>Submission Link:</span> <a href="${sub.submission_link}" target="_blank" class="text-teal-400 hover:underline truncate max-w-[180px]">${sub.submission_link}</a></div>
+                    <div class="flex justify-between"><span>Submitted At:</span> <span class="font-mono">${subDate}</span></div>
+                    <div class="flex justify-between"><span>Grade:</span> <span class="font-bold text-yellow-500">${gradeText}</span></div>
+                    <div class="flex justify-between"><span>Graded By:</span> <span class="font-bold text-white">${grader}</span></div>
                 </div>
             `;
         } else {
             projContainer.innerHTML = `
                 <div class="p-4 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
-                    <p class="text-red-400 font-bold mb-1">المشروع لم يسلم بعد</p>
-                    <p class="text-[10px] text-gray-500">يتوجب على الطالب تسليم المشروع لإكمال الكورس والحصول على التقييم.</p>
+                    <p class="text-red-400 font-bold mb-1">Project Not Submitted Yet</p>
+                    <p class="text-[10px] text-gray-500">The student must submit the project to complete the course and receive an evaluation.</p>
                 </div>
             `;
         }
@@ -1022,7 +1023,7 @@ function renderTabTasks() {
     if (!tbody) return;
 
     if (detailTeamTasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">المستخدم ليس لديه مهام فريق (أو ليس في فريق).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">This user has no team tasks (or is not in a team).</td></tr>`;
         return;
     }
 
@@ -1059,7 +1060,7 @@ function renderTabTasks() {
     else listToRender = activeTasks;
 
     if (listToRender.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">لا توجد مهام في هذا التصنيف.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">No tasks in this category.</td></tr>`;
         return;
     }
 
@@ -1074,19 +1075,19 @@ function renderTabTasks() {
 
         let badge = '';
         if (task.isCompleted) {
-            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 font-bold">مكتملة</span>`;
+            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 font-bold">Completed</span>`;
         } else if (task.isOverdue) {
-            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 font-bold animate-pulse">متأخرة</span>`;
+            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 font-bold animate-pulse">Overdue</span>`;
         } else {
-            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">جارية</span>`;
+            badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">In Progress</span>`;
         }
 
-        const typeMap = { 'video': 'فيديو', 'quiz': 'كويز', 'project': 'مشروع' };
-        const displayType = typeMap[task.type] || task.type || 'درس';
+        const typeMap = { 'video': 'Video', 'quiz': 'Quiz', 'project': 'Project' };
+        const displayType = typeMap[task.type] || task.type || 'Lesson';
 
         return `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
-                <td class="p-4 font-bold text-white">${task.title || 'بدون عنوان'}</td>
+                <td class="p-4 font-bold text-white">${task.title || 'Untitled'}</td>
                 <td class="p-4 text-center text-xs text-gray-300">${displayType}</td>
                 <td class="p-4 text-center text-xs text-gray-400 truncate max-w-[150px]">${courseTitle}</td>
                 <td class="p-4 text-center text-xs font-bold text-teal-400 font-mono">${task.week_id || '--'}</td>
@@ -1115,8 +1116,8 @@ function renderTabTimeline() {
             const course = globalCourses.find(c => c.id === enrol.course_id);
             events.push({
                 time: new Date(enrol.started_at),
-                title: 'بدء كورس جديد',
-                body: `بدأ دراسة كورس [${course ? course.title : enrol.course_id}]`,
+                title: 'Started New Course',
+                body: `Enrolled in course [${course ? course.title : enrol.course_id}]`,
                 icon: 'fa-play-circle text-blue-400 bg-blue-500/10',
             });
         }
@@ -1129,8 +1130,8 @@ function renderTabTimeline() {
             const course = globalCourses.find(c => c.id === mat.course_id);
             events.push({
                 time: new Date(mat.completed_at),
-                title: 'إنهاء درس فيديو',
-                body: `شاهد درس [${material ? material.title : mat.material_id}] من كورس [${course ? course.title : mat.course_id}]`,
+                title: 'Completed Video Lesson',
+                body: `Watched [${material ? material.title : mat.material_id}] in course [${course ? course.title : mat.course_id}]`,
                 icon: 'fa-check-circle text-green-400 bg-green-500/10',
             });
         }
@@ -1142,8 +1143,8 @@ function renderTabTimeline() {
             const quiz = globalMaterials.find(m => m.ref_quiz_id === qa.quiz_id);
             events.push({
                 time: new Date(qa.submitted_at),
-                title: 'اجتياز كويز بنجاح',
-                body: `حل كويز [${quiz ? quiz.title : 'كويز'}] وحصل على درجة ${qa.score}%`,
+                title: 'Passed Quiz',
+                body: `Completed quiz [${quiz ? quiz.title : 'Quiz'}] with score ${qa.score}%`,
                 icon: 'fa-clipboard-check text-yellow-500 bg-yellow-500/10',
             });
         }
@@ -1155,8 +1156,8 @@ function renderTabTimeline() {
             const proj = globalMaterials.find(m => m.ref_project_id === ps.project_id);
             events.push({
                 time: new Date(ps.submitted_at),
-                title: 'تسليم مشروع الكورس',
-                body: `رفع مشروع [${proj ? proj.title : 'المشروع'}] - الحالة الحالية: ${ps.status === 'graded' ? 'تم التصحيح والتقييم بـ ' + ps.grade + '/100' : 'بانتظار تصحيح الليدر'}`,
+                title: 'Submitted Course Project',
+                body: `Submitted project [${proj ? proj.title : 'Project'}] - Status: ${ps.status === 'graded' ? 'Evaluated with ' + ps.grade + '/100' : 'Awaiting Leader Review'}`,
                 icon: 'fa-code-branch text-purple-400 bg-purple-500/10',
             });
         }
@@ -1167,8 +1168,8 @@ function renderTabTimeline() {
         if (log.created_at) {
             events.push({
                 time: new Date(log.created_at),
-                title: 'الحصول على نقاط XP',
-                body: `حصل على +${log.amount} XP لسبب: "${log.reason}"`,
+                title: 'Earned XP Points',
+                body: `Earned +${log.amount} XP for: "${log.reason}"`,
                 icon: 'fa-trophy text-yellow-500 bg-yellow-500/10',
             });
         }
@@ -1178,8 +1179,8 @@ function renderTabTimeline() {
     if (selectedUser.created_at) {
         events.push({
             time: new Date(selectedUser.created_at),
-            title: 'تأسيس الحساب وتسجيل الدخول الأول',
-            body: `انضم رسمياً لمنصة بوصلة في تراك [${selectedUser.track || 'Digital IC Design'}]`,
+            title: 'Account Created & First Sign-In',
+            body: `Officially joined ZDC in track [${selectedUser.track || 'Digital IC Design'}]`,
             icon: 'fa-user-plus text-teal-400 bg-teal-500/10',
         });
     }
@@ -1188,16 +1189,16 @@ function renderTabTimeline() {
     events.sort((a, b) => b.time - a.time);
 
     if (events.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-gray-500 text-xs">لا يوجد نشاط مسجل للمستخدم حالياً.</div>`;
+        container.innerHTML = `<div class="text-center py-10 text-gray-500 text-xs">No recorded activity for this user yet.</div>`;
         return;
     }
 
     container.innerHTML = events.map(evt => {
-        const timeStr = evt.time.toLocaleDateString('en-GB') + ' ' + evt.time.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const timeStr = evt.time.toLocaleDateString('en-GB') + ' ' + evt.time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         return `
             <div class="relative pl-8">
                 <!-- Timeline Dot Icon -->
-                <div class="absolute -right-[43px] top-0 w-8 h-8 rounded-full flex items-center justify-center border border-white/10 ${evt.icon} z-10">
+                <div class="absolute -left-[43px] top-0 w-8 h-8 rounded-full flex items-center justify-center border border-white/10 ${evt.icon} z-10">
                     <i class="fas ${evt.icon.split(' ')[0]} text-xs"></i>
                 </div>
                 <!-- Timeline Content Card -->
@@ -1224,12 +1225,12 @@ async function renderTabTeam() {
     const membersTbody = document.getElementById('ud-team-members-table-body');
 
     if (!selectedUser.team_id) {
-        teamName.innerText = 'لا ينتمي لأي فريق';
+        teamName.innerText = 'Not in any team';
         teamLeader.innerText = '--';
         teamCount.innerText = '0';
         teamXp.innerText = '0 XP';
         teamRankEl.innerText = '--';
-        membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">المستخدم لا ينتمي لأي فريق حالياً.</td></tr>`;
+        membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">This user does not belong to any team currently.</td></tr>`;
         return;
     }
 
@@ -1243,7 +1244,7 @@ async function renderTabTeam() {
         
         // Find leader name
         const leaderObj = members ? members.find(m => m.id === team.leader_id) : null;
-        const leaderName = leaderObj ? leaderObj.full_name : 'غير محدد';
+        const leaderName = leaderObj ? leaderObj.full_name : 'Unspecified';
 
         // Set UI
         teamName.innerText = team.name;
@@ -1251,11 +1252,11 @@ async function renderTabTeam() {
         teamLeader.innerText = leaderName;
         teamCount.innerText = members ? members.length : 0;
         teamXp.innerText = `${(team.total_score || 0).toLocaleString()} XP`;
-        teamRankEl.innerText = team.total_score >= 10000 ? 'بلاتيني 🏆' : team.total_score >= 5000 ? 'ذهبي 🥇' : 'فضي 🥈';
+        teamRankEl.innerText = team.total_score >= 10000 ? 'Platinum 🏆' : team.total_score >= 5000 ? 'Gold 🥇' : 'Silver 🥈';
 
         // Render team members
         if (!members || members.length <= 1) {
-            membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا يوجد أعضاء آخرين في هذا الفريق.</td></tr>`;
+            membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">No other members in this team.</td></tr>`;
             return;
         }
 
@@ -1280,16 +1281,16 @@ async function renderTabTeam() {
                 <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
                     <td class="p-4 font-bold text-white flex items-center gap-2">
                         <img src="${resolveImageUrl(m.avatar_url, 'user')}" class="w-6 h-6 rounded-full object-cover shrink-0">
-                        ${m.full_name || 'عضو مجهول'}
+                        ${m.full_name || 'Unknown Member'}
                     </td>
                     <td class="p-4 text-center text-xs" style="color: ${mRank.stage_color}">${mRank.title}</td>
                     <td class="p-4 text-center text-xs font-mono font-bold text-yellow-500">${(m.total_xp || 0).toLocaleString()} XP</td>
                     <td class="p-4 text-center font-mono">
                         <span class="text-xs font-bold">${progress}%</span>
                     </td>
-                    <td class="p-4 text-center text-[10px] font-mono text-gray-500">نشط مؤخراً</td>
+                    <td class="p-4 text-center text-[10px] font-mono text-gray-500">Recently Active</td>
                     <td class="p-4 text-center">
-                        <button onclick="window.openUserDetails('${m.id}')" class="px-2 py-1 bg-white/5 hover:bg-teal-500 hover:text-white border border-white/10 rounded text-[10px] font-bold transition-all">فتح الملف</button>
+                        <button onclick="window.openUserDetails('${m.id}')" class="px-2 py-1 bg-white/5 hover:bg-teal-500 hover:text-white border border-white/10 rounded text-[10px] font-bold transition-all">Open Profile</button>
                     </td>
                 </tr>
             `;
@@ -1297,7 +1298,7 @@ async function renderTabTeam() {
 
     } catch (err) {
         console.error("Error loading team details:", err);
-        membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">فشل تحميل تفاصيل وأعضاء الفريق.</td></tr>`;
+        membersTbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">Failed to load team details and members.</td></tr>`;
     }
 }
 
@@ -1313,9 +1314,9 @@ function renderTabStats() {
     const completedVideosCount = detailCompletedMaterials.length;
     const simulatedHours = Math.round((completedVideosCount * 0.5) + (quizCount * 1.0) + (projCount * 5.0));
 
-    document.getElementById('ud-stat-learning-hours').innerText = `${simulatedHours} ساعة`;
-    document.getElementById('ud-stat-quizzes-done').innerText = `${quizCount} كويز`;
-    document.getElementById('ud-stat-projects-done').innerText = `${projCount} مشروع`;
+    document.getElementById('ud-stat-learning-hours').innerText = `${simulatedHours} hrs`;
+    document.getElementById('ud-stat-quizzes-done').innerText = `${quizCount} quizzes`;
+    document.getElementById('ud-stat-projects-done').innerText = `${projCount} projects`;
 }
 
 function initCharts() {
@@ -1328,7 +1329,7 @@ function initCharts() {
     }
 
     // Process XP logs into cumulative data points
-    const xpLabels = ['البداية'];
+    const xpLabels = ['Start'];
     const xpData = [0];
     let cumulative = 0;
 
@@ -1344,10 +1345,10 @@ function initCharts() {
         data: {
             labels: xpLabels,
             datasets: [{
-                label: 'النقاط المتراكمة (XP)',
+                label: 'Cumulative XP',
                 data: xpData,
-                borderColor: '#006A67',
-                backgroundColor: 'rgba(0, 106, 103, 0.1)',
+                borderColor: '#EFECE6',
+                backgroundColor: 'rgba(239, 236, 230, 0.1)',
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3
@@ -1357,8 +1358,8 @@ function initCharts() {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#888' } },
-                x: { grid: { display: false }, ticks: { color: '#888', maxTicksLimit: 8 } }
+                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8E8E8E' } },
+                x: { grid: { display: false }, ticks: { color: '#8E8E8E', maxTicksLimit: 8 } }
             },
             plugins: {
                 legend: { display: false }
@@ -1375,7 +1376,7 @@ function initCharts() {
     }
 
     // Map completed videos to past 5 weeks
-    const weeks = ['الاسبوع 1', 'الاسبوع 2', 'الاسبوع 3', 'الاسبوع 4', 'الاسبوع 5'];
+    const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
     const videoData = [0, 0, 0, 0, 0];
     const hourData = [0, 0, 0, 0, 0];
 
@@ -1392,15 +1393,15 @@ function initCharts() {
             labels: weeks,
             datasets: [
                 {
-                    label: 'الدروس المكتملة',
+                    label: 'Completed Lessons',
                     data: videoData,
-                    backgroundColor: '#FFC107',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: 5
                 },
                 {
-                    label: 'ساعات التعلم الكلية',
+                    label: 'Total Study Hours',
                     data: hourData,
-                    backgroundColor: '#006A67',
+                    backgroundColor: '#8E8E8E',
                     borderRadius: 5
                 }
             ]
@@ -1409,11 +1410,11 @@ function initCharts() {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#888' } },
-                x: { grid: { display: false }, ticks: { color: '#888' } }
+                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#8E8E8E' } },
+                x: { grid: { display: false }, ticks: { color: '#8E8E8E' } }
             },
             plugins: {
-                legend: { labels: { color: '#fff', font: { family: 'Cairo' } } }
+                legend: { labels: { color: '#EFECE6', font: { family: 'Plus Jakarta Sans' } } }
             }
         }
     });
@@ -1439,7 +1440,7 @@ async function renderTabLeaderPerformance() {
     const leaderTeam = globalTeams.find(t => t.leader_id === selectedUser.id);
     if (!leaderTeam) {
         teamCount.innerText = '0';
-        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">هذا القائد لا يقود أي فريق حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">This leader is not currently leading any team.</td></tr>`;
         return;
     }
 
@@ -1478,7 +1479,7 @@ async function renderTabLeaderPerformance() {
             });
             if (gradedCount > 0) {
                 const avgHours = totalHours / gradedCount;
-                avgTimeText = avgHours < 24 ? `${Math.round(avgHours)} ساعة` : `${Math.round(avgHours / 24)} يوم`;
+                avgTimeText = avgHours < 24 ? `${Math.round(avgHours)} hrs` : `${Math.round(avgHours / 24)} days`;
             }
         }
         avgGradingTime.innerText = avgTimeText;
@@ -1495,7 +1496,7 @@ async function renderTabLeaderPerformance() {
 
         // Calculate comparison data for team members
         if (members.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">لا يوجد أعضاء في الفريق حالياً.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500">No members in the team currently.</td></tr>`;
             return;
         }
 
@@ -1535,7 +1536,7 @@ async function renderTabLeaderPerformance() {
 
             return {
                 id: m.id,
-                name: m.full_name || 'عضو مجهول',
+                name: m.full_name || 'Unknown Member',
                 progress: progress,
                 xp: m.total_xp || 0,
                 courses: mEnrols.filter(e => e.is_completed).length,
@@ -1543,7 +1544,7 @@ async function renderTabLeaderPerformance() {
                 quizzes: mQuizzes.length,
                 projects: mProjects.length,
                 last_activity: lastAct ? lastAct : new Date(0),
-                taskStatus: 'مستمر'
+                taskStatus: 'Active'
             };
         });
 
@@ -1560,7 +1561,7 @@ async function renderTabLeaderPerformance() {
 
     } catch (err) {
         console.error("Error loading leader performance:", err);
-        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">فشل تحميل مقارنة الأعضاء وأداء الليدر.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-red-500">Failed to load member comparison and leader performance.</td></tr>`;
     }
 }
 
@@ -1624,7 +1625,7 @@ window.openEditUserModal = (userId) => {
     const allowed = isLeader ? (can('leaders:edit') || can('manage_users') || isOwner) : (can('users:edit') || can('manage_users') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لتعديل بيانات هذا الحساب.', 'error');
+        window.showToast?.('You do not have permission to edit this account.', 'error');
         return;
     }
 
@@ -1654,14 +1655,14 @@ window.saveUserData = async (e) => {
     const allowed = isLeader ? (can('leaders:edit') || can('manage_users') || isOwner) : (can('users:edit') || can('manage_users') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لحفظ تعديلات هذا الحساب.', 'error');
+        window.showToast?.('You do not have permission to save edits to this account.', 'error');
         return;
     }
     const form = document.getElementById('edit-user-form');
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
 
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     submitBtn.disabled = true;
 
     const updates = {
@@ -1680,12 +1681,12 @@ window.saveUserData = async (e) => {
         const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
         if (error) throw error;
 
-        window.showToast("تم تحديث البيانات بنجاح!", "success");
+        window.showToast("User profile updated successfully!", "success");
         document.getElementById('edit-user-modal').classList.add('hidden');
         await window.fetchUsersData(); // Reload table
     } catch (err) {
         console.error("Save User Error:", err);
-        window.showToast("حدث خطأ أثناء حفظ البيانات: " + err.message, "error");
+        window.showToast("An error occurred while saving user data: " + err.message, "error");
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -1702,13 +1703,13 @@ window.resetUserPassword = async (userId) => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('users:reset_pwd') && !can('manage_users') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لإعادة تعيين كلمة المرور للمستخدمين.', 'error');
+        window.showToast?.('You do not have permission to reset user passwords.', 'error');
         return;
     }
 
     const confirmed = await window.showCustomConfirm(
-        "إعادة تعيين كلمة المرور",
-        `هل أنت متأكد من إرسال رابط إعادة تعيين كلمة المرور للمستخدم: ${user.full_name}؟`,
+        "Reset Password",
+        `Are you sure you want to send a password reset link to: ${user.full_name}?`,
         null,
         null,
         'warning'
@@ -1716,14 +1717,14 @@ window.resetUserPassword = async (userId) => {
     if (confirmed) {
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-                redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
+                redirectTo: `${window.location.origin}/reset-password.html`
             });
             if (error) throw error;
 
-            window.showToast("تم إرسال بريد إعادة تعيين كلمة المرور بنجاح!", "success");
+            window.showToast("Password reset email sent successfully!", "success");
         } catch (err) {
             console.error("Reset Password Error:", err);
-            window.showToast("فشل إرسال البريد: " + err.message, "error");
+            window.showToast("Failed to send reset email: " + err.message, "error");
         }
     }
 };
@@ -1739,7 +1740,7 @@ window.toggleUserSuspension = async (userId) => {
     const allowed = isLeader ? (can('leaders:suspend') || can('manage_users') || isOwner) : (can('users:suspend') || can('manage_users') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لإيقاف أو تفعيل هذا الحساب.', 'error');
+        window.showToast?.('You do not have permission to suspend or activate this account.', 'error');
         return;
     }
 
@@ -1750,15 +1751,15 @@ window.toggleUserSuspension = async (userId) => {
     if (uStatus === 'suspended') {
         // Reactivate: restore to student or leader
         nextRole = user.role.replace('suspended_', '');
-        msg = `هل أنت متأكد من تفعيل الحساب وإعادة صلاحيات الدخول لـ ${user.full_name}؟`;
+        msg = `Are you sure you want to reactivate ${user.full_name}'s account and restore access?`;
     } else {
         // Suspend
         nextRole = `suspended_${user.role}`;
-        msg = `هل أنت متأكد من إيقاف حساب ${user.full_name} ومنعه من الدخول للمنصة؟`;
+        msg = `Are you sure you want to suspend ${user.full_name}'s account and block platform access?`;
     }
 
     const confirmed = await window.showCustomConfirm(
-        uStatus === 'suspended' ? "تفعيل الحساب" : "إيقاف الحساب",
+        uStatus === 'suspended' ? "Activate Account" : "Suspend Account",
         msg,
         null,
         null,
@@ -1769,11 +1770,11 @@ window.toggleUserSuspension = async (userId) => {
             const { error } = await supabase.from('profiles').update({ role: nextRole }).eq('id', userId);
             if (error) throw error;
 
-            window.showToast("تم تحديث حالة الحساب بنجاح!", "success");
+            window.showToast("Account status updated successfully!", "success");
             await window.fetchUsersData();
         } catch (err) {
             console.error("Toggle Suspension Error:", err);
-            window.showToast("فشل تحديث حالة الحساب: " + err.message, "error");
+            window.showToast("Failed to update account status: " + err.message, "error");
         }
     }
 };
@@ -1791,7 +1792,7 @@ window.openSendNotificationModal = (userId) => {
         : (can('users:notify') || can('notifications:student') || can('manage_notifications') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لإرسال إشعارات لهذا المستخدم.', 'error');
+        window.showToast?.('You do not have permission to send notifications to this user.', 'error');
         return;
     }
     document.getElementById('notif-target-user-id').value = userId;
@@ -1814,7 +1815,7 @@ window.sendUserNotification = async (e) => {
         : (can('users:notify') || can('notifications:student') || can('manage_notifications') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لإرسال إشعارات لهذا المستخدم.', 'error');
+        window.showToast?.('You do not have permission to send notifications to this user.', 'error');
         return;
     }
     const title = document.getElementById('notif-title').value.trim();
@@ -1825,7 +1826,7 @@ window.sendUserNotification = async (e) => {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
 
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
     submitBtn.disabled = true;
 
     try {
@@ -1839,11 +1840,11 @@ window.sendUserNotification = async (e) => {
 
         if (error) throw error;
 
-        window.showToast("تم إرسال الإشعار بنجاح!", "success");
+        window.showToast("Notification sent successfully!", "success");
         document.getElementById('send-user-notification-modal').classList.add('hidden');
     } catch (err) {
         console.error("Send Notification Error:", err);
-        window.showToast("فشل إرسال الإشعار: " + err.message, "error");
+        window.showToast("Failed to send notification: " + err.message, "error");
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -1856,10 +1857,10 @@ window.copyUserProfileLink = (userId) => {
     
     // Fallback standard copy
     navigator.clipboard.writeText(link).then(() => {
-        window.showToast("تم نسخ رابط الملف الشخصي للمستخدم!", "success");
+        window.showToast("User profile link copied to clipboard!", "success");
     }).catch(err => {
         console.error("Copy Error:", err);
-        window.showToast("فشل النسخ تلقائياً.", "error");
+        window.showToast("Failed to copy automatically.", "error");
     });
 };
 
@@ -1876,14 +1877,14 @@ window.deleteUser = async (userId) => {
     const allowed = isLeader ? (can('leaders:delete') || isOwner) : (can('users:delete') || isOwner);
 
     if (!allowed) {
-        window.showToast?.('ليس لديك صلاحية لحذف هذا الحساب.', 'error');
+        window.showToast?.('You do not have permission to delete this account.', 'error');
         return;
     }
 
-    const msg = `⚠️ تحذير نهائي: هل أنت متأكد من حذف حساب: ${user.full_name}؟\nسيؤدي هذا إلى مسح سجلات البروفايل الخاص به بالكامل من قاعدة البيانات. لا يمكن التراجع عن هذا الإجراء!`;
+    const msg = `⚠️ Final Warning: Are you sure you want to delete the account of: ${user.full_name}?\nThis will permanently erase their profile records from the database. This action cannot be undone!`;
 
     const confirmed = await window.showCustomConfirm(
-        "حذف حساب المستخدم نهائياً",
+        "Permanently Delete User Account",
         msg,
         null,
         null,
@@ -1894,11 +1895,11 @@ window.deleteUser = async (userId) => {
             const { error } = await supabase.from('profiles').delete().eq('id', userId);
             if (error) throw error;
 
-            window.showToast("تم حذف الحساب بنجاح من قاعدة البيانات.", "success");
+            window.showToast("Account deleted from the database successfully.", "success");
             await window.fetchUsersData();
         } catch (err) {
             console.error("Delete User Error:", err);
-            window.showToast("فشل الحذف: " + err.message, "error");
+            window.showToast("Deletion failed: " + err.message, "error");
         }
     }
 };
@@ -1910,16 +1911,16 @@ window.exportUsersToCSV = () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتصدير تقارير وبيانات المستخدمين.', 'error');
+        window.showToast?.('You do not have permission to export user reports and data.', 'error');
         return;
     }
 
     if (!allUsers || allUsers.length === 0) {
-        window.showToast?.('لا توجد بيانات مستخدمين لتصديرها.', 'info');
+        window.showToast?.('No user data available to export.', 'info');
         return;
     }
 
-    const headers = ['الاسم', 'البريد الإلكتروني', 'الدور', 'الجامعة', 'الكلية', 'الفرقة', 'المحافظة', 'نقاط XP', 'الرتبة', 'الحالة'];
+    const headers = ['Full Name', 'Email', 'Role', 'University', 'Faculty', 'Academic Year', 'Governorate', 'XP Points', 'Rank', 'Status'];
     const rows = allUsers.map(u => [
         u.full_name || '',
         u.email || '',
@@ -1934,8 +1935,8 @@ window.exportUsersToCSV = () => {
     ]);
 
     if (window.exportToCSV) {
-        window.exportToCSV('busla_users_export.csv', headers, rows);
+        window.exportToCSV('zdc_users_export.csv', headers, rows);
     } else {
-        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
+        window.showToast?.('Export prepared successfully.', 'success');
     }
 };

@@ -1073,7 +1073,7 @@ function updateVideoHeader(item) {
     const pointsText = document.getElementById('header-points-text');
 
     if (courseTitleEl) courseTitleEl.innerText = courseData ? courseData.title : "Course";
-    if (authorEl) authorEl.innerText = item.Author || "Busla";
+    if (authorEl) authorEl.innerText = item.Author || "ZDC";
     if (videoTitleEl) videoTitleEl.innerText = item.title || "Untitled";
 
     const points = item.base_xp || 0;

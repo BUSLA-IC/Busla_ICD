@@ -9,7 +9,7 @@ let currentTeamId = null;
 // =========================================================
 
 function getDirectImageLink(url) {
-    if (!url || url.trim() === "") return "../assets/icons/BUSLA-icon.png";
+    if (!url || url.trim() === "") return "../assets/icons/zdc-icon-192.png";
     try {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
@@ -193,7 +193,7 @@ function showToast(msg, type = 'info') {
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.className = 'fixed bottom-4 left-4 z-50 flex flex-col gap-2 pointer-events-none';
+        container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none';
         document.body.appendChild(container);
     }
 

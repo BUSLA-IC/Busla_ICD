@@ -201,15 +201,15 @@
         if (!banner) {
             banner = document.createElement('div');
             banner.id = 'zdc-install-banner';
-            banner.className = 'bg-[#0f1418]/95 border border-teal-500/30 backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center gap-3 sm:gap-4 max-w-sm';
+            banner.className = 'bg-[#161616]/95 border border-b-border backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center gap-3 sm:gap-4 max-w-sm';
             banner.innerHTML = `
-                <img src="${pathPrefix}assets/icons/zdc-icon-192.png" alt="ZDC" class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-teal-500/40 object-cover shadow shrink-0">
+                <img src="${pathPrefix}assets/icons/zdc-icon-192.png" alt="ZDC" class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-b-border object-cover shadow shrink-0">
                 <div class="min-w-0 flex-1 text-left">
                     <h4 class="text-xs sm:text-sm font-bold text-white leading-tight">Install ZDC App</h4>
                     <p class="text-[10px] sm:text-[11px] text-gray-400 truncate mt-0.5">Faster access & full-screen experience</p>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button onclick="window.installZDCApp()" class="px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">
+                    <button onclick="window.installZDCApp()" class="px-3 py-1.5 bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold text-xs rounded-xl shadow transition-all cursor-pointer">
                         Install
                     </button>
                     <button onclick="window.dismissZDCInstallBanner()" class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors" title="Close">
@@ -259,7 +259,7 @@
             modal.id = 'zdc-ios-modal-backdrop';
             modal.className = 'fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4';
             modal.innerHTML = `
-                <div class="bg-[#11161b] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl text-white space-y-4">
+                <div class="bg-[#161616] border border-b-border rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl text-white space-y-4">
                     <div class="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center mx-auto text-teal-400 text-2xl shadow-lg">
                         <i class="fas fa-mobile-screen"></i>
                     </div>
@@ -331,7 +331,7 @@
     // 9. Toast Notification Helper
     function showToastNotification({ icon, title, desc }) {
         const toast = document.createElement('div');
-        toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[999999] bg-[#0c1014]/95 border border-teal-500/40 backdrop-blur-2xl px-5 py-3.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex items-center gap-3.5 text-left animate-bounce-once';
+        toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[999999] bg-[#161616]/95 border border-b-border backdrop-blur-2xl px-5 py-3.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.85)] flex items-center gap-3.5 text-left animate-bounce-once';
         toast.innerHTML = `
             <div class="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center shrink-0">
                 <i class="${icon}"></i>

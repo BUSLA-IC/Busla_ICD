@@ -1,15 +1,34 @@
 /* ============================================
    ZDC (Zagazig Digital Community) - Global Styles
-   Color Scheme:
-   - Primary: #006A67
-   - Highlight Light: #22C45D
-   - Highlight Green: #E6FF94
-   - Highlight Yellow: #FFF4B7
-   - Background: #000000
-   - Surface: #111111
-   - Border: #222222
-   - Text: #F6F6F6
+   Theme: Dark Monochrome & Warm Off-White
+   - Primary Background: #0D0D0D (--bg-main)
+   - Secondary / Card BG: #161616 (--bg-card)
+   - Elevated Surface: #222222 (--bg-surface)
+   - Border / Stroke: #2E2E2E (--border-subtle)
+   - Primary Accent / Light Card: #EFECE6 (--accent-warm-white)
+   - Pure White: #FFFFFF (--accent-pure-white)
+   - Muted Text: #8E8E8E (--text-secondary)
+   - Dimmed Text: #5A5A5A (--text-muted)
    ============================================ */
+
+:root {
+    /* Backgrounds */
+    --bg-main: #0D0D0D;
+    --bg-card: #161616;
+    --bg-surface: #222222;
+
+    /* Borders */
+    --border-subtle: #2E2E2E;
+
+    /* Accents & Highlights */
+    --accent-warm-white: #EFECE6;
+    --accent-pure-white: #FFFFFF;
+
+    /* Typography */
+    --text-primary: #EFECE6;
+    --text-secondary: #8E8E8E;
+    --text-muted: #5A5A5A;
+}
 
 /* === Base Styles === */
 * {
@@ -20,8 +39,8 @@
 
 body {
     font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
-    background-color: #000000;
-    color: #F6F6F6;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
     overflow-x: hidden;
     animation: fadeIn 0.8s ease-out;
     line-height: 1.6;
@@ -41,9 +60,10 @@ html {
     }
 }
 
-/* === Gradient Text === */
-.gradient-text {
-    background: linear-gradient(135deg, #006A67 0%, #22C45D 50%, #E6FF94 100%);
+/* === Gradient Text (Vertical Metallic Monochrome Fade) === */
+.gradient-text,
+.headline-gradient {
+    background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 55%, #5A5A5A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -119,7 +139,7 @@ html {
     background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(34, 196, 93, 0.2) 50%,
+        rgba(239, 236, 230, 0.14) 50%,
         transparent 100%
     );
     background-size: 1000px 100%;
@@ -129,30 +149,23 @@ html {
 /* === Pulse Glow Animation === */
 @keyframes pulse-glow {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(0, 106, 103, 0.3);
+        box-shadow: 0 0 20px rgba(239, 236, 230, 0.15);
     }
     50% {
-        box-shadow: 0 0 40px rgba(0, 106, 103, 0.6);
+        box-shadow: 0 0 36px rgba(239, 236, 230, 0.3);
     }
 }
 
 .glow-on-hover:hover {
-    box-shadow: 0 0 30px rgba(0, 106, 103, 0.4),
-                0 0 60px rgba(34, 196, 93, 0.2);
+    box-shadow: 0 0 30px rgba(239, 236, 230, 0.22);
     animation: pulse-glow 2s infinite;
 }
 
 /* === Glow Effects === */
-.glow-primary {
-    box-shadow: 0 0 20px rgba(0, 106, 103, 0.3);
-}
-
-.glow-green {
-    box-shadow: 0 0 20px rgba(34, 196, 93, 0.3);
-}
-
+.glow-primary,
+.glow-green,
 .glow-yellow {
-    box-shadow: 0 0 20px rgba(230, 255, 148, 0.3);
+    box-shadow: 0 0 20px rgba(239, 236, 230, 0.18);
 }
 
 /* === Accordion Styles === */
@@ -196,7 +209,7 @@ html {
     transform: translateY(-50%);
     width: 3px;
     height: 0;
-    background: linear-gradient(to bottom, #006A67, #22C45D);
+    background: linear-gradient(to bottom, #FFFFFF, #EFECE6);
     transition: height 0.3s ease;
     border-radius: 2px;
 }
@@ -207,8 +220,8 @@ html {
 
 /* === Loading Spinner === */
 .spinner {
-    border: 3px solid rgba(0, 106, 103, 0.1);
-    border-top: 3px solid #006A67;
+    border: 3px solid rgba(239, 236, 230, 0.12);
+    border-top: 3px solid var(--accent-warm-white);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -235,7 +248,7 @@ html {
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #006A67, #22C45D, #E6FF94);
+    background: linear-gradient(135deg, #FFFFFF, #EFECE6, #5A5A5A);
     opacity: 0;
     transition: opacity 0.3s ease;
     border-radius: inherit;
@@ -243,7 +256,7 @@ html {
 }
 
 .card-hover-effect:hover::before {
-    opacity: 0.1;
+    opacity: 0.12;
 }
 
 .card-hover-effect:hover {
@@ -257,40 +270,40 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-    background: #111111;
+    background: var(--bg-card);
     border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #006A67;
+    background: var(--border-subtle);
     border-radius: 5px;
     transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #22C45D;
+    background: var(--text-muted);
 }
 
 /* Firefox */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #006A67 #111111;
+    scrollbar-color: var(--border-subtle) var(--bg-card);
 }
 
 /* === Selection Styling === */
 ::selection {
-    background-color: #006A67;
-    color: #F6F6F6;
+    background-color: var(--accent-warm-white);
+    color: var(--bg-main);
 }
 
 ::-moz-selection {
-    background-color: #006A67;
-    color: #F6F6F6;
+    background-color: var(--accent-warm-white);
+    color: var(--bg-main);
 }
 
 /* === Focus Styles === */
 *:focus {
-    outline: 2px solid #006A67;
+    outline: 2px solid var(--accent-warm-white);
     outline-offset: 2px;
 }
 
@@ -300,13 +313,13 @@ html {
 
 /* === Button Styles === */
 .btn-primary {
-    background-color: #006A67;
-    color: #F6F6F6;
+    background-color: var(--accent-warm-white);
+    color: var(--bg-main);
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s ease;
-    border: none;
+    border: 1px solid var(--accent-warm-white);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -314,41 +327,43 @@ html {
 }
 
 .btn-primary:hover {
-    background-color: #22C45D;
-    color: #000000;
+    background-color: var(--accent-pure-white);
+    color: var(--bg-main);
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 106, 103, 0.3);
+    box-shadow: 0 10px 24px rgba(239, 236, 230, 0.22);
 }
 
 .btn-secondary {
-    background-color: transparent;
-    color: #006A67;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    border: 2px solid #006A67;
+    border: 1px solid var(--border-subtle);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    text-decoration: none;
 }
 
 .btn-secondary:hover {
-    background-color: #006A67;
-    color: #F6F6F6;
+    background-color: var(--border-subtle);
+    color: var(--accent-pure-white);
+    border-color: var(--text-muted);
     transform: translateY(-2px);
 }
 
 /* === Link Styles === */
 a {
-    color: #006A67;
+    color: var(--text-primary);
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 a:hover {
-    color: #22C45D;
+    color: var(--accent-pure-white);
 }
 
 /* === Modal/Overlay Styles === */
@@ -372,66 +387,53 @@ a:hover {
 
 /* === Card Styles === */
 .card {
-    background-color: #111111;
-    border: 1px solid #222222;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: 1rem;
     padding: 1.5rem;
     transition: all 0.3s ease;
 }
 
 .card:hover {
-    border-color: #006A67;
-    box-shadow: 0 10px 30px rgba(0, 106, 103, 0.2);
+    border-color: var(--text-muted);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
-/* === Badge Styles === */
+/* === Badge Styles (Strict Monochrome Hierarchy) === */
 .badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
+    border: 1px solid;
 }
 
-.badge-primary {
-    background-color: rgba(0, 106, 103, 0.2);
-    color: #22C45D;
-}
-
+.badge-primary,
 .badge-success {
-    background-color: rgba(34, 196, 93, 0.2);
-    color: #22C45D;
+    background: rgba(239, 236, 230, 0.14);
+    color: var(--accent-warm-white);
+    border-color: rgba(239, 236, 230, 0.3);
 }
 
-.badge-warning {
-    background-color: rgba(255, 244, 183, 0.2);
-    color: #FFF4B7;
-}
-
+.badge-warning,
 .badge-info {
-    background-color: rgba(230, 255, 148, 0.2);
-    color: #E6FF94;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
 }
 
 /* === Divider === */
-.divider {
+.divider,
+.divider-primary {
     height: 1px;
     background: linear-gradient(
         to right,
         transparent 0%,
-        #222222 50%,
+        var(--border-subtle) 50%,
         transparent 100%
     );
     margin: 2rem 0;
-}
-
-.divider-primary {
-    background: linear-gradient(
-        to right,
-        transparent 0%,
-        #006A67 50%,
-        transparent 100%
-    );
 }
 
 /* === Section Spacing === */
@@ -443,7 +445,7 @@ a:hover {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 1rem;
-    background: linear-gradient(135deg, #006A67 0%, #22C45D 100%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 55%, #5A5A5A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -466,50 +468,35 @@ img {
 
 /* === Text Utilities === */
 .text-muted {
-    color: #9CA3AF;
+    color: var(--text-secondary);
 }
 
-.text-primary {
-    color: #006A67;
-}
-
-.text-success {
-    color: #22C45D;
-}
-
-.text-warning {
-    color: #FFF4B7;
-}
-
+.text-primary,
+.text-success,
+.text-warning,
 .text-info {
-    color: #E6FF94;
+    color: var(--text-primary);
 }
 
 /* === Background Utilities === */
 .bg-surface {
-    background-color: #111111;
+    background-color: var(--bg-card);
 }
 
 .bg-card {
-    background-color: #1a1a1a;
+    background-color: var(--bg-surface);
 }
 
 /* === Border Utilities === */
-.border-primary {
-    border-color: #006A67;
-}
-
+.border-primary,
 .border-success {
-    border-color: #22C45D;
+    border-color: var(--border-subtle);
 }
 
 /* === Shadow Utilities === */
-.shadow-primary {
-    box-shadow: 0 10px 30px rgba(0, 106, 103, 0.3);
-}
-
+.shadow-primary,
 .shadow-success {
-    box-shadow: 0 10px 30px rgba(34, 196, 93, 0.3);
+    box-shadow: 0 10px 30px rgba(239, 236, 230, 0.15);
 }
 
 /* === Line Clamp === */
@@ -559,13 +546,13 @@ img {
 /* === Custom Checkbox/Radio === */
 input[type="checkbox"],
 input[type="radio"] {
-    accent-color: #006A67;
+    accent-color: var(--accent-warm-white);
 }
 
 /* === Code Blocks === */
 code {
-    background-color: #1a1a1a;
-    color: #22C45D;
+    background-color: var(--bg-surface);
+    color: var(--accent-warm-white);
     padding: 0.2rem 0.4rem;
     border-radius: 0.25rem;
     font-size: 0.875em;
@@ -573,8 +560,8 @@ code {
 }
 
 pre {
-    background-color: #1a1a1a;
-    border: 1px solid #222222;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-subtle);
     border-radius: 0.5rem;
     padding: 1rem;
     overflow-x: auto;
@@ -595,43 +582,105 @@ table {
 th, td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #222222;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 th {
-    background-color: #111111;
-    color: #22C45D;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 tr:hover {
-    background-color: #111111;
+    background-color: var(--bg-card);
 }
 
-/* === Alert/Notice Styles === */
+/* === Alert/Notice Styles (Strict Monochrome) === */
 .alert {
     padding: 1rem 1.5rem;
     border-radius: 0.5rem;
     margin: 1rem 0;
-    border: 1px solid;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }
 
-.alert-info {
-    background-color: rgba(0, 106, 103, 0.1);
-    border-color: #006A67;
-    color: #22C45D;
-}
-
-.alert-success {
-    background-color: rgba(34, 196, 93, 0.1);
-    border-color: #22C45D;
-    color: #22C45D;
-}
-
+.alert-info,
+.alert-success,
 .alert-warning {
-    background-color: rgba(255, 244, 183, 0.1);
-    border-color: #FFF4B7;
-    color: #FFF4B7;
+    background-color: var(--bg-surface);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+/* === Filter Buttons === */
+.filter-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    color: var(--accent-pure-white);
+    background: var(--bg-surface);
+}
+
+.filter-btn.active {
+    color: var(--bg-main);
+    background: var(--accent-warm-white);
+    border-color: var(--accent-warm-white);
+    font-weight: 700;
+}
+
+/* === Tool Card Hover Effect === */
+.tool-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
+}
+
+/* === Modal Styles === */
+#tool-modal {
+    animation: fadeIn 0.3s ease-out;
+}
+
+#tool-modal > div {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#tool-modal > div::-webkit-scrollbar {
+    width: 8px;
+}
+
+#tool-modal > div::-webkit-scrollbar-track {
+    background: var(--bg-card);
+    border-radius: 4px;
+}
+
+#tool-modal > div::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 4px;
+}
+
+#tool-modal > div::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 /* === Responsive Typography === */
@@ -642,6 +691,19 @@ tr:hover {
     
     body {
         font-size: 0.95rem;
+    }
+
+    .tool-card {
+        padding: 1rem;
+    }
+    
+    #tool-modal > div {
+        margin: 1rem;
+        max-height: calc(100vh - 2rem);
+    }
+    
+    #modal-content {
+        padding: 1.5rem;
     }
 }
 
@@ -699,232 +761,15 @@ tr:hover {
     .container { max-width: 1536px; }
 }
 
-
-/* Additional ZDC utility styles */
-
-/* Gradient Text Effect */
-.gradient-text {
-    background: linear-gradient(135deg, #006A67 0%, #22C45D 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Filter Buttons */
-.filter-btn {
-    background: transparent;
-    color: #9CA3AF;
-    border: 1px solid transparent;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.filter-btn:hover {
-    color: #22C45D;
-    background: rgba(34, 196, 93, 0.1);
-}
-
-.filter-btn.active {
-    color: #22C45D;
-    background: rgba(34, 196, 93, 0.2);
-    border-color: #22C45D;
-    font-weight: 600;
-}
-
-/* Badge Styles */
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: 1px solid;
-}
-
-.badge-primary {
-    background: rgba(0, 106, 103, 0.2);
-    color: #22C45D;
-    border-color: #006A67;
-}
-
-.badge-success {
-    background: rgba(34, 196, 93, 0.2);
-    color: #22C45D;
-    border-color: #22C45D;
-}
-
-.badge-warning {
-    background: rgba(251, 191, 36, 0.2);
-    color: #FCD34D;
-    border-color: #F59E0B;
-}
-
-.badge-info {
-    background: rgba(59, 130, 246, 0.2);
-    color: #60A5FA;
-    border-color: #3B82F6;
-}
-
-/* Tool Card Hover Effect */
-.tool-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tool-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 25px -5px rgba(34, 196, 93, 0.1), 
-                0 10px 10px -5px rgba(34, 196, 93, 0.04);
-}
-
-/* Line Clamp Utilities */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* Button Styles */
-.btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background: rgba(0, 106, 103, 0.3);
-    color: #22C45D;
-    border: 1px solid #006A67;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
-}
-
-.btn-secondary:hover {
-    background: rgba(0, 106, 103, 0.5);
-    border-color: #22C45D;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(34, 196, 93, 0.2);
-}
-
-/* Animations */
-@keyframes slide-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fade-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-slide-in-up {
-    animation: slide-in-up 0.6s ease-out forwards;
-}
-
-.animate-fade-in-up {
-    animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.stagger-1 {
-    animation-delay: 0.1s;
-}
-
-.stagger-2 {
-    animation-delay: 0.2s;
-}
-
-/* Modal Styles */
-#tool-modal {
-    animation: fadeIn 0.3s ease-out;
-}
-
-#tool-modal > div {
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Scrollbar Styling */
-#tool-modal > div::-webkit-scrollbar {
-    width: 8px;
-}
-
-#tool-modal > div::-webkit-scrollbar-track {
-    background: #111111;
-    border-radius: 4px;
-}
-
-#tool-modal > div::-webkit-scrollbar-thumb {
-    background: #006A67;
-    border-radius: 4px;
-}
-
-#tool-modal > div::-webkit-scrollbar-thumb:hover {
-    background: #22C45D;
-}
-
-/* Responsive Improvements */
-@media (max-width: 768px) {
-    .tool-card {
-        padding: 1rem;
-    }
-    
-    #tool-modal > div {
-        margin: 1rem;
-        max-height: calc(100vh - 2rem);
-    }
-    
-    #modal-content {
-        padding: 1.5rem;
-    }
-}
-
 /* Focus States for Accessibility */
 .filter-btn:focus,
 .btn-secondary:focus,
 button:focus {
-    outline: 2px solid #22C45D;
+    outline: 2px solid var(--accent-warm-white);
     outline-offset: 2px;
 }
 
-/* Loading State (optional) */
+/* Loading State */
 .loading {
     position: relative;
     pointer-events: none;
@@ -939,14 +784,8 @@ button:focus {
     width: 20px;
     height: 20px;
     margin: -10px 0 0 -10px;
-    border: 2px solid #22C45D;
+    border: 2px solid var(--accent-warm-white);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
 }

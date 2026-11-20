@@ -18,6 +18,8 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0D0D0D;
+            color: #EFECE6;
         }
         h1, h2, h3, .font-display {
             font-family: 'Outfit', sans-serif;
@@ -30,12 +32,12 @@
 
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            50% { transform: translateY(-14px); }
         }
 
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(34, 196, 93, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(34, 196, 93, 0.6); }
+            0%, 100% { box-shadow: 0 0 20px rgba(239, 236, 230, 0.15); }
+            50% { box-shadow: 0 0 36px rgba(239, 236, 230, 0.28); }
         }
 
         .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
@@ -46,7 +48,7 @@
         .stagger-4 { animation-delay: 0.4s; }
 
         .gradient-text {
-            background: linear-gradient(135deg, #22C45D 0%, #006A67 100%);
+            background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 55%, #5A5A5A 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -54,9 +56,9 @@
 
         .gradient-border {
             position: relative;
-            background: linear-gradient(#111111, #111111) padding-box,
-                        linear-gradient(135deg, #006A67, #22C45D) border-box;
-            border: 2px solid transparent;
+            background: linear-gradient(#161616, #161616) padding-box,
+                        linear-gradient(135deg, #EFECE6, #5A5A5A) border-box;
+            border: 1.5px solid transparent;
         }
 
         .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -66,9 +68,9 @@
         .modal-backdrop { backdrop-filter: blur(8px); }
 
         .scrollbar-thin::-webkit-scrollbar { width: 8px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1a1a1a; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #006A67; border-radius: 4px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #22C45D; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #161616; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #5A5A5A; }
     </style>
 </head>
 <body class="antialiased bg-b-bg text-b-text">

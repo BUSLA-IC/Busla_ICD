@@ -187,91 +187,22 @@ function createTracks(tracks) {
     return tracksHTML;
 }
 
-// Fetches data and renders the roadmap
+// Renders roadmap container (static JSON removed; roadmap is managed dynamically via curriculum database)
 async function renderRoadmap() {
     const container = document.getElementById('roadmap-container');
     const loadingIndicator = document.getElementById('loading-indicator');
     if (!container || !loadingIndicator) return;
 
-    try {
-        // Fetch from the local JSON file
-        const response = await fetch('../data/roadmap-data.json');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const roadmapData = await response.json();
-
-        loadingIndicator.remove();
-
-        roadmapData.forEach((phase, index) => {
-            const staggerClass = `stagger-${Math.min(index + 1, 4)}`;
-            const phaseColors = [
-                { bg: 'from-b-primary/10 via-b-primary/5 to-transparent', border: 'border-b-primary', badge: 'bg-b-primary', icon: 'compass' },
-                { bg: 'from-b-hl-light/10 via-b-hl-light/5 to-transparent', border: 'border-b-hl-light', badge: 'bg-b-hl-light', icon: 'layers' },
-                { bg: 'from-b-hl-green/10 via-b-hl-green/5 to-transparent', border: 'border-b-hl-green', badge: 'bg-b-hl-medium', icon: 'zap' },
-                { bg: 'from-b-hl-yellow/10 via-b-hl-yellow/5 to-transparent', border: 'border-b-hl-yellow', badge: 'bg-b-primary', icon: 'award' }
-            ];
-            const colors = phaseColors[index % phaseColors.length];
-            
-            const phaseHTML = `
-                <div class="bg-b-surface border border-b-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up ${staggerClass} hover:shadow-b-primary/20 transition-all duration-300 hover:border-b-primary">
-                    <button class="accordion-button w-full flex justify-between items-center p-8 text-left cursor-pointer hover:bg-gradient-to-r ${colors.bg} transition-all duration-300 group" data-target="#content-${phase.id}">
-                        <div class="flex items-start gap-5 flex-grow">
-                            <div class="flex-shrink-0">
-                                <div class="w-14 h-14 ${colors.badge} rounded-xl flex items-center justify-center shadow-lg">
-                                    <span class="text-2xl font-bold text-white">${index + 1}</span>
-                                </div>
-                            </div>
-                            <div class="text-left flex-grow">
-                                <h3 class="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-b-hl-light transition-colors">${phase.title}</h3>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-feather="calendar" class="w-4 h-4 text-b-hl-light"></i>
-                                    <span class="text-b-hl-light font-semibold">${phase.duration}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="accordion-icon ml-4 text-gray-400 group-hover:text-b-hl-light transition-colors flex-shrink-0">
-                            <i data-feather="chevron-down" class="w-7 h-7"></i>
-                        </span>
-                    </button>
-                    
-                    <div id="content-${phase.id}" class="accordion-content px-8 md:px-10">
-                        <div class="border-t border-b-border pt-8">
-                            <div class="mb-8 p-6 bg-gradient-to-br ${colors.bg} rounded-xl border ${colors.border} border-opacity-30">
-                                <div class="flex items-start gap-3">
-                                    <i data-feather="info" class="w-6 h-6 text-b-hl-light flex-shrink-0 mt-1"></i>
-                                    <p class="text-lg text-gray-300 leading-relaxed">${phase.description}</p>
-                                </div>
-                            </div>
-                            
-                            ${createGuidanceNotes(phase.guidance, "Phase Guidelines", "target", colors.border)}
-                            
-                            <div class="mt-10">
-                                ${createTracks(phase.tracks)}
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            container.innerHTML += phaseHTML;
-        });
-
-        feather.replace();
-        initAccordion(roadmapData.length > 0 ? `content-${roadmapData[0].id}` : null);
-
-    } catch (error) {
-        console.error("Failed to load or render roadmap data:", error);
-        if (loadingIndicator) loadingIndicator.remove();
-        container.innerHTML = `
-            <div class="text-center py-20 px-4">
-                <div class="inline-block mb-6">
-                    <i data-feather="alert-circle" class="w-20 h-20 text-red-400 mx-auto"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-red-400 mb-4">Error Loading Roadmap</h3>
-                <p class="text-gray-500 mb-4">Please verify that <code class="bg-b-surface px-2 py-1 rounded text-sm text-b-primary">roadmap-data.json</code> exists in the expected path.</p>
-                <button onclick="location.reload()" class="mt-4 px-6 py-3 bg-b-primary hover:bg-b-hl-light text-white rounded-lg transition-colors font-semibold">
-                    Try Again
-                </button>
-            </div>`;
-        feather.replace();
-    }
+    loadingIndicator.remove();
+    container.innerHTML = `
+        <div class="text-center py-20 px-4">
+            <div class="inline-block mb-6">
+                <i data-feather="compass" class="w-16 h-16 text-b-primary mx-auto"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Interactive Roadmap</h3>
+            <p class="text-gray-400 text-sm">Curriculum tracks are loaded dynamically from your learning dashboard.</p>
+        </div>`;
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 // Initializes accordion functionality

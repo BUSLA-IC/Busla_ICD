@@ -1219,10 +1219,10 @@ async function renderSquad() {
                         #${index + 1}
                     </div>
                     <div class="relative shrink-0">
-                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#00F5FF'}, transparent);">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#EFECE6'}, transparent);">
                             <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'" alt="Avatar">
                         </div>
-                        <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#00F5FF'}] shadow-md z-10 p-0.5" title="Level ${rankData.level}">
+                        <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#EFECE6'}] shadow-md z-10 p-0.5" title="Level ${rankData.level}">
                             <img src="../assets/user-badge/lv${rankData.level}.png" class="w-full h-full object-contain">
                         </div>
                     </div>

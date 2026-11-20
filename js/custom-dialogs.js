@@ -15,12 +15,12 @@
         container.innerHTML = `
             <!-- Custom Alert Modal -->
             <div id="custom-alert-modal" class="fixed inset-0 z-[100000] flex items-center justify-center bg-black/75 backdrop-blur-md hidden opacity-0 transition-opacity duration-300" dir="ltr">
-                <div id="custom-alert-card" class="bg-[#0b0f17]/95 border border-white/10 rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-all duration-300 relative overflow-hidden text-left">
+                <div id="custom-alert-card" class="bg-[#161616]/95 border border-b-border rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-all duration-300 relative overflow-hidden text-left">
                     <!-- Glow effect -->
-                    <div class="absolute top-0 left-0 w-full h-32 bg-teal-500/10 blur-[50px] pointer-events-none"></div>
+                    <div class="absolute top-0 left-0 w-full h-32 bg-white/5 blur-[50px] pointer-events-none"></div>
 
                     <div class="flex items-center gap-5 mb-5 relative z-10">
-                        <div class="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.15)]">
+                        <div class="w-14 h-14 rounded-2xl bg-b-surface-card border border-b-border text-b-primary flex items-center justify-center text-2xl shrink-0 shadow-md">
                             <i class="fas fa-info-circle"></i>
                         </div>
                         <h3 id="custom-alert-title" class="text-2xl font-black text-white">Notice</h3>
@@ -29,7 +29,7 @@
                     <p id="custom-alert-message" class="text-gray-300 text-sm leading-relaxed mb-8 relative z-10"></p>
 
                     <div class="flex relative z-10">
-                        <button id="btn-alert-ok" class="w-full bg-[#006A67] hover:bg-[#005250] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5">
+                        <button id="btn-alert-ok" class="w-full bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5">
                             OK
                         </button>
                     </div>
@@ -38,12 +38,12 @@
 
             <!-- Custom Confirm Modal -->
             <div id="custom-confirm-modal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/75 backdrop-blur-md hidden opacity-0 transition-opacity duration-300" dir="ltr">
-                <div id="custom-confirm-card" class="bg-[#0b0f17]/95 border border-white/10 rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-all duration-300 relative overflow-hidden text-left">
+                <div id="custom-confirm-card" class="bg-[#161616]/95 border border-b-border rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-all duration-300 relative overflow-hidden text-left">
                     <!-- Dynamic glow effect -->
-                    <div id="confirm-glow" class="absolute top-0 left-0 w-full h-32 bg-red-500/10 blur-[50px] pointer-events-none"></div>
+                    <div id="confirm-glow" class="absolute top-0 left-0 w-full h-32 bg-white/5 blur-[50px] pointer-events-none"></div>
 
                     <div class="flex items-center gap-5 mb-5 relative z-10">
-                        <div id="confirm-icon-bg" class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                        <div id="confirm-icon-bg" class="w-14 h-14 rounded-2xl bg-b-surface-card border border-b-border text-b-primary flex items-center justify-center text-2xl shrink-0 shadow-md">
                             <i id="confirm-icon" class="fas fa-exclamation-triangle"></i>
                         </div>
                         <h3 id="confirm-title" class="text-2xl font-black text-white">Confirm Action</h3>
@@ -52,10 +52,10 @@
                     <p id="confirm-message" class="text-gray-300 text-sm leading-relaxed mb-8 relative z-10">Are you sure you want to continue?</p>
 
                     <div class="flex gap-4 relative z-10">
-                        <button id="btn-confirm-yes" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5">
+                        <button id="btn-confirm-yes" class="flex-1 bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5">
                             Confirm
                         </button>
-                        <button id="btn-confirm-no" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 rounded-xl transition-all border border-white/5 hover:border-white/10">
+                        <button id="btn-confirm-no" class="flex-1 bg-b-surface-card hover:bg-white/10 text-b-primary font-bold py-3.5 rounded-xl transition-all border border-b-border">
                             Cancel
                         </button>
                     </div>
@@ -137,22 +137,22 @@
         const iconEl = card.querySelector('#confirm-icon') || document.getElementById('confirm-icon');
 
         if (type === 'info' || type === 'success') {
-            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-teal-500/10 blur-[50px] pointer-events-none";
-            iconBgEl.className = "w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.15)]";
+            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-white/5 blur-[50px] pointer-events-none";
+            iconBgEl.className = "w-14 h-14 rounded-2xl bg-b-surface-card border border-b-border text-b-primary flex items-center justify-center text-2xl shrink-0 shadow-md";
             iconEl.className = "fas fa-question-circle";
-            yesBtn.className = "flex-1 bg-[#006A67] hover:bg-[#005250] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
+            yesBtn.className = "flex-1 bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
             yesBtn.textContent = "Confirm";
         } else if (type === 'warning') {
-            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-amber-500/10 blur-[50px] pointer-events-none";
-            iconBgEl.className = "w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.15)]";
+            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-white/5 blur-[50px] pointer-events-none";
+            iconBgEl.className = "w-14 h-14 rounded-2xl bg-b-surface-card border border-b-border text-b-primary flex items-center justify-center text-2xl shrink-0 shadow-md";
             iconEl.className = "fas fa-exclamation-circle";
-            yesBtn.className = "flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
+            yesBtn.className = "flex-1 bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
             yesBtn.textContent = "Confirm";
         } else {
-            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-red-500/10 blur-[50px] pointer-events-none";
-            iconBgEl.className = "w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center text-2xl shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.15)]";
+            glowEl.className = "absolute top-0 left-0 w-full h-32 bg-white/5 blur-[50px] pointer-events-none";
+            iconBgEl.className = "w-14 h-14 rounded-2xl bg-b-surface-card border border-b-border text-b-primary flex items-center justify-center text-2xl shrink-0 shadow-md";
             iconEl.className = "fas fa-exclamation-triangle";
-            yesBtn.className = "flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
+            yesBtn.className = "flex-1 bg-[#EFECE6] hover:bg-white text-[#0D0D0D] font-bold py-3.5 rounded-xl transition-all shadow-lg transform hover:-translate-y-0.5";
             yesBtn.textContent = "Confirm";
         }
 

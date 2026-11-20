@@ -78,7 +78,7 @@ async function initDashboard(uid) {
 
         if (error) throw error;
         if (!profile) {
-            showToast("لم يتم العثور على ملف تعريف المستخدم", "error");
+            showToast("User profile not found", "error");
             window.location.href = "../../pages/auth.html";
             return;
         }
@@ -93,7 +93,7 @@ async function initDashboard(uid) {
         const isAuthorizedAdmin = ADMIN_ROLES_LIST.includes(roleLower) || dbAdminRoles.includes(roleLower);
 
         if (!isAuthorizedAdmin) {
-            showToast("غير مصرح لك بالدخول إلى لوحة التحكم", "error");
+            showToast("You are not authorized to access the admin dashboard", "error");
             if (roleLower === 'leader') {
                 setTimeout(() => window.location.replace("../../pages/leader-dash.html"), 1500);
             } else {
@@ -110,7 +110,7 @@ async function initDashboard(uid) {
             userAvatarEl.referrerPolicy = 'no-referrer';
             userAvatarEl.onerror = function() {
                 this.onerror = null;
-                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(adminProfile.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
             };
             if (adminProfile.avatar_url) {
                 userAvatarEl.src = adminProfile.avatar_url;
@@ -131,12 +131,12 @@ async function initDashboard(uid) {
         // Re-apply permission visibility
         updateAdminUI();
 
-        // 🔄 استرجاع آخر تبويب وتصنيف نشط في لوحة الإدارة تلقائياً
+        // Restore last active admin tab and subtab automatically
         restoreAdminNavigation();
 
     } catch (err) {
         console.error("Dashboard Loading Error:", err);
-        showToast("حدث خطأ أثناء تحميل لوحة التحكم", "error");
+        showToast("An error occurred while loading the admin dashboard", "error");
     }
 }
 
@@ -263,7 +263,7 @@ async function loadAllData() {
 
     } catch (err) {
         console.error("Load All Data Error:", err);
-        showToast("فشل تحميل البيانات من السيرفر", "error");
+        showToast("Failed to load data from server", "error");
     }
 }
 
@@ -287,7 +287,7 @@ function populateFilterDropdowns() {
     
     if (roleFilter && editAdminRole && addAdminRole) {
         const optionsHTML = allRoles.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
-        roleFilter.innerHTML = '<option value="all">كل الأدوار</option>' + optionsHTML;
+        roleFilter.innerHTML = '<option value="all">All Roles</option>' + optionsHTML;
         editAdminRole.innerHTML = optionsHTML;
         addAdminRole.innerHTML = optionsHTML;
     }
@@ -313,15 +313,15 @@ function renderAdminAccounts() {
     });
 
     if (filteredAdmins.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">لا توجد حسابات إدارة مطابقة للفلتر.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">لا توجد حسابات إدارة مطابقة للفلتر.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">No admin accounts match the filter.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-gray-500 bg-b-surface border border-white/5 rounded-2xl text-xs">No admin accounts match the filter.</div>`;
         return;
     }
 
     const mapped = filteredAdmins.map(admin => {
-        const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
-        const lastLogin = admin.last_login ? new Date(admin.last_login).toLocaleString('ar-EG') : 'لم يدخل بعد';
-        const lastActivity = admin.last_activity ? new Date(admin.last_activity).toLocaleString('ar-EG') : 'لا يوجد نشاط';
+        const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
+        const lastLogin = admin.last_login ? new Date(admin.last_login).toLocaleString('en-US') : 'Never logged in';
+        const lastActivity = admin.last_activity ? new Date(admin.last_activity).toLocaleString('en-US') : 'No activity';
         
         // Count total permissions
         const customCount = adminPermissionsMap[admin.id] ? adminPermissionsMap[admin.id].size : 0;
@@ -335,41 +335,43 @@ function renderAdminAccounts() {
         const canManagePerms = isOwner || hasPermission('settings:permissions');
 
         let statusClass = 'bg-green-500/10 text-green-400 border-green-500/20';
-        let statusText = 'نشط';
+        let statusText = 'Active';
         if (admin.status === 'disabled') {
             statusClass = 'bg-red-500/10 text-red-400 border-red-500/20';
-            statusText = 'معطل';
+            statusText = 'Disabled';
         }
 
         // Build Actions
         let actionButtons = `
-            <button onclick="viewAdminDetails('${admin.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
+            <button onclick="viewAdminDetails('${admin.id}')" class="text-teal-400 hover:text-teal-300 p-1" title="View Details"><i class="fas fa-eye"></i></button>
         `;
         if (canManageAdmins) {
-            actionButtons += `<button onclick="openEditAdminModal('${admin.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="تعديل"><i class="fas fa-edit"></i></button>`;
+            actionButtons += `<button onclick="openEditAdminModal('${admin.id}')" class="text-blue-400 hover:text-blue-300 p-1" title="Edit"><i class="fas fa-edit"></i></button>`;
         }
         if (canManagePerms) {
-            actionButtons += `<button onclick="openPermissionsDrawer('${admin.id}')" class="text-yellow-500 hover:text-yellow-400 p-1" title="إدارة الصلاحيات"><i class="fas fa-key"></i></button>`;
+            actionButtons += `<button onclick="openPermissionsDrawer('${admin.id}')" class="text-yellow-500 hover:text-yellow-400 p-1" title="Manage Permissions"><i class="fas fa-key"></i></button>`;
         }
 
         if (canManageAdmins) {
             if (admin.status === 'disabled') {
-                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="تفعيل الحساب"><i class="fas fa-user-check"></i></button>`;
+                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="text-green-500 hover:text-green-400 p-1" title="Enable Account"><i class="fas fa-user-check"></i></button>`;
             } else {
-                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="text-orange-500 hover:text-orange-400 p-1" title="تعطيل الحساب"><i class="fas fa-user-slash"></i></button>`;
+                actionButtons += `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="text-orange-500 hover:text-orange-400 p-1" title="Disable Account"><i class="fas fa-user-slash"></i></button>`;
             }
         }
 
         if (isOwner && !isTargetOwner) {
-            actionButtons += `<button onclick="deleteAdminAccount('${admin.id}')" class="text-red-500 hover:text-red-400 p-1" title="حذف الحساب"><i class="fas fa-trash-can"></i></button>`;
+            actionButtons += `<button onclick="deleteAdminAccount('${admin.id}')" class="text-red-500 hover:text-red-400 p-1" title="Delete Account"><i class="fas fa-trash-can"></i></button>`;
         }
+
+        const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
 
         return {
             tableRow: `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(admin.full_name || 'Admin') + '&background=006A67&color=fff&size=100'" class="w-9 h-9 rounded-full object-cover border border-white/10">
-                    <span class="font-bold text-white">${admin.full_name || 'بلا اسم'}</span>
+                    <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${fallbackAvatarUrl}'" class="w-9 h-9 rounded-full object-cover border border-white/10">
+                    <span class="font-bold text-white">${admin.full_name || 'Unnamed'}</span>
                 </td>
                 <td class="p-4 text-gray-300 font-mono text-xs">${admin.email}</td>
                 <td class="p-4"><span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs px-2.5 py-1 rounded-full font-bold">${admin.role}</span></td>
@@ -377,16 +379,16 @@ function renderAdminAccounts() {
                 <td class="p-4 text-xs text-gray-400">${lastLogin}</td>
                 <td class="p-4 text-xs text-gray-400">${lastActivity}</td>
                 <td class="p-4"><span class="border text-[10px] font-bold px-2 py-0.5 rounded-md ${statusClass}">${statusText}</span></td>
-                <td class="p-4 text-left"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
+                <td class="p-4 text-right"><div class="flex items-center justify-end gap-2.5">${actionButtons}</div></td>
             </tr>
             `,
             mobileCard: `
             <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 space-y-3 shadow-lg">
                 <div class="flex items-center justify-between gap-2.5">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(admin.full_name || 'Admin') + '&background=006A67&color=fff&size=100'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
+                        <img src="${avatarUrl}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${fallbackAvatarUrl}'" class="w-10 h-10 rounded-full object-cover border border-white/10 bg-black shrink-0">
                         <div class="min-w-0">
-                            <h4 class="text-sm font-bold text-white truncate">${admin.full_name || 'بلا اسم'}</h4>
+                            <h4 class="text-sm font-bold text-white truncate">${admin.full_name || 'Unnamed'}</h4>
                             <div class="text-[10px] text-gray-400 font-mono truncate select-all mt-0.5">${admin.email}</div>
                         </div>
                     </div>
@@ -398,11 +400,11 @@ function renderAdminAccounts() {
 
                 <div class="grid grid-cols-2 gap-1.5 py-2 px-2.5 bg-black/40 border border-white/5 rounded-xl text-center">
                     <div>
-                        <span class="text-[9px] text-gray-500 block">الصلاحيات الممنوحة</span>
-                        <span class="text-xs font-black text-teal-400 block mt-0.5">${permsCount} صلاحية</span>
+                        <span class="text-[9px] text-gray-500 block">Granted Permissions</span>
+                        <span class="text-xs font-black text-teal-400 block mt-0.5">${permsCount} permissions</span>
                     </div>
                     <div>
-                        <span class="text-[9px] text-gray-500 block">آخر نشاط</span>
+                        <span class="text-[9px] text-gray-500 block">Last Activity</span>
                         <span class="text-xs font-bold text-gray-300 truncate block mt-0.5">${lastActivity}</span>
                     </div>
                 </div>
@@ -410,20 +412,20 @@ function renderAdminAccounts() {
                 <div class="flex items-center justify-between gap-1.5 pt-1 border-t border-white/5">
                     <div class="flex items-center gap-1.5">
                         <button onclick="viewAdminDetails('${admin.id}')" class="px-2.5 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 text-teal-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                            <i class="fas fa-eye text-[10px]"></i> التفاصيل
+                            <i class="fas fa-eye text-[10px]"></i> Details
                         </button>
                         ${canManagePerms ? `
                         <button onclick="openPermissionsDrawer('${admin.id}')" class="px-2.5 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 text-yellow-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                            <i class="fas fa-key text-[10px]"></i> الصلاحيات
+                            <i class="fas fa-key text-[10px]"></i> Permissions
                         </button>` : ''}
                     </div>
                     <div class="flex items-center gap-1">
-                        ${canManageAdmins ? `<button onclick="openEditAdminModal('${admin.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="تعديل"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canManageAdmins ? `<button onclick="openEditAdminModal('${admin.id}')" class="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs" title="Edit"><i class="fas fa-edit"></i></button>` : ''}
                         ${canManageAdmins ? (admin.status === 'disabled' ? 
-                            `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="تفعيل"><i class="fas fa-user-check"></i></button>` :
-                            `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="p-1.5 text-orange-400 hover:bg-orange-500/10 rounded-lg text-xs" title="تعطيل"><i class="fas fa-user-slash"></i></button>`
+                            `<button onclick="toggleAdminStatus('${admin.id}', 'active')" class="p-1.5 text-green-400 hover:bg-green-500/10 rounded-lg text-xs" title="Enable"><i class="fas fa-user-check"></i></button>` :
+                            `<button onclick="toggleAdminStatus('${admin.id}', 'disabled')" class="p-1.5 text-orange-400 hover:bg-orange-500/10 rounded-lg text-xs" title="Disable"><i class="fas fa-user-slash"></i></button>`
                         ) : ''}
-                        ${(isOwner && !isTargetOwner) ? `<button onclick="deleteAdminAccount('${admin.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="حذف"><i class="fas fa-trash-can"></i></button>` : ''}
+                        ${(isOwner && !isTargetOwner) ? `<button onclick="deleteAdminAccount('${admin.id}')" class="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg text-xs" title="Delete"><i class="fas fa-trash-can"></i></button>` : ''}
                     </div>
                 </div>
             </div>
@@ -446,7 +448,7 @@ function renderRoles() {
 
         let deleteBtn = '';
         if (!isProtected && (adminProfile.role || '').toLowerCase() === 'owner') {
-            deleteBtn = `<button onclick="deleteRole('${role.id}')" class="text-red-400 hover:text-red-300 border border-red-500/20 bg-red-500/5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><i class="fas fa-trash"></i> حذف</button>`;
+            deleteBtn = `<button onclick="deleteRole('${role.id}')" class="text-red-400 hover:text-red-300 border border-red-500/20 bg-red-500/5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><i class="fas fa-trash"></i> Delete</button>`;
         }
 
         return `
@@ -454,13 +456,13 @@ function renderRoles() {
                 <div>
                     <div class="flex justify-between items-start mb-3">
                         <h4 class="text-lg font-black text-white">${role.name}</h4>
-                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs px-2.5 py-0.5 rounded-full font-mono font-bold">${permsCount} صلاحية افتراضية</span>
+                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs px-2.5 py-0.5 rounded-full font-mono font-bold">${permsCount} default perms</span>
                     </div>
-                    <p class="text-xs text-gray-400 leading-relaxed mb-6">${role.description || 'لا يوجد وصف لهذا الدور.'}</p>
+                    <p class="text-xs text-gray-400 leading-relaxed mb-6">${role.description || 'No description provided for this role.'}</p>
                 </div>
                 <div class="flex gap-2 justify-end border-t border-white/5 pt-4">
                     ${deleteBtn}
-                    <button onclick="openEditRoleModal('${role.id}')" class="text-purple-400 hover:text-purple-300 border border-purple-500/20 bg-purple-500/5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><i class="fas fa-edit"></i> تعديل الصلاحيات</button>
+                    <button onclick="openEditRoleModal('${role.id}')" class="text-purple-400 hover:text-purple-300 border border-purple-500/20 bg-purple-500/5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"><i class="fas fa-edit"></i> Edit Permissions</button>
                 </div>
             </div>
         `;
@@ -480,7 +482,7 @@ function renderPermissionsCatalog(category) {
     
     // Fetch static permissions for this category
     const catPerms = allPermissions.filter(p => p.category === category && !p.id.includes(':track'));
-    badge.innerText = `${catPerms.length} صلاحية`;
+    badge.innerText = `${catPerms.length} permissions`;
 
     listContainer.innerHTML = catPerms.map(p => `
         <div class="bg-black/40 border border-white/5 rounded-xl p-4 flex justify-between items-start">
@@ -488,7 +490,7 @@ function renderPermissionsCatalog(category) {
                 <span class="font-mono text-teal-400 text-xs font-bold bg-teal-500/5 px-2 py-0.5 rounded-md border border-teal-500/10">${p.id}</span>
                 <h4 class="text-sm font-bold text-white mt-2">${p.name}</h4>
             </div>
-            <p class="text-xs text-gray-400 text-left max-w-sm">${p.description || 'لا يوجد وصف تفصيلي.'}</p>
+            <p class="text-xs text-gray-400 text-right max-w-sm">${p.description || 'No detailed description.'}</p>
         </div>
     `).join('');
 
@@ -511,27 +513,27 @@ function renderGlobalTrackTree() {
         
         let phasesHTML = '';
         if (trackPhases.length === 0) {
-            phasesHTML = `<p class="text-xs text-gray-500 pr-6 py-2">لا توجد مراحل مسجلة في هذا المسار حالياً.</p>`;
+            phasesHTML = `<p class="text-xs text-gray-500 pl-6 py-2">No phases registered in this track yet.</p>`;
         } else {
             phasesHTML = trackPhases.map(phase => {
                 const phaseCourses = allCourses.filter(c => c.phase_id === phase.phase_id);
                 
                 let coursesHTML = '';
                 if (phaseCourses.length === 0) {
-                    coursesHTML = `<p class="text-xs text-gray-500 pr-8 py-2">لا توجد كورسات في هذه المرحلة.</p>`;
+                    coursesHTML = `<p class="text-xs text-gray-500 pl-8 py-2">No courses in this phase.</p>`;
                 } else {
                     coursesHTML = phaseCourses.map(course => {
                         return `
-                            <div class="tree-line pr-8 py-2">
+                            <div class="tree-line pl-8 py-2">
                                 <div class="flex items-center gap-2 mb-2">
                                     <i class="fas fa-book text-yellow-500/80 text-xs"></i>
                                     <span class="text-xs font-bold text-gray-300">${course.title}</span>
                                 </div>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 pr-6">
-                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-edit text-blue-400"></i> تعديل الكورس</span>
-                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-video-slash text-purple-400"></i> إضافة/تعديل فيديوهات</span>
-                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-clipboard-question text-emerald-400"></i> إدارة الكويزات</span>
-                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-laptop-code text-orange-400"></i> إدارة المشاريع</span>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 pl-6">
+                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-edit text-blue-400"></i> Edit Course</span>
+                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-video-slash text-purple-400"></i> Add/Edit Videos</span>
+                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-clipboard-question text-emerald-400"></i> Manage Quizzes</span>
+                                    <span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 rounded-md px-2 py-1 flex items-center gap-1.5"><i class="fas fa-laptop-code text-orange-400"></i> Manage Projects</span>
                                 </div>
                             </div>
                         `;
@@ -539,12 +541,12 @@ function renderGlobalTrackTree() {
                 }
 
                 return `
-                    <div class="tree-line pr-6 py-2">
+                    <div class="tree-line pl-6 py-2">
                         <div class="flex items-center gap-2 mb-2">
                             <i class="fas fa-folder text-purple-400/80 text-xs"></i>
                             <span class="text-xs font-bold text-gray-200">${phase.title}</span>
                         </div>
-                        <div class="border-r border-white/5 mr-2 pr-2">
+                        <div class="border-l border-white/5 ml-2 pl-2">
                             ${coursesHTML}
                         </div>
                     </div>
@@ -560,7 +562,7 @@ function renderGlobalTrackTree() {
                     </span>
                     <span class="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full font-mono">Dynamic Node</span>
                 </div>
-                <div class="border-r border-white/5 mr-2 pr-2">
+                <div class="border-l border-white/5 ml-2 pl-2">
                     ${phasesHTML}
                 </div>
             </div>
@@ -593,7 +595,7 @@ async function renderAuditLogs() {
         const logAdminSelect = document.getElementById('log-admin-filter');
         if (logAdminSelect && logAdminSelect.options.length <= 1) {
             const adminOptions = allAdmins.map(a => `<option value="${a.id}">${a.full_name || a.email}</option>`).join('');
-            logAdminSelect.innerHTML = '<option value="all">كل الأدمنز</option>' + adminOptions;
+            logAdminSelect.innerHTML = '<option value="all">All Admins</option>' + adminOptions;
             if (adminFilter !== 'all') logAdminSelect.value = adminFilter;
         }
 
@@ -601,15 +603,15 @@ async function renderAuditLogs() {
         if (logsCountEl) logsCountEl.innerText = logs.length;
 
         if (logs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">سجل العمليات فارغ حالياً.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">Audit log is currently empty.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = logs.map(log => {
-            const date = new Date(log.created_at).toLocaleString('ar-EG');
+            const date = new Date(log.created_at).toLocaleString('en-US');
             return `
                 <tr class="hover:bg-white/5 border-b border-white/5 transition-colors text-xs">
-                    <td class="p-4 font-bold text-white">${log.admin_name || 'أدمن غير معروف'}</td>
+                    <td class="p-4 font-bold text-white">${log.admin_name || 'Unknown Admin'}</td>
                     <td class="p-4"><span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-bold">${log.action}</span></td>
                     <td class="p-4 text-gray-300 font-bold">${log.target || '---'}</td>
                     <td class="p-4 text-gray-400 max-w-xs truncate" title="${log.details || ''}">${log.details || '---'}</td>
@@ -620,7 +622,7 @@ async function renderAuditLogs() {
 
     } catch (err) {
         console.error("Fetch Audit Logs Error:", err);
-        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">حدث خطأ أثناء تحميل سجل العمليات.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">An error occurred while loading the audit log.</td></tr>`;
     }
 }
 
@@ -629,7 +631,7 @@ async function renderAuditLogs() {
 // ==========================================
 window.openPermissionsDrawer = async (adminId) => {
     if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية إدارة وتخصيص الصلاحيات", "error");
+        showToast("You do not have permission to manage and customize permissions", "error");
         return;
     }
     currentSelectedAdminId = adminId;
@@ -637,17 +639,17 @@ window.openPermissionsDrawer = async (adminId) => {
     if (!admin) return;
 
     // Fill Drawer Profile Details
-    document.getElementById('drawer-admin-name').innerText = admin.full_name || 'بلا اسم';
+    document.getElementById('drawer-admin-name').innerText = admin.full_name || 'Unnamed';
     document.getElementById('drawer-admin-email').innerText = admin.email;
     document.getElementById('drawer-admin-role').innerText = admin.role;
     
-    const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+    const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
     const drawerAv = document.getElementById('drawer-avatar');
     if (drawerAv) {
         drawerAv.referrerPolicy = 'no-referrer';
         drawerAv.onerror = function() {
             this.onerror = null;
-            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
         };
         drawerAv.src = avatarUrl;
     }
@@ -692,11 +694,11 @@ window.openPermissionsDrawer = async (adminId) => {
 
         return `
             <div class="border border-white/10 rounded-xl bg-black/40 overflow-hidden">
-                <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 text-right font-bold text-sm text-gray-200 hover:bg-white/5 transition-all">
+                <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 text-left font-bold text-sm text-gray-200 hover:bg-white/5 transition-all">
                     <span>${cat}</span>
                     <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
                 </button>
-                <div class="accordion-content hidden border-t border-white/5 bg-[#141414] p-4 space-y-3 max-h-96 overflow-y-auto custom-scroll">
+                <div class="accordion-content hidden border-t border-white/5 bg-[#161616] p-4 space-y-3 max-h-96 overflow-y-auto custom-scroll">
                     ${insideContentHTML}
                 </div>
             </div>
@@ -711,7 +713,7 @@ window.openPermissionsDrawer = async (adminId) => {
     drawer.classList.remove('hidden');
     setTimeout(() => {
         overlay.classList.remove('opacity-0');
-        panel.classList.remove('translate-x-full');
+        panel.classList.remove('translate-x-full', '-translate-x-full');
     }, 50);
 };
 
@@ -752,12 +754,12 @@ function renderDrawerContentTree(activePerms) {
                         
                         // Course sub-permissions checklist
                         const subActions = [
-                            { sub: 'video:create', label: 'إضافة فيديو' },
-                            { sub: 'video:edit', label: 'تعديل فيديو' },
-                            { sub: 'video:delete', label: 'حذف فيديو' },
-                            { sub: 'quiz:edit', label: 'تعديل كويز' },
-                            { sub: 'quiz:delete', label: 'حذف كويز' },
-                            { sub: 'project:edit', label: 'تعديل مشروع' }
+                            { sub: 'video:create', label: 'Add Video' },
+                            { sub: 'video:edit', label: 'Edit Video' },
+                            { sub: 'video:delete', label: 'Delete Video' },
+                            { sub: 'quiz:edit', label: 'Edit Quiz' },
+                            { sub: 'quiz:delete', label: 'Delete Quiz' },
+                            { sub: 'project:edit', label: 'Edit Project' }
                         ];
 
                         const subHTML = subActions.map(act => {
@@ -771,12 +773,12 @@ function renderDrawerContentTree(activePerms) {
                         }).join('');
 
                         return `
-                            <div class="tree-line pr-8 py-2">
+                            <div class="tree-line pl-8 py-2">
                                 <label class="flex items-center gap-2 mb-2 cursor-pointer">
                                     <input type="checkbox" data-perm="content:track:${track.id}:course:${course.course_id}" ${courseChecked} onchange="toggleTreeChildren(this)" class="accent-teal-500 rounded w-4 h-4">
                                     <span class="text-xs font-bold text-gray-300">${course.title}</span>
                                 </label>
-                                <div class="grid grid-cols-2 gap-2 pr-6 border-r border-white/5">
+                                <div class="grid grid-cols-2 gap-2 pl-6 border-l border-white/5">
                                     ${subHTML}
                                 </div>
                             </div>
@@ -785,12 +787,12 @@ function renderDrawerContentTree(activePerms) {
                 }
 
                 return `
-                    <div class="tree-line pr-6 py-2">
+                    <div class="tree-line pl-6 py-2">
                         <label class="flex items-center gap-2 mb-1.5 cursor-pointer">
                             <input type="checkbox" data-perm="content:track:${track.id}:phase:${phase.phase_id}" ${phaseChecked} onchange="toggleTreeChildren(this)" class="accent-teal-500 rounded w-4 h-4">
                             <span class="text-xs font-bold text-gray-200">${phase.title}</span>
                         </label>
-                        <div class="border-r border-white/5 mr-2 pr-2">
+                        <div class="border-l border-white/5 ml-2 pl-2">
                             ${coursesHTML}
                         </div>
                     </div>
@@ -807,7 +809,7 @@ function renderDrawerContentTree(activePerms) {
                     </div>
                     <span class="text-[9px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full font-mono">Track</span>
                 </label>
-                <div class="border-r border-white/5 mr-2 pr-2">
+                <div class="border-l border-white/5 ml-2 pl-2">
                     ${phasesHTML}
                 </div>
             </div>
@@ -865,7 +867,7 @@ window.viewAdminDetails = (adminId) => {
     const admin = allAdmins.find(a => a.id === adminId);
     if (!admin) return;
 
-    document.getElementById('detail-name').innerText = admin.full_name || 'بلا اسم';
+    document.getElementById('detail-name').innerText = admin.full_name || 'Unnamed';
     document.getElementById('detail-email').innerText = admin.email;
     document.getElementById('detail-role').innerText = admin.role;
     document.getElementById('detail-university').innerText = admin.university || '---';
@@ -875,13 +877,13 @@ window.viewAdminDetails = (adminId) => {
     document.getElementById('detail-xp').innerText = admin.total_xp ?? '0';
     document.getElementById('detail-rank').innerText = admin.current_rank || 'Newbie';
     
-    const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+    const avatarUrl = admin.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
     const detailAv = document.getElementById('detail-avatar');
     if (detailAv) {
         detailAv.referrerPolicy = 'no-referrer';
         detailAv.onerror = function() {
             this.onerror = null;
-            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=006A67&color=fff&size=100`;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.full_name || 'Admin')}&background=222222&color=EFECE6&size=100`;
         };
         detailAv.src = avatarUrl;
     }
@@ -892,7 +894,7 @@ window.viewAdminDetails = (adminId) => {
 // Edit Admin Account (Modal)
 window.openEditAdminModal = (adminId) => {
     if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية تعديل بيانات الأدمن", "error");
+        showToast("You do not have permission to edit admin accounts", "error");
         return;
     }
     const admin = allAdmins.find(a => a.id === adminId);
@@ -910,7 +912,7 @@ window.openEditAdminModal = (adminId) => {
 // Edit Role Modal
 window.openEditRoleModal = (roleId) => {
     if (!hasPermission('settings:permissions') && !hasPermission('settings:edit') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية تعديل الأدوار", "error");
+        showToast("You do not have permission to edit roles", "error");
         return;
     }
     const role = allRoles.find(r => r.id === roleId);
@@ -920,7 +922,7 @@ window.openEditRoleModal = (roleId) => {
     document.getElementById('role-editor-name').value = role.name;
     document.getElementById('role-editor-name').disabled = true; // Protect system names
     document.getElementById('role-editor-desc').value = role.description || '';
-    document.getElementById('role-modal-title').innerHTML = `<i class="fas fa-shield-halved text-purple-400 mr-2"></i> تعديل صلاحيات دور (${role.name})`;
+    document.getElementById('role-modal-title').innerHTML = `<i class="fas fa-shield-halved text-purple-400 mr-2"></i> Edit Role Permissions (${role.name})`;
 
     // Check checklist of default permissions
     const checklist = document.getElementById('role-perms-checklist');
@@ -942,14 +944,14 @@ window.openEditRoleModal = (roleId) => {
 // Create Role Modal
 window.openCreateRoleModal = () => {
     if (!hasPermission('settings:permissions') && !hasPermission('settings:edit') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية إنشاء أدوار جديدة", "error");
+        showToast("You do not have permission to create new roles", "error");
         return;
     }
     document.getElementById('role-editor-id').value = '';
     document.getElementById('role-editor-name').value = '';
     document.getElementById('role-editor-name').disabled = false;
     document.getElementById('role-editor-desc').value = '';
-    document.getElementById('role-modal-title').innerHTML = `<i class="fas fa-plus text-purple-400 mr-2"></i> إنشاء دور جديد (Role)`;
+    document.getElementById('role-modal-title').innerHTML = `<i class="fas fa-plus text-purple-400 mr-2"></i> Create New Role`;
 
     const checklist = document.getElementById('role-perms-checklist');
     checklist.innerHTML = allPermissions.filter(p => !p.id.includes(':track')).map(p => {
@@ -972,13 +974,13 @@ window.openCreateRoleModal = () => {
 async function saveAdminPermissions() {
     if (!currentSelectedAdminId) return;
     if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية حفظ وتعديل الصلاحيات", "error");
+        showToast("You do not have permission to save and modify permissions", "error");
         return;
     }
     
     const btn = document.getElementById('btn-save-permissions');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
 
     try {
@@ -993,27 +995,27 @@ async function saveAdminPermissions() {
         if (dynamicPerms.length > 0) {
             // Build dynamic metadata objects
             const newPermRows = dynamicPerms.map(id => {
-                let name = 'مسار مخصص';
+                let name = 'Custom Track';
                 if (id.includes(':course:')) {
                     const cId = id.split(':course:')[1].split(':')[0];
                     const course = allCourses.find(c => c.course_id === cId);
                     const subAction = id.split(':course:')[1].split(':')[1] || '';
-                    name = `مسار: ${course ? course.title : cId} (${subAction || 'تعديل'})`;
+                    name = `Course: ${course ? course.title : cId} (${subAction || 'edit'})`;
                 } else if (id.includes(':phase:')) {
                     const pId = id.split(':phase:')[1];
                     const phase = allPhases.find(p => p.phase_id === pId);
-                    name = `مرحلة: ${phase ? phase.title : pId}`;
+                    name = `Phase: ${phase ? phase.title : pId}`;
                 } else {
                     const tId = id.split(':track:')[1];
                     const track = allTracks.find(t => t.id === tId);
-                    name = `مسار: ${track ? track.name : tId}`;
+                    name = `Track: ${track ? track.name : tId}`;
                 }
 
                 return {
                     id,
                     name,
                     category: 'Content',
-                    description: `صلاحية ديناميكية للمحتوى: ${name}`
+                    description: `Dynamic content permission: ${name}`
                 };
             });
 
@@ -1046,16 +1048,16 @@ async function saveAdminPermissions() {
             adminProfile.full_name || adminProfile.email,
             'Edit Admin Permissions',
             admin.full_name || admin.email,
-            `تعديل صلاحيات الأدمن. الصلاحيات الجديدة: ${selectedPermIds.length} صلاحية.`
+            `Updated admin permissions. Total selected: ${selectedPermIds.length} permissions.`
         );
 
-        showToast("تم تحديث الصلاحيات بنجاح", "success");
+        showToast("Permissions updated successfully", "success");
         closePermissionsDrawer();
         await loadAllData();
 
     } catch (err) {
         console.error("Save Permissions Error:", err);
-        showToast("فشل حفظ وتحديث الصلاحيات", "error");
+        showToast("Failed to save and update permissions", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -1066,7 +1068,7 @@ async function saveAdminPermissions() {
 async function handleEditAdminSubmit(e) {
     e.preventDefault();
     if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية تعديل بيانات الحسابات الإدارية", "error");
+        showToast("You do not have permission to edit admin account details", "error");
         return;
     }
     const adminId = document.getElementById('edit-admin-id').value;
@@ -1088,16 +1090,16 @@ async function handleEditAdminSubmit(e) {
             adminProfile.full_name || adminProfile.email,
             'Edit Admin Profile',
             name,
-            `تعديل البيانات الأساسية للأدمن. الدور: ${role}، الحالة: ${status}`
+            `Updated core admin profile. Role: ${role}, Status: ${status}`
         );
 
-        showToast("تم تعديل بيانات الأدمن بنجاح", "success");
+        showToast("Admin profile updated successfully", "success");
         closeModal('edit-admin-modal');
         await loadAllData();
 
     } catch (err) {
         console.error("Edit Admin Error:", err);
-        showToast("فشل تحديث بيانات الحساب", "error");
+        showToast("Failed to update account details", "error");
     }
 }
 
@@ -1107,7 +1109,7 @@ window.toggleAdminStatus = async (adminId, status) => {
     if (!admin) return;
 
     if (adminId === currentAdmin.id) {
-        showToast("لا يمكنك تعطيل حسابك الشخصي", "warning");
+        showToast("You cannot disable your own account", "warning");
         return;
     }
 
@@ -1120,7 +1122,7 @@ window.toggleAdminStatus = async (adminId, status) => {
         if (error) throw error;
 
         const actionText = status === 'active' ? 'Enable Admin' : 'Disable Admin';
-        const detailText = status === 'active' ? 'إعادة تفعيل وتنشيط الحساب' : 'تعطيل وتجميد الحساب الإداري';
+        const detailText = status === 'active' ? 'Reactivated admin account' : 'Disabled admin account';
 
         await logAdminAction(
             currentAdmin.id,
@@ -1130,12 +1132,12 @@ window.toggleAdminStatus = async (adminId, status) => {
             detailText
         );
 
-        showToast(`تم ${status === 'active' ? 'تفعيل' : 'تعطيل'} الحساب الإداري بنجاح`, "success");
+        showToast(`Admin account ${status === 'active' ? 'enabled' : 'disabled'} successfully`, "success");
         await loadAllData();
 
     } catch (err) {
         console.error("Toggle Admin Status Error:", err);
-        showToast("فشل تغيير حالة الحساب", "error");
+        showToast("Failed to update account status", "error");
     }
 };
 
@@ -1145,13 +1147,13 @@ window.deleteAdminAccount = async (adminId) => {
     if (!admin) return;
 
     if (adminId === currentAdmin.id) {
-        showToast("لا يمكنك حذف حسابك الشخصي", "warning");
+        showToast("You cannot delete your own account", "warning");
         return;
     }
 
     const confirmed = await window.showCustomConfirm(
-        "حذف حساب إداري",
-        `هل أنت متأكد من رغبتك في حذف الحساب الإداري للأدمن (${admin.full_name || admin.email}) نهائياً؟`,
+        "Delete Admin Account",
+        `Are you sure you want to permanently delete the admin account for (${admin.full_name || admin.email})?`,
         null,
         null,
         'danger'
@@ -1171,15 +1173,15 @@ window.deleteAdminAccount = async (adminId) => {
             adminProfile.full_name || adminProfile.email,
             'Delete Admin',
             admin.full_name || admin.email,
-            'حذف الملف الشخصي للأدمن من النظام بالكامل'
+            'Deleted admin profile from the system completely'
         );
 
-        showToast("تم حذف الحساب بنجاح", "success");
+        showToast("Account deleted successfully", "success");
         await loadAllData();
 
     } catch (err) {
         console.error("Delete Admin Error:", err);
-        showToast("حدث خطأ أثناء محاولة حذف الحساب", "error");
+        showToast("An error occurred while deleting the account", "error");
     }
 };
 
@@ -1187,7 +1189,7 @@ window.deleteAdminAccount = async (adminId) => {
 async function handleAddAdminSubmit(e) {
     e.preventDefault();
     if (!hasPermission('settings:admins') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية إضافة حسابات أدمن جديدة", "error");
+        showToast("You do not have permission to add new admin accounts", "error");
         return;
     }
     const name = document.getElementById('add-admin-name').value;
@@ -1212,9 +1214,6 @@ async function handleAddAdminSubmit(e) {
             if (error) throw error;
         } else {
             // Invite/Create profile. The user can register using this email.
-            // Since we can't create auth user from client without admin key, we insert a placeholder profile.
-            // When they sign up, their profile is matched or created.
-            // Insert profile with random uuid
             const randomId = crypto.randomUUID();
             const { error } = await supabase
                 .from('profiles')
@@ -1234,17 +1233,17 @@ async function handleAddAdminSubmit(e) {
             adminProfile.full_name || adminProfile.email,
             'Create Admin',
             name,
-            `تكليف بريد (${email}) بصلاحيات دور (${role})`
+            `Assigned email (${email}) to role (${role})`
         );
 
-        showToast("تم إضافة وتكليف الحساب الإداري بنجاح", "success");
+        showToast("Admin account added and assigned successfully", "success");
         closeModal('add-admin-modal');
         document.getElementById('add-admin-form').reset();
         await loadAllData();
 
     } catch (err) {
         console.error("Add Admin Error:", err);
-        showToast("فشل إضافة حساب الأدمن", "error");
+        showToast("Failed to add admin account", "error");
     }
 }
 
@@ -1252,7 +1251,7 @@ async function handleAddAdminSubmit(e) {
 async function handleRoleEditorSubmit(e) {
     e.preventDefault();
     if (!hasPermission('settings:permissions') && (adminProfile?.role || '').toLowerCase() !== 'owner') {
-        showToast("ليس لديك صلاحية إنشاء أو تعديل الأدوار", "error");
+        showToast("You do not have permission to create or edit roles", "error");
         return;
     }
     const roleId = document.getElementById('role-editor-id').value;
@@ -1307,16 +1306,16 @@ async function handleRoleEditorSubmit(e) {
             adminProfile.full_name || adminProfile.email,
             roleId ? 'Edit Role' : 'Create Role',
             name,
-            `تحديث إعدادات الدور. الصلاحيات المحددة: ${selectedPerms.length}`
+            `Updated role configuration. Selected permissions: ${selectedPerms.length}`
         );
 
-        showToast(`تم ${roleId ? 'تعديل' : 'إنشاء'} الدور بنجاح`, "success");
+        showToast(`Role ${roleId ? 'updated' : 'created'} successfully`, "success");
         closeModal('role-editor-modal');
         await loadAllData();
 
     } catch (err) {
         console.error("Save Role Error:", err);
-        showToast("حدث خطأ أثناء حفظ وتعديل صلاحيات الدور", "error");
+        showToast("An error occurred while saving role permissions", "error");
     }
 }
 
@@ -1326,8 +1325,8 @@ window.deleteRole = async (roleId) => {
     if (!role) return;
 
     const confirmed = await window.showCustomConfirm(
-        "حذف دور إداري",
-        `هل أنت متأكد من رغبتك في حذف دور (${role.name}) نهائياً من النظام؟`,
+        "Delete Admin Role",
+        `Are you sure you want to permanently delete the role (${role.name}) from the system?`,
         null,
         null,
         'danger'
@@ -1347,28 +1346,28 @@ window.deleteRole = async (roleId) => {
             adminProfile.full_name || adminProfile.email,
             'Delete Role',
             role.name,
-            `حذف قالب الدور (${role.name}) من قاعدة البيانات`
+            `Deleted role template (${role.name}) from database`
         );
 
-        showToast("تم حذف الدور بنجاح", "success");
+        showToast("Role deleted successfully", "success");
         await loadAllData();
 
     } catch (err) {
         console.error("Delete Role Error:", err);
-        showToast("فشل حذف الدور", "error");
+        showToast("Failed to delete role", "error");
     }
 };
 
 // Clear Audit Logs (Owner Only)
 async function clearAuditLogs() {
     if ((adminProfile.role || '').toLowerCase() !== 'owner') {
-        showToast("غير مصرح لك بمسح سجل العمليات", "error");
+        showToast("You are not authorized to clear the audit log", "error");
         return;
     }
 
     const confirmed = await window.showCustomConfirm(
-        "حذف سجل العمليات",
-        "هل أنت متأكد من حذف وسجل كافة العمليات التاريخية للمنصة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
+        "Clear Audit Logs",
+        "Are you sure you want to permanently delete all historical audit logs for the platform? This action cannot be undone.",
         null,
         null,
         'danger'
@@ -1383,12 +1382,12 @@ async function clearAuditLogs() {
 
         if (error) throw error;
 
-        showToast("تم إفراغ سجل العمليات بنجاح", "success");
+        showToast("Audit log cleared successfully", "success");
         await renderAuditLogs();
 
     } catch (err) {
         console.error("Clear Logs Error:", err);
-        showToast("فشل مسح سجل العمليات", "error");
+        showToast("Failed to clear audit log", "error");
     }
 }
 
@@ -1520,8 +1519,8 @@ function setupTabNavigation() {
             }
 
             // Save active tab state
-            localStorage.setItem('busla_admin_active_tab', targetId);
-            const savedSub = localStorage.getItem('busla_admin_active_subtab_' + targetId);
+            localStorage.setItem('zdc_admin_active_tab', targetId);
+            const savedSub = localStorage.getItem('zdc_admin_active_subtab_' + targetId) || localStorage.getItem('busla_admin_active_subtab_' + targetId);
             const newHash = savedSub ? '#' + targetId + '/' + savedSub : '#' + targetId;
             try { history.replaceState(null, '', newHash); } catch(e) {}
 
@@ -1536,7 +1535,7 @@ window.closeAdminSidebar = function() {
     const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
     const reopenBtn = document.getElementById('admin-sidebar-reopen-btn');
-    if (sidebar) sidebar.classList.add('translate-x-full');
+    if (sidebar) sidebar.classList.add('-translate-x-full');
     if (overlay) overlay.classList.add('hidden');
     if (window.innerWidth < 768 && reopenBtn) {
         reopenBtn.classList.add('hidden');
@@ -1550,12 +1549,12 @@ window.toggleAdminSidebar = function() {
     if (!sidebar) return;
 
     if (window.innerWidth < 768) {
-        sidebar.classList.toggle('translate-x-full');
+        sidebar.classList.toggle('-translate-x-full');
         if (overlay) overlay.classList.toggle('hidden');
         if (reopenBtn) reopenBtn.classList.add('hidden');
     } else {
         const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
-        localStorage.setItem('busla_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        localStorage.setItem('zdc_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
         if (reopenBtn) {
             reopenBtn.classList.toggle('hidden', !isCollapsed);
         }
@@ -1564,7 +1563,7 @@ window.toggleAdminSidebar = function() {
 };
 
 function initAdminSidebarState() {
-    const isCollapsed = localStorage.getItem('busla_admin_sidebar_collapsed') === 'true';
+    const isCollapsed = (localStorage.getItem('zdc_admin_sidebar_collapsed') ?? localStorage.getItem('busla_admin_sidebar_collapsed')) === 'true';
     const sidebar = document.getElementById('admin-sidebar');
     const reopenBtn = document.getElementById('admin-sidebar-reopen-btn');
     if (sidebar && window.innerWidth >= 768 && isCollapsed) {
@@ -1583,10 +1582,10 @@ function restoreAdminNavigation() {
         targetTab = parts[0] || 'dashboard';
         targetSubtab = parts[1] || null;
     } else {
-        const savedTab = localStorage.getItem('busla_admin_active_tab');
+        const savedTab = localStorage.getItem('zdc_admin_active_tab') || localStorage.getItem('busla_admin_active_tab');
         if (savedTab) {
             targetTab = savedTab;
-            targetSubtab = localStorage.getItem('busla_admin_active_subtab_' + savedTab) || null;
+            targetSubtab = localStorage.getItem('zdc_admin_active_subtab_' + savedTab) || localStorage.getItem('busla_admin_active_subtab_' + savedTab) || null;
         }
     }
 
@@ -1606,7 +1605,7 @@ function setupSubtabMemoryListeners() {
         btn.addEventListener('click', () => {
             const level = btn.getAttribute('data-level');
             if (level) {
-                localStorage.setItem('busla_admin_active_subtab_content-mgmt', level);
+                localStorage.setItem('zdc_admin_active_subtab_content-mgmt', level);
                 try { history.replaceState(null, '', '#content-mgmt/' + level); } catch(e) {}
             }
         });
@@ -1617,7 +1616,7 @@ function setupSubtabMemoryListeners() {
         btn.addEventListener('click', () => {
             const sub = btn.getAttribute('data-subtab');
             if (sub) {
-                localStorage.setItem('busla_admin_active_subtab_team-mgmt', sub);
+                localStorage.setItem('zdc_admin_active_subtab_team-mgmt', sub);
                 try { history.replaceState(null, '', '#team-mgmt/' + sub); } catch(e) {}
             }
         });
@@ -1628,7 +1627,7 @@ function setupSubtabMemoryListeners() {
         btn.addEventListener('click', () => {
             const tab = btn.getAttribute('data-tab');
             if (tab) {
-                localStorage.setItem('busla_admin_active_subtab_project-audit', tab);
+                localStorage.setItem('zdc_admin_active_subtab_project-audit', tab);
                 try { history.replaceState(null, '', '#project-audit/' + tab); } catch(e) {}
             }
         });
@@ -1639,7 +1638,7 @@ function setupSubtabMemoryListeners() {
         btn.addEventListener('click', () => {
             const sub = btn.getAttribute('data-subtab');
             if (sub) {
-                localStorage.setItem('busla_admin_active_subtab_users-mgmt', sub);
+                localStorage.setItem('zdc_admin_active_subtab_users-mgmt', sub);
                 try { history.replaceState(null, '', '#users-mgmt/' + sub); } catch(e) {}
             }
         });
@@ -1921,11 +1920,11 @@ function setupEventListeners() {
     document.querySelectorAll('.perm-group-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.perm-group-btn').forEach(b => {
-                b.classList.remove('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500');
+                b.classList.remove('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500');
                 b.classList.add('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
             });
             btn.classList.remove('text-gray-400', 'hover:bg-white/5', 'hover:text-white');
-            btn.classList.add('bg-white/5', 'text-teal-400', 'border-r-2', 'border-teal-500');
+            btn.classList.add('bg-white/5', 'text-teal-400', 'border-l-2', 'border-teal-500');
 
             const group = btn.getAttribute('data-group');
             renderPermissionsCatalog(group);
@@ -1935,8 +1934,8 @@ function setupEventListeners() {
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
         const confirmed = await window.showCustomConfirm(
-            "تسجيل الخروج",
-            "هل تريد تسجيل الخروج؟",
+            "Sign Out",
+            "Do you want to sign out?",
             null,
             null,
             'warning'
@@ -1998,10 +1997,10 @@ async function renderDashboardOverview() {
         const isMasterOrOwner = ['owner', 'master admin'].includes(roleLower);
 
         // 1. Welcome Message & Last Login (Desktop & Mobile)
-        const adminDisplayName = adminProfile?.full_name || adminProfile?.email || 'الأدمن';
+        const adminDisplayName = adminProfile?.full_name || adminProfile?.email || 'Admin';
         const formattedLastLogin = adminProfile?.last_login 
-            ? new Date(adminProfile.last_login).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })
-            : 'أول تسجيل دخول';
+            ? new Date(adminProfile.last_login).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+            : 'First Login';
 
         const welcomeNameEl = document.getElementById('dash-welcome-name');
         if (welcomeNameEl) welcomeNameEl.innerText = adminDisplayName;
@@ -2122,7 +2121,7 @@ async function renderDashboardOverview() {
 
             if (pendingReviewCount > 0 && hasPermission('audit_projects')) {
                 actionItems.push({
-                    text: `يوجد ${pendingReviewCount} مشروعاً بانتظار المراجعة والاعتماد النهائي.`,
+                    text: `${pendingReviewCount} project(s) awaiting final review and approval.`,
                     icon: 'fa-check-double',
                     color: 'text-yellow-500',
                     tab: 'project-audit',
@@ -2132,7 +2131,7 @@ async function renderDashboardOverview() {
 
             if (pendingTeamRequestsCount > 0 && hasPermission('manage_requests')) {
                 actionItems.push({
-                    text: `يوجد ${pendingTeamRequestsCount} طلبات إنشاء فرق بانتظار الموافقة والاعتماد.`,
+                    text: `${pendingTeamRequestsCount} team creation request(s) awaiting approval.`,
                     icon: 'fa-users-gear',
                     color: 'text-purple-400',
                     tab: 'team-mgmt',
@@ -2142,7 +2141,7 @@ async function renderDashboardOverview() {
 
             if (totalAppealsCount > 0 && hasPermission('audit_projects')) {
                 actionItems.push({
-                    text: `يوجد ${totalAppealsCount} اعتراضات (تظلمات) جديدة من الطلاب بحاجة للفحص.`,
+                    text: `${totalAppealsCount} new student grade appeal(s) require inspection.`,
                     icon: 'fa-triangle-exclamation',
                     color: 'text-red-400',
                     tab: 'project-audit',
@@ -2156,7 +2155,7 @@ async function renderDashboardOverview() {
                 allSubmissions.forEach(sub => {
                     if (sub.status === 'graded' || sub.status === 'approved') {
                         const graderId = sub.graded_by;
-                        const graderName = sub.graded_by_name || 'غير معروف';
+                        const graderName = sub.graded_by_name || 'Unknown';
                         const graderObj = allUsers.find(p => p.id === graderId);
                         const graderFullName = graderObj?.full_name || graderName;
                         
@@ -2208,7 +2207,7 @@ async function renderDashboardOverview() {
 
                     if (trustScore < 70) {
                         actionItems.push({
-                            text: `الليدر (${l.name}) لديه معدل تصحيح غير طبيعي أو نسبة تظلمات مرتفعة (معدل ثقة ${trustScore}%).`,
+                            text: `Leader (${l.name}) has an unusual grading rate or high appeal ratio (Trust Score: ${trustScore}%).`,
                             icon: 'fa-user-xmark',
                             color: 'text-red-500',
                             tab: 'project-audit',
@@ -2223,7 +2222,7 @@ async function renderDashboardOverview() {
                     const hasMaterials = allCourseMaterials.some(m => m.course_id === c.course_id);
                     if (!hasMaterials) {
                         actionItems.push({
-                            text: `الكورس (${c.title}) تم إنشاؤه ولا يحتوي على أي مواد دراسية حالياً.`,
+                            text: `Course (${c.title}) has been created with no learning materials attached yet.`,
                             icon: 'fa-book-open-reader',
                             color: 'text-orange-400',
                             tab: 'content-mgmt',
@@ -2234,7 +2233,7 @@ async function renderDashboardOverview() {
             }
 
             if (actionItems.length === 0) {
-                actionListEl.innerHTML = `<li class="py-3 text-center text-gray-500 text-xs flex items-center justify-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> لا توجد تنبيهات معلقة تتطلب إجراءً حالياً.</li>`;
+                actionListEl.innerHTML = `<li class="py-3 text-center text-gray-500 text-xs flex items-center justify-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> No pending alerts require action right now.</li>`;
             } else {
                 actionListEl.innerHTML = actionItems.map(item => `
                     <li onclick="window.navigateFromDashboard('${item.tab}', '${item.subtab}')" class="py-3 px-4 flex items-center justify-between hover:bg-white/5 border border-white/5 hover:border-white/10 rounded-xl cursor-pointer transition-all group">
@@ -2242,7 +2241,7 @@ async function renderDashboardOverview() {
                             <i class="fas ${item.icon} ${item.color} text-sm"></i>
                             <span class="text-xs text-gray-200 group-hover:text-white font-bold transition-all">${item.text}</span>
                         </div>
-                        <i class="fas fa-chevron-left text-[10px] text-gray-500 group-hover:translate-x-[-4px] transition-transform"></i>
+                        <i class="fas fa-chevron-right text-[10px] text-gray-500 group-hover:translate-x-1 transition-transform"></i>
                     </li>
                 `).join('');
             }
@@ -2306,7 +2305,7 @@ async function renderDashboardOverview() {
 
                 logs.forEach(log => {
                     activities.push({
-                        text: `${log.admin_name || 'أدمن'} : ${log.details || log.action}`,
+                        text: `${log.admin_name || 'Admin'} : ${log.details || log.action}`,
                         time: new Date(log.created_at),
                         icon: 'fa-user-shield',
                         color: 'text-teal-400 border-teal-500/20 bg-teal-500/5'
@@ -2316,10 +2315,10 @@ async function renderDashboardOverview() {
                 allSubmissions.forEach(sub => {
                     if (sub.submitted_at) {
                         const studentObj = allUsers.find(p => p.id === sub.user_id);
-                        const studentName = studentObj?.full_name || 'طالب';
-                        const projectObj = allCourseMaterials.find(m => m.ref_project_id === sub.project_id || m.content_id === sub.project_id) || { title: 'مشروع' };
+                        const studentName = studentObj?.full_name || 'Student';
+                        const projectObj = allCourseMaterials.find(m => m.ref_project_id === sub.project_id || m.content_id === sub.project_id) || { title: 'Project' };
                         activities.push({
-                            text: `سلم الطالب (${studentName}) المشروع (${projectObj.title || 'مشروع'}).`,
+                            text: `Student (${studentName}) submitted project (${projectObj.title || 'Project'}).`,
                             time: new Date(sub.submitted_at),
                             icon: 'fa-upload',
                             color: 'text-yellow-400 border-yellow-500/20 bg-yellow-500/5'
@@ -2327,11 +2326,11 @@ async function renderDashboardOverview() {
                     }
                     if (sub.graded_at && sub.status === 'graded') {
                         const graderObj = allUsers.find(p => p.id === sub.graded_by);
-                        const graderName = graderObj?.full_name || sub.graded_by_name || 'الليدر';
+                        const graderName = graderObj?.full_name || sub.graded_by_name || 'Leader';
                         const studentObj = allUsers.find(p => p.id === sub.user_id);
-                        const studentName = studentObj?.full_name || 'طالب';
+                        const studentName = studentObj?.full_name || 'Student';
                         activities.push({
-                            text: `قيّم الليدر (${graderName}) مشروع الطالب (${studentName}) بدرجة (${sub.grade}).`,
+                            text: `Leader (${graderName}) graded student (${studentName})'s project with score (${sub.grade}).`,
                             time: new Date(sub.graded_at),
                             icon: 'fa-star',
                             color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
@@ -2342,9 +2341,9 @@ async function renderDashboardOverview() {
                 allTeamRequests.forEach(req => {
                     if (req.reviewed_at && req.status === 'approved') {
                         const reviewerObj = allUsers.find(p => p.id === req.reviewed_by);
-                        const reviewerName = reviewerObj?.full_name || 'المشرف';
+                        const reviewerName = reviewerObj?.full_name || 'Supervisor';
                         activities.push({
-                            text: `وافق (${reviewerName}) على طلب إنشاء فريق (${req.team_name}).`,
+                            text: `(${reviewerName}) approved team creation request (${req.team_name}).`,
                             time: new Date(req.reviewed_at),
                             icon: 'fa-circle-check',
                             color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
@@ -2356,10 +2355,10 @@ async function renderDashboardOverview() {
                 const topActivities = activities.slice(0, 15);
 
                 if (topActivities.length === 0) {
-                    timelineEl.innerHTML = `<li class="text-center py-10 text-xs text-gray-500">لا يوجد عمليات حديثة مسجلة.</li>`;
+                    timelineEl.innerHTML = `<li class="text-center py-10 text-xs text-gray-500">No recent operations recorded.</li>`;
                 } else {
                     timelineEl.innerHTML = topActivities.map(act => {
-                        const dateStr = act.time.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        const dateStr = act.time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                         return `
                             <li class="relative pb-1">
                                 <div class="flex items-start gap-3">
@@ -2419,12 +2418,12 @@ async function renderDashboardOverview() {
                     .slice(0, 10);
 
                 if (students.length === 0) {
-                    topStudentsEl.innerHTML = `<p class="text-center py-10 text-xs text-gray-500">لا يوجد طلاب مسجلين.</p>`;
+                    topStudentsEl.innerHTML = `<p class="text-center py-10 text-xs text-gray-500">No students registered.</p>`;
                 } else {
                     topStudentsEl.innerHTML = students.map((s, idx) => {
-                        const photo = s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || 'Student')}&background=006A67&color=fff&size=100`;
+                        const photo = s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || 'Student')}&background=222222&color=EFECE6&size=100`;
                         const teamObj = allTeams.find(t => t.id === s.team_id);
-                        const teamName = teamObj ? teamObj.name : 'بدون فريق';
+                        const teamName = teamObj ? teamObj.name : 'No Team';
                         const hours = ((s.total_xp || 0) / 120).toFixed(1);
 
                         let rankBadge = `<span class="w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-mono text-gray-400">${idx+1}</span>`;
@@ -2438,13 +2437,13 @@ async function renderDashboardOverview() {
                                     ${rankBadge}
                                     <img src="${photo}" class="w-8 h-8 rounded-full border border-white/10 object-cover bg-black">
                                     <div>
-                                        <h4 class="text-xs font-bold text-white">${s.full_name || 'طالب مجهول'}</h4>
-                                        <span class="text-[9px] text-gray-400">فريق: ${teamName}</span>
+                                        <h4 class="text-xs font-bold text-white">${s.full_name || 'Unknown Student'}</h4>
+                                        <span class="text-[9px] text-gray-400">Team: ${teamName}</span>
                                     </div>
                                 </div>
-                                <div class="text-left font-mono font-bold">
+                                <div class="text-right font-mono font-bold">
                                     <span class="text-xs text-yellow-500 block">${(s.total_xp || 0).toLocaleString()} XP</span>
-                                    <span class="text-[9px] text-gray-500">${hours} ساعة</span>
+                                    <span class="text-[9px] text-gray-500">${hours} hrs</span>
                                 </div>
                             </div>
                         `;
@@ -2460,7 +2459,7 @@ async function renderDashboardOverview() {
                     .slice(0, 10);
 
                 if (sortedTeams.length === 0) {
-                    topTeamsTbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">لا تتوفر فرق مسجلة.</td></tr>`;
+                    topTeamsTbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">No teams registered.</td></tr>`;
                 } else {
                     topTeamsTbody.innerHTML = sortedTeams.map(t => {
                         const membersCount = allUsers.filter(u => u.team_id === t.id).length;
@@ -2468,9 +2467,9 @@ async function renderDashboardOverview() {
 
                         return `
                             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
-                                <td class="py-2.5 font-bold text-white text-right">${t.name}</td>
+                                <td class="py-2.5 font-bold text-white text-left">${t.name}</td>
                                 <td class="py-2.5 text-center font-mono font-bold text-yellow-500">${t.total_score || 0}</td>
-                                <td class="py-2.5 text-center text-gray-300 font-mono">${membersCount} أعضاء</td>
+                                <td class="py-2.5 text-center text-gray-300 font-mono">${membersCount} members</td>
                                 <td class="py-2.5 text-center">
                                     <span class="font-mono font-bold text-teal-400">${avgProgress}%</span>
                                 </td>
@@ -2525,22 +2524,22 @@ async function renderDashboardOverview() {
                     .slice(0, 5);
 
                 if (activeCourses.length === 0) {
-                    topCoursesTbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">لا تتوفر كورسات مسجلة.</td></tr>`;
+                    topCoursesTbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">No courses registered.</td></tr>`;
                 } else {
                     topCoursesTbody.innerHTML = activeCourses.map(c => `
                         <tr class="hover:bg-white/5 border-b border-white/5 transition-colors text-xs">
-                            <td class="py-3 font-bold text-white text-right">${c.title}</td>
+                            <td class="py-3 font-bold text-white text-left">${c.title}</td>
                             <td class="py-3 text-center font-mono font-bold text-gray-300">${c.registered}</td>
                             <td class="py-3 text-center font-mono font-bold text-emerald-400">${c.completed}</td>
                             <td class="py-3 text-center font-mono font-bold text-teal-400">${c.avgProgress}%</td>
-                            <td class="py-3 text-center font-mono font-bold text-white">${c.views} مشاهدة</td>
+                            <td class="py-3 text-center font-mono font-bold text-white">${c.views} views</td>
                         </tr>
                     `).join('');
                 }
             }
         }
 
-        // Render My Permissions checklist checklist
+        // Render My Permissions checklist
         if (isMasterOrOwner) {
             const checkPerm = (permId, elId) => {
                 const el = document.getElementById(elId);
@@ -2568,13 +2567,13 @@ async function renderDashboardOverview() {
             if (hasPermission('audit_projects')) {
                 if (pendingReviewCount > 0) {
                     tasks.push({
-                        text: `${pendingReviewCount} مشروعاً بانتظار المراجعة والاعتماد.`,
+                        text: `${pendingReviewCount} project(s) awaiting review and approval.`,
                         action: "window.navigateFromDashboard('project-audit', 'pending-review')"
                     });
                 }
                 if (totalAppealsCount > 0) {
                     tasks.push({
-                        text: `${totalAppealsCount} اعتراضات (تظلمات) جديدة بحاجة لفصل وحل.`,
+                        text: `${totalAppealsCount} new grade appeal(s) require resolution.`,
                         action: "window.navigateFromDashboard('project-audit', 'appeals')"
                     });
                 }
@@ -2583,7 +2582,7 @@ async function renderDashboardOverview() {
             if (hasPermission('manage_requests')) {
                 if (pendingTeamRequestsCount > 0) {
                     tasks.push({
-                        text: `${pendingTeamRequestsCount} طلبات إنشاء فرق بحاجة للاعتماد أو الرفض.`,
+                        text: `${pendingTeamRequestsCount} team creation request(s) require approval or rejection.`,
                         action: "window.navigateFromDashboard('team-mgmt', 'team-requests')"
                     });
                 }
@@ -2593,19 +2592,19 @@ async function renderDashboardOverview() {
                 const inactiveCoursesCount = allCourses.filter(c => !c.is_active).length;
                 if (inactiveCoursesCount > 0) {
                     tasks.push({
-                        text: `يوجد ${inactiveCoursesCount} كورسات معطلة بحاجة للمراجعة والتفعيل.`,
+                        text: `${inactiveCoursesCount} inactive course(s) require review and activation.`,
                         action: "window.navigateFromDashboard('content-mgmt', 'courses')"
                     });
                 }
             }
 
             if (tasks.length === 0) {
-                myTasksListEl.innerHTML = `<li class="text-center py-8 text-xs text-gray-500 flex items-center justify-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> لا توجد مهام معلقة خاصة بك حالياً.</li>`;
+                myTasksListEl.innerHTML = `<li class="text-center py-8 text-xs text-gray-500 flex items-center justify-center gap-2"><i class="fas fa-check-circle text-emerald-400"></i> You have no pending tasks right now.</li>`;
             } else {
                 myTasksListEl.innerHTML = tasks.map(task => `
                     <li onclick="${task.action}" class="flex items-center justify-between p-2.5 bg-black/35 hover:bg-white/5 border border-white/5 hover:border-teal-500/20 rounded-xl cursor-pointer transition-all">
                         <span class="text-xs text-gray-300 font-bold">${task.text}</span>
-                        <i class="fas fa-arrow-left text-[10px] text-teal-400 animate-pulse"></i>
+                        <i class="fas fa-arrow-right text-[10px] text-teal-400"></i>
                     </li>
                 `).join('');
             }
@@ -2673,7 +2672,7 @@ function renderActivityChart() {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dayStr = d.toISOString().split('T')[0];
-        const label = d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+        const label = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
         
         labels.push(label);
         newStudentsData.push(studentsMap[dayStr] || 0);
@@ -2688,37 +2687,37 @@ function renderActivityChart() {
             labels: labels,
             datasets: [
                 {
-                    label: 'الطلاب الجدد',
+                    label: 'New Students',
                     data: newStudentsData,
-                    borderColor: '#006A67',
-                    backgroundColor: 'rgba(0, 106, 103, 0.05)',
+                    borderColor: '#FFFFFF',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
                     borderWidth: 2.5,
                     tension: 0.3,
                     fill: true
                 },
                 {
-                    label: 'المشاريع المسلمة',
+                    label: 'Submitted Projects',
                     data: projectsData,
-                    borderColor: '#FFC107',
-                    backgroundColor: 'rgba(255, 193, 7, 0.05)',
+                    borderColor: '#EFECE6',
+                    backgroundColor: 'rgba(239, 236, 230, 0.06)',
                     borderWidth: 2.5,
                     tension: 0.3,
                     fill: true
                 },
                 {
-                    label: 'الكويزات المحلولة',
+                    label: 'Completed Quizzes',
                     data: quizzesData,
-                    borderColor: '#A855F7',
-                    backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                    borderColor: '#8E8E8E',
+                    backgroundColor: 'rgba(142, 142, 142, 0.05)',
                     borderWidth: 2.5,
                     tension: 0.3,
                     fill: true
                 },
                 {
-                    label: 'ساعات التعلم',
+                    label: 'Learning Hours',
                     data: learningHoursData,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                    borderColor: '#5A5A5A',
+                    backgroundColor: 'rgba(90, 90, 90, 0.05)',
                     borderWidth: 2.5,
                     tension: 0.3,
                     fill: true
@@ -2732,16 +2731,16 @@ function renderActivityChart() {
                 y: {
                     beginAtZero: true,
                     grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                    ticks: { color: '#888', font: { family: 'Cairo' } }
+                    ticks: { color: '#8E8E8E', font: { family: 'Plus Jakarta Sans' } }
                 },
                 x: {
                     grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                    ticks: { color: '#888', font: { family: 'Cairo' }, maxTicksLimit: 7 }
+                    ticks: { color: '#8E8E8E', font: { family: 'Plus Jakarta Sans' }, maxTicksLimit: 7 }
                 }
             },
             plugins: {
                 legend: {
-                    labels: { color: '#fff', font: { family: 'Cairo', size: 10 } },
+                    labels: { color: '#EFECE6', font: { family: 'Plus Jakarta Sans', size: 10 } },
                     position: 'top'
                 }
             }
@@ -2761,13 +2760,13 @@ function renderDistributionChart() {
     const grouping = {};
 
     students.forEach(s => {
-        let key = 'غير محدد';
+        let key = 'Unspecified';
         if (currentDistChartType === 'uni') {
-            key = s.university || 'غير محدد';
+            key = s.university || 'Unspecified';
         } else if (currentDistChartType === 'gov') {
-            key = s.governorate || 'غير محدد';
+            key = s.governorate || 'Unspecified';
         } else if (currentDistChartType === 'track') {
-            key = s.track || 'غير محدد';
+            key = s.track || 'Unspecified';
         }
         grouping[key] = (grouping[key] || 0) + 1;
     });
@@ -2787,11 +2786,11 @@ function renderDistributionChart() {
     });
 
     if (otherSum > 0) {
-        labels.push('أخرى');
+        labels.push('Other');
         data.push(otherSum);
     }
 
-    const colors = ['#006A67', '#009F9D', '#FFC107', '#A855F7', '#3B82F6', '#64748B'];
+    const colors = ['#FFFFFF', '#EFECE6', '#D4CFC6', '#8E8E8E', '#5A5A5A', '#2E2E2E'];
 
     distributionChartInst = new Chart(ctx, {
         type: 'doughnut',
@@ -2801,7 +2800,7 @@ function renderDistributionChart() {
                 data: data,
                 backgroundColor: colors.slice(0, labels.length),
                 borderWidth: 1,
-                borderColor: '#111'
+                borderColor: '#161616'
             }]
         },
         options: {
@@ -2810,7 +2809,7 @@ function renderDistributionChart() {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#fff', font: { family: 'Cairo', size: 10 } }
+                    labels: { color: '#EFECE6', font: { family: 'Plus Jakarta Sans', size: 10 } }
                 }
             }
         }
@@ -2943,11 +2942,11 @@ window.submitGlobalNotification = async (e) => {
     const targetType = document.getElementById('global-notif-target-type').value;
 
     if (targetType === 'all' && !hasPermission('notifications:all') && !isOwner) {
-        showToast("ليس لديك صلاحية إرسال إشعار عام للجميع", "error");
+        showToast("You do not have permission to send a global notification to everyone", "error");
         return;
     }
     if (targetType === 'team' && !hasPermission('notifications:team') && !isOwner) {
-        showToast("ليس لديك صلاحية إرسال إشعار لفريق", "error");
+        showToast("You do not have permission to send a notification to a team", "error");
         return;
     }
     if (targetType === 'user') {
@@ -2955,16 +2954,16 @@ window.submitGlobalNotification = async (e) => {
         const targetUser = (allUsers || []).find(u => u.id === uid);
         const isLeader = targetUser && (String(targetUser.role).toLowerCase() === 'leader');
         if (isLeader && !hasPermission('notifications:leader') && !isOwner) {
-            showToast("ليس لديك صلاحية إرسال إشعار لليدر", "error");
+            showToast("You do not have permission to send a notification to a leader", "error");
             return;
         }
         if (!isLeader && !hasPermission('notifications:student') && !hasPermission('users:notify') && !isOwner) {
-            showToast("ليس لديك صلاحية إرسال إشعار لطالب", "error");
+            showToast("You do not have permission to send a notification to a student", "error");
             return;
         }
     }
 
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
     submitBtn.disabled = true;
 
     try {
@@ -2992,12 +2991,12 @@ window.submitGlobalNotification = async (e) => {
 
         if (error) throw error;
 
-        showToast("تم إرسال الإشعار بنجاح!", "success");
+        showToast("Notification sent successfully!", "success");
         document.getElementById('global-send-notification-modal').classList.add('hidden');
         form.reset();
     } catch (err) {
         console.error("Global Send Notification Error:", err);
-        showToast("فشل إرسال الإشعار: " + err.message, "error");
+        showToast("Failed to send notification: " + err.message, "error");
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -3010,7 +3009,7 @@ window.submitGlobalNotification = async (e) => {
 window.exportToCSV = function(filename, headers, rows) {
     const isOwner = (adminProfile?.role || '').toLowerCase() === 'owner';
     if (!hasPermission('reports:export:excel') && !hasPermission('dashboard:export') && !isOwner) {
-        showToast("ليس لديك صلاحية تصدير البيانات (Excel/CSV)", "error");
+        showToast("You do not have permission to export data (Excel/CSV)", "error");
         return;
     }
 
@@ -3028,7 +3027,7 @@ window.exportToCSV = function(filename, headers, rows) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast("تم تصدير البيانات بنجاح", "success");
+    showToast("Data exported successfully", "success");
 };
 
 // ==========================================
@@ -3037,12 +3036,12 @@ window.exportToCSV = function(filename, headers, rows) {
 window.triggerDataBackup = async function() {
     const isOwner = (adminProfile?.role || '').toLowerCase() === 'owner';
     if (!hasPermission('settings:backup') && !hasPermission('manage_settings') && !isOwner) {
-        showToast("ليس لديك صلاحية إنشاء وتصدير النسخ الاحتياطية", "error");
+        showToast("You do not have permission to create and export backups", "error");
         return;
     }
 
     try {
-        showToast("جاري جمع بيانات المنصة وتحضير النسخة الاحتياطية...", "info");
+        showToast("Gathering platform data and preparing system backup...", "info");
         const [tracksRes, phasesRes, coursesRes, rolesRes] = await Promise.all([
             supabase.from('tracks').select('*'),
             supabase.from('phases').select('*'),
@@ -3052,8 +3051,8 @@ window.triggerDataBackup = async function() {
 
         const backupData = {
             export_date: new Date().toISOString(),
-            version: '2.0',
-            system: 'Busla LMS Platform',
+            version: '3.0',
+            system: 'ZDC (Zagazig Digital Community) LMS Platform',
             tracks: tracksRes.data || [],
             phases: phasesRes.data || [],
             courses: coursesRes.data || [],
@@ -3065,16 +3064,16 @@ window.triggerDataBackup = async function() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `busla_system_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `zdc_system_backup_${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        await logAdminAction('settings:backup', 'Platform Backup', 'تصدير نسخة احتياطية من بيانات المنصة');
-        showToast("تم تصدير النسخة الاحتياطية بنجاح!", "success");
+        await logAdminAction('settings:backup', 'Platform Backup', 'Exported system backup of platform data');
+        showToast("Backup exported successfully!", "success");
     } catch (err) {
         console.error("Backup Export Error:", err);
-        showToast("فشل إنشاء النسخة الاحتياطية: " + err.message, "error");
+        showToast("Failed to create backup: " + err.message, "error");
     }
 };

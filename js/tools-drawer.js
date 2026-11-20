@@ -88,7 +88,7 @@
                 border-radius: 10px;
             }
             .custom-scroll::-webkit-scrollbar-thumb:hover {
-                background: #00dec8;
+                background: #EFECE6;
             }
             
             /* Active tab indicator styles */
@@ -103,12 +103,12 @@
                 left: 0;
                 width: 0;
                 height: 2.5px;
-                background: #00dec8;
-                box-shadow: 0 0 10px rgba(0, 222, 200, 0.5);
+                background: #EFECE6;
+                box-shadow: 0 0 10px rgba(239, 236, 230, 0.35);
                 transition: width 0.3s ease;
             }
             .tools-tab-btn.active {
-                color: #00dec8 !important;
+                color: #EFECE6 !important;
             }
             .tools-tab-btn.active::after {
                 width: 100%;

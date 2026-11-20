@@ -18,24 +18,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        body { background-color: #000; color: #fff; overflow-x: hidden; scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: #0D0D0D; color: #EFECE6; overflow-x: hidden; scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
         h1, h2, h3 { font-family: 'Outfit', sans-serif; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #006A67; border-radius: 10px; }
-        .glass-card { background: rgba(10, 10, 10, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-        .neon-text { text-shadow: 0 0 15px rgba(0, 222, 200, 0.5); }
-        .neon-border { box-shadow: 0 0 20px rgba(0, 106, 103, 0.2); }
-        #reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: #00dec8; z-index: 9999; transition: width 0.1s ease; box-shadow: 0 0 10px #00dec8; }
+        ::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 10px; }
+        .glass-card { background: rgba(22, 22, 22, 0.85); backdrop-filter: blur(16px); border: 1px solid #2E2E2E; }
+        .neon-text { text-shadow: none; }
+        .neon-border { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); }
+        #reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: #EFECE6; z-index: 9999; transition: width 0.1s ease; box-shadow: 0 0 10px rgba(239, 236, 230, 0.4); }
         .spy-link { position: relative; transition: all 0.3s ease; border-left-width: 2px; border-left-color: transparent; }
-        .spy-link.active { color: #00dec8; font-weight: 700; border-left-color: #00dec8; background: linear-gradient(to right, rgba(0,106,103,0.12), transparent); }
+        .spy-link.active { color: #EFECE6; font-weight: 700; border-left-color: #EFECE6; background: linear-gradient(to right, rgba(239, 236, 230, 0.1), transparent); }
         .policy-section { scroll-margin-top: 120px; opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
         .policy-section.is-visible { opacity: 1; transform: translateY(0); }
         #particles-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-        .particle { position: absolute; background: #00dec8; border-radius: 50%; opacity: 0; box-shadow: 0 0 15px #00dec8; animation: floatUp linear infinite; }
+        .particle { position: absolute; background: #EFECE6; border-radius: 50%; opacity: 0; box-shadow: 0 0 15px rgba(239, 236, 230, 0.4); animation: floatUp linear infinite; }
         @keyframes floatUp {
             0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
-            20% { opacity: 0.3; }
-            80% { opacity: 0.3; }
+            20% { opacity: 0.25; }
+            80% { opacity: 0.25; }
             100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
         }
     </style>

@@ -94,8 +94,19 @@ window.initProjectAudit = async () => {
     // Populate filter university dropdown with defaults
     const uniSelect = document.getElementById('audit-filter-uni');
     if (uniSelect && uniSelect.options.length <= 1) {
-        const universities = ["جامعة القاهرة", "جامعة عين شمس", "جامعة حلوان", "جامعة المنصورة", "جامعة الإسكندرية", "جامعة أسيوط", "جامعة طنطا", "جامعة الزقازيق", "جامعة بنها", "جامعة المنوفية"];
-        uniSelect.innerHTML = '<option value="all">الجامعة: الكل</option>' + 
+        const universities = [
+            "Cairo University",
+            "Ain Shams University",
+            "Helwan University",
+            "Mansoura University",
+            "Alexandria University",
+            "Assiut University",
+            "Tanta University",
+            "Zagazig University",
+            "Benha University",
+            "Menoufia University"
+        ];
+        uniSelect.innerHTML = '<option value="all">University: All</option>' + 
             universities.map(u => `<option value="${u}">${u}</option>`).join('');
     }
     
@@ -166,7 +177,7 @@ window.fetchAuditDashboardData = async () => {
 
     } catch (err) {
         console.error("Fetch Audit Dashboard Data Error:", err);
-        window.showToast("حدث خطأ أثناء تحميل بيانات الإشراف والمراجعة", "error");
+        window.showToast("An error occurred while loading audit & review data.", "error");
     }
 };
 
@@ -299,9 +310,9 @@ function updateStatsBoard() {
         });
         const avgHours = totalMs / (1000 * 60 * 60 * gradedSubs.length);
         if (avgHours < 24) {
-            document.getElementById('stat-avg-grading-time').innerText = `${Math.round(avgHours)} ساعة`;
+            document.getElementById('stat-avg-grading-time').innerText = `${Math.round(avgHours)} hrs`;
         } else {
-            document.getElementById('stat-avg-grading-time').innerText = `${(avgHours / 24).toFixed(1)} يوم`;
+            document.getElementById('stat-avg-grading-time').innerText = `${(avgHours / 24).toFixed(1)} days`;
         }
     } else {
         document.getElementById('stat-avg-grading-time').innerText = '--';
@@ -330,42 +341,42 @@ function populateFilters() {
     // 1. Teams
     const teamSelect = document.getElementById('audit-filter-team');
     if (teamSelect) {
-        teamSelect.innerHTML = '<option value="all">الفريق: الكل</option>' +
+        teamSelect.innerHTML = '<option value="all">Team: All</option>' +
             teamsList.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     }
 
     // 2. Leaders
     const leaderSelect = document.getElementById('audit-filter-leader');
     if (leaderSelect) {
-        leaderSelect.innerHTML = '<option value="all">الليدر: الكل</option>' +
+        leaderSelect.innerHTML = '<option value="all">Leader: All</option>' +
             leadersList.map(l => `<option value="${l.id}">${l.full_name || l.email}</option>`).join('');
     }
 
     // 3. Courses
     const courseSelect = document.getElementById('audit-filter-course');
     if (courseSelect) {
-        courseSelect.innerHTML = '<option value="all">الكورس: الكل</option>' +
+        courseSelect.innerHTML = '<option value="all">Course: All</option>' +
             coursesList.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
     }
 
     // 4. Phases
     const phaseSelect = document.getElementById('audit-filter-phase');
     if (phaseSelect) {
-        phaseSelect.innerHTML = '<option value="all">المرحلة: الكل</option>' +
+        phaseSelect.innerHTML = '<option value="all">Phase: All</option>' +
             phasesList.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
     }
 
     // 5. Projects
     const projectSelect = document.getElementById('audit-filter-project');
     if (projectSelect) {
-        projectSelect.innerHTML = '<option value="all">المشروع: الكل</option>' +
+        projectSelect.innerHTML = '<option value="all">Project: All</option>' +
             projectsList.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
     }
 
     // 6. Tracks
     const trackSelect = document.getElementById('audit-filter-track');
     if (trackSelect) {
-        trackSelect.innerHTML = '<option value="all">المسار: الكل</option>' +
+        trackSelect.innerHTML = '<option value="all">Track: All</option>' +
             tracksList.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
     }
 }
@@ -472,22 +483,22 @@ function renderPendingReviewTable(data) {
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">لا توجد مشاريع معلقة بانتظار المراجعة.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">No pending projects awaiting review.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = data.map(sub => {
-        const studentName = sub.user?.full_name || 'طالب غير معروف';
-        const avatar = sub.user?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff';
-        const projectTitle = sub.project?.title || 'مشروع بدون عنوان';
+        const studentName = sub.user?.full_name || 'Unknown Student';
+        const avatar = sub.user?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=222222&color=EFECE6';
+        const projectTitle = sub.project?.title || 'Untitled Project';
         const teamObj = teamsList.find(t => t.id === sub.user?.team_id);
-        const teamName = teamObj?.name || 'بدون فريق';
+        const teamName = teamObj?.name || 'No Team';
         
         // Find leader of the team
         const leaderObj = leadersList.find(l => l.id === teamObj?.leader_id);
-        const leaderName = leaderObj?.full_name || 'غير محدد';
+        const leaderName = leaderObj?.full_name || 'Unspecified';
         
-        const dateStr = new Date(sub.submitted_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const dateStr = new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         
         // Time elapsed since submission
         const daysElapsed = Math.floor((new Date().getTime() - new Date(sub.submitted_at).getTime()) / (1000 * 60 * 60 * 24));
@@ -495,10 +506,10 @@ function renderPendingReviewTable(data) {
         let priorityBadge = '';
         
         if (daysElapsed === 0) {
-            timeElapsedText = 'اليوم';
+            timeElapsedText = 'Today';
             priorityBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Normal</span>';
         } else {
-            timeElapsedText = `منذ ${daysElapsed} يوم`;
+            timeElapsedText = `${daysElapsed}d ago`;
             if (daysElapsed >= 3) {
                 priorityBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">High</span>';
             } else {
@@ -509,7 +520,7 @@ function renderPendingReviewTable(data) {
         return `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
+                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/zdc-icon-192.png'">
                     <div>
                         <div class="font-bold text-white text-sm">${studentName}</div>
                         <div class="text-[10px] text-gray-500">${sub.user?.university || ''}</div>
@@ -525,12 +536,12 @@ function renderPendingReviewTable(data) {
                 <td class="p-4 text-center text-xs text-gray-300">${timeElapsedText}</td>
                 <td class="p-4 text-center">${priorityBadge}</td>
                 <td class="p-4 text-center">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ المعلق</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ Pending</span>
                 </td>
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="window.openProjectDetailsDrawer('${sub.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="فتح المشروع">
-                            فتح التسليم
+                        <button onclick="window.openProjectDetailsDrawer('${sub.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="Open Project">
+                            Open Submission
                         </button>
                     </div>
                 </td>
@@ -545,47 +556,47 @@ function renderLeaderReviewsTable(data) {
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">لا توجد مراجعات مصححة مطابقة.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">No matching graded reviews found.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = data.map(sub => {
-        const studentName = sub.user?.full_name || 'طالب غير معروف';
-        const avatar = sub.user?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=006A67&color=fff';
-        const projectTitle = sub.project?.title || 'مشروع بدون عنوان';
+        const studentName = sub.user?.full_name || 'Unknown Student';
+        const avatar = sub.user?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=222222&color=EFECE6';
+        const projectTitle = sub.project?.title || 'Untitled Project';
         const teamObj = teamsList.find(t => t.id === sub.user?.team_id);
-        const teamName = teamObj?.name || 'بدون فريق';
+        const teamName = teamObj?.name || 'No Team';
         
-        const graderName = sub.grader?.full_name || sub.graded_by_name || 'ليدر غير معروف';
-        const gradingDate = sub.graded_at ? new Date(sub.graded_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '---';
+        const graderName = sub.grader?.full_name || sub.graded_by_name || 'Unknown Leader';
+        const gradingDate = sub.graded_at ? new Date(sub.graded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '---';
 
         // Calculation of grading duration
         let durationText = '---';
         if (sub.graded_at && sub.submitted_at) {
             const minutes = Math.floor((new Date(sub.graded_at).getTime() - new Date(sub.submitted_at).getTime()) / (1000 * 60));
             if (minutes < 60) {
-                durationText = `${minutes} دقيقة`;
+                durationText = `${minutes} mins`;
             } else if (minutes < 24 * 60) {
-                durationText = `${Math.floor(minutes / 60)} ساعة`;
+                durationText = `${Math.floor(minutes / 60)} hrs`;
             } else {
-                durationText = `${Math.floor(minutes / (24 * 60))} يوم`;
+                durationText = `${Math.floor(minutes / (24 * 60))} days`;
             }
         }
 
         // Review status badge
         let statusBadge = '';
         if (sub.status === 'approved') {
-            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ معتمد</span>';
+            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ Approved</span>';
         } else if (sub.status === 'rejected') {
-            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">❌ مرفوض</span>';
+            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">❌ Rejected</span>';
         } else {
-            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ بانتظار المراجعة</span>';
+            statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ Pending Review</span>';
         }
 
         return `
             <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="p-4 flex items-center gap-3">
-                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
+                    <img src="${avatar}" class="w-9 h-9 rounded-full object-cover border border-white/10" onerror="this.onerror=null; this.src='../../assets/icons/zdc-icon-192.png'">
                     <div>
                         <div class="font-bold text-white text-sm">${studentName}</div>
                         <div class="text-[10px] text-gray-500">${sub.user?.university || ''}</div>
@@ -599,8 +610,8 @@ function renderLeaderReviewsTable(data) {
                 <td class="p-4 text-center text-xs text-gray-300 font-mono">${durationText}</td>
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center">
-                    <button onclick="window.openProjectDetailsDrawer('${sub.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="مراجعة التقييم">
-                        مراجعة
+                    <button onclick="window.openProjectDetailsDrawer('${sub.id}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="Review Evaluation">
+                        Review
                     </button>
                 </td>
             </tr>
@@ -614,32 +625,32 @@ function renderAuditQueueTable(data) {
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">طابور التدقيق فارغ حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">Audit queue is currently empty.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = data.map(sub => {
-        const studentName = sub.user?.full_name || 'طالب غير معروف';
-        const projectTitle = sub.project?.title || 'مشروع بدون عنوان';
+        const studentName = sub.user?.full_name || 'Unknown Student';
+        const projectTitle = sub.project?.title || 'Untitled Project';
         const teamObj = teamsList.find(t => t.id === sub.user?.team_id);
         const leaderObj = leadersList.find(l => l.id === teamObj?.leader_id);
-        const leaderName = leaderObj?.full_name || 'غير معروف';
+        const leaderName = leaderObj?.full_name || 'Unknown';
 
         // Translate audit reasons
         const reasonsLabels = {
-            appeal: '<span class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚠️ اعتراض طالب</span>',
-            grade_100: '<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded text-[10px] font-bold">💯 درجة 100%</span>',
-            fast_grading: '<span class="bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚡ تصحيح سريع جداً</span>',
-            same_score: '<span class="bg-purple-500/10 text-purple-500 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-bold">👥 درجات متطابقة للفريق</span>',
-            random: '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold">🎲 مراجعة عشوائية</span>',
-            difference: '<span class="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚖️ تباين في تقييم الأدمن</span>'
+            appeal: '<span class="bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚠️ Student Appeal</span>',
+            grade_100: '<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded text-[10px] font-bold">💯 100% Score</span>',
+            fast_grading: '<span class="bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚡ Very Fast Grading</span>',
+            same_score: '<span class="bg-purple-500/10 text-purple-500 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-bold">👥 Identical Team Scores</span>',
+            random: '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold">🎲 Random Audit</span>',
+            difference: '<span class="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2 py-0.5 rounded text-[10px] font-bold">⚖️ Admin Score Variance</span>'
         };
 
         const auditBadges = (sub.auditReasons || []).map(r => reasonsLabels[r] || r).join(' ');
         
-        let auditStatus = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">معلق للتدقيق</span>';
+        let auditStatus = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">Pending Audit</span>';
         if (sub.auditRecord?.status === 'completed') {
-            auditStatus = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ تم التدقيق</span>';
+            auditStatus = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ Audited</span>';
         }
 
         return `
@@ -653,8 +664,8 @@ function renderAuditQueueTable(data) {
                 <td class="p-4 text-center font-mono font-bold text-white text-sm">${sub.grade || 0} / ${sub.project?.max_points || 100}</td>
                 <td class="p-4 text-center">${auditStatus}</td>
                 <td class="p-4 text-center">
-                    <button onclick="window.openProjectDetailsDrawer('${sub.id}', 'admin-review')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="بدء التدقيق">
-                        تدقيق التقييم
+                    <button onclick="window.openProjectDetailsDrawer('${sub.id}', 'admin-review')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="Start Audit">
+                        Audit Evaluation
                     </button>
                 </td>
             </tr>
@@ -680,8 +691,8 @@ function renderLeaderPerformanceTable() {
             
             perfMap[leaderId] = {
                 id: leaderId,
-                name: leaderObj?.full_name || sub.graded_by_name || 'قائد غير معروف',
-                team: teamObj?.name || 'بدون فريق',
+                name: leaderObj?.full_name || sub.graded_by_name || 'Unknown Leader',
+                team: teamObj?.name || 'No Team',
                 gradedCount: 0,
                 totalScoreGiven: 0,
                 totalDurationMs: 0,
@@ -718,7 +729,7 @@ function renderLeaderPerformanceTable() {
 
     const perfArray = Object.values(perfMap);
     if (perfArray.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">لا تتوفر بيانات أداء لليدرز حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">No leader performance data available yet.</td></tr>`;
         return;
     }
 
@@ -731,9 +742,9 @@ function renderLeaderPerformanceTable() {
         if (avgMs > 0) {
             const hours = avgMs / (1000 * 60 * 60);
             if (hours < 24) {
-                avgTimeText = `${Math.round(hours)} ساعة`;
+                avgTimeText = `${Math.round(hours)} hrs`;
             } else {
-                avgTimeText = `${(hours / 24).toFixed(1)} يوم`;
+                avgTimeText = `${(hours / 24).toFixed(1)} days`;
             }
         }
 
@@ -792,29 +803,29 @@ function renderAppealsTable(data) {
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-500">لا توجد اعتراضات مقدمة حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-500">No appeals submitted currently.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = data.map(sub => {
-        const studentName = sub.user?.full_name || 'طالب غير معروف';
-        const projectTitle = sub.project?.title || 'مشروع بدون عنوان';
+        const studentName = sub.user?.full_name || 'Unknown Student';
+        const projectTitle = sub.project?.title || 'Untitled Project';
         const teamObj = teamsList.find(t => t.id === sub.user?.team_id);
         const leaderObj = leadersList.find(l => l.id === teamObj?.leader_id);
-        const leaderName = leaderObj?.full_name || 'غير معروف';
+        const leaderName = leaderObj?.full_name || 'Unknown';
         
         const appeal = sub.appealRecord || {};
-        const reason = appeal.reason || 'تظلم عام';
-        const comments = appeal.comments || 'لا توجد تعليقات إضافية.';
+        const reason = appeal.reason || 'General Appeal';
+        const comments = appeal.comments || 'No additional comments.';
         
         // Final decision badge
         let decisionBadge = '';
         if (appeal.status === 'resolved_approved') {
-            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ تم قبول التظلم</span>';
+            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">✅ Appeal Approved</span>';
         } else if (appeal.status === 'resolved_rejected') {
-            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">❌ تم رفض التظلم</span>';
+            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">❌ Appeal Rejected</span>';
         } else {
-            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ قيد الفحص</span>';
+            decisionBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">⏳ Under Review</span>';
         }
 
         return `
@@ -825,14 +836,14 @@ function renderAppealsTable(data) {
                 </td>
                 <td class="p-4 text-center text-xs text-gray-300 font-bold">${leaderName}</td>
                 <td class="p-4 text-center text-xs text-red-400 font-bold">${reason}</td>
-                <td class="p-4 text-right text-xs text-gray-300 max-w-[200px] truncate" title="${comments}">${comments}</td>
+                <td class="p-4 text-left text-xs text-gray-300 max-w-[200px] truncate" title="${comments}">${comments}</td>
                 <td class="p-4 text-center text-xs">
-                    <a href="${sub.submission_link}" target="_blank" class="text-blue-400 hover:underline">الملفات</a>
+                    <a href="${sub.submission_link}" target="_blank" class="text-blue-400 hover:underline">Files</a>
                 </td>
                 <td class="p-4 text-center">${decisionBadge}</td>
                 <td class="p-4 text-center">
-                    <button onclick="window.openProjectDetailsDrawer('${sub.id}', 'admin-review')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="البدء في حل التظلم">
-                        حل الاعتراض
+                    <button onclick="window.openProjectDetailsDrawer('${sub.id}', 'admin-review')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20" title="Resolve Appeal">
+                        Resolve Appeal
                     </button>
                 </td>
             </tr>
@@ -852,17 +863,17 @@ window.openProjectDetailsDrawer = (subId, targetTab = 'submission') => {
     selectedSubmissionAudit = auditsData.find(a => a.submission_id === sub.id) || null;
 
     // Fill Header
-    document.getElementById('drawer-project-title').innerText = sub.project?.title || 'مشروع بدون عنوان';
-    document.getElementById('drawer-student-subtext').innerText = `الطالب: ${sub.user?.full_name || 'غير معروف'} | الجامعة: ${sub.user?.university || 'غير معروف'}`;
+    document.getElementById('drawer-project-title').innerText = sub.project?.title || 'Untitled Project';
+    document.getElementById('drawer-student-subtext').innerText = `Student: ${sub.user?.full_name || 'Unknown'} | University: ${sub.user?.university || 'Unknown'}`;
 
     // Fill Submission Tab
-    document.getElementById('sub-student-name').innerText = sub.user?.full_name || 'غير معروف';
+    document.getElementById('sub-student-name').innerText = sub.user?.full_name || 'Unknown';
     const teamObj = teamsList.find(t => t.id === sub.user?.team_id);
-    document.getElementById('sub-team-name').innerText = `فريق: ${teamObj?.name || 'بدون فريق'}`;
+    document.getElementById('sub-team-name').innerText = `Team: ${teamObj?.name || 'No Team'}`;
     
     // Course and Phase details mapping
     document.getElementById('sub-course-title').innerText = 'IC Course';
-    document.getElementById('sub-phase-title').innerText = 'المرحلة الحالية';
+    document.getElementById('sub-phase-title').innerText = 'Current Phase';
     
     const mainLink = document.getElementById('sub-main-link');
     mainLink.href = sub.submission_link;
@@ -879,9 +890,9 @@ window.openProjectDetailsDrawer = (subId, targetTab = 'submission') => {
 
     // Fill Leader Review Tab
     document.getElementById('leader-review-grade').innerText = sub.grade !== null ? sub.grade : '--';
-    document.getElementById('leader-review-by').innerText = sub.grader?.full_name || sub.graded_by_name || 'لم يصحح بعد';
+    document.getElementById('leader-review-by').innerText = sub.grader?.full_name || sub.graded_by_name || 'Not graded yet';
     
-    const gradingDate = sub.graded_at ? new Date(sub.graded_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'لم يصحح';
+    const gradingDate = sub.graded_at ? new Date(sub.graded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not graded';
     document.getElementById('leader-review-date').innerText = gradingDate;
 
     // Calculation of grading duration
@@ -889,10 +900,10 @@ window.openProjectDetailsDrawer = (subId, targetTab = 'submission') => {
     if (sub.graded_at && sub.submitted_at) {
         const diffMs = new Date(sub.graded_at).getTime() - new Date(sub.submitted_at).getTime();
         const minutes = Math.floor(diffMs / (1000 * 60));
-        durationText = minutes < 60 ? `${minutes} دقيقة` : `${Math.floor(minutes / 60)} ساعة`;
+        durationText = minutes < 60 ? `${minutes} mins` : `${Math.floor(minutes / 60)} hrs`;
     }
     document.getElementById('leader-review-duration').innerText = durationText;
-    document.getElementById('leader-review-feedback').innerText = sub.feedback_text || 'لا توجد تعليقات مكتوبة.';
+    document.getElementById('leader-review-feedback').innerText = sub.feedback_text || 'No written feedback.';
 
     // Populate Leader Rubric
     populateLeaderRubricGrid(sub);
@@ -996,7 +1007,7 @@ function populateLeaderRubricGrid(sub) {
             `;
         }).join('');
     } else {
-        container.innerHTML = `<p class="text-xs text-gray-500 italic">هذا المشروع لا يحتوي على معايير تقييم مفصلة. تم رصد الدرجة إجمالياً.</p>`;
+        container.innerHTML = `<p class="text-xs text-gray-500 italic">This project has no detailed rubric criteria. The score was recorded as a total grade.</p>`;
     }
 }
 
@@ -1111,15 +1122,15 @@ function populateComparisonTab(sub) {
 
     // Fill header scores
     compLeaderEl.innerText = sub.grade !== null ? `${sub.grade} / ${sub.project?.max_points || 100}` : '--';
-    compAdminEl.innerText = adminTotalGrade !== undefined && adminTotalGrade !== null ? `${adminTotalGrade} / ${sub.project?.max_points || 100}` : 'بانتظار المراجعة';
+    compAdminEl.innerText = adminTotalGrade !== undefined && adminTotalGrade !== null ? `${adminTotalGrade} / ${sub.project?.max_points || 100}` : 'Pending Review';
 
     // Calculate Variance
     if (sub.grade !== null && adminTotalGrade !== undefined && adminTotalGrade !== null) {
         const variance = Math.abs(sub.grade - adminTotalGrade);
-        compVarianceEl.innerText = `${variance} درجات`;
+        compVarianceEl.innerText = `${variance} pts`;
         compVarianceEl.className = `font-mono font-black text-lg px-4 py-2 rounded-xl border ${variance > 5 ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`;
     } else {
-        compVarianceEl.innerText = '-- درجة';
+        compVarianceEl.innerText = '-- pts';
         compVarianceEl.className = 'bg-white/5 border border-white/10 text-white font-mono font-black text-lg px-4 py-2 rounded-xl';
     }
 
@@ -1150,7 +1161,7 @@ function populateComparisonTab(sub) {
     } else {
         tbody.innerHTML = `
             <tr class="border-b border-white/5">
-                <td class="p-4 font-bold text-white">الدرجة الإجمالية للمشروع</td>
+                <td class="p-4 font-bold text-white">Total Project Score</td>
                 <td class="p-4 text-center font-mono font-bold text-gray-300">${sub.grade || 0}</td>
                 <td class="p-4 text-center font-mono font-bold text-teal-400">${adminTotalGrade || '--'}</td>
                 <td class="p-4 text-center">
@@ -1170,8 +1181,8 @@ function populateHistoryTimeline(sub) {
     
     // 1. Submitted event
     timelineEvents.push({
-        title: "تم تسليم المشروع من الطالب",
-        detail: "قام الطالب برفع رابط المشروع الأساسي بنجاح.",
+        title: "Project Submitted by Student",
+        detail: "The student successfully uploaded the primary project link.",
         date: sub.submitted_at,
         icon: "fa-paper-plane",
         color: "text-blue-400 bg-blue-500/10 border-blue-500/20"
@@ -1179,10 +1190,10 @@ function populateHistoryTimeline(sub) {
 
     // 2. Graded by leader event
     if (sub.graded_at) {
-        const grader = sub.grader?.full_name || sub.graded_by_name || 'الليدر';
+        const grader = sub.grader?.full_name || sub.graded_by_name || 'Leader';
         timelineEvents.push({
-            title: `تم رصد التقييم بواسطة الليدر: ${grader}`,
-            detail: `رصد درجة (${sub.grade}) مع إعطاء تعليق: "${sub.feedback_text || ''}"`,
+            title: `Evaluated by Leader: ${grader}`,
+            detail: `Recorded score (${sub.grade}) with feedback: "${sub.feedback_text || ''}"`,
             date: sub.graded_at,
             icon: "fa-check-circle",
             color: "text-purple-400 bg-purple-500/10 border-purple-500/20"
@@ -1192,8 +1203,8 @@ function populateHistoryTimeline(sub) {
     // 3. Appeal filed event
     if (sub.hasAppeal) {
         timelineEvents.push({
-            title: "تقديم تظلم واعتراض من الطالب",
-            detail: `سبب الاعتراض: "${sub.appealRecord?.reason || ''}" | تفاصيل: "${sub.appealRecord?.comments || ''}"`,
+            title: "Student Appeal Submitted",
+            detail: `Appeal reason: "${sub.appealRecord?.reason || ''}" | Details: "${sub.appealRecord?.comments || ''}"`,
             date: sub.appealRecord?.created_at,
             icon: "fa-exclamation-triangle",
             color: "text-red-400 bg-red-500/10 border-red-500/20"
@@ -1202,10 +1213,10 @@ function populateHistoryTimeline(sub) {
 
     // 4. Audited by admin event
     if (selectedSubmissionAudit && selectedSubmissionAudit.status === 'completed') {
-        const resolver = 'الإدارة العامة';
+        const resolver = 'General Administration';
         timelineEvents.push({
-            title: "تم إنهاء التدقيق والمراجعة الإدارية",
-            detail: `رصد الأدمن درجة (${selectedSubmissionAudit.admin_grade}) مع المبررات: "${selectedSubmissionAudit.admin_feedback || ''}"`,
+            title: "Administrative Audit Completed",
+            detail: `Admin recorded score (${selectedSubmissionAudit.admin_grade}) with notes: "${selectedSubmissionAudit.admin_feedback || ''}"`,
             date: selectedSubmissionAudit.resolved_at,
             icon: "fa-user-shield",
             color: "text-teal-400 bg-teal-500/10 border-teal-500/20"
@@ -1216,10 +1227,10 @@ function populateHistoryTimeline(sub) {
     timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     container.innerHTML = timelineEvents.map(e => {
-        const timeStr = new Date(e.date).toLocaleString('ar-EG');
+        const timeStr = new Date(e.date).toLocaleString('en-US');
         return `
             <div class="relative mb-5 last:mb-0">
-                <div class="absolute -right-[33px] top-0 w-8 h-8 rounded-full border flex items-center justify-center text-xs ${e.color}">
+                <div class="absolute -left-[33px] top-0 w-8 h-8 rounded-full border flex items-center justify-center text-xs ${e.color}">
                     <i class="fas ${e.icon}"></i>
                 </div>
                 <div class="bg-black/30 border border-white/5 rounded-xl p-4">
@@ -1275,7 +1286,7 @@ function adjustFooterButtons(sub) {
 // Copy helper
 window.copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    window.showToast("تم نسخ الرابط للحافظة!", "success");
+    window.showToast("Link copied to clipboard!", "success");
 };
 
 // ============================================================================
@@ -1288,13 +1299,13 @@ window.approveLeaderGradingAction = async () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reviews:grades:approve') && !can('audit_projects') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية اعتماد درجات المشاريع.', 'error');
+        window.showToast?.('You do not have permission to approve project grades.', 'error');
         return;
     }
     
     const btn = document.getElementById('btn-drawer-approve');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
 
     try {
@@ -1313,7 +1324,7 @@ window.approveLeaderGradingAction = async () => {
                 status: 'completed',
                 admin_grade: sub.grade,
                 admin_rubric_scores: sub.rubric_scores,
-                admin_feedback: "تم اعتماد درجة الليدر مباشرة بدون تعديل.",
+                admin_feedback: "Leader's grade approved directly without modifications.",
                 resolved_by: currentAdminUser?.id || null,
                 resolved_at: new Date()
             }).eq('id', selectedSubmissionAudit.id);
@@ -1324,7 +1335,7 @@ window.approveLeaderGradingAction = async () => {
                 reason: sub.auditReasons?.join(',') || 'direct_approval',
                 admin_grade: sub.grade,
                 admin_rubric_scores: sub.rubric_scores,
-                admin_feedback: "اعتماد مباشر",
+                admin_feedback: "Direct approval",
                 status: 'completed',
                 resolved_by: currentAdminUser?.id || null,
                 resolved_at: new Date()
@@ -1335,19 +1346,19 @@ window.approveLeaderGradingAction = async () => {
         if (selectedSubmissionAppeal) {
             await supabase.from('project_appeals').update({
                 status: 'resolved_rejected',
-                decision_text: "تم فحص الاعتراض واعتماد التقييم الأصلي بنجاح.",
+                decision_text: "Appeal reviewed and original evaluation upheld.",
                 resolved_by: currentAdminUser?.id || null,
                 resolved_at: new Date()
             }).eq('id', selectedSubmissionAppeal.id);
         }
 
-        window.showToast("تم اعتماد درجة الليدر بنجاح!", "success");
+        window.showToast("Leader's grade approved successfully!", "success");
         window.closeProjectDetailsDrawer();
         await window.fetchAuditDashboardData();
 
     } catch (err) {
         console.error("Approve Grading Error:", err);
-        window.showToast("فشل اعتماد التقييم", "error");
+        window.showToast("Failed to approve evaluation.", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -1360,13 +1371,13 @@ window.saveAdminAuditAction = async () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reviews:grades:edit') && !can('reviews:regrade') && !can('audit_projects') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتعديل درجات وتدقيق المشاريع.', 'error');
+        window.showToast?.('You do not have permission to edit grades or audit projects.', 'error');
         return;
     }
 
     const btn = document.getElementById('btn-drawer-save-audit');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري رصد الدرجة...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving grade...';
     btn.disabled = true;
 
     try {
@@ -1399,7 +1410,7 @@ window.saveAdminAuditAction = async () => {
 
         const feedback = document.getElementById('admin-review-feedback').value.trim();
         if (!feedback) {
-            window.showToast("يرجى كتابة ملاحظات الأدمن ومبررات التعديل", "warning");
+            window.showToast("Please write admin notes and justification for the adjustment.", "warning");
             btn.innerHTML = originalText;
             btn.disabled = false;
             return;
@@ -1447,7 +1458,7 @@ window.saveAdminAuditAction = async () => {
             const appealStatus = gradeDiff > 0 ? 'resolved_approved' : 'resolved_rejected';
             await supabase.from('project_appeals').update({
                 status: appealStatus,
-                decision_text: `تم فحص الاعتراض ورصد درجة مراجعة إدارية نهائية (${finalAdminGrade}). ملاحظات: ${feedback}`,
+                decision_text: `Appeal reviewed and final administrative audit score recorded (${finalAdminGrade}). Notes: ${feedback}`,
                 resolved_by: currentAdminUser?.id || null,
                 resolved_at: new Date()
             }).eq('id', selectedSubmissionAppeal.id);
@@ -1465,7 +1476,7 @@ window.saveAdminAuditAction = async () => {
             await supabase.from('student_xp_logs').insert({
                 user_id: studentId,
                 amount: gradeDiff,
-                reason: `تعديل تقييم مشروع (مراجعة إدارية): ${sub.project?.title}`,
+                reason: `Project grade adjustment (Admin Audit): ${sub.project?.title}`,
                 source_id: sub.project_id
             });
 
@@ -1480,18 +1491,18 @@ window.saveAdminAuditAction = async () => {
                     team_id: teamId,
                     contributor_id: studentId,
                     amount: gradeDiff,
-                    reason: `تعديل رصيد مشروع العضو (مراجعة إدارية)`
+                    reason: `Member project score adjustment (Admin Audit)`
                 });
             }
         }
 
-        window.showToast("تم حفظ التقييم الإداري وتحديث الدرجة بنجاح!", "success");
+        window.showToast("Administrative evaluation saved and score updated successfully!", "success");
         window.closeProjectDetailsDrawer();
         await window.fetchAuditDashboardData();
 
     } catch (err) {
         console.error("Save Admin Audit Error:", err);
-        window.showToast("حدث خطأ أثناء حفظ التقييم الإداري", "error");
+        window.showToast("An error occurred while saving the administrative evaluation.", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -1504,13 +1515,13 @@ window.rejectLeaderGradingAction = async () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reviews:grades:reject') && !can('audit_projects') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية رفض تقييم الليدر وإرجاع المشروع.', 'error');
+        window.showToast?.('You do not have permission to reject a leader evaluation and return the project.', 'error');
         return;
     }
 
     const confirmed = await window.showCustomConfirm(
-        "تأكيد رفض التصحيح",
-        "هل أنت متأكد من رفض تصحيح هذا الليدر وإعادة المشروع له للتصحيح مرة أخرى؟",
+        "Confirm Evaluation Rejection",
+        "Are you sure you want to reject this leader's evaluation and return the project for re-grading?",
         null,
         null,
         'danger'
@@ -1519,12 +1530,12 @@ window.rejectLeaderGradingAction = async () => {
 
     const btn = document.getElementById('btn-drawer-reject');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإعادة...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Returning...';
     btn.disabled = true;
 
     try {
         const sub = selectedSubmission;
-        const feedback = document.getElementById('admin-review-feedback').value.trim() || 'إعادة التقييم لوجود تباين أو خطأ في معايير التصحيح.';
+        const feedback = document.getElementById('admin-review-feedback').value.trim() || 'Returned for re-evaluation due to grading discrepancy or rubric error.';
 
         // Deduct Leader's original score from Student XP before resetting!
         if (sub.grade && sub.grade > 0) {
@@ -1536,7 +1547,7 @@ window.rejectLeaderGradingAction = async () => {
             await supabase.from('student_xp_logs').insert({
                 user_id: studentId,
                 amount: -sub.grade,
-                reason: `سحب تقييم مشروع ملغي للتدقيق: ${sub.project?.title}`,
+                reason: `Reverted cancelled project grade for audit: ${sub.project?.title}`,
                 source_id: sub.project_id
             });
 
@@ -1551,7 +1562,7 @@ window.rejectLeaderGradingAction = async () => {
                     team_id: teamId,
                     contributor_id: studentId,
                     amount: -sub.grade,
-                    reason: `سحب نقاط تقييم ملغي`
+                    reason: `Reverted cancelled evaluation points`
                 });
             }
         }
@@ -1561,7 +1572,7 @@ window.rejectLeaderGradingAction = async () => {
             status: 'pending',
             grade: null,
             rubric_scores: null,
-            feedback_text: `[إرجاع من الإدارة]: ${feedback}`
+            feedback_text: `[Returned by Admin]: ${feedback}`
         }).eq('id', sub.id);
 
         if (error) throw error;
@@ -1570,19 +1581,19 @@ window.rejectLeaderGradingAction = async () => {
         if (selectedSubmissionAudit) {
             await supabase.from('project_audits').update({
                 status: 'completed',
-                admin_feedback: `تم رفض التقييم وإعادة التصحيح لليدر. مبررات: ${feedback}`,
+                admin_feedback: `Evaluation rejected and returned to leader for re-grading. Reason: ${feedback}`,
                 resolved_by: currentAdminUser?.id || null,
                 resolved_at: new Date()
             }).eq('id', selectedSubmissionAudit.id);
         }
 
-        window.showToast("تم رفض التصحيح وإرجاع المشروع لليدر بنجاح!", "success");
+        window.showToast("Evaluation rejected and project returned to leader successfully!", "success");
         window.closeProjectDetailsDrawer();
         await window.fetchAuditDashboardData();
 
     } catch (err) {
         console.error("Reject Grading Error:", err);
-        window.showToast("حدث خطأ أثناء رفض تصحيح الليدر", "error");
+        window.showToast("An error occurred while rejecting the leader's evaluation.", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -1608,7 +1619,7 @@ window.submitReassignReviewer = async () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reviews:regrade') && !can('audit_projects') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لإعادة تعيين مراجع المشروع.', 'error');
+        window.showToast?.('You do not have permission to reassign the project reviewer.', 'error');
         return;
     }
 
@@ -1635,17 +1646,17 @@ window.submitReassignReviewer = async () => {
             currentAdminProfile?.full_name || 'Admin',
             'Transfer Reviewer',
             selectedSubmission.project?.title,
-            `تحويل تصحيح المشروع لليدر (${newGraderName}). السبب: ${reasonText || 'بدون تفاصيل'}`
+            `Transferred project grading to leader (${newGraderName}). Reason: ${reasonText || 'No details'}`
         );
 
-        window.showToast("تم تحويل مراجع المشروع بنجاح!", "success");
+        window.showToast("Project reviewer transferred successfully!", "success");
         document.getElementById('reassign-reviewer-modal').classList.add('hidden');
         window.closeProjectDetailsDrawer();
         await window.fetchAuditDashboardData();
 
     } catch (err) {
         console.error("Transfer Reviewer Error:", err);
-        window.showToast("حدث خطأ أثناء تحويل المراجع", "error");
+        window.showToast("An error occurred while transferring the reviewer.", "error");
     }
 };
 
@@ -1668,10 +1679,10 @@ window.submitAddAuditNote = async () => {
             currentAdminProfile?.full_name || 'Admin',
             'Add Audit Note',
             selectedSubmission.project?.title,
-            `ملاحظة إدارية داخلية: ${note}`
+            `Internal admin note: ${note}`
         );
 
-        window.showToast("تم تسجيل الملاحظة الإدارية بنجاح!", "success");
+        window.showToast("Internal audit note recorded successfully!", "success");
         document.getElementById('add-audit-note-modal').classList.add('hidden');
         
         // Refresh history timeline in Drawer
@@ -1679,7 +1690,7 @@ window.submitAddAuditNote = async () => {
 
     } catch (err) {
         console.error("Add Audit Note Error:", err);
-        window.showToast("حدث خطأ أثناء تسجيل الملاحظة", "error");
+        window.showToast("An error occurred while recording the note.", "error");
     }
 };
 
@@ -1690,16 +1701,16 @@ window.exportAuditsToCSV = () => {
     const can = (perm) => window.hasPermission ? window.hasPermission(perm) : true;
     const isOwner = window.getAdminProfile ? (window.getAdminProfile()?.role || '').toLowerCase() === 'owner' : false;
     if (!can('reports:export:excel') && !can('dashboard:export') && !can('manage_reports') && !isOwner) {
-        window.showToast?.('ليس لديك صلاحية لتصدير تقارير المراجعات.', 'error');
+        window.showToast?.('You do not have permission to export review reports.', 'error');
         return;
     }
 
     if (!submissionsData || submissionsData.length === 0) {
-        window.showToast?.('لا توجد تسليمات لتصديرها.', 'info');
+        window.showToast?.('No submissions available to export.', 'info');
         return;
     }
 
-    const headers = ['المشروع', 'الطالب', 'الفريق', 'الليدر المراجع', 'الدرجة', 'الحالة', 'تاريخ التسليم', 'تاريخ التصحيح'];
+    const headers = ['Project', 'Student', 'Team', 'Reviewer Leader', 'Score', 'Status', 'Submitted Date', 'Graded Date'];
     const rows = submissionsData.map(s => [
         s.project_title || '',
         s.student_name || '',
@@ -1712,8 +1723,8 @@ window.exportAuditsToCSV = () => {
     ]);
 
     if (window.exportToCSV) {
-        window.exportToCSV('busla_project_audits_export.csv', headers, rows);
+        window.exportToCSV('zdc_project_audits_export.csv', headers, rows);
     } else {
-        window.showToast?.('تم إعداد التصدير بنجاح.', 'success');
+        window.showToast?.('Export prepared successfully.', 'success');
     }
 };

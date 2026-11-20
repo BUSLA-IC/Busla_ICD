@@ -89,7 +89,7 @@
                 border-radius: 10px;
             }
             .custom-scroll::-webkit-scrollbar-thumb:hover {
-                background: #00dec8;
+                background: #EFECE6;
             }
             
             /* Active tab indicator styles */
@@ -104,12 +104,12 @@
                 left: 0;
                 width: 0;
                 height: 2.5px;
-                background: #00dec8;
-                box-shadow: 0 0 10px rgba(0, 222, 200, 0.5);
+                background: #EFECE6;
+                box-shadow: none;
                 transition: width 0.3s ease;
             }
             .references-tab-btn.active {
-                color: #00dec8 !important;
+                color: #EFECE6 !important;
             }
             .references-tab-btn.active::after {
                 width: 100%;
@@ -718,14 +718,14 @@
                 linksGrid.appendChild(a);
             };
 
-            addLinkBtn(ref.read_online_url, 'Read Online Directly', 'fas fa-book-open', 'bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30 text-teal-400');
-            addLinkBtn(ref.download_pdf_url, 'Download Reference PDF', 'fas fa-file-pdf', 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-400');
-            addLinkBtn(ref.ieee_url, 'View on IEEE Xplore', 'fas fa-university', 'bg-[#00629B]/10 hover:bg-[#00629B]/20 border-[#00629B]/30 text-[#38bdf8]');
-            addLinkBtn(ref.springer_url, 'View on Springer Link', 'fas fa-external-link-alt', 'bg-[#001E3C]/10 hover:bg-[#001E3C]/20 border-[#001E3C]/30 text-blue-300');
-            addLinkBtn(ref.acm_url, 'View in ACM Digital Library', 'fas fa-graduation-cap', 'bg-[#002F6C]/10 hover:bg-[#002F6C]/20 border-[#002F6C]/30 text-blue-300');
-            addLinkBtn(ref.sciencedirect_url, 'View on ScienceDirect', 'fas fa-journal-whills', 'bg-[#FF6600]/10 hover:bg-[#FF6600]/20 border-[#FF6600]/30 text-[#FF6600]');
-            addLinkBtn(ref.github_url, 'GitHub Code & Projects', 'fab fa-github', 'bg-white/5 hover:bg-white/10 border-white/10 text-white');
-            addLinkBtn(ref.official_source_url, 'Official Source Link', 'fas fa-link', 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-400');
+            addLinkBtn(ref.read_online_url, 'Read Online Directly', 'fas fa-book-open', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.download_pdf_url, 'Download Reference PDF', 'fas fa-file-pdf', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.ieee_url, 'View on IEEE Xplore', 'fas fa-university', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.springer_url, 'View on Springer Link', 'fas fa-external-link-alt', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.acm_url, 'View in ACM Digital Library', 'fas fa-graduation-cap', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.sciencedirect_url, 'View on ScienceDirect', 'fas fa-journal-whills', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-primary');
+            addLinkBtn(ref.github_url, 'GitHub Code & Projects', 'fab fa-github', 'bg-b-surface-card hover:bg-white/10 border-b-border text-white');
+            addLinkBtn(ref.official_source_url, 'Official Source Link', 'fas fa-link', 'bg-b-surface-card hover:bg-white/10 border-b-border text-b-muted');
 
             if (linksGrid.children.length === 0) {
                 linksGrid.innerHTML = '<div class="col-span-full text-center text-xs text-gray-500 py-3">No external access links are registered for this reference.</div>';

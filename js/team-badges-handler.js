@@ -34,7 +34,7 @@ export async function initTeamBadgesSystem() {
                 <div class="absolute inset-0 border-t-4 border-b-primary rounded-full animate-spin"></div>
                 <div class="absolute inset-0 border-b-4 border-b-primary/30 rounded-full animate-pulse"></div>
             </div>
-            <p class="text-gray-500 text-sm tracking-[0.2em] animate-pulse">جاري تحميل بيانات الفريق...</p>
+            <p class="text-gray-500 text-sm tracking-[0.2em]">LOADING SQUAD DATA...</p>
         </div>
     `;
 
@@ -57,9 +57,8 @@ export async function initTeamBadgesSystem() {
         if (teamError) throw teamError;
 
         const currentPoints = teamData?.total_score || 0;
-        const teamName = teamData?.name || "فريقك";
+        const teamName = teamData?.name || "Your Squad";
 
-        // 4. تحديد الرتبة الحالية
         let currentRankIndex = 0;
         for (let i = 0; i < TEAM_RANKS_DATA.length; i++) {
             if (currentPoints >= TEAM_RANKS_DATA[i].points_required) {
@@ -77,11 +76,10 @@ export async function initTeamBadgesSystem() {
 
     } catch (error) {
         console.error("Team Badges Error:", error);
-        container.innerHTML = `<div class="text-red-500 text-center py-20 border border-red-500/20 rounded-xl bg-red-900/10">حدث خطأ في تحميل البيانات</div>`;
+        container.innerHTML = `<div class="text-red-500 text-center py-20 border border-red-500/20 rounded-xl bg-red-900/10">Failed to load squad rank data</div>`;
     }
 }
 
-// ربط الدالة بالـ Window لتعمل عند تغيير التابات
 window.loadTeamRankSystem = initTeamBadgesSystem;
 
 // ==========================================
@@ -94,12 +92,12 @@ function renderNoTeamState(container) {
                 <div class="absolute inset-0 border-4 border-dashed border-gray-700 rounded-full animate-spin-slow opacity-50"></div>
                 <i class="fas fa-users-slash text-5xl text-gray-500"></i>
             </div>
-            <h2 class="text-4xl font-black text-white mb-4">أنت لست ضمن أي فريق!</h2>
+            <h2 class="text-4xl font-black text-white mb-4">You Are Not in a Squad Yet!</h2>
             <p class="text-gray-400 mb-10 max-w-lg leading-relaxed text-lg">
-                رحلة الفرق تعتمد على التعاون المشترك وجمع النقاط الجماعية.<br> انضم إلى فريق الآن أو قم بتأسيس فريقك الخاص لتبدأ صعود القمة!
+                Squad progression is powered by teamwork and shared XP.<br> Join an existing squad or form your own to start climbing the ranks!
             </p>
             <button onclick="window.switchTab('squad')" class="bg-gradient-to-r from-b-primary to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all transform hover:-translate-y-1 shadow-[0_10px_20px_rgba(0,106,103,0.3)] flex items-center gap-3">
-                <i class="fas fa-compass"></i> انطلق لصفحة الفرق
+                <i class="fas fa-compass"></i> Go to Squad Hub
             </button>
         </div>
     `;
@@ -125,13 +123,13 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
     // 💡 إنشاء شبكة البادجات (منور ومظلم)
     const badgesGridHtml = TEAM_RANKS_DATA.map((rank) => {
         const isUnlocked = points >= rank.points_required;
-        const hexColor = rank.stage_color || '#006A67';
+        const hexColor = rank.stage_color || '#EFECE6';
         const badgeUrl = `../assets/team-badge/lv${rank.level}.png`;
 
         // التظليم للرتب المغلقة
         const stateStyle = isUnlocked 
-            ? `border-color: ${hexColor}80; box-shadow: 0 0 15px ${hexColor}20; background-color: rgba(0,0,0,0.6);` 
-            : `border-color: rgba(255,255,255,0.05); background-color: rgba(0,0,0,0.4); filter: grayscale(100%) opacity(0.4);`;
+            ? `border-color: ${hexColor}80; box-shadow: 0 0 15px ${hexColor}20; background-color: rgba(22,22,22,0.8);` 
+            : `border-color: #2E2E2E; background-color: rgba(13,13,13,0.6); filter: grayscale(100%) opacity(0.45);`;
 
         const imgStyle = isUnlocked 
             ? `filter: drop-shadow(0 0 15px ${hexColor}80);` 
@@ -145,20 +143,20 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
                 ${isUnlocked ? `<div class="absolute inset-0 opacity-10 pointer-events-none" style="background: radial-gradient(circle at center, ${hexColor}, transparent 70%);"></div>` : ''}
 
                 <div class="w-20 h-20 mx-auto mb-4 rounded-[15%] flex items-center justify-center transition-transform duration-500 group-hover:scale-110 relative bg-black"
-                     style="border: 2px solid ${isUnlocked ? hexColor : '#333'};">
+                     style="border: 2px solid ${isUnlocked ? hexColor : '#2E2E2E'};">
                     <img src="${badgeUrl}" loading="lazy" decoding="async" class="w-full h-full object-cover relative z-10 p-[2px] rounded-2xl" style="${imgStyle}" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${rank.level}'">
                 </div>
 
                 <h3 class="text-white font-bold text-center text-sm mb-2 truncate">${rank.title}</h3>
                 <div class="text-center">
                     <span class="text-xs font-mono px-3 py-1 rounded-full border" 
-                          style="background: ${isUnlocked ? hexColor+'20' : '#222'}; color: ${isUnlocked ? hexColor : '#888'}; border-color: ${isUnlocked ? hexColor+'40' : '#444'}">
+                          style="background: ${isUnlocked ? hexColor+'20' : '#222222'}; color: ${isUnlocked ? hexColor : '#8E8E8E'}; border-color: ${isUnlocked ? hexColor+'40' : '#2E2E2E'}">
                         ${rank.points_required.toLocaleString()} XP
                     </span>
                 </div>
 
                 <div class="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-[12px] shadow-lg"
-                     style="background: ${isUnlocked ? hexColor+'20' : 'rgba(0,0,0,0.8)'}; border: 1px solid ${isUnlocked ? hexColor+'50' : '#333'}; color: ${isUnlocked ? hexColor : '#666'};">
+                     style="background: ${isUnlocked ? hexColor+'20' : 'rgba(13,13,13,0.85)'}; border: 1px solid ${isUnlocked ? hexColor+'50' : '#2E2E2E'}; color: ${isUnlocked ? hexColor : '#5A5A5A'};">
                     <i class="fas ${isUnlocked ? 'fa-unlock' : 'fa-lock'}"></i>
                 </div>
             </div>
@@ -168,8 +166,8 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
     container.innerHTML = `
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h2 class="text-3xl font-black text-white mb-2">رحلة الفريق <span class="text-b-primary">(${teamName})</span></h2>
-                <p class="text-gray-400">تتبع تقدم فريقك، اجمعوا النقاط معاً، وهيمنوا على ساحة المنافسة.</p>
+                <h2 class="text-3xl font-black text-white mb-2">Squad Journey <span class="text-b-primary">(${teamName})</span></h2>
+                <p class="text-gray-400">Track your squad progress, earn XP together, and climb the engineering leaderboard.</p>
             </div>
         </header>
 
@@ -181,7 +179,7 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
 
                 <div class="relative z-30 flex flex-col items-center">
                     <div id="team-hero-badge" class="relative w-56 h-56 md:w-64 md:h-64 mb-8 transition-transform duration-200 ease-out cursor-pointer" onclick="window.openTeamBadgeModal('${currentRank.key}', ${points})" style="animation: float-slow 6s ease-in-out infinite;">
-                        <div class="absolute inset-0 rounded-full blur-2xl opacity-40 animate-pulse" style="background-color: ${currentRank.stage_color}"></div>
+                        <div class="absolute inset-0 rounded-full blur-2xl opacity-40" style="background-color: ${currentRank.stage_color}"></div>
                         <div class="relative w-full h-full rounded-[12%] overflow-hidden border-4 shadow-2xl bg-black" style="border-color: ${currentRank.stage_color}">
                             <img src="${currentImgUrl}" class="w-full h-full object-cover p-2 rounded-2xl" alt="${currentRank.title}" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${currentRank.level}'">
                         </div>
@@ -189,13 +187,13 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
 
                     <div class="text-center space-y-2 mb-8">
                         <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono tracking-widest text-gray-400 backdrop-blur-md">
-                            <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: ${currentRank.stage_color}"></span>
-                            رتبة الفريق الحالية
+                            <span class="w-2 h-2 rounded-full" style="background-color: ${currentRank.stage_color}"></span>
+                            CURRENT SQUAD RANK
                         </div>
                         <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 tracking-tight drop-shadow-lg uppercase">
                             ${currentRank.title}
                         </h1>
-                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 pl-4 text-right" style="border-left-color: ${currentRank.stage_color}">
+                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 pl-4 text-left" style="border-left-color: ${currentRank.stage_color}">
                             "${currentRank.lore}"
                         </p>
                     </div>
@@ -205,11 +203,11 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
                         
                         <div class="flex justify-between items-end mb-3">
                             <div>
-                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">نقاط الفريق (Team Score)</span>
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Squad Score</span>
                                 <span class="text-3xl font-black text-white font-mono">${points.toLocaleString()}</span>
                             </div>
                             <div class="text-right">
-                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">هدف الفريق القادم</span>
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Next Squad Target</span>
                                 <span class="text-base font-bold" style="color: ${currentRank.stage_color}">
                                     ${nextRank ? nextRank.title : 'MAX RANK'}
                                 </span>
@@ -223,8 +221,8 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
                             </div>
                         </div>
                         
-                        <p class="text-xs text-gray-400 mt-3 text-right">
-                            ${nextRank ? `تعاون مع فريقك! متبقي <span class="text-white font-bold">${pointsNeeded.toLocaleString()}</span> نقطة للترقية` : 'فريقك يتربع على القمة!'}
+                        <p class="text-xs text-gray-400 mt-3 text-left">
+                            ${nextRank ? `Collaborate with your squad! <span class="text-white font-bold">${pointsNeeded.toLocaleString()}</span> XP remaining for promotion` : 'Your squad stands at the summit!'}
                         </p>
                     </div>
                 </div>
@@ -235,8 +233,8 @@ function renderTeamCinematicPage(container, currentRank, nextRank, points, teamN
             <div class="flex items-center gap-3 mb-8 border-b border-white/10 pb-4">
                 <i class="fas fa-shield-alt text-3xl text-b-primary"></i>
                 <div>
-                    <h2 class="text-2xl font-black text-white">سجل رتب الفريق</h2>
-                    <p class="text-sm text-gray-400">تاريخ إنجازات فريقك والمراحل القادمة.</p>
+                    <h2 class="text-2xl font-black text-white">Squad Rank Tiers</h2>
+                    <p class="text-sm text-gray-400">Your squad's milestones and upcoming tiers.</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -265,12 +263,12 @@ window.openTeamBadgeModal = (badgeKey, teamScore) => {
     const pointsLeft = badge.points_required - teamScore;
     const progressPercent = isUnlocked ? 100 : Math.min(100, Math.max(0, (teamScore / (badge.points_required || 1)) * 100));
     
-    const hexColor = badge.stage_color || '#006A67';
+    const hexColor = badge.stage_color || '#EFECE6';
     const badgeImgUrl = `../assets/team-badge/lv${badge.level}.png`;
     
     modal.innerHTML = `
         <div class="relative w-full max-w-sm md:max-w-md mx-auto rounded-3xl overflow-hidden shadow-2xl transform transition-all animate-slideUp" 
-             style="background: #0a0a0a; border: 1px solid ${hexColor}40; box-shadow: 0 20px 50px -10px ${hexColor}30;">
+             style="background: #161616; border: 1px solid ${hexColor}40; box-shadow: 0 20px 50px -10px ${hexColor}30;">
             
             <div class="absolute top-0 left-0 w-full h-40 opacity-20 pointer-events-none" 
                  style="background: radial-gradient(ellipse at top, ${hexColor}, transparent 70%);"></div>
@@ -283,7 +281,7 @@ window.openTeamBadgeModal = (badgeKey, teamScore) => {
             <div class="p-8 text-center relative z-0 mt-4">
                 
                 <div class="w-40 h-40 mx-auto mb-6 rounded-[15%] flex items-center justify-center shadow-2xl transition-all duration-500 relative overflow-hidden bg-black"
-                     style="border: 2px solid ${isUnlocked ? hexColor : '#333'}; ${!isUnlocked ? 'filter: grayscale(100%) brightness(50%);' : ''}">
+                     style="border: 2px solid ${isUnlocked ? hexColor : '#2E2E2E'}; ${!isUnlocked ? 'filter: grayscale(100%) brightness(50%);' : ''}">
                      
                     ${isUnlocked ? `<div class="absolute inset-0 rounded-[15%] animate-ping opacity-20" style="background: ${hexColor};"></div>` : ''}
                     <img src="${badgeImgUrl}" class="w-full h-full object-cover p-2 rounded-2xl relative z-10" onerror="this.src='https://placehold.co/200x200/111/FFF?text=Lv${badge.level}'">
@@ -296,7 +294,7 @@ window.openTeamBadgeModal = (badgeKey, teamScore) => {
                     <i class="fas fa-users-cog"></i> ${badge.stage_name} | ${badge.rarity}
                 </div>
 
-                <div class="bg-black/50 rounded-xl p-5 border border-white/5 mb-6 text-right relative overflow-hidden">
+                <div class="bg-black/50 rounded-xl p-5 border border-white/5 mb-6 text-left relative overflow-hidden">
                     <div class="absolute left-0 top-0 w-1 h-full" style="background: ${hexColor};"></div>
                     <p class="text-gray-400 text-xs font-serif italic mb-3 leading-relaxed">"${badge.lore}"</p>
                     <p class="text-gray-200 text-sm leading-relaxed">${badge.description}</p>
@@ -304,8 +302,8 @@ window.openTeamBadgeModal = (badgeKey, teamScore) => {
 
                 <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
                     <div class="flex justify-between text-sm font-bold mb-3">
-                        <span class="text-gray-400">نقاط الفريق: <span class="text-white text-base">${teamScore.toLocaleString()}</span></span>
-                        <span class="text-gray-400">المطلوب: <span class="text-white text-base">${badge.points_required.toLocaleString()}</span> XP</span>
+                        <span class="text-gray-400">Squad Score: <span class="text-white text-base">${teamScore.toLocaleString()}</span></span>
+                        <span class="text-gray-400">Required: <span class="text-white text-base">${badge.points_required.toLocaleString()}</span> XP</span>
                     </div>
                     
                     <div class="w-full h-3 bg-black rounded-full overflow-hidden border border-white/10 mb-4 relative">
@@ -314,8 +312,8 @@ window.openTeamBadgeModal = (badgeKey, teamScore) => {
                     </div>
 
                     ${isUnlocked 
-                        ? `<div class="text-base font-black animate-pulse mt-2 flex items-center justify-center gap-2" style="color: ${hexColor};"><i class="fas fa-crown"></i> فريقك يمتلك هذه الرتبة!</div>`
-                        : `<div class="text-yellow-500/90 text-sm font-bold mt-2 flex items-center justify-center gap-2"><i class="fas fa-handshake text-xs"></i> تعاونوا! متبقي <span class="text-yellow-400 font-mono text-base">${pointsLeft.toLocaleString()}</span> XP للفتح</div>`
+                        ? `<div class="text-base font-black mt-2 flex items-center justify-center gap-2" style="color: ${hexColor};"><i class="fas fa-crown"></i> Your squad holds this rank!</div>`
+                        : `<div class="text-yellow-500/90 text-sm font-bold mt-2 flex items-center justify-center gap-2"><i class="fas fa-handshake text-xs"></i> Team up! <span class="text-yellow-400 font-mono text-base">${pointsLeft.toLocaleString()}</span> XP left to unlock</div>`
                     }
                 </div>
             </div>

@@ -24,7 +24,7 @@ import { getAvailableTracks } from '../../js/auth-handler.js';
 
         let currentStep = 1;
         const totalSteps = 5;
-        const stepTitles = [ "البيانات الأساسية", "البيانات الجغرافية والأكاديمية", "الالتزام الزمني", "الاهتمام التقني", "الأسئلة الشخصية والإقرار" ];
+        const stepTitles = [ "Basic Information", "Location & Academic Profile", "Time Commitment", "Technical Interest", "Motivation & Confirmation" ];
 
         window.nextStep = () => {
             const currentStepDiv = document.getElementById(`step-${currentStep}`);
@@ -34,7 +34,7 @@ import { getAvailableTracks } from '../../js/auth-handler.js';
             for (let input of inputs) {
                 if (input.classList.contains('searchable-select')) {
                     if (input.value.trim() === "") {
-                        window.showToast(`يرجى إكمال الحقل الخاص بـ: ${input.parentElement.querySelector('label').innerText.replace('*', '')}`, "error");
+                        window.showToast(`Please complete the field: ${input.parentElement.querySelector('label').innerText.replace('*', '')}`, "error");
                         isValid = false; break;
                     }
                 } else if (!input.checkValidity()) {
@@ -45,7 +45,7 @@ import { getAvailableTracks } from '../../js/auth-handler.js';
 
             if (currentStep === 3 && isValid) {
                 const daysChecked = document.querySelectorAll('.chk-day:checked').length;
-                if (daysChecked === 0) { window.showToast("يرجى اختيار يوم واحد على الأقل للعمل.", "error"); isValid = false; }
+                if (daysChecked === 0) { window.showToast("Please select at least one preferred working day.", "error"); isValid = false; }
             }
 
             if (isValid && currentStep < totalSteps) {
@@ -69,7 +69,7 @@ import { getAvailableTracks } from '../../js/auth-handler.js';
             const percentage = (currentStep / totalSteps) * 100;
             document.getElementById('step-progress-bar').style.width = `${percentage}%`;
             document.getElementById('step-percentage').innerText = `${Math.round(percentage)}%`;
-            document.getElementById('step-indicator-text').innerText = `الخطوة ${currentStep} من ${totalSteps}: ${stepTitles[currentStep - 1]}`;
+            document.getElementById('step-indicator-text').innerText = `Step ${currentStep} of ${totalSteps}: ${stepTitles[currentStep - 1]}`;
 
             document.getElementById('btn-prev').classList.toggle('hidden', currentStep === 1);
             document.getElementById('btn-next').classList.toggle('hidden', currentStep === totalSteps);
@@ -82,7 +82,7 @@ async function fetchDynamicTracks() {
         if (error) throw error;
         const trackSelect = document.getElementById('f-academic-track');
         if (data && data.length > 0) {
-            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار الذي يناسبك --</option>' + 
+            trackSelect.innerHTML = '<option value="" disabled selected>-- Select your preferred track --</option>' + 
                 data.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
         }
     } catch (err) { console.error(err); }
@@ -92,7 +92,7 @@ async function fetchDynamicTracks() {
             const trackName = document.getElementById('f-academic-track').value;
             if (trackName) {
                 document.getElementById('dynamic-skills-container').classList.remove('hidden');
-                document.getElementById('lbl-custom-skills').innerText = `أخبرنا بمهاراتك التقنية المتعلقة بمسار (${trackName}):`;
+                document.getElementById('lbl-custom-skills').innerText = `Tell us about your technical skills related to (${trackName}):`;
             }
         };
 
@@ -100,20 +100,20 @@ async function fetchDynamicTracks() {
             const selects = document.querySelectorAll('.searchable-select');
             selects.forEach(select => {
                 select.style.display = 'none';
-                const ui = document.createElement('div'); ui.className = 'relative w-full dir-rtl text-right';
+                const ui = document.createElement('div'); ui.className = 'relative w-full text-left';
                 const trigger = document.createElement('div'); trigger.className = 'w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm cursor-pointer flex justify-between items-center';
-                const textSpan = document.createElement('span'); textSpan.className = 'truncate pl-2'; 
+                const textSpan = document.createElement('span'); textSpan.className = 'truncate pr-2'; 
                 trigger.appendChild(textSpan); trigger.innerHTML += '<i class="fas fa-chevron-down text-gray-500 text-xs"></i>';
                 const textSpanRef = trigger.querySelector('span'); 
-                const dropdown = document.createElement('div'); dropdown.className = 'absolute z-[999] w-full bg-[#111111] border border-white/10 rounded-xl mt-1 hidden shadow-2xl flex flex-col max-h-60 overflow-hidden';
-                const searchInput = document.createElement('input'); searchInput.type = 'text'; searchInput.placeholder = 'ابحث هنا...'; searchInput.className = 'm-2 bg-black border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-teal-500';
+                const dropdown = document.createElement('div'); dropdown.className = 'absolute z-[999] w-full bg-[#161616] border border-b-border rounded-xl mt-1 hidden shadow-2xl flex flex-col max-h-60 overflow-hidden';
+                const searchInput = document.createElement('input'); searchInput.type = 'text'; searchInput.placeholder = 'Search here...'; searchInput.className = 'm-2 bg-black border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-teal-500';
                 const optionsContainer = document.createElement('div'); optionsContainer.className = 'overflow-y-auto custom-scroll p-1 flex-1';
                 dropdown.appendChild(searchInput); dropdown.appendChild(optionsContainer);
                 ui.appendChild(trigger); ui.appendChild(dropdown); select.parentNode.insertBefore(ui, select.nextSibling);
 
                 const createOpt = (opt) => {
                     const div = document.createElement('div'); div.className = 'px-3 py-2 text-sm text-gray-300 hover:bg-teal-500/20 hover:text-white cursor-pointer rounded-lg mb-0.5 opt-item'; div.innerText = opt.text;
-                    div.onclick = (e) => { e.stopPropagation(); select.value = opt.value; textSpanRef.innerText = opt.text; textSpanRef.className = 'text-white font-bold truncate pl-2'; dropdown.classList.add('hidden'); select.dispatchEvent(new Event('change')); }; optionsContainer.appendChild(div);
+                    div.onclick = (e) => { e.stopPropagation(); select.value = opt.value; textSpanRef.innerText = opt.text; textSpanRef.className = 'text-white font-bold truncate pr-2'; dropdown.classList.add('hidden'); select.dispatchEvent(new Event('change')); }; optionsContainer.appendChild(div);
                 };
 
                 Array.from(select.children).forEach(child => {
@@ -125,7 +125,7 @@ async function fetchDynamicTracks() {
 
                 const sel = select.options[select.selectedIndex];
                 textSpanRef.innerText = sel && sel.value !== "" ? sel.text : select.options[0].text;
-                textSpanRef.className = sel && sel.value !== "" ? 'text-white font-bold truncate pl-2' : 'text-gray-400 truncate pl-2';
+                textSpanRef.className = sel && sel.value !== "" ? 'text-white font-bold truncate pr-2' : 'text-gray-400 truncate pr-2';
 
                 searchInput.addEventListener('input', (e) => {
                     const term = e.target.value.toLowerCase();
@@ -186,44 +186,42 @@ async function fetchDynamicTracks() {
             };
 
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i> جاري الإرسال...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i> Submitting...';
             btn.disabled = true;
 
 try {
-    // 💡 1. التحقق من الإيميل أولاً عبر الدالة الآمنة (RPC)
+    // 1. Check email availability via RPC
     const checkEmail = payload.email;
     const { data: emailStatus, error: checkError } = await supabase.rpc('check_email_availability', { email_to_check: checkEmail });
 
     if (checkError) throw checkError;
 
-    // معالجة إذا كان الإيميل له طلب معلق
     if (emailStatus === 'pending') {
-        window.showToast("يوجد طلب انضمام معلق بهذا البريد بالفعل. يرجى انتظار الرد.", "error");
+        window.showToast("There is already a pending application for this email address. Please wait for our response.", "error");
         btn.innerHTML = originalText;
         btn.disabled = false;
         btn.classList.remove('opacity-70', 'cursor-not-allowed');
-        return; // إيقاف الإرسال
+        return;
     }
 
-    // معالجة إذا كان الإيميل مسجل كحساب في المنصة
     if (emailStatus === 'exists') {
-        window.showToast("هذا البريد مسجل كحساب في المنصة مسبقاً (طالب أو مسؤول). لا يمكن التقديم به.", "error");
+        window.showToast("This email is already registered on ZDC. Please use a different email address.", "error");
         btn.innerHTML = originalText;
         btn.disabled = false;
         btn.classList.remove('opacity-70', 'cursor-not-allowed');
-        return; // إيقاف الإرسال
+        return;
     }
 
-    // 💡 2. حفظ الطلب في قاعدة البيانات
+    // 2. Save application to database
     const { error } = await supabase.from('admin_applications').insert([payload]);
     if (error) throw error;
     
-    // 💡 3. إرسال إيميل تأكيد الاستلام للطالب (الجزء الذي كان مفقوداً)
+    // 3. Send confirmation email via EmailJS
     try {
-        emailjs.init("ejz_KrYv1VtCu9DJq"); // ⚠️ انسخه من Account في EmailJS
+        emailjs.init("ejz_KrYv1VtCu9DJq");
         await emailjs.send(
-            "service_xsjpfql", // ✅ الخدمة الخاصة بك
-            "template_7oginph", // ⚠️ انسخه من Templates
+            "service_xsjpfql",
+            "template_7oginph",
             {
                 to_name: payload.full_name,
                 to_email: payload.email,
@@ -234,9 +232,8 @@ try {
         console.error("EmailJS Error:", emailErr);
     }
 
-    window.showToast("تم إرسال طلبك بنجاح! سيتم مراجعة بياناتك والتواصل معك.", "success");
+    window.showToast("Your application has been submitted successfully! We will review it and reach out soon.", "success");
     
-    // إعادة التهيئة وتحديث الواجهة للبداية
     document.getElementById('joinForm').reset();
     document.getElementById('application-container').classList.add('hidden');
     document.getElementById('tracks-section').classList.remove('hidden');
@@ -245,9 +242,8 @@ try {
     
 } catch (error) {
     console.error("Submission Error:", error);
-    window.showToast("حدث خطأ أثناء إرسال الطلب: " + error.message, "error");
+    window.showToast("Failed to submit application: " + error.message, "error");
 } finally {
-    // في حالة النجاح أو خطأ غير متوقع (غير الشيك)
     if (document.getElementById('application-container').classList.contains('hidden') === false) {
         btn.innerHTML = originalText;
         btn.disabled = false;

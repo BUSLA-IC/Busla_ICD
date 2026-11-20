@@ -1,5 +1,5 @@
 import { supabase, AuthService, TeamService, UserService } from './supabase-config.js';
-import { initInteractiveRoadmap } from './roadmap-interactive.js?v=2.6';
+import { initInteractiveRoadmap } from './roadmap-interactive.js?v=3.0';
 import { initSettingsModal, openSettings } from './settings-handler.js';
 import { initBadgesSystem } from './badges-handler.js';
 import { initTeamBadgesSystem } from './team-badges-handler.js';
@@ -12,7 +12,7 @@ import { TEAM_RANKS_DATA } from './team-badges-data.js';
 // ==========================================
 // 1. GLOBAL STATE & CONFIGURATION
 // ==========================================
-const CACHE_KEY = 'busla_lms_v6_supa';
+const CACHE_KEY = 'zdc_lms_v6_supa';
 
 let currentUser = null;
 let currentTeam = null;
@@ -127,14 +127,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 
     if (menuBtn) {
         menuBtn.addEventListener('click', () => {
-            sidebar.classList.remove('translate-x-full'); 
+            sidebar.classList.remove('-translate-x-full'); 
             overlay.classList.remove('hidden'); 
         });
     }
 
     if (overlay) {
         overlay.addEventListener('click', () => {
-            sidebar.classList.add('translate-x-full'); 
+            sidebar.classList.add('-translate-x-full'); 
             overlay.classList.add('hidden'); 
         });
     }
@@ -332,7 +332,7 @@ allData.courses = rawCourses.map(course => {
                 course_id: course.id, 
                 real_video_count: videoCount,
                 real_total_duration: formatSecondsToTime(totalSeconds),
-                instructor: instructor || "Busla Team",
+                instructor: instructor || "ZDC Team",
                 image_url: course.image_url
             };
         });
@@ -402,7 +402,7 @@ function initTrackSelector() {
     if (!selector || !allData.tracks) return;
 
     // بناء الخيارات
-    let html = '<option value="all" class="font-bold text-b-primary">🌍 عرض كل المسارات (All Tracks)</option>';
+    let html = '<option value="all" class="font-bold text-b-primary">🌍 All Tracks</option>';
     allData.tracks.forEach(track => {
         html += `<option value="${track.id}">${track.name}</option>`;
     });
@@ -474,30 +474,28 @@ function updateHeaderInfo(user, team) {
     }
 
     // Set User and Team Names
-    const userName = user.full_name || "طالب بوصلة";
-    const teamName = (team && team.name) ? team.name : "بدون فريق";
+    const userName = user.full_name || "ZDC Student";
+    const teamName = (team && team.name) ? team.name : "No Squad";
     
     safeText('sidebar-team-name', teamName);
     safeText('header-user-name', userName);
     safeText('my-points', userPoints);
     safeText('stat-team-score', teamPoints);
 
-    // 💡 التعديل الأهم: جلب اسم الليدر الحقيقي بدلاً من اسم الطالب
+    // Fetch real leader name
     const leaderNameEl = document.getElementById('sidebar-leader-name');
     if (leaderNameEl) {
         if (!team || !team.leader_id) {
-            leaderNameEl.innerText = "لا يوجد";
+            leaderNameEl.innerText = "None";
         } else {
-            // وضع علامة تحميل مؤقتة حتى يأتي الاسم من قاعدة البيانات
             leaderNameEl.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-500 text-[10px]"></i>';
             
-            // جلب الاسم في الخلفية
             supabase.from('profiles').select('full_name').eq('id', team.leader_id).single()
                 .then(({ data, error }) => {
                     if (!error && data) {
                         leaderNameEl.innerHTML = `${data.full_name}`;
                     } else {
-                        leaderNameEl.innerText = "غير معروف";
+                        leaderNameEl.innerText = "Unknown";
                     }
                 });
         }
@@ -507,14 +505,14 @@ function updateHeaderInfo(user, team) {
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
         let rawTeamLogo = team ? team.logo_url : null;
-        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/BUSLA-icon.png";
+        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/zdc-icon-192.png";
     }
 
     // Update User Avatar
     const headerAvatarEl = document.getElementById('header-user-avatar');
     if(headerAvatarEl) {
         const rawUserAvatar = user.avatar_url;
-        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/BUSLA-icon.png";
+        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/zdc-icon-192.png";
     }
 }
 
@@ -522,7 +520,7 @@ function updateHeaderInfo(user, team) {
 window.closeSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    if (sidebar) sidebar.classList.add('translate-x-full');
+    if (sidebar) sidebar.classList.add('-translate-x-full');
     if (overlay) overlay.classList.add('hidden');
 };
 
@@ -530,7 +528,7 @@ function getRememberedLeaderTab() {
     const validTabs = ['overview', 'roadmap', 'assignments', 'squad', 'announcements', 'grading', 'submissions', 'calendar', 'rank', 'team-rank', 'leaderboard'];
     const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
     if (hash && validTabs.includes(hash)) return hash;
-    const saved = localStorage.getItem('busla_leader_active_tab');
+    const saved = localStorage.getItem('zdc_leader_active_tab') || localStorage.getItem('busla_leader_active_tab');
     if (saved && validTabs.includes(saved)) return saved;
     return 'overview';
 }
@@ -544,7 +542,7 @@ window.switchTab = function(id) {
     }
 
     // Save active tab state
-    localStorage.setItem('busla_leader_active_tab', id);
+    localStorage.setItem('zdc_leader_active_tab', id);
     if (window.location.hash !== '#' + id) {
         try { history.replaceState(null, '', '#' + id); } catch(e) {}
     }
@@ -664,10 +662,10 @@ function renderActiveCourses(activeIds) {
                 <div class="w-10 h-10 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center mx-auto mb-2">
                     <i class="fas fa-book-open text-base"></i>
                 </div>
-                <p class="text-gray-300 font-bold text-xs mb-1">لا توجد كورسات مفعّلة حالياً</p>
-                <p class="text-gray-500 text-[11px] mb-3">فعّل الكورسات من شجرة المنهج لتظهر هنا وتتمكن من تعيين المهام منها.</p>
+                <p class="text-gray-300 font-bold text-xs mb-1">No active courses yet</p>
+                <p class="text-gray-500 text-[11px] mb-3">Activate courses from the curriculum roadmap so they appear here for task assignment.</p>
                 <button onclick="window.switchTab('roadmap')" class="bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs px-3 py-1.5 rounded-xl font-bold transition-all inline-flex items-center gap-1.5">
-                    <i class="fas fa-sitemap"></i> استكشاف الشجرة والتفعيل
+                    <i class="fas fa-sitemap"></i> Explore Roadmap & Activate
                 </button>
             </div>
         `;
@@ -676,7 +674,7 @@ function renderActiveCourses(activeIds) {
 
     validCourses.forEach(courseData => {
         const courseId = courseData.course_id || courseData.id || courseData.originalCourseId;
-        const title = courseData.title || "كورس بدون عنوان";
+        const title = courseData.title || "Untitled Course";
         let img = resolveImageUrl(courseData?.image_url, 'course');
 
         const html = `
@@ -685,7 +683,7 @@ function renderActiveCourses(activeIds) {
                     <img src="${img}" alt="${title}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500">
                     <div class="absolute inset-0 bg-gradient-to-t from-b-surface via-transparent to-transparent"></div>
                     <span class="absolute top-2 right-2 bg-teal-500/95 text-white text-[9px] font-bold px-2 py-0.5 rounded-md border border-white/20 shadow-md">
-                        <i class="fas fa-unlock ml-1"></i> مفعّل للفريق
+                        <i class="fas fa-unlock mr-1"></i> Active for Squad
                     </span>
                 </div>
                 <div class="p-4 relative -mt-6">
@@ -695,10 +693,10 @@ function renderActiveCourses(activeIds) {
                     <h4 class="font-bold text-white text-sm mb-2 group-hover:text-teal-400 transition-colors line-clamp-2 leading-snug" dir="auto" title="${title}">${title}</h4>
                     <div class="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
                         <button onclick="window.goToCourseAssignments('${courseId}')" class="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-teal-500/20">
-                            <i class="fas fa-tasks text-[11px]"></i> تعيين مهام
+                            <i class="fas fa-tasks text-[11px]"></i> Assign Tasks
                         </button>
                         <a href="course-player.html?id=${courseId}" class="bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-1 border border-white/10">
-                            <i class="fas fa-play text-[10px]"></i> فتح
+                            <i class="fas fa-play text-[10px]"></i> Open
                         </a>
                     </div>
                 </div>
@@ -715,12 +713,12 @@ function renderWeekInfo() {
     const week = getCurrentWeekCycle();
     const now = new Date();
     
-    const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    const currentDayName = daysAr[now.getDay()];
+    const daysEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDayName = daysEn[now.getDay()];
 
     const options = { month: 'long', day: 'numeric' };
-    const startStr = week.start.toLocaleDateString('ar-EG', options);
-    const endStr = week.end.toLocaleDateString('ar-EG', options);
+    const startStr = week.start.toLocaleDateString('en-US', options);
+    const endStr = week.end.toLocaleDateString('en-US', options);
 
     headerContainer.innerHTML = `
         <div class="flex flex-row justify-between items-center bg-gradient-to-r from-b-primary/20 to-black/30 p-3 sm:p-4 rounded-2xl border border-b-primary/30 mb-4 sm:mb-6 shadow-lg">
@@ -729,13 +727,13 @@ function renderWeekInfo() {
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white text-sm sm:text-lg">الأسبوع الحالي</h3>
-                    <p class="text-[11px] sm:text-sm text-gray-300">من <span class="text-teal-300 font-bold">${startStr}</span> إلى <span class="text-teal-300 font-bold">${endStr}</span></p>
+                    <h3 class="font-bold text-white text-sm sm:text-lg">Current Week</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-300">From <span class="text-teal-300 font-bold">${startStr}</span> to <span class="text-teal-300 font-bold">${endStr}</span></p>
                 </div>
             </div>
             <div class="shrink-0 text-center">
                 <div class="bg-black/50 px-2.5 sm:px-4 py-1 sm:py-2 rounded-xl border border-white/10 shadow-inner">
-                    <p class="text-[10px] sm:text-xs text-gray-400">اليوم</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400">Today</p>
                     <p class="font-bold text-teal-400 text-xs sm:text-base">${currentDayName}</p>
                 </div>
             </div>
@@ -826,10 +824,10 @@ async function renderTeamOverview(tasks) {
                 <div class="flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 mb-3">
                     <span class="text-xs text-red-300 font-bold flex items-center gap-1.5">
                         <i class="fas fa-exclamation-triangle text-red-400"></i>
-                        يوجد ${overdueTasks.length} مهام سابقة متأخرة
+                        ${overdueTasks.length} overdue tasks from previous cycles
                     </span>
                     <button onclick="window.clearOverdueTasks()" class="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5">
-                        <i class="fas fa-trash-alt text-[10px]"></i> مسح المهام السابقة
+                        <i class="fas fa-trash-alt text-[10px]"></i> Clear Overdue Tasks
                     </button>
                 </div>
             `;
@@ -849,7 +847,7 @@ async function renderTeamOverview(tasks) {
                 opacityClass = 'opacity-50 hover:opacity-100'; 
                 typeConfig.border = 'border-l-green-500/50'; 
             } else if (task.isOverdue) {
-                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> Overdue</span>`;
+                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-exclamation-triangle"></i> Overdue</span>`;
                 typeConfig.border = 'border-l-red-500'; 
             } else {
                 statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> Active</span>`;
@@ -882,21 +880,21 @@ async function renderTeamOverview(tasks) {
                         <div class="w-10 h-10 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-lg shadow-inner shrink-0">
                             <i class="fas ${typeConfig.icon}"></i>
                         </div>
-                        <div class="flex-1 min-w-0 pr-2 text-right">
+                        <div class="flex-1 min-w-0 pl-2 text-left">
                             <h4 class="font-bold text-white text-sm line-clamp-2 leading-snug group-hover:text-b-primary transition-colors" dir="auto" title="${task.title || 'Untitled Task'}">
                                 ${task.title || "Untitled Task"}
                             </h4>
-                            <div class="flex items-center justify-end gap-2 mt-1.5 flex-row-reverse w-full">
+                            <div class="flex items-center justify-start gap-2 mt-1.5 w-full">
                                 <span class="text-[10px] text-gray-400 bg-black px-2 py-0.5 rounded border border-white/5">${typeConfig.label}</span>
                                 ${statusBadge}
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 shrink-0 border-r border-white/10 pr-4 mr-2">
+                    <div class="flex items-center gap-2 shrink-0 border-l border-white/10 pl-4 ml-2">
                         <button onclick="event.stopPropagation(); window.unassignTask('${taskId}')" 
                                 class="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all"
-                                title="${hasStarted ? 'حذف المهمة (تنبيه: بدأها بعض الطلاب)' : 'حذف المهمة'}">
+                                title="${hasStarted ? 'Delete Task (Warning: some students already started)' : 'Delete Task'}">
                             <i class="fas fa-trash text-xs"></i>
                         </button>
                         
@@ -947,7 +945,7 @@ window.unassignTask = (taskId) => {
     const task = (window.allTeamTasks || currentTeam?.weekly_tasks || []).find(t => t.id === taskId || t.task_id === taskId);
     
     if (!task) {
-        showToast("المهمة غير موجودة.", "error");
+        showToast("Task not found.", "error");
         return;
     }
 
@@ -956,13 +954,13 @@ window.unassignTask = (taskId) => {
     const isStarted = task.stats && (task.stats.started_count > 0 || task.stats.completed_count > 0);
 
     // Dynamic warning message
-    let confirmMessage = `هل أنت متأكد من حذف المهمة "${task.title || ''}"؟`;
+    let confirmMessage = `Are you sure you want to delete the task "${task.title || ''}"?`;
     if (isStarted && isPastTask) {
-        confirmMessage = `تنبيه: هذه مهمة من دورة سابقة وبدأها بعض الطلاب بالفعل (${task.stats.started_count || 1}). هل أنت متأكد من حذفها نهائياً من سجل الفريق؟`;
+        confirmMessage = `Warning: This task is from a previous cycle and some students have already started it (${task.stats.started_count || 1}). Permanently delete it from the squad log?`;
     } else if (isStarted) {
-        confirmMessage = `تنبيه: بدأ بعض أعضاء الفريق في هذه المهمة بالفعل. هل أنت متأكد من حذفها؟`;
+        confirmMessage = `Warning: Some squad members have already started this task. Are you sure you want to delete it?`;
     } else if (isPastTask) {
-        confirmMessage = `هذه المهمة من دورة سابقة (متأخرة). هل تريد حذفها من سجل الفريق؟`;
+        confirmMessage = `This task is from a previous cycle (overdue). Delete it from the squad log?`;
     }
     
     const performDeletion = async () => {
@@ -970,7 +968,7 @@ window.unassignTask = (taskId) => {
             const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
             if (error) throw error;
             
-            showToast("تم حذف المهمة بنجاح.", "success");
+            showToast("Task deleted successfully.", "success");
             
             // Update local state
             if (window.allTeamTasks) {
@@ -990,11 +988,11 @@ window.unassignTask = (taskId) => {
             
         } catch (err) {
             console.error("Delete Task Error:", err);
-            showToast("فشل حذف المهمة: " + (err.message || ''), "error");
+            showToast("Failed to delete task: " + (err.message || ''), "error");
         }
     };
 
-    window.showCustomConfirm("تأكيد الحذف", confirmMessage, performDeletion);
+    window.showCustomConfirm("Confirm Deletion", confirmMessage, performDeletion);
 };
 
 // Batch delete all overdue / past tasks for the team
@@ -1006,20 +1004,20 @@ window.clearOverdueTasks = async () => {
     });
 
     if (overdueTasks.length === 0) {
-        showToast("لا توجد مهام متأخرة لحذفها.", "info");
+        showToast("No overdue tasks to clear.", "info");
         return;
     }
 
     const ids = overdueTasks.map(t => t.id || t.task_id);
     window.showCustomConfirm(
-        "مسح المهام السابقة والمتأخرة",
-        `هل أنت متأكد من رغبتك في حذف ${overdueTasks.length} من المهام السابقة المتأخرة نهائياً من سجل الفريق؟`,
+        "Clear Overdue Tasks",
+        `Are you sure you want to permanently remove ${overdueTasks.length} overdue tasks from the squad log?`,
         async () => {
             try {
                 const { error } = await supabase.from('team_tasks').delete().in('id', ids);
                 if (error) throw error;
 
-                showToast(`تم مسح ${ids.length} مهمة بنجاح.`, "success");
+                showToast(`Cleared ${ids.length} tasks successfully.`, "success");
                 
                 if (window.allTeamTasks) {
                     window.allTeamTasks = window.allTeamTasks.filter(t => !ids.includes(t.id) && !ids.includes(t.task_id));
@@ -1032,7 +1030,7 @@ window.clearOverdueTasks = async () => {
                 if (typeof renderAssignments === 'function') renderAssignments();
             } catch (err) {
                 console.error("Clear overdue error:", err);
-                showToast("فشل مسح المهام: " + (err.message || ''), "error");
+                showToast("Failed to clear tasks: " + (err.message || ''), "error");
             }
         }
     );
@@ -1106,7 +1104,7 @@ window.showDetails = (type, id, parentTitle = "") => {
     
     const typeLabel = type === 'phase' ? 'Educational Phase' : (item.type || 'Course');
     setText('detail-type', typeLabel);
-    setText('detail-instructor', item.instructor || "Busla Team");
+    setText('detail-instructor', item.instructor || "ZDC Team");
     
     const realDur = item.real_total_duration && item.real_total_duration !== "00:00:00" ? item.real_total_duration : "00:00:00";
     setText('detail-duration', realDur);
@@ -1141,10 +1139,10 @@ window.showDetails = (type, id, parentTitle = "") => {
     if (imgEl) {
         imgEl.onerror = function() {
             this.onerror = null; 
-            this.src = '../assets/icons/BUSLA-icon.png';
+            this.src = '../assets/icons/zdc-icon-192.png';
         };
         
-        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/icons/BUSLA-icon.png';
+        imgEl.src = (item.image_url && item.image_url.startsWith('http')) ? img : '../assets/icons/zdc-icon-192.png';
     }
 
     const toggleArea = document.getElementById('course-action-area');
@@ -1198,13 +1196,13 @@ window.toggleActivate = async (id, isChecked) => {
         if (error) throw error;
 
         if (isChecked) {
-            showToast("تم تفعيل الكورس للفريق بنجاح", "success");
+            showToast("Course activated for your squad", "success");
         } else {
-            showToast("تم إلغاء تفعيل الكورس للفريق", "info");
+            showToast("Course deactivated for your squad", "info");
         }
     } catch (e) {
         console.error("Sync Error:", e);
-        showToast("خطأ في مزامنة التفعيل: " + e.message, "error");
+        showToast("Activation sync error: " + e.message, "error");
     }
 };
 
@@ -1257,10 +1255,10 @@ function renderAssignments() {
                 <div class="w-12 h-12 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center mx-auto mb-3">
                     <i class="fas fa-sitemap text-xl"></i>
                 </div>
-                <h4 class="text-white font-bold text-sm mb-1">لا توجد كورسات مفعّلة حالياً</h4>
-                <p class="text-gray-400 text-xs leading-relaxed mb-4">فعّل الكورسات من شجرة المنهج لتظهر هنا وتتمكن من تحديد ونشر المهام الأسبوعية للفريق.</p>
+                <h4 class="text-white font-bold text-sm mb-1">No active courses yet</h4>
+                <p class="text-gray-400 text-xs leading-relaxed mb-4">Activate courses from the curriculum roadmap so they appear here for weekly squad task publishing.</p>
                 <button onclick="window.switchTab('roadmap')" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold transition-all inline-flex items-center gap-2 shadow-lg shadow-teal-500/20">
-                    <i class="fas fa-map-signs"></i> الانتقال لشجرة المنهج وتفعيل كورس
+                    <i class="fas fa-map-signs"></i> Go to Roadmap & Activate Course
                 </button>
             </div>
         `;
@@ -1275,7 +1273,7 @@ function renderAssignments() {
     if (activeItems.length === 0) {
         list.innerHTML = `
             <div class="text-center py-10 px-4 text-gray-500 text-xs">
-                <p>لم يتم العثور على بيانات الكورسات المفعّلة.</p>
+                <p>No active course data found.</p>
             </div>
         `;
         return;
@@ -1283,7 +1281,7 @@ function renderAssignments() {
 
     list.innerHTML = activeItems.map(item => {
         const stats = [];
-        if (item.real_video_count) stats.push(`${item.real_video_count} درس`);
+        if (item.real_video_count) stats.push(`${item.real_video_count} Lessons`);
         const subInfo = stats.length > 0 ? stats.join(' • ') : (item.module_time || '');
         const itemId = String(item.id || item.course_id);
 
@@ -1294,7 +1292,7 @@ function renderAssignments() {
             <div class="min-w-0">
                 <div class="flex justify-between items-start gap-2">
                     <h4 class="font-bold text-sm text-white group-hover:text-teal-400 transition-colors truncate max-w-[80%]">${item.title}</h4>
-                    <span class="text-[9px] text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded uppercase font-bold">مفعّل</span>
+                    <span class="text-[9px] text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded uppercase font-bold">Active</span>
                 </div>
                 ${subInfo ? `<p class="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1.5"><i class="far fa-clock text-teal-400"></i> ${subInfo}</p>` : ''}
             </div>
@@ -1318,7 +1316,7 @@ window.loadAssignContent = async (cid) => {
 
     const cont = document.getElementById('assign-content-list');
     if (!cont) return;
-    cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-teal-400 text-2xl"></i><p class="text-xs text-gray-400 mt-2">جاري تحميل محتوى الكورس...</p></div>`;
+    cont.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-teal-400 text-2xl"></i><p class="text-xs text-gray-400 mt-2">Loading course content...</p></div>`;
     
     let courseContents = (lookupData.contents || allData.rawContents || []).filter(c => String(c.course_id) === String(cid));
     if (courseContents.length === 0) {
@@ -1356,10 +1354,10 @@ window.loadAssignContent = async (cid) => {
                     </div>
                     <div class="flex-1 min-w-0">
                         <span class="text-sm font-medium ${isAssigned ? 'text-green-300' : 'text-gray-300'} group-hover:text-white transition-colors truncate">${title}</span>
-                        ${isAssigned ? '<span class="text-[9px] text-green-400 bg-green-900/20 px-1.5 rounded mr-2">Published</span>' : ''}
+                        ${isAssigned ? '<span class="text-[9px] text-green-400 bg-green-900/20 px-1.5 rounded ml-2">Published</span>' : ''}
                     </div>
                 </label>
-                <div class="mr-6 space-y-1 border-r border-white/10 pr-2">
+                <div class="ml-6 space-y-1 border-l border-white/10 pl-2">
                     ${renderRelatedItem(m, 'quiz', cid, currentTasks)}
                     ${renderRelatedItem(m, 'project', cid, currentTasks)}
                 </div>
@@ -1403,7 +1401,7 @@ function renderRelatedItem(item, type, courseId, currentTasks) {
     );
 
     return `
-        <label class="flex items-center gap-3 p-2 mt-1 hover:bg-white/5 cursor-pointer transition-colors rounded-lg ${isAssigned ? 'opacity-50' : ''} border-r-2 border-r-gray-700 pr-3 mr-4">
+        <label class="flex items-center gap-3 p-2 mt-1 hover:bg-white/5 cursor-pointer transition-colors rounded-lg ${isAssigned ? 'opacity-50' : ''} border-l-2 border-l-gray-700 pl-3 ml-4">
             <div class="pt-1">
                 <input type="checkbox" 
                        value="${relatedIdString}" 
@@ -1595,7 +1593,7 @@ async function renderSquad() {
                 memberRow.innerHTML = `
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full bg-gray-800 border border-white/10 overflow-hidden">
-                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="${photo}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'">
                         </div>
                         <div>
                             <h4 class="font-bold text-sm text-white flex items-center gap-2">
@@ -1619,32 +1617,32 @@ async function renderSquad() {
             if (container) {
                 containerHtml += `
                 <div class="group flex items-center justify-between bg-b-surface/80 hover:bg-white/5 border border-white/5 hover:border-white/15 rounded-2xl p-3 sm:p-4 md:p-5 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/40">
-                    <div class="absolute right-0 top-0 bottom-0 w-1 sm:w-1.5 bg-gradient-to-b ${index === 0 ? 'from-yellow-400 to-yellow-600' : index === 1 ? 'from-gray-300 to-gray-500' : index === 2 ? 'from-amber-600 to-amber-800' : 'from-b-primary/40 to-transparent'} opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 bg-gradient-to-b ${index === 0 ? 'from-yellow-400 to-yellow-600' : index === 1 ? 'from-gray-300 to-gray-500' : index === 2 ? 'from-amber-600 to-amber-800' : 'from-b-primary/40 to-transparent'} opacity-80 group-hover:opacity-100 transition-opacity"></div>
                     
-                    <div class="flex items-center gap-2.5 sm:gap-4 md:gap-5 flex-1 min-w-0 pr-1 sm:pr-2">
+                    <div class="flex items-center gap-2.5 sm:gap-4 md:gap-5 flex-1 min-w-0 pl-1 sm:pl-2">
                         <div class="hidden md:flex items-center justify-center w-8 text-2xl font-black text-white/15 font-mono group-hover:text-white/30 transition-colors shrink-0">
                             #${index + 1}
                         </div>
                         <div class="relative shrink-0">
-                            <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#00F5FF'}, transparent);">
-                                <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'" alt="Avatar">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#EFECE6'}, transparent);">
+                                <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'" alt="Avatar">
                             </div>
-                            <div class="absolute -bottom-1 -left-1 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#00F5FF'}] shadow-md z-10 p-0.5" title="المستوى ${rankData.level}">
+                            <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#EFECE6'}] shadow-md z-10 p-0.5" title="Level ${rankData.level}">
                                 <img src="../assets/user-badge/lv${rankData.level}.png" class="w-full h-full object-contain">
                             </div>
                         </div>
-                        <div class="flex-1 min-w-0 text-right space-y-0.5 sm:space-y-1">
+                        <div class="flex-1 min-w-0 text-left space-y-0.5 sm:space-y-1">
                             <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                 <h4 class="text-white font-bold text-sm sm:text-base md:text-lg truncate tracking-tight max-w-[130px] sm:max-w-[200px] md:max-w-none">
                                     ${name}
                                 </h4>
                                 ${isLeader ? `
                                     <span class="px-2 py-0.5 bg-yellow-500/15 text-yellow-400 text-[10px] sm:text-xs rounded-full border border-yellow-500/30 font-bold inline-flex items-center gap-1 shrink-0">
-                                        <i class="fas fa-crown text-[9px]"></i> ليدر
+                                        <i class="fas fa-crown text-[9px]"></i> Leader
                                     </span>` : ''}
                                 ${isMe && !isLeader ? `
                                     <span class="px-2 py-0.5 bg-b-primary/10 text-b-primary text-[10px] sm:text-xs rounded-full border border-b-primary/20 font-bold shrink-0">
-                                        أنت
+                                        You
                                     </span>` : ''}
                             </div>
                             <div class="text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: ${rankData.stage_color}">
@@ -1658,7 +1656,7 @@ async function renderSquad() {
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 sm:gap-3 shrink-0 pl-1">
+                    <div class="flex items-center gap-2 sm:gap-3 shrink-0 pr-1">
                         <div class="text-center bg-black/30 sm:bg-white/5 border border-white/5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl">
                             <span class="block text-[8px] sm:text-[9px] text-gray-400 uppercase font-mono tracking-wider">XP</span>
                             <span class="font-mono font-black text-xs sm:text-sm md:text-base text-b-primary">${points.toLocaleString()}</span>
@@ -1666,7 +1664,7 @@ async function renderSquad() {
                         ${canKick ? `
                         <button onclick="confirmKickMember('${currentTeam.team_id}', '${member.id}', '${name}')" 
                                 class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs sm:text-sm active:scale-95 shrink-0" 
-                                title="إزالة العضو">
+                                title="Remove Member">
                             <i class="fas fa-user-times"></i>
                         </button>` : ''}
                     </div>
@@ -1713,10 +1711,10 @@ window.sendTeamInvitation = async () => {
     const btn = document.getElementById('btn-send-invite');
     const email = emailInput.value.trim();
 
-    if (!email) return showToast("الرجاء إدخال البريد الإلكتروني", "error");
+    if (!email) return showToast("Please enter an email address", "error");
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
 
     try {
         const { data: user, error: userError } = await supabase
@@ -1725,11 +1723,10 @@ window.sendTeamInvitation = async () => {
             .eq('email', email)
             .single();
 
-        if (userError || !user) throw new Error("البريد الإلكتروني غير مسجل في المنصة.");
+        if (userError || !user) throw new Error("Email address is not registered on ZDC.");
         
-        // 💡 حماية صارمة لمنع إرسال دعوة لطالب موجود في فريق بالفعل
         if (user.team_id && user.team_id !== 'null' && user.team_id !== '') {
-            throw new Error("هذا الطالب منضم لفريق بالفعل ولا يمكن دعوته.");
+            throw new Error("This student is already in a squad and cannot be invited.");
         }
 
         const { data: existing, error: existError } = await supabase
@@ -1739,7 +1736,7 @@ window.sendTeamInvitation = async () => {
             .eq('from_team_id', currentTeam.team_id)
             .eq('status', 'pending');
 
-        if (existing && existing.length > 0) throw new Error("تم إرسال دعوة مسبقاً لهذا الطالب وهي قيد الانتظار.");
+        if (existing && existing.length > 0) throw new Error("A pending invitation has already been sent to this student.");
 
         const inviteData = {
             to_uid: user.id,
@@ -1757,24 +1754,20 @@ window.sendTeamInvitation = async () => {
         const { error: insertError } = await supabase.from('team_invitations').insert([inviteData]);
         if (insertError) throw insertError;
 
-        // ==========================================
-        // 💡 إرسال إشعار تنبيهي مبسط للطالب
-        // ==========================================
         try {
             const inviteNotif = {
-                title: `📩 دعوة انضمام لفريق ${currentTeam.name}`,
-                content: `لقد قام القائد (${currentUserData.full_name}) بدعوتك للانضمام إلى فريقه!\n\nيرجى التوجه إلى قسم (الدعوات) في لوحة القيادة الخاصة بك لمراجعة الدعوة واتخاذ قرارك بالقبول أو الرفض.`,
+                title: `📩 Invitation to join squad ${currentTeam.name}`,
+                content: `Squad Leader (${currentUserData.full_name}) has invited you to join their squad!\n\nPlease visit the Invitations section in your dashboard to review and accept or decline the invite.`,
                 type: 'info',
-                target_leader_id: user.id, // نوجه الإشعار لصندوق الطالب مباشرة
+                target_leader_id: user.id,
                 is_read: false
             };
             await supabase.from('system_notifications').insert([inviteNotif]);
         } catch (notifErr) {
             console.warn("Failed to send notification:", notifErr);
         }
-        // ==========================================
 
-        showToast("تم إرسال الدعوة بنجاح!", "success");
+        showToast("Invitation sent successfully!", "success");
         closeModal('invite-member-modal');
         
         if (typeof renderSentInvitesList === 'function') renderSentInvitesList();
@@ -1785,7 +1778,7 @@ window.sendTeamInvitation = async () => {
         showToast(error.message, "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'إرسال الدعوة';
+        btn.innerHTML = 'Send Invitation';
     }
 };
 
@@ -1810,7 +1803,7 @@ async function renderSentInvitesList() {
         invites.forEach(invite => {
             if (invite.status === 'accepted') return; 
 
-            const date = new Date(invite.created_at).toLocaleDateString('ar-EG');
+            const date = new Date(invite.created_at).toLocaleDateString('en-US');
             let statusBadge = '';
             if (invite.status === 'pending') statusBadge = '<span class="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-1 rounded border border-yellow-500/20">Pending</span>';
             if (invite.status === 'rejected') statusBadge = '<span class="bg-red-500/20 text-red-500 text-xs px-2 py-1 rounded border border-red-500/20">Rejected</span>';
@@ -1861,15 +1854,15 @@ function renderSentInvites(teamData) {
                     </td>
                     <td class="p-4">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20 uppercase tracking-wide">
-                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Waiting
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Waiting
                         </span>
                     </td>
-                    <td class="p-4 text-xs font-mono text-gray-500 dir-ltr text-right">
-                        ${new Date(inv.created_at).toLocaleDateString('en-GB')}
+                    <td class="p-4 text-xs font-mono text-gray-500 text-left">
+                        ${new Date(inv.created_at).toLocaleDateString('en-US')}
                     </td>
-                    <td class="p-4 text-left">
+                    <td class="p-4 text-right">
                         <button onclick="cancelInvitation('${inv.id}')" 
-                                class="text-gray-500 hover:text-red-400 text-xs font-bold py-1 px-3 rounded-lg hover:bg-red-500/10 transition-all flex items-center gap-1 ml-auto">
+                                class="text-gray-500 hover:text-red-400 text-xs font-bold py-1 px-3 rounded-lg hover:bg-red-500/10 transition-all inline-flex items-center gap-1">
                             <i class="fas fa-trash-alt"></i> Cancel
                         </button>
                     </td>
@@ -1880,7 +1873,7 @@ function renderSentInvites(teamData) {
 
 window.cancelInvitation = (inviteId) => {
     window.showCustomConfirm(
-        "إلغاء الدعوة المرسلة",
+        "Cancel Sent Invitation",
         "Are you sure you want to cancel this invitation?",
         async () => {
             try {
@@ -1914,7 +1907,7 @@ function renderJoinRequests(teamData) {
     const requests = teamData.requests || [];
 
     if (requests.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 border border-white/5 border-dashed rounded-xl">لا توجد طلبات انضمام جديدة</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-600 border border-white/5 border-dashed rounded-xl">No new join requests</div>`;
         return;
     }
 
@@ -1922,7 +1915,6 @@ function renderJoinRequests(teamData) {
     if(countBadge) countBadge.innerText = requests.length;
     
     container.innerHTML = requests.map(req => {
-        // تشفير البيانات لتمريرها في الزر
         const safeReqData = encodeURIComponent(JSON.stringify(req));
         
         return `
@@ -1934,22 +1926,22 @@ function renderJoinRequests(teamData) {
                     <i class="fas fa-user-clock"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-white text-base truncate">${req.name || 'مستخدم'}</h4>
-                    <p class="text-xs text-gray-400 mt-0.5">يريد الانضمام إلى فريقك</p>
+                    <h4 class="font-bold text-white text-base truncate">${req.name || 'Student'}</h4>
+                    <p class="text-xs text-gray-400 mt-0.5">Wants to join your squad</p>
                 </div>
             </div>
             
             <div class="flex gap-2 w-full sm:w-auto z-10 shrink-0">
                 <button onclick="window.viewStudentDetails('${req.uid}', '${safeReqData}')" 
                         class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all font-bold text-sm">
-                    <i class="fas fa-eye mr-1"></i> التفاصيل
+                    <i class="fas fa-eye mr-1"></i> Details
                 </button>
                 <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-600 hover:text-white transition-all">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-600 hover:text-white transition-all" title="Accept">
                     <i class="fas fa-check"></i>
                 </button>
                 <button onclick="handleRequestAction('${teamData.id}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all" title="Decline">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1960,11 +1952,10 @@ function renderJoinRequests(teamData) {
 function renderRequestsList() {
     const container = document.getElementById('requests-list-container');
     const requests = currentTeam.requests || [];
-    // 💡 استخدام المعرف الصحيح للفريق
     const tId = currentTeam.id || currentTeam.team_id;
 
     if (requests.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">لا توجد طلبات جديدة.</div>`;
+        container.innerHTML = `<div class="text-center py-10 text-gray-500 border border-white/5 border-dashed rounded-xl">No pending join requests.</div>`;
         return;
     }
 
@@ -1978,21 +1969,21 @@ function renderRequestsList() {
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="truncate">
-                    <h4 class="font-bold text-white text-sm truncate">${req.name || 'مستخدم'}</h4>
-                    <p class="text-[10px] text-gray-400 truncate">يريد الانضمام للفريق</p>
+                    <h4 class="font-bold text-white text-sm truncate">${req.name || 'Student'}</h4>
+                    <p class="text-[10px] text-gray-400 truncate">Wants to join the squad</p>
                 </div>
             </div>
             <div class="flex gap-2 shrink-0">
                 <button onclick="window.viewStudentDetails('${req.uid}', '${safeReqData}')" 
-                        class="px-3 py-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-blue-500/20" title="التفاصيل">
+                        class="px-3 py-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-blue-500/20" title="Details">
                     <i class="fas fa-eye"></i>
                 </button>
                 <button onclick="handleRequestAction('${tId}', '${req.uid}', '${req.name}', 'accept')" 
-                        class="px-3 py-2 bg-green-500/10 hover:bg-green-600 text-green-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-green-500/20" title="قبول">
+                        class="px-3 py-2 bg-green-500/10 hover:bg-green-600 text-green-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-green-500/20" title="Accept">
                     <i class="fas fa-check"></i>
                 </button>
                 <button onclick="handleRequestAction('${tId}', '${req.uid}', '${req.name}', 'reject')" 
-                        class="px-3 py-2 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg text-xs font-bold transition-all border border-white/5" title="رفض">
+                        class="px-3 py-2 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg text-xs font-bold transition-all border border-white/5" title="Decline">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -2005,7 +1996,7 @@ window.viewStudentDetails = async (uid, encodedReq) => {
     if (!modal) return;
     
     modal.classList.remove('hidden');
-    document.getElementById('sdm-name').innerText = "جاري التحميل...";
+    document.getElementById('sdm-name').innerText = "Loading...";
     document.getElementById('sdm-reason').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
@@ -2013,16 +2004,16 @@ window.viewStudentDetails = async (uid, encodedReq) => {
         const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
         if (error) throw error;
 
-        document.getElementById('sdm-name').innerText = profile.full_name || reqData.name || 'طالب مجهول';
-        document.getElementById('sdm-email').innerHTML = `<i class="fas fa-envelope mr-1"></i> ${profile.email || 'غير متوفر'}`;
+        document.getElementById('sdm-name').innerText = profile.full_name || reqData.name || 'Unknown Student';
+        document.getElementById('sdm-email').innerHTML = `<i class="fas fa-envelope mr-1"></i> ${profile.email || 'Unavailable'}`;
         document.getElementById('sdm-avatar').src = resolveImageUrl(profile.avatar_url, 'user');
         document.getElementById('sdm-xp').innerText = (profile.total_xp || 0).toLocaleString();
         
-        document.getElementById('sdm-uni').innerText = profile.university || 'لم يُحدد';
-        document.getElementById('sdm-faculty').innerText = profile.faculty || 'لم يُحدد';
-        document.getElementById('sdm-dept').innerText = profile.department || 'لم يُحدد';
-        document.getElementById('sdm-year').innerText = profile.academic_year || 'لم يُحدد';
-        document.getElementById('sdm-gov').innerText = profile.governorate || 'لم يُحدد';
+        document.getElementById('sdm-uni').innerText = profile.university || 'Not specified';
+        document.getElementById('sdm-faculty').innerText = profile.faculty || 'Not specified';
+        document.getElementById('sdm-dept').innerText = profile.department || 'Not specified';
+        document.getElementById('sdm-year').innerText = profile.academic_year || 'Not specified';
+        document.getElementById('sdm-gov').innerText = profile.governorate || 'Not specified';
 
         const sRank = getRankDataForMember(profile.total_xp || 0);
         const rankEl = document.getElementById('sdm-rank');
@@ -2037,39 +2028,36 @@ window.viewStudentDetails = async (uid, encodedReq) => {
             reasonEl.classList.remove('text-gray-500', 'italic', 'text-center');
             reasonEl.classList.add('text-white');
         } else {
-            reasonEl.innerHTML = `<div class="text-center mt-6"><i class="fas fa-comment-slash text-3xl mb-2 opacity-50"></i><br>لم يقم الطالب بكتابة رسالة تقديم.</div>`;
+            reasonEl.innerHTML = `<div class="text-center mt-6"><i class="fas fa-comment-slash text-3xl mb-2 opacity-50"></i><br>The student did not include a message.</div>`;
             reasonEl.classList.add('text-gray-500', 'italic');
             reasonEl.classList.remove('text-white');
         }
 
-        // 💡 استخدام المعرف الصحيح للفريق هنا
         const tId = currentTeam.id || currentTeam.team_id;
         const actionsCont = document.getElementById('sdm-actions');
         actionsCont.innerHTML = `
             <button onclick="window.closeModal('student-details-modal'); handleRequestAction('${tId}', '${uid}', '${profile.full_name || reqData.name}', 'accept')" 
                     class="flex-1 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-2xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
-                <i class="fas fa-check"></i> قبول الطالب في الفريق
+                <i class="fas fa-check"></i> Accept Into Squad
             </button>
             <button onclick="window.closeModal('student-details-modal'); handleRequestAction('${tId}', '${uid}', '${profile.full_name || reqData.name}', 'reject')" 
                     class="px-8 py-4 bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 font-bold rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2">
-                <i class="fas fa-times"></i> رفض الطلب
+                <i class="fas fa-times"></i> Decline Request
             </button>
         `;
 
     } catch(e) {
         console.error(e);
-        showToast("فشل في جلب بيانات الطالب", "error");
+        showToast("Failed to load student details", "error");
     }
 };
 
 window.handleRequestAction = async (teamId, userId, userName, action) => {
     try {
         if (action === 'accept') {
-            // 1. جلب نقاط الطالب الحالية
             const { data: prof } = await supabase.from('profiles').select('total_xp').eq('id', userId).single();
             const studentXp = prof?.total_xp || 0;
 
-            // 2. إدخال الطالب في الفريق
             const { data: updatedProfile, error: profileErr } = await supabase
                 .from('profiles')
                 .update({ team_id: teamId })
@@ -2078,13 +2066,11 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
 
             if (profileErr) throw profileErr;
 
-            // 🛑 حماية قوية: إذا كانت القائمة فارغة، هذا يعني أن Supabase رفضت التعديل!
             if (!updatedProfile || updatedProfile.length === 0) {
-                showToast("تم رفض التعديل من قاعدة البيانات! يرجى تنفيذ كود الـ SQL.", "error");
+                showToast("Database rejected the update. Check RLS policies.", "error");
                 return; 
             }
 
-            // 3. إضافة النقاط للفريق 
             if (studentXp > 0) {
                 const currentTeamScore = currentTeam.total_score || 0;
                 await supabase.from('teams').update({ total_score: currentTeamScore + studentXp }).eq('id', teamId);
@@ -2094,80 +2080,68 @@ window.handleRequestAction = async (teamId, userId, userName, action) => {
                         team_id: teamId,
                         contributor_id: userId,
                         amount: studentXp,
-                        reason: 'نقاط الانضمام المبدئية'
+                        reason: 'Initial squad join XP'
                     });
                 } catch(logErr) {
-                    console.warn("تم تجاهل خطأ اللوج");
+                    console.warn("Log insert skipped");
                 }
             }
 
-            // 4. إزالة الطلب من قائمة الطلبات
             const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
             await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
 
-            // ==========================================
-            // 🎉 إرسال إشعار الترحيب المشجع (في حالة القبول)
-            // ==========================================
             try {
                 const welcomePost = {
                     team_id: teamId,
-                    type: 'achievement', // نوع إنجاز ليظهر الكأس الأخضر المبهج
-                    title: `🎉 مرحباً بك يا بطل في فريق ${currentTeam.name}!`,
-                    content: `أهلاً بك في بيتك الجديد! نحن في غاية السعادة بانضمامك لأسرتنا. لقد تم قبول طلبك بنجاح لأننا نؤمن بقدراتك. 🚀\n\nنرجو منك:\n1️⃣ تفقد خريطة التعلم والبدء فوراً.\n2️⃣ الالتزام بالمهام والمواعيد لضمان تفوقنا.\n3️⃣ متابعة الإشعارات باستمرار.\n\nانطلاقة موفقة، ودعنا نصنع النجاح معاً! 💪`,
+                    type: 'achievement',
+                    title: `🎉 Welcome aboard, ${userName}, to ${currentTeam.name}!`,
+                    content: `Welcome to your new engineering squad! Your request has been approved and we are excited to build with you. 🚀\n\nNext steps:\n1. Explore the curriculum roadmap and start your lessons.\n2. Stay on top of weekly squad assignments and deadlines.\n3. Check squad announcements regularly.\n\nLet's succeed together!`,
                     creator_id: currentUserData.id,
-                    creator_name: currentUserData.full_name || 'قائد الفريق',
+                    creator_name: currentUserData.full_name || 'Squad Leader',
                     creator_avatar: currentUserData.avatar_url,
-                    target_members: [userId], // توجيه الإشعار للطالب المقبول فقط
+                    target_members: [userId],
                     seen_by: [{ uid: currentUserData.id, seen_at: new Date().toISOString() }] 
                 };
                 await supabase.from('team_posts').insert([welcomePost]);
-            } catch (notifErr) { console.warn("فشل إرسال إشعار الترحيب", notifErr); }
-            // ==========================================
+            } catch (notifErr) { console.warn("Failed to send welcome notification", notifErr); }
 
-            showToast(`تم قبول ${userName} وإضافته للفريق بنجاح!`, 'success');
+            showToast(`${userName} accepted and added to the squad!`, 'success');
 
         } else {
-            // حالة الرفض
             const newRequests = currentTeam.requests.filter(r => r.uid !== userId);
             await supabase.from('teams').update({ requests: newRequests }).eq('id', teamId);
             
-            // ==========================================
-            // 🌟 إرسال إشعار اعتذار لطيف ومُشجع (في حالة الرفض)
-            // ==========================================
             try {
                 const rejectMsg = {
-                    title: `🌟 تحديث بخصوص طلب انضمامك لفريق ${currentTeam.name}`,
-                    content: `مرحباً بك يا بطل،\n\nنشكرك من القلب على حماسك ورغبتك في الانضمام إلى فريقنا. لقد قمنا بمراجعة طلبك بعناية، ولكن للأسف لن نتمكن من قبول انضمامك في الوقت الحالي نظراً لاكتمال العدد أو لأسباب تنظيمية خاصة بالفريق.\n\n🎯 تذكر دائماً أن هذه ليست سوى بداية! استمر في تطوير مهاراتك بشغف، فهناك العديد من الفرق الرائعة الأخرى بانتظار إبداعك في منصة بوصلة.\n\nنتمنى لك رحلة تعلم مليئة بالتفوق والنجاح! ✨`,
+                    title: `🌟 Update regarding your request to join ${currentTeam.name}`,
+                    content: `Hello,\n\nThank you for your enthusiasm and interest in joining our squad. After reviewing your request, we are unable to accept new members at this time due to squad capacity or current planning.\n\nKeep sharpening your skills — there are many great squads on ZDC waiting for your talent. Wishing you an awesome engineering journey!`,
                     type: 'info',
-                    target_leader_id: userId, // 💡 إرسال الرسالة لـ (صندوق الطالب) مباشرة لأنه بدون فريق حالياً
+                    target_leader_id: userId,
                     is_read: false
                 };
                 await supabase.from('system_notifications').insert([rejectMsg]);
-            } catch (notifErr) { console.warn("فشل إرسال إشعار الرفض", notifErr); }
-            // ==========================================
+            } catch (notifErr) { console.warn("Failed to send decline notification", notifErr); }
 
-            showToast(`تم رفض طلب ${userName} وإرسال رسالة تشجيعية له.`, 'neutral');
+            showToast(`Declined ${userName}'s request and sent an encouraging update.`, 'neutral');
             window.closeModal('student-details-modal');
         }
         
-        // إعادة تحميل الواجهة لتحديث القوائم والنقاط
         setTimeout(() => location.reload(), 1500);
 
     } catch (e) {
         console.error("Request Action Error:", e);
-        showToast("فشل في تنفيذ الإجراء", "error");
+        showToast("Failed to process request", "error");
     }
 };
-// دالة طرد طالب من الفريق (شاملة الخصم المحاسبي والحماية)
+
 window.confirmKickMember = (teamId, memberUid, memberName) => {
     window.showCustomConfirm(
-        "طرد عضو من الفريق",
-        `هل أنت متأكد من طرد "${memberName}"؟\nسيحتفظ الطالب بجميع نقاطه الشخصية، ولكن سيتم سحب النقاط التي ساهم بها من رصيد الفريق.`,
+        "Remove Squad Member",
+        `Are you sure you want to remove "${memberName}"?\nThey will keep all personal XP, while XP they contributed to the squad will be deducted from the squad score.`,
         async () => {
-            showToast("جاري تنفيذ عملية الطرد، يرجى الانتظار...", "info");
+            showToast("Removing member, please wait...", "info");
 
             try {
-                // 1. حساب النقاط التي ساهم بها الطالب في هذا الفريق
                 const { data: logs } = await supabase.from('team_score_logs')
                     .select('amount, id')
                     .eq('team_id', teamId)
@@ -2182,7 +2156,6 @@ window.confirmKickMember = (teamId, memberUid, memberName) => {
                     });
                 }
 
-                // 2. إزالة الطالب من الفريق (مع الحماية من الرفض الصامت باستخدام .select)
                 const { data: updatedProfile, error: kickError } = await supabase
                     .from('profiles')
                     .update({ team_id: null })
@@ -2191,46 +2164,35 @@ window.confirmKickMember = (teamId, memberUid, memberName) => {
 
                 if (kickError) throw kickError;
 
-                // إذا رجعت القائمة فارغة، معناه أن قاعدة البيانات رفضت التعديل بسبب الصلاحيات
                 if (!updatedProfile || updatedProfile.length === 0) {
-                    throw new Error("لم يتم طرد الطالب. يرجى التأكد من صلاحيات قاعدة البيانات (RLS).");
+                    throw new Error("Could not remove member. Please verify database RLS permissions.");
                 }
 
-                // 3. خصم مساهمات الطالب من نقاط الفريق وحذف سجلات المساهمة
                 if (totalContributed > 0) {
-                    // أ) جلب نقاط الفريق الحالية
                     const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
                     const currentTeamScore = teamInfo?.total_score || 0;
-                    
-                    // ب) حساب النقاط الجديدة (مع التأكد أنها لا تقل عن الصفر)
                     const newTeamScore = Math.max(0, currentTeamScore - totalContributed);
-                    
-                    // ج) تحديث نقاط الفريق
                     await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', teamId);
-                    
-                    // د) مسح السجلات الخاصة بهذا الطالب في هذا الفريق
                     if (logIds.length > 0) {
                         await supabase.from('team_score_logs').delete().in('id', logIds);
                     }
                 }
 
-                showToast(`تم طرد ${memberName} وسحب مساهماته بنجاح.`, 'success');
-                
-                // إعادة تحميل الصفحة لتحديث الواجهة والترتيب
+                showToast(`Removed ${memberName} and adjusted squad XP.`, 'success');
                 setTimeout(() => location.reload(), 1500);
 
             } catch (error) {
                 console.error("Kick Error:", error);
-                showToast(error.message || "فشل في إزالة العضو من الفريق.", 'error');
+                showToast(error.message || "Failed to remove member from squad.", 'error');
             }
         }
     );
 };
+
 // ==========================================
 // LEAVE TEAM & LEADERSHIP HANDOVER
 // ==========================================
 
-// 1. دالة فتح نافذة المغادرة (تُجهز القائمة بناءً على عدد الأعضاء)
 window.openLeaveTeamModal = async () => {
     const modal = document.getElementById('leave-team-modal');
     const select = document.getElementById('new-leader-select');
@@ -2238,40 +2200,37 @@ window.openLeaveTeamModal = async () => {
     if (modal) modal.classList.remove('hidden');
     if (!select) return;
 
-    select.innerHTML = '<option value="" disabled selected>جاري فحص بيانات الفريق...</option>';
+    select.innerHTML = '<option value="" disabled selected>Checking squad members...</option>';
     select.disabled = true;
 
     if (!currentTeam || !currentTeam.members) {
-        select.innerHTML = '<option value="" disabled>خطأ في تحميل البيانات</option>';
+        select.innerHTML = '<option value="" disabled>Error loading data</option>';
         return;
     }
 
     try {
-        // فلترة الأعضاء لاستبعاد الليدر الحالي
         const otherMembersIds = currentTeam.members.filter(uid => uid !== currentUser.id);
 
         if (otherMembersIds.length === 0) {
-            // حالة 1: الليدر بمفرده
-            select.innerHTML = '<option value="" disabled selected>أنت العضو الوحيد (سيتم حذف الفريق بالكامل)</option>';
+            select.innerHTML = '<option value="" disabled selected>You are the only member (squad will be deleted)</option>';
             return;
         }
 
-        // حالة 2: يوجد أعضاء آخرين
         const { data: members } = await supabase
             .from('profiles')
             .select('id, full_name, total_xp')
             .in('id', otherMembersIds);
 
-        select.innerHTML = '<option value="" disabled selected>-- اختر القائد الجديد أولاً --</option>';
+        select.innerHTML = '<option value="" disabled selected>-- Select New Leader First --</option>';
         
         if (members) {
             members.forEach(member => {
-                const name = member.full_name || "مجهول";
+                const name = member.full_name || "Unknown";
                 const points = member.total_xp || 0;
                 
                 const option = document.createElement('option');
                 option.value = member.id;
-                option.text = `${name} (النقاط: ${points} XP)`;
+                option.text = `${name} (${points} XP)`;
                 select.appendChild(option);
             });
             select.disabled = false;
@@ -2279,37 +2238,35 @@ window.openLeaveTeamModal = async () => {
 
     } catch (error) {
         console.error("Error loading candidates:", error);
-        select.innerHTML = '<option value="" disabled>خطأ في جلب الأعضاء</option>';
+        select.innerHTML = '<option value="" disabled>Error loading members</option>';
     }
 };
 
-// 2. دالة تنفيذ المغادرة وتسليم القيادة (المحمية)
 window.confirmLeaveTeam = async () => {
     const selectEl = document.getElementById('new-leader-select');
     const newLeaderId = selectEl ? selectEl.value : null;
     const isSolo = (!currentTeam.members || currentTeam.members.length <= 1);
     
     if (!isSolo && !newLeaderId) {
-        return showToast("يجب عليك اختيار أحد أفراد الفريق ليتولى القيادة من بعدك!", "error");
+        return showToast("You must select a squad member to take over leadership first!", "error");
     }
 
     const confirmMessage = isSolo 
-        ? "أنت العضو الوحيد. مغادرتك تعني [حذف الفريق نهائياً] بكل بياناته، هل أنت متأكد؟ ستحتفظ بنقاطك الشخصية." 
-        : "هل أنت متأكد من تسليم القيادة ومغادرة الفريق؟ سيتم سحب نقاط مساهماتك من رصيد الفريق، ولكنك ستحتفظ بها في حسابك الشخصي.";
+        ? "You are the only member. Leaving will permanently delete the squad and all its data. Are you sure? You will keep your personal XP." 
+        : "Are you sure you want to hand over leadership and leave the squad? Your contributed XP will be deducted from the squad score, while you keep your personal XP.";
 
     window.showCustomConfirm(
-        "مغادرة الفريق",
+        "Leave Squad",
         confirmMessage,
         async () => {
         closeModal('leave-team-modal');
-        showToast("جاري معالجة البيانات، يرجى الانتظار...", "info");
+        showToast("Processing request, please wait...", "info");
 
         try {
             const teamId = currentTeam.team_id;
             const myId = currentUser.id;
 
             if (isSolo) {
-                // 🔴 سيناريو 1: الليدر بمفرده
                 await supabase.from('team_tasks').delete().eq('team_id', teamId);
                 await supabase.from('team_score_logs').delete().eq('team_id', teamId);
                 await supabase.from('team_invitations').delete().eq('from_team_id', teamId);
@@ -2320,9 +2277,6 @@ window.confirmLeaveTeam = async () => {
                 await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', myId);
 
             } else {
-                // 🟢 سيناريو 2: تسليم القيادة لزميل
-                
-                // 💡 التعديل الأهم: ترقية العضو الجديد مع التأكد من نجاح العملية (.select())
                 const { data: updatedProfile, error: roleErr } = await supabase
                     .from('profiles')
                     .update({ role: 'leader' })
@@ -2331,15 +2285,12 @@ window.confirmLeaveTeam = async () => {
 
                 if (roleErr) throw roleErr;
                 
-                // لو الترقية اترفضت من الداتا بيز، نوقف الكود فوراً!
                 if (!updatedProfile || updatedProfile.length === 0) {
-                    throw new Error("فشل في ترقية الطالب إلى ليدر. يرجى تشغيل كود SQL لتحديث صلاحيات RLS.");
+                    throw new Error("Failed to promote member to leader. Check database RLS permissions.");
                 }
 
-                // تحديث الليدر الجديد في جدول الفريق
                 await supabase.from('teams').update({ leader_id: newLeaderId }).eq('id', teamId);
 
-                // حساب مساهمات الليدر المغادر وخصمها
                 const { data: logs } = await supabase.from('team_score_logs')
                     .select('amount, id')
                     .eq('team_id', teamId)
@@ -2362,11 +2313,10 @@ window.confirmLeaveTeam = async () => {
                     }
                 }
 
-                // تجريد الليدر القديم من صلاحياته
                 await supabase.from('profiles').update({ team_id: null, role: 'student' }).eq('id', myId);
             }
 
-            showToast("تمت العملية بنجاح! سيتم توجيهك لصفحة الطالب...", "success");
+            showToast("Done! Redirecting to student dashboard...", "success");
             
             setTimeout(() => {
                 window.location.replace('student-dash.html');
@@ -2374,7 +2324,7 @@ window.confirmLeaveTeam = async () => {
 
         } catch (e) {
             console.error("Leave/Handover Team Error:", e);
-            showToast(e.message || "حدث خطأ أثناء تنفيذ العملية، راجع الكونسول.", "error");
+            showToast(e.message || "An error occurred while leaving the squad.", "error");
         }
     });
 };
@@ -2397,7 +2347,7 @@ function renderCalendarTab() {
     
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
-    const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     monthTitle.innerText = `${monthNames[month]} ${year}`;
 
     let currentDate = new Date(year, month, 1);
@@ -2415,8 +2365,8 @@ function renderCalendarTab() {
         weekEnd.setDate(weekStart.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
 
-        const startStr = weekStart.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
-        const endStr = weekEnd.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+        const startStr = weekStart.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        const endStr = weekEnd.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
         const weekTasks = tasks.filter(t => {
             const taskDue = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
@@ -2437,22 +2387,22 @@ function renderCalendarTab() {
                         <span class="text-sm sm:text-base font-black leading-tight">${i + 1}</span>
                     </div>
                     
-                    <div class="min-w-0 text-right">
+                    <div class="min-w-0 text-left">
                         <div class="flex items-center gap-2">
                             <h4 class="font-bold text-white text-xs sm:text-sm truncate">${startStr} - ${endStr}</h4>
-                            ${isCurrent ? `<span class="bg-b-primary/20 text-b-primary text-[9px] font-bold px-1.5 py-0.5 rounded border border-b-primary/30 shrink-0 animate-pulse">الحالي</span>` : ''}
+                            ${isCurrent ? `<span class="bg-b-primary/20 text-b-primary text-[9px] font-bold px-1.5 py-0.5 rounded border border-b-primary/30 shrink-0">Current</span>` : ''}
                         </div>
                         <div class="text-[10px] sm:text-xs text-gray-400 mt-0.5 flex items-center gap-2">
                             <span class="flex items-center gap-1 ${weekTasks.length > 0 ? 'text-teal-300 font-semibold' : 'text-gray-500'}">
                                 <i class="fas fa-tasks text-[9px] sm:text-[10px]"></i>
-                                <span>${weekTasks.length} مهام</span>
+                                <span>${weekTasks.length} tasks</span>
                             </span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
-                    <i class="fas fa-chevron-left text-[10px] sm:text-xs group-hover:-translate-x-0.5 transition-transform"></i>
+                    <i class="fas fa-chevron-right text-[10px] sm:text-xs group-hover:translate-x-0.5 transition-transform"></i>
                 </div>
             </div>
         `;
@@ -2487,8 +2437,8 @@ window.openWeekDetails = (startIso, endIso) => {
         return d >= startDate && d <= endDate;
     });
 
-    if(headerTitle) headerTitle.innerText = `الخطة الأسبوعية (${startDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})} - ${endDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})})`;
-    if(headerPoints) headerPoints.innerText = `${tasks.length} مهام`; 
+    if(headerTitle) headerTitle.innerText = `Weekly Plan (${startDate.toLocaleDateString('en-US', {day:'numeric', month:'short'})} - ${endDate.toLocaleDateString('en-US', {day:'numeric', month:'short'})})`;
+    if(headerPoints) headerPoints.innerText = `${tasks.length} tasks`; 
 
     if (tasks.length === 0) {
         container.innerHTML = `
@@ -2496,20 +2446,20 @@ window.openWeekDetails = (startIso, endIso) => {
                 <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
                     <i class="fas fa-mug-hot text-2xl"></i>
                 </div>
-                <p class="font-bold">لا توجد مهام معينة في هذا الأسبوع</p>
+                <p class="font-bold">No tasks assigned for this week</p>
             </div>`;
     } else {
         container.innerHTML = tasks.map(t => {
             let icon = 'fa-play-circle text-b-primary';
-            let typeName = 'فيديو';
+            let typeName = 'Video';
             
             if (t.type === 'quiz') { 
                 icon = 'fa-clipboard-question text-yellow-500'; 
-                typeName = 'كويز'; 
+                typeName = 'Quiz'; 
             }
             if (t.type === 'project') { 
                 icon = 'fa-laptop-code text-purple-500'; 
-                typeName = 'مشروع'; 
+                typeName = 'Project'; 
             }
 
             return `
@@ -2522,15 +2472,15 @@ window.openWeekDetails = (startIso, endIso) => {
                     <i class="fas ${icon} text-base sm:text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 
-                <div class="flex-1 min-w-0 text-right">
+                <div class="flex-1 min-w-0 text-left">
                     <div class="flex items-center justify-between gap-2 mb-0.5">
-                        <h4 class="text-xs sm:text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
+                        <h4 class="text-xs sm:text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate" title="${t.title || 'Untitled'}">${t.title || 'Untitled'}</h4>
                         <span class="text-[9px] sm:text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-1.5 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
                     </div>
                 </div>
                 
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
-                    <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
+                    <i class="fas fa-chevron-right text-[10px] sm:text-xs"></i>
                 </div>
             </div>
             `;
@@ -2554,7 +2504,7 @@ window.openCalendarTask = (taskId) => {
             const closeBtn = modal.querySelector('.fa-times')?.closest('button');
             
             if (closeBtn) {
-                closeBtn.innerHTML = '<i class="fas fa-arrow-right text-lg"></i>';
+                closeBtn.innerHTML = '<i class="fas fa-arrow-left text-lg"></i>';
                 
                 closeBtn.onclick = (e) => {
                     e.preventDefault();
@@ -2619,7 +2569,7 @@ window.loadPendingSubmissions = async () => {
         const memberIds = (teamMembers || []).map(m => m.id);
         
         if (memberIds.length === 0) {
-            listContainer.innerHTML = `<p class="text-gray-500 text-center col-span-full py-8 text-xs sm:text-sm">لا يوجد أعضاء في الفريق حالياً.</p>`;
+            listContainer.innerHTML = `<p class="text-gray-500 text-center col-span-full py-8 text-xs sm:text-sm">No members in the squad yet.</p>`;
             return;
         }
 
@@ -2636,16 +2586,16 @@ window.loadPendingSubmissions = async () => {
             listContainer.innerHTML = `
                 <div class="col-span-full text-center text-gray-500 py-16 sm:py-20 bg-white/5 rounded-2xl border border-white/5 border-dashed">
                     <i class="fas fa-check-circle text-4xl sm:text-5xl mb-3 sm:mb-4 text-green-500/20"></i>
-                    <p class="text-xs sm:text-sm font-semibold">عمل رائع! لا توجد مشاريع معلقة للتقييم.</p>
+                    <p class="text-xs sm:text-sm font-semibold">Great job! No pending project submissions to grade.</p>
                 </div>`;
             return;
         }
 
         listContainer.innerHTML = submissions.map(sub => {
-            const dateStr = new Date(sub.submitted_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            const studentName = sub.profiles?.full_name || 'طالب غير معروف';
+            const dateStr = new Date(sub.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const studentName = sub.profiles?.full_name || 'Unknown Student';
             const avatar = resolveImageUrl(sub.profiles?.avatar_url);
-            const projectTitle = sub.projects?.title || 'مشروع بدون عنوان';
+            const projectTitle = sub.projects?.title || 'Untitled Project';
             const safeData = encodeURIComponent(JSON.stringify(sub));
 
             return `
@@ -2658,16 +2608,16 @@ window.loadPendingSubmissions = async () => {
                                 <p class="text-[10px] text-gray-400 font-mono">${dateStr}</p>
                             </div>
                         </div>
-                        <span class="bg-yellow-500/10 text-yellow-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-yellow-500/20 shrink-0">معلق</span>
+                        <span class="bg-yellow-500/10 text-yellow-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-yellow-500/20 shrink-0">Pending</span>
                     </div>
                     <div class="mb-3.5 sm:mb-5">
                         <h5 class="text-xs sm:text-sm font-bold text-gray-200 mb-2 line-clamp-1" title="${projectTitle}">${projectTitle}</h5>
                         <a href="${sub.submission_link}" target="_blank" class="text-[11px] sm:text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1.5 bg-blue-900/20 w-fit px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-blue-500/20">
-                            <i class="fas fa-external-link-alt text-[10px]"></i> <span>فتح رابط التسليم</span>
+                            <i class="fas fa-external-link-alt text-[10px]"></i> <span>Open Submission</span>
                         </a>
                     </div>
                     <button onclick="window.openGradeModal('${safeData}')" class="w-full py-2 sm:py-2.5 rounded-xl bg-b-primary/10 text-b-primary hover:bg-b-primary hover:text-white font-bold transition-all text-xs sm:text-sm flex items-center justify-center gap-2 group-hover:shadow-[0_0_15px_rgba(0,106,103,0.3)]">
-                        <i class="fas fa-check-double text-xs"></i> <span>تقييم ورصد الدرجة</span>
+                        <i class="fas fa-check-double text-xs"></i> <span>Grade & Review</span>
                     </button>
                 </div>
             `;
@@ -2675,7 +2625,7 @@ window.loadPendingSubmissions = async () => {
 
     } catch (e) {
         console.error("Fetch Submissions Error:", e);
-        listContainer.innerHTML = `<p class="text-red-400 text-center col-span-full py-8 text-xs sm:text-sm">فشل في جلب البيانات.</p>`;
+        listContainer.innerHTML = `<p class="text-red-400 text-center col-span-full py-8 text-xs sm:text-sm">Failed to load submissions.</p>`;
     }
 };
 
@@ -2692,7 +2642,7 @@ window.loadTaskTracking = async () => {
         const memberIds = (members || []).map(m => m.id);
 
         if (totalMembers === 0) {
-            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10 text-xs sm:text-sm">لا يوجد أعضاء في الفريق حتى الآن.</p>`;
+            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10 text-xs sm:text-sm">No members in the squad yet.</p>`;
             return;
         }
 
@@ -2702,7 +2652,7 @@ window.loadTaskTracking = async () => {
             .order('created_at', {ascending: false});
             
         if (!tasks || tasks.length === 0) {
-            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl text-xs sm:text-sm">لا توجد مهام حالية أو متأخرة.</p>`;
+            list.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl text-xs sm:text-sm">No active or overdue tasks.</p>`;
             return;
         }
 
@@ -2736,7 +2686,7 @@ window.loadTaskTracking = async () => {
             if (isCurrentWeek || (!isCurrentWeek && !isFullyCompleted)) {
                 
                 const progress = totalMembers > 0 ? Math.round((compCount / totalMembers) * 100) : 0;
-                const lateBadge = (!isCurrentWeek && !isFullyCompleted) ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold animate-pulse shrink-0"><i class="fas fa-clock mr-1"></i> متأخرة</span>` : '';
+                const lateBadge = (!isCurrentWeek && !isFullyCompleted) ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold shrink-0"><i class="fas fa-clock mr-1"></i> Overdue</span>` : '';
                 
                 let icon = 'fa-play-circle text-b-primary';
                 if(task.type === 'quiz') icon = 'fa-clipboard-question text-yellow-500';
@@ -2757,24 +2707,24 @@ window.loadTaskTracking = async () => {
                     
                     <div class="space-y-1.5 sm:space-y-2 mt-auto">
                         <div class="flex justify-between text-[11px] sm:text-xs text-gray-400 font-bold">
-                            <span>نسبة الإنجاز</span>
+                            <span>Completion Rate</span>
                             <span class="${progress === 100 ? 'text-green-400' : 'text-b-primary'} font-mono">${progress}%</span>
                         </div>
                         <div class="w-full h-1.5 bg-black rounded-full overflow-hidden border border-white/5">
                             <div class="h-full ${progress === 100 ? 'bg-green-500' : 'bg-b-primary'} transition-all" style="width: ${progress}%"></div>
                         </div>
-                        <div class="text-[10px] text-gray-500 text-left pt-0.5 font-mono">${compCount} / ${totalMembers} 👨‍🎓</div>
+                        <div class="text-[10px] text-gray-500 text-right pt-0.5 font-mono">${compCount} / ${totalMembers} members</div>
                     </div>
                 </div>`;
             }
         });
         
-        if(!html) html = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl">الفريق متفوق! لا توجد مهام حالية أو متأخرة للعمل عليها.</p>`;
+        if(!html) html = `<p class="col-span-full text-center text-gray-500 py-10 border border-white/5 border-dashed rounded-xl">Outstanding work! No active or overdue tasks remaining.</p>`;
         list.innerHTML = html;
 
     } catch(e) {
         console.error("Task Tracking Error:", e);
-        list.innerHTML = `<p class="col-span-full text-center text-red-500 py-10">حدث خطأ أثناء جلب المهام.</p>`;
+        list.innerHTML = `<p class="col-span-full text-center text-red-500 py-10">Failed to load task tracking data.</p>`;
     }
 };
 
@@ -2861,26 +2811,26 @@ window.openTaskDetailsModal = async (taskId) => {
             const detail = completedMembersMap[m.id];
             let isDone = !!detail;
             
-            let statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-times"></i> لم يُنجز</span>`;
+            let statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-times"></i> Not Completed</span>`;
             let extraInfo = '';
 
             if (isDone) {
                 if (task.type === 'video') {
                     compCount++;
-                    statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check"></i> مكتمل</span>`;
+                    statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check"></i> Completed</span>`;
                 } 
                 else if (task.type === 'quiz') {
                     if(detail.passed) compCount++;
                     const color = detail.passed ? 'green' : 'yellow';
-                    const text = detail.passed ? 'نجاح' : 'لم يجتز';
+                    const text = detail.passed ? 'Passed' : 'Not Passed';
                     const icon = detail.passed ? 'fa-check' : 'fa-exclamation-triangle';
                     statusBadge = `<span class="bg-${color}-500/10 text-${color}-400 border border-${color}-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas ${icon}"></i> ${text}</span>`;
                     
                     extraInfo = `
                         <div class="flex items-center gap-2 mr-3" dir="ltr">
-                            <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[10px] font-mono" title="عدد المحاولات"><i class="fas fa-redo text-[8px] mr-1"></i>${detail.attempts}</span>
-                            <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="النسبة المئوية">${detail.score}%</span>
-                            <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="النقاط (XP)">+${detail.xp} XP</span>
+                            <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[10px] font-mono" title="Attempts"><i class="fas fa-redo text-[8px] mr-1"></i>${detail.attempts}</span>
+                            <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="Score Percentage">${detail.score}%</span>
+                            <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="XP Earned">+${detail.xp} XP</span>
                         </div>
                     `;
                 } 
@@ -2888,14 +2838,14 @@ window.openTaskDetailsModal = async (taskId) => {
                     if (detail.status === 'graded' || detail.status === 'remarked') compCount++;
                     
                     if (detail.status === 'pending') {
-                        statusBadge = `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-clock"></i> قيد المراجعة</span>`;
+                        statusBadge = `<span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-clock"></i> Under Review</span>`;
                     } else if (detail.status === 'graded' || detail.status === 'remarked') {
-                        statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-double"></i> تم التقييم</span>`;
+                        statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-double"></i> Graded</span>`;
                         
                         extraInfo = `
                             <div class="flex items-center gap-2 mr-3" dir="ltr">
-                                <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="النسبة المئوية">${detail.percentage}%</span>
-                                <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="النقاط (XP)">+${detail.grade} XP</span>
+                                <span class="bg-black text-white px-2 py-1 rounded-lg border border-white/10 text-[10px] font-mono" title="Score Percentage">${detail.percentage}%</span>
+                                <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-1 rounded-lg text-[10px] font-bold font-mono" title="XP Earned">+${detail.grade} XP</span>
                             </div>
                         `;
                     }
@@ -2907,7 +2857,7 @@ window.openTaskDetailsModal = async (taskId) => {
             <div class="flex items-center justify-between p-3.5 bg-black/40 rounded-xl border border-white/5 hover:bg-white/5 transition-colors group">
                 <div class="flex items-center gap-3">
                     <img src="${avatar}" class="w-10 h-10 rounded-full border border-white/10 object-cover bg-black">
-                    <span class="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">${m.full_name || 'طالب'}</span>
+                    <span class="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">${m.full_name || 'Student'}</span>
                 </div>
                 <div class="flex items-center">
                     ${extraInfo}
@@ -2928,7 +2878,7 @@ window.openTaskDetailsModal = async (taskId) => {
 
     } catch(e) {
         console.error(e);
-        list.innerHTML = `<p class="text-red-500 text-center py-10">حدث خطأ أثناء جلب التفاصيل.</p>`;
+        list.innerHTML = `<p class="text-red-500 text-center py-10">Failed to load task details.</p>`;
     }
 };
 
@@ -2981,7 +2931,7 @@ window.openGradeModal = (encodedData) => {
             if(manualArea) manualArea.classList.add('hidden');
             window.updateTotalGrade(); 
         } else {
-            if(rubricContainer) rubricContainer.innerHTML = `<p class="text-gray-500 text-xs italic">لا يوجد معايير، أدخل الدرجة النهائية يدوياً.</p>`;
+            if(rubricContainer) rubricContainer.innerHTML = `<p class="text-gray-500 text-xs italic">No rubric criteria defined; enter the final score manually.</p>`;
             if(autoCalcArea) autoCalcArea.classList.add('hidden');
             if(manualArea) manualArea.classList.remove('hidden');
             const maxP = sub.projects?.max_points || 100;
@@ -3028,7 +2978,7 @@ window.submitGrade = async () => {
 
     const btn = document.getElementById('btn-submit-grade');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
 
     try {
@@ -3075,7 +3025,7 @@ window.submitGrade = async () => {
             await supabase.from('student_xp_logs').insert({
                 user_id: studentId,
                 amount: finalGrade,
-                reason: `تقييم مشروع: ${sub.projects?.title}`,
+                reason: `Project Evaluation: ${sub.projects?.title}`,
                 source_id: sub.project_id
             });
 
@@ -3084,18 +3034,18 @@ window.submitGrade = async () => {
                 const { data: teamProf } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
                 await supabase.from('teams').update({ total_score: (teamProf?.total_score || 0) + finalGrade }).eq('id', teamId);
                 await supabase.from('team_score_logs').insert({
-                    team_id: teamId, contributor_id: studentId, amount: finalGrade, reason: `مكافأة تسليم مشروع`
+                    team_id: teamId, contributor_id: studentId, amount: finalGrade, reason: `Project submission reward`
                 });
             }
         }
 
-        showToast("تم اعتماد الدرجة بنجاح!", "success");
+        showToast("Grade approved successfully!", "success");
         window.closeGradeModal();
         window.loadPendingSubmissions(); 
 
     } catch (e) {
         console.error("Submit Grade Error:", e);
-        showToast("حدث خطأ أثناء حفظ التقييم", "error");
+        showToast("An error occurred while saving the grade", "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -3132,7 +3082,7 @@ function updateModalContent(task, details, type) {
             <div class="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col justify-between h-full">
                 <p class="text-[10px] text-gray-500 mb-1">${label}</p>
                 <p class="font-bold text-white text-sm line-clamp-2">
-                    <i class="fas ${iconClass} ${style.color} ml-1 opacity-70"></i> ${value}
+                    <i class="fas ${iconClass} ${style.color} mr-1 opacity-70"></i> ${value}
                 </p>
             </div>`;
     };
@@ -3157,8 +3107,8 @@ function updateModalContent(task, details, type) {
         description = details.description || details.note || task.description || "No description.";
         description = String(description);
 
-        let authorName = details.author || "Team";
-        if (!details.author || details.author === "Busla Team") {
+        let authorName = details.author || "ZDC Team";
+        if (!details.author || details.author === "Busla Team" || details.author === "ZDC Team") {
              const courseInfo = getCourseInfoById(task.course_id);
              if (courseInfo && courseInfo.instructor) authorName = courseInfo.instructor;
         }
@@ -3266,7 +3216,7 @@ function formatDuration(rawTime) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);

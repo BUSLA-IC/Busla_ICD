@@ -149,7 +149,7 @@ window.fetchAndRenderLeaderboard = async () => {
 
     } catch (error) {
         console.error("Leaderboard fetch error:", error);
-        if (container) container.innerHTML = '<div class="text-center text-red-500 py-10">فشل في تحميل البيانات</div>';
+        if (container) container.innerHTML = '<div class="text-center text-red-500 py-10">Failed to load leaderboard data</div>';
     }
 }
 
@@ -202,15 +202,14 @@ function renderLeaderboard(items, isSearchMode = false) {
 
     if (!container || !contextHeader) return;
     
-    contextHeader.innerText = currentType === 'students' ? 'الفريق / الجامعة' : 'القائد / الجامعة';
+    contextHeader.innerText = currentType === 'students' ? 'Squad / University' : 'Leader / University';
 
     if (items.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 text-gray-500">لا توجد نتائج مطابقة للبحث.</div>`;
+        container.innerHTML = `<div class="text-center py-20 text-gray-500">No matching results found.</div>`;
         if(!isSearchMode && podiumContainer) podiumContainer.innerHTML = '';
         return;
     }
 
-    // رسم المنصة فقط إذا لم نكن في وضع البحث
     if (!isSearchMode) {
         const top3 = items.slice(0, 3);
         renderPodium(top3, podiumContainer);
@@ -220,14 +219,13 @@ function renderLeaderboard(items, isSearchMode = false) {
     let userRankIndex = -1;
 
     items.forEach((item, index) => {
-        // تحديد الترتيب الفعلي في القائمة الأصلية
         const actualRank = isSearchMode ? (allFetchedItems.findIndex(i => i.id === item.id) + 1) : (index + 1);
         
         const isMe = currentType === 'students' ? (item.id === currentUserData?.id) : (item.id === currentTeamData?.id);
         if (isMe && !isSearchMode) userRankIndex = actualRank;
 
         const points = currentType === 'students' ? (item.total_xp || 0) : (item.total_score || 0);
-        const name = currentType === 'students' ? (item.full_name || 'طالب') : (item.name || 'فريق');
+        const name = currentType === 'students' ? (item.full_name || 'Student') : (item.name || 'Squad');
         const avatar = currentType === 'students' ? resolveImageUrl(item.avatar_url, 'user') : resolveImageUrl(item.logo_url, 'team');
         const rankData = currentType === 'students' ? getRankDataForMember(points) : getRankDataForTeam(points);
         
@@ -236,35 +234,34 @@ function renderLeaderboard(items, isSearchMode = false) {
         let roleBadge = ''; 
         
         if (currentType === 'students') {
-            // استخدام البيانات المجلوبة مباشرة من الـ Join
-            const teamName = item.teams?.name || 'بدون فريق';
-            const univ = item.university || 'جامعة غير محددة';
+            const teamName = item.teams?.name || 'No Squad';
+            const univ = item.university || 'University Unspecified';
             
             const isLeader = item.role === 'leader';
             roleBadge = isLeader 
-                ? `<span class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-crown ml-1 text-[8px]"></i>قائد</span>`
-                : `<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-user ml-1 text-[8px]"></i>طالب</span>`;
+                ? `<span class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-crown mr-1 text-[8px]"></i>Leader</span>`
+                : `<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap"><i class="fas fa-user mr-1 text-[8px]"></i>Student</span>`;
             
             contextHTML = `
                 <div class="flex flex-col">
-                    <span class="text-sm font-bold text-gray-200 truncate" title="${teamName}"><i class="fas fa-shield-alt text-gray-500 ml-1"></i> ${teamName}</span>
+                    <span class="text-sm font-bold text-gray-200 truncate" title="${teamName}"><i class="fas fa-shield-alt text-gray-500 mr-1"></i> ${teamName}</span>
                     <span class="text-[11px] text-gray-500 truncate" title="${univ}">${univ}</span>
                 </div>
             `;
 
             badgeHTML = `
-                <div class="flex items-center bg-black/40 px-4 py-1.5 rounded-xl border border-white/5 w-fit mr-auto">
+                <div class="flex items-center bg-black/40 px-4 py-1.5 rounded-xl border border-white/5 w-fit ml-auto">
                     <span class="text-xs font-bold uppercase tracking-wider ${rankData.color}">${rankData.title}</span>
                 </div>
             `;
             
         } else {
-            const leaderName = item.profiles?.full_name || 'بدون قائد';
-            const univ = item.university || 'جامعة غير محددة';
+            const leaderName = item.profiles?.full_name || 'No Leader';
+            const univ = item.university || 'University Unspecified';
             
             contextHTML = `
                 <div class="flex flex-col">
-                    <span class="text-sm font-bold text-gray-200 truncate" title="${leaderName}"><i class="fas fa-user-tie text-gray-500 ml-1"></i> ${leaderName}</span>
+                    <span class="text-sm font-bold text-gray-200 truncate" title="${leaderName}"><i class="fas fa-user-tie text-gray-500 mr-1"></i> ${leaderName}</span>
                     <span class="text-[11px] text-gray-500 truncate" title="${univ}">${univ}</span>
                 </div>
             `;
@@ -277,40 +274,39 @@ function renderLeaderboard(items, isSearchMode = false) {
                         <span class="text-[11px] font-bold uppercase tracking-wider ${rankData.color}">${rankData.title}</span>
                     </div>
                     <div class="text-[10px] font-bold text-gray-400 bg-white/5 px-2 py-0.5 rounded w-fit border border-white/5">
-                        <i class="fas fa-users ml-1"></i> الأعضاء: <span class="text-white">${mCount}</span> / 5
+                        <i class="fas fa-users mr-1"></i> Members: <span class="text-white">${mCount}</span> / 5
                     </div>
                 </div>
             `;
         }
 
-        let rowStyles = "hover:bg-white/[0.04] transition-all duration-200 border-r-4 border-r-transparent";
+        let rowStyles = "hover:bg-white/[0.04] transition-all duration-200 border-l-4 border-l-transparent";
         let rankDisplay = `<span class="text-gray-400 font-black text-base sm:text-lg font-mono">#${actualRank}</span>`;
 
-        // لا نميز الأوائل في وضع البحث لكي يبقى التصميم مرتباً
         if (!isSearchMode) {
             if (actualRank === 1) {
-                rowStyles = "bg-gradient-to-l from-amber-500/15 via-amber-500/5 to-transparent border-r-4 border-amber-400 shadow-[inset_0_0_25px_rgba(245,158,11,0.08)] hover:bg-amber-500/20";
-                rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-crown text-amber-400 text-2xl drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] animate-pulse"></i><span class="text-[10px] font-black text-amber-400 mt-0.5 font-mono">#1</span></div>`;
+                rowStyles = "bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-400 shadow-[inset_0_0_25px_rgba(245,158,11,0.08)] hover:bg-amber-500/20";
+                rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-crown text-amber-400 text-2xl drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]"></i><span class="text-[10px] font-black text-amber-400 mt-0.5 font-mono">#1</span></div>`;
             } else if (actualRank === 2) {
-                rowStyles = "bg-gradient-to-l from-slate-400/10 via-slate-400/5 to-transparent border-r-4 border-slate-300 hover:bg-slate-400/15";
+                rowStyles = "bg-gradient-to-r from-slate-400/10 via-slate-400/5 to-transparent border-l-4 border-slate-300 hover:bg-slate-400/15";
                 rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-medal text-slate-300 text-2xl drop-shadow-[0_0_10px_rgba(203,213,225,0.6)]"></i><span class="text-[10px] font-black text-slate-300 mt-0.5 font-mono">#2</span></div>`;
             } else if (actualRank === 3) {
-                rowStyles = "bg-gradient-to-l from-amber-700/15 via-amber-700/5 to-transparent border-r-4 border-amber-600 hover:bg-amber-700/20";
+                rowStyles = "bg-gradient-to-r from-amber-700/15 via-amber-700/5 to-transparent border-l-4 border-amber-600 hover:bg-amber-700/20";
                 rankDisplay = `<div class="flex flex-col items-center justify-center"><i class="fas fa-award text-amber-600 text-2xl drop-shadow-[0_0_10px_rgba(217,119,6,0.6)]"></i><span class="text-[10px] font-black text-amber-600 mt-0.5 font-mono">#3</span></div>`;
             } else if (isMe) {
-                rowStyles = "bg-gradient-to-l from-teal-500/20 via-teal-500/10 to-transparent border-r-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
+                rowStyles = "bg-gradient-to-r from-teal-500/20 via-teal-500/10 to-transparent border-l-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
             }
         } else if (isMe) {
-            rowStyles = "bg-gradient-to-l from-teal-500/20 via-teal-500/10 to-transparent border-r-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
+            rowStyles = "bg-gradient-to-r from-teal-500/20 via-teal-500/10 to-transparent border-l-4 border-teal-400 shadow-[0_0_25px_rgba(20,184,166,0.15)] ring-1 ring-teal-500/30 hover:bg-teal-500/25";
         }
 
-        const youBadge = isMe ? `<span class="bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-black px-2 py-0.5 rounded-full mr-1.5 shadow-sm">أنت</span>` : '';
+        const youBadge = isMe ? `<span class="bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-black px-2 py-0.5 rounded-full ml-1.5 shadow-sm">You</span>` : '';
 
         html += `
         <div class="flex items-center px-4 sm:px-6 py-4 transition-all ${rowStyles}">
             <div class="w-14 sm:w-16 text-center shrink-0">${rankDisplay}</div>
             
-            <div class="flex-1 flex items-center gap-3 sm:gap-4 pr-3 sm:pr-4 border-l border-white/5 pl-4 min-w-0">
+            <div class="flex-1 flex items-center gap-3 sm:gap-4 pl-3 sm:pl-4 border-r border-white/5 pr-4 min-w-0">
                 <img src="${avatar}" class="w-12 h-12 rounded-2xl object-cover bg-black border border-white/10 shadow-md shrink-0">
                 <div class="min-w-0 flex flex-col justify-center">
                     <div class="flex items-center gap-1.5 mb-1 flex-wrap">
@@ -322,16 +318,16 @@ function renderLeaderboard(items, isSearchMode = false) {
                 </div>
             </div>
             
-            <div class="hidden sm:block w-48 text-right px-2 border-l border-white/5 pl-4">
+            <div class="hidden sm:block w-48 text-left px-2 border-r border-white/5 pr-4">
                 ${contextHTML}
             </div>
             
-            <div class="hidden md:flex w-44 flex-col justify-center text-right px-2 border-l border-white/5 pl-4">
+            <div class="hidden md:flex w-44 flex-col justify-center text-right px-2 border-r border-white/5 pr-4">
                 ${badgeHTML}
             </div>
             
-            <div class="w-28 text-left pl-2 shrink-0">
-                <div class="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl w-fit mr-auto shadow-sm">
+            <div class="w-28 text-right pr-2 shrink-0">
+                <div class="flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl w-fit ml-auto shadow-sm">
                     <i class="fas fa-bolt text-amber-400 text-xs"></i>
                     <span class="text-amber-400 text-sm sm:text-base font-mono font-black">${points} XP</span>
                 </div>
@@ -347,14 +343,14 @@ function renderLeaderboard(items, isSearchMode = false) {
 function renderPodium(top3, container) {
     if (!container || top3.length === 0) return;
     
-    // Ordered: 2nd place (right in RTL), 1st place (center), 3rd place (left in RTL)
+    // Ordered: 2nd place (left), 1st place (center), 3rd place (right)
     const orderedTop3 = [top3[1] || null, top3[0] || null, top3[2] || null];
     
     const positions = [
         { 
             rank: 2, 
-            title: 'الوصيف',
-            placeholder: 'المركز الثاني شاغر',
+            title: 'Runner-Up',
+            placeholder: '2nd Place Open',
             height: 'h-36 sm:h-44', 
             ring: 'ring-4 ring-slate-300/80 shadow-[0_0_25px_rgba(203,213,225,0.4)]', 
             border: 'border-slate-300', 
@@ -367,8 +363,8 @@ function renderPodium(top3, container) {
         },
         { 
             rank: 1, 
-            title: 'البطل الأول',
-            placeholder: 'المركز الأول شاغر',
+            title: 'Champion',
+            placeholder: '1st Place Open',
             height: 'h-48 sm:h-56', 
             ring: 'ring-4 ring-amber-400 shadow-[0_0_40px_rgba(245,158,11,0.6)]', 
             border: 'border-amber-400', 
@@ -381,8 +377,8 @@ function renderPodium(top3, container) {
         },
         { 
             rank: 3, 
-            title: 'المركز الثالث',
-            placeholder: 'المركز الثالث شاغر',
+            title: '3rd Place',
+            placeholder: '3rd Place Open',
             height: 'h-28 sm:h-36', 
             ring: 'ring-4 ring-amber-700/80 shadow-[0_0_25px_rgba(217,119,6,0.4)]', 
             border: 'border-amber-600', 
@@ -405,7 +401,7 @@ function renderPodium(top3, container) {
                 <div class="relative mb-3 flex flex-col items-center">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-white/20 bg-white/[0.02] flex flex-col items-center justify-center text-gray-500 backdrop-blur-sm shadow-inner">
                         <i class="fas fa-lock text-gray-600 text-sm mb-1"></i>
-                        <span class="text-[9px] text-gray-500 font-bold">شاغر</span>
+                        <span class="text-[9px] text-gray-500 font-bold">Open</span>
                     </div>
                     <div class="absolute -bottom-2.5 w-7 h-7 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-xs font-black text-gray-500 font-mono shadow">
                         ${pos.rank}
@@ -413,7 +409,7 @@ function renderPodium(top3, container) {
                 </div>
                 
                 <span class="text-xs text-gray-500 font-bold mb-1 truncate w-full text-center">${pos.placeholder}</span>
-                <span class="text-[10px] text-gray-600 mb-3 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5 font-semibold">متاح للمنافسة</span>
+                <span class="text-[10px] text-gray-600 mb-3 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5 font-semibold">Up for Grabs</span>
 
                 <div class="w-full ${pos.height} bg-gradient-to-t from-white/[0.01] to-white/[0.04] rounded-t-3xl relative flex flex-col items-center justify-start pt-4 border-t border-x border-white/10 border-dashed backdrop-blur-sm">
                     <span class="text-3xl sm:text-5xl font-black text-white/5 font-mono select-none">${pos.rank}</span>
@@ -424,15 +420,15 @@ function renderPodium(top3, container) {
         }
 
         const points = currentType === 'students' ? (item.total_xp || 0) : (item.total_score || 0);
-        const name = currentType === 'students' ? (item.full_name || 'طالب') : (item.name || 'فريق');
+        const name = currentType === 'students' ? (item.full_name || 'Student') : (item.name || 'Squad');
         const avatar = currentType === 'students' ? resolveImageUrl(item.avatar_url, 'user') : resolveImageUrl(item.logo_url, 'team');
 
         let roleBadge = '';
         if (currentType === 'students') {
             const isLeader = item.role === 'leader';
             roleBadge = isLeader 
-                ? `<div class="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-crown text-[8px]"></i><span>قائد</span></div>`
-                : `<div class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-user-graduate text-[8px]"></i><span>طالب</span></div>`;
+                ? `<div class="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-crown text-[8px]"></i><span>Leader</span></div>`
+                : `<div class="bg-gray-500/20 text-gray-300 border border-gray-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold mb-2 w-fit shadow-sm flex items-center gap-1"><i class="fas fa-user-graduate text-[8px]"></i><span>Student</span></div>`;
         }
 
         const avatarSize = pos.rank === 1 ? 'w-20 h-20 sm:w-28 sm:h-28' : 'w-16 h-16 sm:w-22 sm:h-22';
@@ -485,7 +481,7 @@ function updateStickyBar(rankIndex, items) {
 
         document.getElementById('sticky-rank-num').innerText = `#${rankIndex}`;
         document.getElementById('sticky-points').innerText = `${myPoints} XP`;
-        document.getElementById('sticky-diff-text').innerText = `تحتاج ${diff} نقطة للتقدم مركزاً واحداً!`;
+        document.getElementById('sticky-diff-text').innerText = `You need ${diff} XP to climb 1 rank!`;
         
         stickyBar.classList.remove('translate-y-[200%]');
     } else {
@@ -534,7 +530,7 @@ window.switchLeaderboardScope = (scope) => {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);

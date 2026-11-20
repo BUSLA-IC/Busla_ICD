@@ -46,7 +46,7 @@ async function loadInitialData() {
         renderTracksChecklist();
     } catch (err) {
         console.error("References Mgmt Initial Data Load Error:", err);
-        showToast("حدث خطأ أثناء تحميل بيانات التصنيفات والمسارات", "error");
+        showToast("Error loading categories and tracks data.", "error");
     }
 }
 
@@ -65,7 +65,7 @@ function populateTypeFilter() {
         'Blog Article', 'External Learning Resource', 'Other'
     ];
 
-    filter.innerHTML = '<option value="all">كل الأنواع</option>' + 
+    filter.innerHTML = '<option value="all">All Types</option>' + 
         types.map(t => `<option value="${t}">${t}</option>`).join('');
 }
 
@@ -73,7 +73,7 @@ function populateTypeFilter() {
 async function fetchReferences() {
     const tbody = document.getElementById('admin-references-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>جاري تحميل مكتبة المراجع العلمية...</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>Loading reference library...</p></td></tr>`;
     }
 
     try {
@@ -89,7 +89,7 @@ async function fetchReferences() {
         filterAndRenderReferences();
     } catch (err) {
         console.error("Fetch References Error:", err);
-        showToast("فشل تحميل قائمة المراجع من السيرفر", "error");
+        showToast("Failed to load references list from server.", "error");
     }
 }
 
@@ -169,7 +169,7 @@ function renderReferencesTable(refs) {
     gridCont.classList.add('hidden');
 
     if (refs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500 font-bold">لا توجد مراجع علمية مطابقة للبحث حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-500 font-bold">No scientific references match your current search.</td></tr>`;
         return;
     }
 
@@ -182,37 +182,37 @@ function renderReferencesTable(refs) {
         else if (ref.status === 'Draft') statusColor = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
         else if (ref.status === 'Hidden') statusColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
 
-        const updatedDate = ref.updated_at ? new Date(ref.updated_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
+        const updatedDate = ref.updated_at ? new Date(ref.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '---';
 
         return `
             <tr class="hover:bg-white/5 transition-all">
                 <td class="p-4 text-center">
                     <div class="w-10 h-14 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden mx-auto shrink-0 shadow">
-                        <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
+                        <img src="${ref.cover_url || '../../assets/icons/zdc-icon-192.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/zdc-icon-192.png'">
                     </div>
                 </td>
                 <td class="p-4 font-bold text-white max-w-[200px]">
                     <span class="hover:text-teal-400 cursor-pointer block truncate" onclick="window.editReference('${ref.id}')" title="${ref.title}">${ref.title}</span>
-                    <span class="text-[10px] text-gray-500 block mt-1 truncate">${ref.author || 'مؤلف غير معروف'} • ${ref.publication_year || '---'}</span>
+                    <span class="text-[10px] text-gray-500 block mt-1 truncate">${ref.author || 'Unknown Author'} • ${ref.publication_year || '---'}</span>
                 </td>
                 <td class="p-4"><span class="text-xs bg-white/5 px-2.5 py-1 rounded border border-white/5 block text-center truncate max-w-[120px]">${ref.type}</span></td>
                 <td class="p-4 text-xs font-semibold text-gray-300 text-center">${ref.importance || 'Optional'}</td>
                 <td class="p-4 text-xs text-gray-300 text-center">${ref.experience_level || 'Beginner'}</td>
                 <td class="p-4 text-center font-mono">
-                    <span class="text-white font-bold" title="زيارات">${views}</span>
+                    <span class="text-white font-bold" title="Views">${views}</span>
                     <span class="text-gray-600 mx-1">/</span>
-                    <span class="text-teal-400 font-bold" title="ضغطات">${clicks}</span>
+                    <span class="text-teal-400 font-bold" title="Clicks">${clicks}</span>
                 </td>
                 <td class="p-4 text-xs text-gray-400 text-center">${updatedDate}</td>
                 <td class="p-4 text-center"><span class="text-[10px] border px-2.5 py-0.5 rounded font-bold uppercase tracking-wider ${statusColor}">${ref.status}</span></td>
-                <td class="p-4 text-left">
-                    <div class="flex items-center gap-1.5 justify-start">
-                        <button onclick="window.editReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs" title="تعديل"><i class="fas fa-edit"></i></button>
-                        <button onclick="window.duplicateReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs" title="نسخ"><i class="far fa-copy"></i></button>
-                        <button onclick="window.toggleReferencePublish('${ref.id}', '${ref.status}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs" title="${ref.status === 'Published' ? 'إلغاء النشر' : 'نشر'}">
+                <td class="p-4 text-right">
+                    <div class="flex items-center gap-1.5 justify-end">
+                        <button onclick="window.editReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button onclick="window.duplicateReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs" title="Duplicate"><i class="far fa-copy"></i></button>
+                        <button onclick="window.toggleReferencePublish('${ref.id}', '${ref.status}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs" title="${ref.status === 'Published' ? 'Unpublish' : 'Publish'}">
                             <i class="${ref.status === 'Published' ? 'fas fa-eye-slash' : 'fas fa-eye'}"></i>
                         </button>
-                        <button onclick="window.deleteReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                        <button onclick="window.deleteReference('${ref.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs" title="Delete"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </td>
             </tr>
@@ -230,7 +230,7 @@ function renderReferencesGrid(refs) {
     gridCont.classList.remove('hidden');
 
     if (refs.length === 0) {
-        gridCont.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 font-bold">لا توجد مراجع علمية مطابقة للبحث حالياً.</div>`;
+        gridCont.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 font-bold">No scientific references match your current search.</div>`;
         return;
     }
 
@@ -247,35 +247,35 @@ function renderReferencesGrid(refs) {
             <div class="bg-b-surface border border-white/10 rounded-2xl p-5 flex flex-col justify-between h-full hover:border-teal-500/30 transition-all duration-300 shadow-xl group relative">
                 <div>
                     <!-- Status Badge -->
-                    <span class="absolute top-4 left-4 text-[9px] border px-2 py-0.5 rounded font-bold uppercase tracking-wider ${statusColor}">${ref.status}</span>
+                    <span class="absolute top-4 right-4 text-[9px] border px-2 py-0.5 rounded font-bold uppercase tracking-wider ${statusColor}">${ref.status}</span>
                     
-                    <div class="flex items-center gap-3 mb-4">
+                    <div class="flex items-center gap-3 mb-4 pr-16">
                         <div class="w-12 h-16 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
-                            <img src="${ref.cover_url || '../../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/BUSLA-icon.png'">
+                            <img src="${ref.cover_url || '../../assets/icons/zdc-icon-192.png'}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='../../assets/icons/zdc-icon-192.png'">
                         </div>
-                        <div class="text-right flex-1 min-w-0">
+                        <div class="text-left flex-1 min-w-0">
                             <h3 class="text-base font-bold text-white leading-tight hover:text-teal-400 cursor-pointer block truncate" onclick="window.editReference('${ref.id}')">${ref.title}</h3>
-                            <span class="text-[10px] text-gray-500 mt-1 block truncate">${ref.author || 'مؤلف غير معروف'} • ${ref.publication_year || '---'}</span>
+                            <span class="text-[10px] text-gray-500 mt-1 block truncate">${ref.author || 'Unknown Author'} • ${ref.publication_year || '---'}</span>
                             <span class="text-[9px] text-teal-500 mt-0.5 block">${ref.type} • ${ref.importance}</span>
                         </div>
                     </div>
                     
-                    <p class="text-gray-400 text-xs text-right leading-relaxed line-clamp-3 mb-4">${ref.short_description || 'لا يوجد وصف مختصر.'}</p>
+                    <p class="text-gray-400 text-xs text-left leading-relaxed line-clamp-3 mb-4">${ref.short_description || 'No short description provided.'}</p>
                 </div>
                 
                 <div class="border-t border-white/5 pt-4 mt-auto">
                     <div class="flex justify-between items-center text-xs text-gray-400 mb-4">
-                        <span class="font-mono">زيارات: <b class="text-white">${views}</b> • ضغطات: <b class="text-teal-400">${clicks}</b></span>
-                        <span>مستوى: <b class="text-gray-300">${ref.experience_level}</b></span>
+                        <span class="font-mono">Views: <b class="text-white">${views}</b> • Clicks: <b class="text-teal-400">${clicks}</b></span>
+                        <span>Level: <b class="text-gray-300">${ref.experience_level}</b></span>
                     </div>
                     
                     <div class="flex justify-end gap-1.5">
-                        <button onclick="window.editReference('${ref.id}')" class="flex-1 py-2 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold flex items-center justify-center gap-1"><i class="fas fa-edit"></i> تعديل</button>
-                        <button onclick="window.duplicateReference('${ref.id}')" class="px-3 py-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs" title="نسخ"><i class="far fa-copy"></i></button>
-                        <button onclick="window.toggleReferencePublish('${ref.id}', '${ref.status}')" class="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs" title="${ref.status === 'Published' ? 'إلغاء النشر' : 'نشر'}">
+                        <button onclick="window.editReference('${ref.id}')" class="flex-1 py-2 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Edit</button>
+                        <button onclick="window.duplicateReference('${ref.id}')" class="px-3 py-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-xs" title="Duplicate"><i class="far fa-copy"></i></button>
+                        <button onclick="window.toggleReferencePublish('${ref.id}', '${ref.status}')" class="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs" title="${ref.status === 'Published' ? 'Unpublish' : 'Publish'}">
                             <i class="${ref.status === 'Published' ? 'fas fa-eye-slash' : 'fas fa-eye'}"></i>
                         </button>
-                        <button onclick="window.deleteReference('${ref.id}')" class="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                        <button onclick="window.deleteReference('${ref.id}')" class="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs" title="Delete"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
             </div>
@@ -291,9 +291,9 @@ function renderTracksChecklist() {
     if (!container) return;
 
     container.innerHTML = allTracks.map(track => `
-        <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-            <span>${track.name}</span>
+        <label class="flex items-center gap-2 justify-start cursor-pointer text-xs text-gray-300">
             <input type="checkbox" name="ref-tracks" value="${track.id}" class="track-chk rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+            <span>${track.name}</span>
         </label>
     `).join('');
 
@@ -312,9 +312,9 @@ function renderPhasesChecklist() {
     if (!container) return;
 
     if (selectedTracks.size === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر مساراً أولاً لتعبئة المراحل</div>`;
-        document.getElementById('rc-courses-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر مرحلة أولاً لتعبئة الكورسات</div>`;
-        document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر كورساً أولاً لتعبئة الدروس</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a track first to load phases</div>`;
+        document.getElementById('rc-courses-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a phase first to load courses</div>`;
+        document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a course first to load lessons</div>`;
         selectedPhases.clear();
         selectedCourses.clear();
         return;
@@ -323,14 +323,14 @@ function renderPhasesChecklist() {
     const filteredPhases = allPhases.filter(phase => selectedTracks.has(phase.track_id));
 
     if (filteredPhases.length === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">لا توجد مراحل مسجلة لهذه المسارات</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">No phases registered for these tracks</div>`;
         return;
     }
 
     container.innerHTML = filteredPhases.map(phase => `
-        <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300">
-            <span>${phase.title}</span>
+        <label class="flex items-center gap-2 justify-start cursor-pointer text-xs text-gray-300">
             <input type="checkbox" name="ref-phases" value="${phase.phase_id}" class="phase-chk rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+            <span>${phase.title}</span>
         </label>
     `).join('');
 
@@ -349,8 +349,8 @@ function renderCoursesChecklist() {
     if (!container) return;
 
     if (selectedPhases.size === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر مرحلة أولاً لتعبئة الكورسات</div>`;
-        document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر كورساً أولاً لتعبئة الدروس</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a phase first to load courses</div>`;
+        document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a course first to load lessons</div>`;
         selectedCourses.clear();
         return;
     }
@@ -358,14 +358,14 @@ function renderCoursesChecklist() {
     const filteredCourses = allCourses.filter(c => selectedPhases.has(c.phase_id));
 
     if (filteredCourses.length === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">لا توجد كورسات مسجلة لهذه المراحل</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">No courses registered for these phases</div>`;
         return;
     }
 
     container.innerHTML = filteredCourses.map(course => `
-        <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 font-light">
-            <span>${course.title}</span>
+        <label class="flex items-center gap-2 justify-start cursor-pointer text-xs text-gray-300 font-light">
             <input type="checkbox" name="ref-courses" value="${course.course_id}" class="course-chk rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+            <span>${course.title}</span>
         </label>
     `).join('');
 
@@ -384,21 +384,21 @@ function renderLessonsChecklist() {
     if (!container) return;
 
     if (selectedCourses.size === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر كورساً أولاً لتعبئة الدروس</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a course first to load lessons</div>`;
         return;
     }
 
     const filteredLessons = allLessons.filter(lesson => selectedCourses.has(lesson.course_id));
 
     if (filteredLessons.length === 0) {
-        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">لا توجد دروس مسجلة لهذه الكورسات</div>`;
+        container.innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">No lessons registered for these courses</div>`;
         return;
     }
 
     container.innerHTML = filteredLessons.map(lesson => `
-        <label class="flex items-center gap-2 justify-end cursor-pointer text-xs text-gray-300 font-light text-right">
-            <span>${lesson.title}</span>
+        <label class="flex items-center gap-2 justify-start cursor-pointer text-xs text-gray-300 font-light text-left">
             <input type="checkbox" name="ref-lessons" value="${lesson.content_id}" class="lesson-chk rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+            <span>${lesson.title}</span>
         </label>
     `).join('');
 }
@@ -410,14 +410,14 @@ function renderRelatedReferencesChecklist(currentRefId) {
 
     const availableRefs = allReferences.filter(r => r.id !== currentRefId && r.status === 'Published');
     if (availableRefs.length === 0) {
-        container.innerHTML = '<div class="text-gray-500 text-[10px] py-2 text-center col-span-2">لا توجد مراجع أخرى منشورة لتحديدها كمراجع مرتبطة.</div>';
+        container.innerHTML = '<div class="text-gray-500 text-[10px] py-2 text-center col-span-2">No other published references available to link.</div>';
         return;
     }
 
     container.innerHTML = availableRefs.map(r => `
-        <label class="flex items-center gap-2 justify-end cursor-pointer text-[11px] text-gray-300">
-            <span class="truncate block max-w-[140px] text-right" title="${r.title}">${r.title}</span>
+        <label class="flex items-center gap-2 justify-start cursor-pointer text-[11px] text-gray-300">
             <input type="checkbox" name="ref-related" value="${r.id}" class="related-chk rounded border-white/10 bg-black text-teal-600 focus:ring-teal-500">
+            <span class="truncate block max-w-[140px] text-left" title="${r.title}">${r.title}</span>
         </label>
     `).join('');
 }
@@ -427,7 +427,7 @@ function renderRelatedReferencesChecklist(currentRefId) {
 // ==========================================
 function openAddReferenceModal() {
     resetReferenceForm();
-    document.getElementById('admin-reference-modal-title').innerText = "إضافة مرجع علمي جديد";
+    document.getElementById('admin-reference-modal-title').innerText = "Add New Scientific Reference";
     document.getElementById('admin-reference-modal').classList.remove('hidden');
 }
 
@@ -446,9 +446,9 @@ function resetReferenceForm() {
     selectedPhases.clear();
     selectedCourses.clear();
 
-    document.getElementById('rc-phases-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر مساراً أولاً لتعبئة المراحل</div>`;
-    document.getElementById('rc-courses-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر مرحلة أولاً لتعبئة الكورسات</div>`;
-    document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">أختر كورساً أولاً لتعبئة الدروس</div>`;
+    document.getElementById('rc-phases-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a track first to load phases</div>`;
+    document.getElementById('rc-courses-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a phase first to load courses</div>`;
+    document.getElementById('rc-lessons-list').innerHTML = `<div class="text-gray-500 text-[10px] py-4 text-center">Select a course first to load lessons</div>`;
     
     renderRelatedReferencesChecklist('');
 }
@@ -458,7 +458,7 @@ async function editReference(refId) {
     const ref = allReferences.find(r => r.id === refId);
     if (!ref) return;
 
-    document.getElementById('admin-reference-modal-title').innerText = `تعديل بيانات المرجع: ${ref.title}`;
+    document.getElementById('admin-reference-modal-title').innerText = `Edit Reference: ${ref.title}`;
     
     // Basic Info mapping
     document.getElementById('reference-id').value = ref.id;
@@ -695,7 +695,7 @@ async function submitReferenceForm(e) {
                 .eq('id', refId);
 
             if (error) throw error;
-            showToast("تم تحديث بيانات المرجع بنجاح", "success");
+            showToast("Reference updated successfully.", "success");
         } else {
             // Insert
             payload.created_at = new Date();
@@ -704,14 +704,14 @@ async function submitReferenceForm(e) {
                 .insert([payload]);
 
             if (error) throw error;
-            showToast("تم إضافة المرجع الجديد بنجاح", "success");
+            showToast("New reference added successfully.", "success");
         }
 
         closeReferenceModal();
         await fetchReferences();
     } catch (err) {
         console.error("Save Reference Form Error:", err);
-        showToast("حدث خطأ أثناء حفظ بيانات المرجع: " + (err.message || err), "error");
+        showToast("Error saving reference data: " + (err.message || err), "error");
     }
 }
 
@@ -720,8 +720,8 @@ async function duplicateReference(refId) {
     if (!ref) return;
 
     const isApproved = window.showCustomConfirm
-        ? await window.showCustomConfirm("تكرار المرجع", `هل ترغب في إنشاء نسخة مكررة من المرجع "${ref.title}"؟`, null, null, 'info')
-        : (window.confirmAction ? await window.confirmAction(`هل ترغب في إنشاء نسخة مكررة من المرجع "${ref.title}"؟`, "تكرار المرجع", 'info') : true);
+        ? await window.showCustomConfirm("Duplicate Reference", `Do you want to create a duplicate copy of "${ref.title}"?`, null, null, 'info')
+        : (window.confirmAction ? await window.confirmAction(`Do you want to create a duplicate copy of "${ref.title}"?`, "Duplicate Reference", 'info') : true);
     if (!isApproved) return;
 
     // Clone ref fields
@@ -742,11 +742,11 @@ async function duplicateReference(refId) {
 
         if (error) throw error;
 
-        showToast("تم تكرار المرجع كمسودة بنجاح", "success");
+        showToast("Reference duplicated as draft successfully.", "success");
         await fetchReferences();
     } catch (err) {
         console.error("Duplicate Reference Error:", err);
-        showToast("حدث خطأ أثناء نسخ المرجع", "error");
+        showToast("Error duplicating reference.", "error");
     }
 }
 
@@ -761,11 +761,11 @@ async function toggleReferencePublish(refId, currentStatus) {
 
         if (error) throw error;
 
-        showToast(newStatus === 'Published' ? "تم نشر المرجع بنجاح" : "تم إلغاء نشر المرجع بنجاح", "success");
+        showToast(newStatus === 'Published' ? "Reference published successfully." : "Reference unpublished successfully.", "success");
         await fetchReferences();
     } catch (err) {
         console.error("Toggle Publish Error:", err);
-        showToast("حدث خطأ أثناء تعديل حالة النشر للمرجع", "error");
+        showToast("Error updating reference publish status.", "error");
     }
 }
 
@@ -774,8 +774,8 @@ async function deleteReference(refId) {
     if (!ref) return;
 
     const isApproved = window.showCustomConfirm
-        ? await window.showCustomConfirm("حذف المرجع", `⚠️ تحذير: هل أنت متأكد من رغبتك في حذف المرجع "${ref.title}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, null, null, 'danger')
-        : (window.confirmAction ? await window.confirmAction(`⚠️ تحذير: هل أنت متأكد من رغبتك في حذف المرجع "${ref.title}" نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.`, "حذف المرجع", 'danger') : true);
+        ? await window.showCustomConfirm("Delete Reference", `Warning: Are you sure you want to permanently delete "${ref.title}" from the database? This action cannot be undone.`, null, null, 'danger')
+        : (window.confirmAction ? await window.confirmAction(`Warning: Are you sure you want to permanently delete "${ref.title}" from the database? This action cannot be undone.`, "Delete Reference", 'danger') : true);
     if (!isApproved) return;
 
     try {
@@ -786,11 +786,11 @@ async function deleteReference(refId) {
 
         if (error) throw error;
 
-        showToast("تم حذف المرجع بنجاح", "success");
+        showToast("Reference deleted successfully.", "success");
         await fetchReferences();
     } catch (err) {
         console.error("Delete Reference Error:", err);
-        showToast("حدث خطأ أثناء حذف المرجع", "error");
+        showToast("Error deleting reference.", "error");
     }
 }
 

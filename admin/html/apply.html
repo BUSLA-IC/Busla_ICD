@@ -1,80 +1,83 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الانضمام لفريق بوصلة | Busla Core Team</title>
+    <title>Join the ZDC Core Team | Zagazig Digital Community</title>
+    <link rel="icon" type="image/png" href="../../assets/icons/zdc-icon-192.png">
     <link rel="stylesheet" href="../../css/tailwind.min.css">
     <script src="../../js/custom-dialogs.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-        <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #000; color: #fff; scroll-behavior: smooth; }
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0D0D0D; color: #EFECE6; scroll-behavior: smooth; }
+        h1, h2, h3, .font-display { font-family: 'Outfit', sans-serif; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 3px; }
         
         .input-field {
-            width: 100%; background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem; padding: 0.75rem 1rem; color: white; font-size: 0.875rem;
+            width: 100%; background-color: #0D0D0D; border: 1px solid #2E2E2E;
+            border-radius: 0.75rem; padding: 0.75rem 1rem; color: #EFECE6; font-size: 0.875rem;
             outline: none; transition: all 0.3s ease;
         }
-        .input-field:focus { border-color: #006A67; box-shadow: 0 0 0 2px rgba(0, 106, 103, 0.2); }
-        .input-label { display: block; font-size: 0.75rem; color: #9ca3af; font-weight: 700; margin-bottom: 0.5rem; }
-        .form-card { background-color: #111111; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; padding: 2rem; margin-bottom: 1.5rem; }
+        .input-field:focus { border-color: #EFECE6; box-shadow: 0 0 0 2px rgba(239, 236, 230, 0.15); }
+        .input-label { display: block; font-size: 0.75rem; color: #8E8E8E; font-weight: 700; margin-bottom: 0.5rem; }
+        .form-card { background-color: #161616; border: 1px solid #2E2E2E; border-radius: 1.5rem; padding: 2rem; margin-bottom: 1.5rem; }
     </style>
 </head>
 <body class="custom-scroll select-none relative">
 
-    <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-b-primary/10 via-black to-black"></div>
+    <div class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-b-primary/10 via-black to-black"></div>
 
     <header class="pt-16 pb-8 text-center px-4">
         <div class="inline-block bg-b-primary/10 border border-b-primary/30 text-teal-400 px-4 py-1.5 rounded-full text-sm font-bold mb-4 tracking-wide">
-            <i class="fas fa-rocket mr-2"></i> Busla Core Team - Phase 1
+            <i class="fas fa-rocket mr-2"></i> ZDC Core Team — Phase 1
         </div>
-        <h1 class="text-3xl md:text-5xl font-black mb-4 tracking-tight">انضم إلى فريق <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-b-primary">Busla</span></h1>
+        <h1 class="text-3xl md:text-5xl font-black mb-4 tracking-tight">Join the <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-b-primary">ZDC</span> Core Team</h1>
+        <p class="text-sm text-gray-400 max-w-xl mx-auto">Help shape Zagazig Digital Community's engineering curriculum, tracks, and mentorship ecosystem.</p>
     </header>
 
     <section id="tracks-section" class="max-w-6xl mx-auto px-4 mb-24 pt-4 animate-fade-in">
-        <h2 class="text-xl font-bold mb-6 text-center text-gray-300">اختر مسار الانضمام الذي يناسبك:</h2>
+        <h2 class="text-xl font-bold mb-6 text-center text-gray-300">Choose the team track that fits you best:</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             <div class="bg-b-surface border-2 border-b-primary/50 rounded-2xl p-6 relative overflow-hidden group shadow-xl shadow-b-primary/5 transition-transform hover:-translate-y-1">
-                <div class="absolute top-0 right-0 bg-b-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">مفعل - Active</div>
+                <div class="absolute top-0 right-0 bg-b-primary text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Active</div>
                 <div class="w-14 h-14 bg-b-primary/10 text-b-primary rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-laptop-code"></i></div>
                 <h3 class="text-xl font-bold mb-3 text-white">Content Contributor</h3>
-                <p class="text-xs text-gray-400 mb-5 leading-relaxed">المساهمة في بناء وتطوير المحتوى العلمي والعملي الخاص بمجال تصميم الدوائر المتكاملة.</p>
+                <p class="text-xs text-gray-400 mb-5 leading-relaxed">Contribute to building and curating technical and hands-on curriculum for Digital IC and engineering tracks.</p>
                 <ul class="text-xs text-gray-300 space-y-2.5 mb-8">
-                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> إدخال الكورسات والمشاريع للمنصة</li>
-                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> مراجعة وتقييم المحتوى التقني</li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> Curate courses, quizzes, and hands-on projects</li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-green-500 mt-0.5"></i> Review and elevate technical learning materials</li>
                 </ul>
-                <button onclick="startApplication('content')" class="block w-full text-center bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-all shadow-md">ابدأ التقديم</button>
+                <button onclick="startApplication('content')" class="block w-full text-center bg-b-primary hover:bg-teal-600 text-white font-bold py-3 rounded-xl transition-all shadow-md">Start Application</button>
             </div>
 
             <div class="bg-black/50 border border-white/5 rounded-2xl p-6 relative opacity-60 grayscale-[50%]">
                 <div class="absolute top-0 right-0 bg-gray-700 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Coming Soon</div>
                 <div class="w-14 h-14 bg-white/5 text-gray-400 rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-cogs"></i></div>
                 <h3 class="text-xl font-bold mb-3 text-gray-300">Operations Track</h3>
-                <p class="text-xs text-gray-500 mb-5 leading-relaxed">إدارة العمليات الداخلية، متابعة أداء الطلاب، والتنظيم العام لسير العمل داخل المنصة.</p>
-                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">غير متاح حالياً</button>
+                <p class="text-xs text-gray-500 mb-5 leading-relaxed">Manage internal operations, track cohort progress, and keep community workflows running smoothly.</p>
+                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">Currently Closed</button>
             </div>
 
             <div class="bg-black/50 border border-white/5 rounded-2xl p-6 relative opacity-60 grayscale-[50%]">
                 <div class="absolute top-0 right-0 bg-gray-700 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Coming Soon</div>
                 <div class="w-14 h-14 bg-white/5 text-gray-400 rounded-xl flex items-center justify-center text-2xl mb-5"><i class="fas fa-user-graduate"></i></div>
                 <h3 class="text-xl font-bold mb-3 text-gray-300">Academic Oversight</h3>
-                <p class="text-xs text-gray-500 mb-5 leading-relaxed">الإشراف الأكاديمي، مراجعة معايير التقييم (Rubrics)، والتوجيه التقني المتقدم للطلاب.</p>
-                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">غير متاح حالياً</button>
+                <p class="text-xs text-gray-500 mb-5 leading-relaxed">Oversee academic quality, review project grading rubrics, and deliver advanced technical mentorship.</p>
+                <button disabled class="w-full text-center bg-white/5 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed">Currently Closed</button>
             </div>
         </div>
     </section>
 
     <section id="application-container" class="hidden max-w-4xl mx-auto px-4 mb-32">
         
-        <div class="mb-8 relative bg-[#111111] p-6 rounded-2xl border border-white/5 shadow-lg">
+        <div class="mb-8 relative bg-[#161616] p-6 rounded-2xl border border-b-border shadow-lg">
             <div class="flex justify-between mb-3">
-                <span class="text-sm font-bold text-teal-400" id="step-indicator-text">الخطوة 1 من 5: البيانات الأساسية</span>
+                <span class="text-sm font-bold text-teal-400" id="step-indicator-text">Step 1 of 5: Basic Information</span>
                 <span class="text-sm font-bold text-gray-500 font-mono" id="step-percentage">20%</span>
             </div>
             <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
@@ -87,29 +90,29 @@
 
             <div id="step-1" class="form-step animate-slide-in">
                 <div class="form-card">
-                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-user mr-2"></i> البيانات الشخصية</h3>
+                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-user mr-2"></i> Personal Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="md:col-span-2">
-                            <label class="input-label">الاسم (Full Name) *</label>
-                            <input type="text" id="f-name" required class="input-field" placeholder="">
+                            <label class="input-label">Full Name *</label>
+                            <input type="text" id="f-name" required class="input-field" placeholder="e.g. Ahmed Mohamed Hassan">
                         </div>
                         <div>
-                            <label class="input-label">البريد الإلكتروني (Email) *</label>
-                            <input type="email" id="f-email" required class="input-field dir-ltr text-left" placeholder="example@gmail.com">
+                            <label class="input-label">Email Address *</label>
+                            <input type="email" id="f-email" required class="input-field text-left" placeholder="example@gmail.com">
                         </div>
                         <div>
-                            <label class="input-label text-teal-400">رقم الواتساب (WhatsApp) *</label>
-                            <input type="tel" id="f-phone" required class="input-field dir-ltr text-left border-teal-500/30" placeholder="+20 10...">
+                            <label class="input-label text-teal-400">WhatsApp Number *</label>
+                            <input type="tel" id="f-phone" required class="input-field text-left border-teal-500/30" placeholder="+20 10...">
                         </div>
                         <div>
-                            <label class="input-label">العمر (Age) *</label>
+                            <label class="input-label">Age *</label>
                             <input type="number" id="f-age" required min="15" max="60" class="input-field">
                         </div>
                         <div>
-                            <label class="input-label">النوع (Gender)</label>
+                            <label class="input-label">Gender</label>
                             <select id="f-gender" class="input-field text-gray-300">
-                                <option value="Male">ذكر</option>
-                                <option value="Female">أنثى</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
                             </select>
                         </div>
                     </div>
@@ -118,116 +121,116 @@
 
             <div id="step-2" class="form-step hidden animate-slide-in">
                 <div class="form-card">
-                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-map-marker-alt mr-2"></i> البيانات الجغرافية والأكاديمية</h3>
+                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-map-marker-alt mr-2"></i> Location & Academic Profile</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="input-label">المحافظة *</label>
+                            <label class="input-label">Governorate *</label>
                             <select id="f-gov" required class="searchable-select">
-                                <option value="" disabled selected>اختر المحافظة</option>
-                                <option value="Sharqia">الشرقية</option>
-                                <option value="Cairo">القاهرة</option>
-                                <option value="Giza">الجيزة</option>
-                                <option value="Alexandria">الإسكندرية</option>
-                                <option value="Dakahlia">الدقهلية</option>
-                                <option value="Red Sea">البحر الأحمر</option>
-                                <option value="Beheira">البحيرة</option>
-                                <option value="Fayoum">الفيوم</option>
-                                <option value="Gharbia">الغربية</option>
-                                <option value="Ismailia">الإسماعيلية</option>
-                                <option value="Monufia">المنوفية</option>
-                                <option value="Minya">المنيا</option>
-                                <option value="Qalyubia">القليوبية</option>
-                                <option value="New Valley">الوادي الجديد</option>
-                                <option value="Suez">السويس</option>
-                                <option value="Aswan">أسوان</option>
-                                <option value="Assiut">أسيوط</option>
-                                <option value="Beni Suef">بني سويف</option>
-                                <option value="Port Said">بورسعيد</option>
-                                <option value="Damietta">دمياط</option>
-                                <option value="South Sinai">جنوب سيناء</option>
-                                <option value="Kafr El Sheikh">كفر الشيخ</option>
-                                <option value="Matrouh">مطروح</option>
-                                <option value="Luxor">الأقصر</option>
-                                <option value="Qena">قنا</option>
-                                <option value="North Sinai">شمال سيناء</option>
-                                <option value="Sohag">سوهاج</option>
-                                <option value="Other">أخرى</option>
+                                <option value="" disabled selected>Select Governorate</option>
+                                <option value="Sharqia">Sharqia</option>
+                                <option value="Cairo">Cairo</option>
+                                <option value="Giza">Giza</option>
+                                <option value="Alexandria">Alexandria</option>
+                                <option value="Dakahlia">Dakahlia</option>
+                                <option value="Red Sea">Red Sea</option>
+                                <option value="Beheira">Beheira</option>
+                                <option value="Fayoum">Fayoum</option>
+                                <option value="Gharbia">Gharbia</option>
+                                <option value="Ismailia">Ismailia</option>
+                                <option value="Monufia">Monufia</option>
+                                <option value="Minya">Minya</option>
+                                <option value="Qalyubia">Qalyubia</option>
+                                <option value="New Valley">New Valley</option>
+                                <option value="Suez">Suez</option>
+                                <option value="Aswan">Aswan</option>
+                                <option value="Assiut">Assiut</option>
+                                <option value="Beni Suef">Beni Suef</option>
+                                <option value="Port Said">Port Said</option>
+                                <option value="Damietta">Damietta</option>
+                                <option value="South Sinai">South Sinai</option>
+                                <option value="Kafr El Sheikh">Kafr El Sheikh</option>
+                                <option value="Matrouh">Matrouh</option>
+                                <option value="Luxor">Luxor</option>
+                                <option value="Qena">Qena</option>
+                                <option value="North Sinai">North Sinai</option>
+                                <option value="Sohag">Sohag</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div>
-                            <label class="input-label">الجامعة *</label>
+                            <label class="input-label">University *</label>
                             <select id="f-uni" required class="searchable-select">
-                                <option value="" disabled selected>اختر الجامعة</option>
-                                <optgroup label="الجامعات الحكومية">
-                                    <option value="Zagazig">جامعة الزقازيق</option>
-                                    <option value="Cairo">جامعة القاهرة</option>
-                                    <option value="Alexandria">جامعة الإسكندرية</option>
-                                    <option value="Ain Shams">جامعة عين شمس</option>
-                                    <option value="Mansoura">جامعة المنصورة</option>
-                                    <option value="Assiut">جامعة أسيوط</option>
-                                    <option value="Tanta">جامعة طنطا</option>
-                                    <option value="Helwan">جامعة حلوان</option>
-                                    <option value="Minya">جامعة المنيا</option>
-                                    <option value="Monufia">جامعة المنوفية</option>
-                                    <option value="Suez Canal">جامعة قناة السويس</option>
-                                    <option value="South Valley">جامعة جنوب الوادي</option>
-                                    <option value="Beni Suef">جامعة بني سويف</option>
-                                    <option value="Fayoum">جامعة الفيوم</option>
-                                    <option value="Benha">جامعة بنها</option>
-                                    <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
-                                    <option value="Sohag">جامعة سوهاج</option>
-                                    <option value="Port Said">جامعة بورسعيد</option>
-                                    <option value="Damanhour">جامعة دمنهور</option>
-                                    <option value="Aswan">جامعة أسوان</option>
-                                    <option value="Damietta">جامعة دمياط</option>
-                                    <option value="Suez">جامعة السويس</option>
-                                    <option value="Sadat City">جامعة مدينة السادات</option>
-                                    <option value="Arish">جامعة العريش</option>
-                                    <option value="Luxor">جامعة الأقصر</option>
+                                <option value="" disabled selected>Select University</option>
+                                <optgroup label="Public Universities">
+                                    <option value="Zagazig">Zagazig University</option>
+                                    <option value="Cairo">Cairo University</option>
+                                    <option value="Alexandria">Alexandria University</option>
+                                    <option value="Ain Shams">Ain Shams University</option>
+                                    <option value="Mansoura">Mansoura University</option>
+                                    <option value="Assiut">Assiut University</option>
+                                    <option value="Tanta">Tanta University</option>
+                                    <option value="Helwan">Helwan University</option>
+                                    <option value="Minya">Minya University</option>
+                                    <option value="Monufia">Monufia University</option>
+                                    <option value="Suez Canal">Suez Canal University</option>
+                                    <option value="South Valley">South Valley University</option>
+                                    <option value="Beni Suef">Beni Suef University</option>
+                                    <option value="Fayoum">Fayoum University</option>
+                                    <option value="Benha">Benha University</option>
+                                    <option value="Kafrelsheikh">Kafrelsheikh University</option>
+                                    <option value="Sohag">Sohag University</option>
+                                    <option value="Port Said">Port Said University</option>
+                                    <option value="Damanhour">Damanhour University</option>
+                                    <option value="Aswan">Aswan University</option>
+                                    <option value="Damietta">Damietta University</option>
+                                    <option value="Suez">Suez University</option>
+                                    <option value="Sadat City">University of Sadat City</option>
+                                    <option value="Arish">Arish University</option>
+                                    <option value="Luxor">Luxor University</option>
                                 </optgroup>
-                                <optgroup label="جامعات أخرى وخاصة">
-                                    <option value="Al-Azhar">جامعة الأزهر</option>
-                                    <option value="Zewail City">مدينة زويل</option>
-                                    <option value="E-JUST">الجامعة المصرية اليابانية (E-JUST)</option>
-                                    <option value="AUC">الجامعة الأمريكية بالقاهرة</option>
-                                    <option value="GUC">الجامعة الألمانية بالقاهرة</option>
-                                    <option value="BUE">الجامعة البريطانية في مصر</option>
-                                    <option value="MUST">جامعة مصر (MUST)</option>
-                                    <option value="MIU">جامعة مصر الدولية</option>
-                                    <option value="Other">جامعة أخرى / معهد</option>
+                                <optgroup label="Private & National Universities">
+                                    <option value="Al-Azhar">Al-Azhar University</option>
+                                    <option value="Zewail City">Zewail City of Science and Technology</option>
+                                    <option value="E-JUST">Egypt-Japan University (E-JUST)</option>
+                                    <option value="AUC">American University in Cairo (AUC)</option>
+                                    <option value="GUC">German University in Cairo (GUC)</option>
+                                    <option value="BUE">British University in Egypt (BUE)</option>
+                                    <option value="MUST">Misr University for Science & Tech (MUST)</option>
+                                    <option value="MIU">Misr International University (MIU)</option>
+                                    <option value="Other">Other University / Institute</option>
                                 </optgroup>
                             </select>
                         </div>
                         <div>
-                            <label class="input-label">الكلية *</label>
+                            <label class="input-label">Faculty *</label>
                             <select id="f-faculty" required class="searchable-select">
-                                <option value="" disabled selected>اختر الكلية</option>
-                                <option value="Engineering">هندسة</option>
-                                <option value="Computers">حاسبات ومعلومات</option>
-                                <option value="Science">علوم</option>
-                                <option value="Other">أخرى</option>
+                                <option value="" disabled selected>Select Faculty</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Computers">Computer Science & Information</option>
+                                <option value="Science">Science</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div>
-                            <label class="input-label">القسم *</label>
+                            <label class="input-label">Department *</label>
                             <select id="f-dept" required class="searchable-select">
-                                <option value="" disabled selected>اختر القسم</option>
-                                <option value="Electronics">إتصالات وإلكترونيات</option>
-                                <option value="CSE">حاسبات ونظم</option>
-                                <option value="Mechatronics">ميكاترونكس</option>
-                                <option value="Other">أخرى</option>
+                                <option value="" disabled selected>Select Department</option>
+                                <option value="Electronics">Electronics & Communications</option>
+                                <option value="CSE">Computer & Systems Engineering</option>
+                                <option value="Mechatronics">Mechatronics</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="input-label">الفرقة الدراسية *</label>
+                            <label class="input-label">Academic Year *</label>
                             <select id="f-year" required class="searchable-select">
-                                <option value="" disabled selected>اختر الفرقة</option>
-                                <option value="Prep">إعدادي</option>
-                                <option value="1st Year">الأولى</option>
-                                <option value="2nd Year">الثانية</option>
-                                <option value="3rd Year">الثالثة</option>
-                                <option value="4th Year">الرابعة</option>
-                                <option value="Graduated">خريج</option>
+                                <option value="" disabled selected>Select Year</option>
+                                <option value="Prep">Preparatory Year</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                                <option value="Graduated">Graduate</option>
                             </select>
                         </div>
                     </div>
@@ -236,39 +239,39 @@
 
             <div id="step-3" class="form-step hidden animate-slide-in">
                 <div class="form-card">
-                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-clock mr-2"></i> الالتزام الزمني</h3>
+                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-clock mr-2"></i> Time Commitment</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                         <div>
-                            <label class="input-label">عدد الساعات المتاحة أسبوعياً للتطوع *</label>
+                            <label class="input-label">Weekly Hours Available for Volunteering *</label>
                             <select id="f-hours" required class="input-field text-gray-300">
-                                <option value="" disabled selected>-- اختر عدد الساعات --</option>
-                                <option value="3-5">من 3 إلى 5 ساعات</option>
-                                <option value="5-8">من 5 إلى 8 ساعات</option>
-                                <option value="8-12">من 8 إلى 12 ساعة</option>
-                                <option value="12+">أكثر من 12 ساعة</option>
+                                <option value="" disabled selected>-- Select Weekly Hours --</option>
+                                <option value="3-5">3 to 5 hours</option>
+                                <option value="5-8">5 to 8 hours</option>
+                                <option value="8-12">8 to 12 hours</option>
+                                <option value="12+">More than 12 hours</option>
                             </select>
                         </div>
                         <div>
-                            <label class="input-label">الوقت المفضل للعمل (Preferred Time)</label>
+                            <label class="input-label">Preferred Working Time</label>
                             <select id="f-pref-time" class="input-field text-gray-300">
-                                <option value="">-- غير محدد --</option>
-                                <option value="Morning">صباحاً (Morning)</option>
-                                <option value="Afternoon">عصراً (Afternoon)</option>
-                                <option value="Night">ليلاً (Night)</option>
+                                <option value="">-- Flexible / Unspecified --</option>
+                                <option value="Morning">Morning</option>
+                                <option value="Afternoon">Afternoon</option>
+                                <option value="Night">Night</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="input-label">الأيام المفضلة للعمل (اختر يوماً واحداً على الأقل) *</label>
+                        <label class="input-label">Preferred Working Days (select at least one) *</label>
                         <div class="flex flex-wrap gap-3 mt-2">
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Sat" class="chk-day accent-b-primary"><span class="text-xs">السبت</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Sun" class="chk-day accent-b-primary"><span class="text-xs">الأحد</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Mon" class="chk-day accent-b-primary"><span class="text-xs">الاثنين</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Tue" class="chk-day accent-b-primary"><span class="text-xs">الثلاثاء</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Wed" class="chk-day accent-b-primary"><span class="text-xs">الأربعاء</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Thu" class="chk-day accent-b-primary"><span class="text-xs">الخميس</span></label>
-                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Fri" class="chk-day accent-b-primary"><span class="text-xs">الجمعة</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Sat" class="chk-day accent-b-primary"><span class="text-xs">Saturday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Sun" class="chk-day accent-b-primary"><span class="text-xs">Sunday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Mon" class="chk-day accent-b-primary"><span class="text-xs">Monday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Tue" class="chk-day accent-b-primary"><span class="text-xs">Tuesday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Wed" class="chk-day accent-b-primary"><span class="text-xs">Wednesday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Thu" class="chk-day accent-b-primary"><span class="text-xs">Thursday</span></label>
+                            <label class="px-4 py-2 rounded-lg border border-white/10 bg-black/30 hover:border-b-primary cursor-pointer flex items-center gap-2"><input type="checkbox" value="Fri" class="chk-day accent-b-primary"><span class="text-xs">Friday</span></label>
                         </div>
                     </div>
                 </div>
@@ -276,28 +279,28 @@
 
             <div id="step-4" class="form-step hidden animate-slide-in">
                 <div class="form-card">
-                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-microchip mr-2"></i> الاهتمام التقني والمسارات</h3>
+                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-microchip mr-2"></i> Technical Interest & Tracks</h3>
                     <div class="mb-6">
-                        <label class="input-label text-teal-400">المسار التقني الذي تود المساهمة فيه *</label>
+                        <label class="input-label text-teal-400">Technical Track You Want to Contribute To *</label>
                         <select id="f-academic-track" required onchange="showDynamicSkills()" class="input-field border-teal-500/50 bg-teal-900/10">
-                            <option value="" disabled selected>⏳ جاري تحميل المسارات...</option>
+                            <option value="" disabled selected>Loading available tracks...</option>
                         </select>
                     </div>
 
                     <div id="dynamic-skills-container" class="hidden animate-fade-in transition-all">
                         <div class="mb-6">
-                            <label class="input-label">ما هو مدى اهتمامك وارتباطك بهذا المسار؟ *</label>
+                            <label class="input-label">How familiar are you with this track? *</label>
                             <select id="f-ic-interest" required class="input-field text-gray-300">
-                                <option value="" disabled selected>-- اختر إجابة --</option>
-                                <option value="studying">خبير، ذو خبرة كبيره في هذا المجال </option>
-                                <option value="studying">نعم، أدرسه حالياً بشكل أكاديمي أو ذاتي</option>
-                                <option value="started">مهتم جداً وبدأت في تعلم الأساسيات</option>
-                                <option value="curious">لدي فضول للتعرف على المجال والتطوع فيه</option>
+                                <option value="" disabled selected>-- Select an option --</option>
+                                <option value="studying">Experienced with strong hands-on background in this field</option>
+                                <option value="studying">Actively studying it academically or self-paced</option>
+                                <option value="started">Highly interested and already started learning fundamentals</option>
+                                <option value="curious">Curious to explore the field and volunteer with ZDC</option>
                             </select>
                         </div>
                         <div>
-                            <label id="lbl-custom-skills" class="input-label">أخبرنا بمهاراتك التقنية (البرامج واللغات):</label>
-                            <textarea id="f-custom-skills" rows="3" class="input-field" placeholder="مثال: خبرة في التعامل مع Verilog، معرفة سابقة بـ Proteus..."></textarea>
+                            <label id="lbl-custom-skills" class="input-label">Tell us about your technical skills (tools & languages):</label>
+                            <textarea id="f-custom-skills" rows="3" class="input-field" placeholder="e.g. Experience with Verilog, Vivado, ModelSim, Proteus, or Python..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -305,33 +308,33 @@
 
             <div id="step-5" class="form-step hidden animate-slide-in">
                 <div class="form-card">
-                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-comment-dots mr-2"></i> أسئلة شخصية وروابط</h3>
+                    <h3 class="text-lg font-bold text-teal-400 border-b border-white/5 pb-3 mb-6"><i class="fas fa-comment-dots mr-2"></i> Motivation & Profile Links</h3>
                     <div class="space-y-5 mb-6">
                         <div>
-                            <label class="input-label">لماذا تريد الانضمام إلى فريق عمل المنصة؟ *</label>
+                            <label class="input-label">Why do you want to join the ZDC Core Team? *</label>
                             <textarea id="f-motivation" required rows="2" class="input-field"></textarea>
                         </div>
                         <div>
-                            <label class="input-label">كيف تعتقد أنك تستطيع إضافة قيمة في هذا المسار؟ *</label>
+                            <label class="input-label">How can you add value to this technical track? *</label>
                             <textarea id="f-contribution" required rows="2" class="input-field"></textarea>
                         </div>
                         <div>
-                            <label class="input-label">هل سبق لك العمل في تنظيم محتوى أو التطوع؟ (اختياري)</label>
-                            <textarea id="f-experience" rows="2" class="input-field" placeholder="اذكر باختصار..."></textarea>
+                            <label class="input-label">Do you have prior content curation or volunteering experience? (Optional)</label>
+                            <textarea id="f-experience" rows="2" class="input-field" placeholder="Share briefly..."></textarea>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4 pt-4 border-t border-white/5">
                             <div class="md:col-span-2">
-                                <label class="input-label">حساب لينكد إن (LinkedIn) *</label>
-                                <input type="url" id="f-linkedin" required class="input-field dir-ltr text-left" placeholder="https://linkedin.com/in/...">
+                                <label class="input-label">LinkedIn Profile *</label>
+                                <input type="url" id="f-linkedin" required class="input-field text-left" placeholder="https://linkedin.com/in/...">
                             </div>
                             <div>
-                                <label class="input-label">حساب جيت هاب (GitHub) - اختياري</label>
-                                <input type="url" id="f-github" class="input-field dir-ltr text-left" placeholder="https://github.com/...">
+                                <label class="input-label">GitHub Profile (Optional)</label>
+                                <input type="url" id="f-github" class="input-field text-left" placeholder="https://github.com/...">
                             </div>
                             <div>
-                                <label class="input-label">بورتفوليو أو سي في (Portfolio) - اختياري</label>
-                                <input type="url" id="f-portfolio" class="input-field dir-ltr text-left" placeholder="https://...">
+                                <label class="input-label">Portfolio or Resume Link (Optional)</label>
+                                <input type="url" id="f-portfolio" class="input-field text-left" placeholder="https://...">
                             </div>
                         </div>
                     </div>
@@ -342,9 +345,9 @@
                         <div class="mt-1"><input type="checkbox" id="f-agree" required class="w-5 h-5 accent-b-primary cursor-pointer rounded"></div>
                         <div>
                             <label for="f-agree" class="font-bold text-white cursor-pointer text-sm">
-                                أقر بأنني قرأت <a href="../../pages/legal/volunteer-agreement.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">شروط وأحكام الالتحاق بفريق العمل</a>، وأتعهد بالالتزام التام بالمهام الأسبوعية وساعات العمل في حال قبولي.
+                                I confirm that I have read the <a href="../../pages/legal/volunteer-agreement.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">ZDC Volunteer & Core Team Agreement</a> and commit to my weekly tasks and hours if accepted.
                             </label>
-                            <p class="text-xs text-gray-400 mt-1">تقديمك للطلب يعني أنك قرأت وفهمت طبيعة المسار المختار وجديته.</p>
+                            <p class="text-xs text-gray-400 mt-1">Submitting this application confirms that you understand the responsibilities and commitment of your chosen track.</p>
                         </div>
                     </div>
                 </div>
@@ -352,22 +355,22 @@
 
             <div class="flex justify-between items-center mt-8 border-t border-white/10 pt-6">
                 <button type="button" id="btn-prev" onclick="window.prevStep()" class="hidden px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-all border border-white/10">
-                    <i class="fas fa-arrow-right ml-2"></i> السابق
+                    <i class="fas fa-arrow-left mr-2"></i> Previous
                 </button>
                 
                 <button type="button" id="btn-next" onclick="window.nextStep()" class="px-8 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-all ml-auto shadow-[0_0_15px_rgba(13,148,136,0.3)]">
-                    التالي <i class="fas fa-arrow-left mr-2"></i>
+                    Next <i class="fas fa-arrow-right ml-2"></i>
                 </button>
                 
                 <button type="submit" id="btn-submit" class="hidden px-8 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-black transition-all ml-auto shadow-[0_0_20px_rgba(0,106,103,0.5)]">
-                    <i class="fas fa-paper-plane ml-2"></i> إرسال الطلب
+                    <i class="fas fa-paper-plane mr-2"></i> Submit Application
                 </button>
             </div>
 
         </form>
     </section>
 
-    <div id="toast-container" class="fixed bottom-6 left-6 z-[999] flex flex-col gap-3 pointer-events-none"></div>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none"></div>
 
 <script type="module" src="../js/apply.js"></script>
 </body>

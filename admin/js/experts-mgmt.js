@@ -9,22 +9,21 @@ let advicesFilterStatus = 'all';
 let advicesSearchTerm = '';
 let currentEditingAdviceId = null;
 let isHtmlMode = false;
-let isAutoSeeding = false;
 
 const CATEGORIES = [
-    { id: 'General', name: 'نصائح عامة' },
-    { id: 'GP', name: 'مشروع التخرج' },
-    { id: 'Career', name: 'المسار الوظيفي' },
+    { id: 'General', name: 'General Advice' },
+    { id: 'GP', name: 'Graduation Project' },
+    { id: 'Career', name: 'Career Path' },
     { id: 'Verification', name: 'Verification' },
     { id: 'RTL', name: 'RTL & Design' },
     { id: 'FPGA', name: 'FPGA' },
     { id: 'MATLAB', name: 'MATLAB' },
-    { id: 'Presentation', name: 'العرض والتقديم' },
-    { id: 'Tools', name: 'الأدوات والمواقع' },
-    { id: 'Training', name: 'التدريب' },
+    { id: 'Presentation', name: 'Presentation Skills' },
+    { id: 'Tools', name: 'Tools & Websites' },
+    { id: 'Training', name: 'Training & Internships' },
     { id: 'ChatGPT', name: 'ChatGPT & AI' },
-    { id: 'Study', name: 'المذاكرة والدراسة' },
-    { id: 'Resources', name: 'المصادر والكورسات' }
+    { id: 'Study', name: 'Study & Learning' },
+    { id: 'Resources', name: 'Resources & Courses' }
 ];
 
 // ==========================================
@@ -91,7 +90,7 @@ function setupTwoWayLiveSync() {
     // Title Sync (Both Ways)
     if (titleInput && previewTitle) {
         titleInput.addEventListener('input', () => {
-            previewTitle.textContent = titleInput.value.trim() || 'عنوان النصيحة يظهر هنا...';
+            previewTitle.textContent = titleInput.value.trim() || 'Advice title appears here...';
         });
 
         previewTitle.addEventListener('input', () => {
@@ -106,7 +105,7 @@ function setupTwoWayLiveSync() {
         });
 
         previewSource.addEventListener('input', () => {
-            let clean = previewSource.innerText.replace(/^المصدر:\s*/, '').trim();
+            let clean = previewSource.innerText.replace(/^Source:\s*/i, '').trim();
             sourceInput.value = clean;
         });
     }
@@ -195,8 +194,8 @@ function updateSourcePreview() {
     const previewSource = document.getElementById('preview-advice-source');
     if (!previewSource) return;
 
-    const sourceVal = (sourceInput && sourceInput.value.trim()) ? sourceInput.value.trim() : 'مهندسون وخبراء';
-    previewSource.innerHTML = `<i class="fas fa-user-graduate ml-1.5 text-teal-400"></i> المصدر: ${sourceVal}`;
+    const sourceVal = (sourceInput && sourceInput.value.trim()) ? sourceInput.value.trim() : 'Engineers & Experts';
+    previewSource.innerHTML = `<i class="fas fa-user-graduate mr-1.5 text-teal-400"></i> Source: ${sourceVal}`;
 }
 
 function updateTagsPreview() {
@@ -211,7 +210,7 @@ function updateTagsPreview() {
         .map(t => t.startsWith('#') ? t : `#${t}`);
 
     if (list.length === 0) {
-        previewTags.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-gray-400">#نصائح_عامة</span>`;
+        previewTags.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 text-gray-400">#General_Advice</span>`;
         return;
     }
 
@@ -225,7 +224,7 @@ function populateCategoryFilters() {
     const formCat = document.getElementById('advice-form-category');
     
     if (filter) {
-        filter.innerHTML = '<option value="all">كل التصنيفات</option>' + 
+        filter.innerHTML = '<option value="all">All Categories</option>' + 
             CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     }
 
@@ -235,12 +234,12 @@ function populateCategoryFilters() {
 }
 
 // ==========================================
-// 🚀 FETCH DATA (With Silent Auto-Seed)
+// 🚀 FETCH DATA (No Auto-Seed)
 // ==========================================
 export async function fetchAdvices() {
     const tbody = document.getElementById('admin-advices-table-body');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>جاري تحميل نصائح وخبرات المهندسين...</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-teal-500 text-3xl mb-3"></i><p>Loading engineers & experts advice...</p></td></tr>`;
     }
 
     try {
@@ -257,12 +256,6 @@ export async function fetchAdvices() {
             allAdvices = data || [];
         }
 
-        // Silent Auto-Seed: If database has 0 advice items, seed all 75 automatically
-        if (allAdvices.length === 0 && !isAutoSeeding) {
-            await silentAutoSeed();
-            return;
-        }
-
         updateStats();
         filterAndRenderAdvices();
     } catch (err) {
@@ -270,67 +263,6 @@ export async function fetchAdvices() {
         allAdvices = [];
         updateStats();
         filterAndRenderAdvices();
-    }
-}
-
-// Silent Auto-Seed from experts_data.json
-async function silentAutoSeed() {
-    isAutoSeeding = true;
-    try {
-        const resp = await fetch('../../data/experts_data.json');
-        if (!resp.ok) return;
-        const data = await resp.json();
-        const seedAdvice = data.Advice || [];
-
-        if (seedAdvice.length === 0) return;
-
-        const formattedPayload = seedAdvice.map((item, idx) => {
-            const firstTag = (item.tags && item.tags[0]) || '#General';
-            let cat = 'General';
-            if (firstTag.includes('GP')) cat = 'GP';
-            else if (firstTag.includes('Verification')) cat = 'Verification';
-            else if (firstTag.includes('Career')) cat = 'Career';
-            else if (firstTag.includes('RTL')) cat = 'RTL';
-            else if (firstTag.includes('FPGA')) cat = 'FPGA';
-            else if (firstTag.includes('MATLAB')) cat = 'MATLAB';
-            else if (firstTag.includes('Presentation')) cat = 'Presentation';
-            else if (firstTag.includes('Tools')) cat = 'Tools';
-
-            return {
-                title: item.title,
-                summary: item.summary || item.title,
-                content: item.fullText || `<p>${item.summary}</p>`,
-                source: item.source || 'Multiple Engineers & Professors',
-                category: cat,
-                tags: item.tags || ['#General'],
-                difficulty: item.difficulty || 'beginner',
-                priority: item.priority || 'high',
-                order_index: idx + 1,
-                is_published: true
-            };
-        });
-
-        // Insert in chunks of 20
-        const chunkSize = 20;
-        for (let i = 0; i < formattedPayload.length; i += chunkSize) {
-            const chunk = formattedPayload.slice(i, i + chunkSize);
-            await supabase.from('expert_advices').insert(chunk);
-        }
-
-        // Re-fetch after seeding
-        const { data: refreshed } = await supabase
-            .from('expert_advices')
-            .select('*')
-            .order('order_index', { ascending: true });
-
-        allAdvices = refreshed || [];
-        showToast(`تمت مزامنة ${allAdvices.length} نصيحة من الخبراء وحفظها في قاعدة البيانات تلقائياً!`, "success");
-        updateStats();
-        filterAndRenderAdvices();
-    } catch (err) {
-        console.warn("Silent Auto Seed Notice:", err);
-    } finally {
-        isAutoSeeding = false;
     }
 }
 
@@ -381,11 +313,14 @@ function filterAndRenderAdvices() {
     });
 
     if (filtered.length === 0) {
+        const emptyTitle = allAdvices.length === 0
+            ? "No expert advice items in the database yet."
+            : "No advice items match the current search or filter.";
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="p-12 text-center text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-3 text-gray-600 block"></i>
-                    <p class="font-bold text-gray-400">لا توجد نصائح مطابقة للبحث أو الفلتر الحالي.</p>
+                    <p class="font-bold text-gray-400">${emptyTitle}</p>
                 </td>
             </tr>
         `;
@@ -393,7 +328,7 @@ function filterAndRenderAdvices() {
             mobileCards.innerHTML = `
                 <div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">
                     <i class="fas fa-inbox text-3xl mb-2 text-gray-600 block"></i>
-                    <p class="font-bold text-gray-400">لا توجد نصائح مطابقة للبحث أو الفلتر الحالي.</p>
+                    <p class="font-bold text-gray-400">${emptyTitle}</p>
                 </div>
             `;
         }
@@ -402,26 +337,26 @@ function filterAndRenderAdvices() {
 
     const rendered = filtered.map((advice, index) => {
         const catObj = CATEGORIES.find(c => c.id === advice.category);
-        const catName = catObj ? catObj.name : (advice.category || 'عام');
+        const catName = catObj ? catObj.name : (advice.category || 'General');
         const tags = advice.tags || [];
 
-        // Desktop Table Row (100% UNCHANGED)
+        // Desktop Table Row
         const trHtml = `
             <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                 <td class="p-3 text-center text-gray-500 font-mono text-xs w-16">
                     <div class="flex items-center justify-center gap-1">
-                        <button onclick="window.moveAdviceOrder('${advice.id}', -1)" title="رفع للأعلى" class="p-1 hover:text-teal-400 transition-colors ${index === 0 ? 'opacity-20 cursor-not-allowed' : ''}">
+                        <button onclick="window.moveAdviceOrder('${advice.id}', -1)" title="Move Up" class="p-1 hover:text-teal-400 transition-colors ${index === 0 ? 'opacity-20 cursor-not-allowed' : ''}">
                             <i class="fas fa-chevron-up text-[10px]"></i>
                         </button>
                         <span class="font-bold text-gray-300">${advice.order_index ?? index + 1}</span>
-                        <button onclick="window.moveAdviceOrder('${advice.id}', 1)" title="إنزال للأسفل" class="p-1 hover:text-teal-400 transition-colors ${index === filtered.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}">
+                        <button onclick="window.moveAdviceOrder('${advice.id}', 1)" title="Move Down" class="p-1 hover:text-teal-400 transition-colors ${index === filtered.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}">
                             <i class="fas fa-chevron-down text-[10px]"></i>
                         </button>
                     </div>
                 </td>
                 <td class="p-3">
                     <div class="font-bold text-white text-sm max-w-xs md:max-w-md line-clamp-2">${advice.title}</div>
-                    <div class="text-xs text-gray-400 mt-0.5 line-clamp-1">${advice.summary || 'بدون ملخص خارجي'}</div>
+                    <div class="text-xs text-gray-400 mt-0.5 line-clamp-1">${advice.summary || 'No external summary'}</div>
                 </td>
                 <td class="p-3 text-xs whitespace-nowrap">
                     <span class="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 border border-teal-500/20 font-semibold">${catName}</span>
@@ -435,23 +370,23 @@ function filterAndRenderAdvices() {
                 <td class="p-3 text-xs text-gray-300 whitespace-nowrap font-medium">
                     <span class="flex items-center gap-1.5">
                         <i class="fas fa-user-graduate text-teal-400 text-[11px]"></i>
-                        <span>${advice.source || 'غير محدد'}</span>
+                        <span>${advice.source || 'Unspecified'}</span>
                     </span>
                 </td>
                 <td class="p-3 text-center whitespace-nowrap">
                     <button onclick="window.toggleAdvicePublish('${advice.id}', ${!advice.is_published})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${advice.is_published ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/25'}">
-                        ${advice.is_published ? '<i class="fas fa-check-circle ml-1"></i>منشور' : '<i class="fas fa-pause-circle ml-1"></i>مسودة'}
+                        ${advice.is_published ? '<i class="fas fa-check-circle mr-1"></i>Published' : '<i class="fas fa-pause-circle mr-1"></i>Draft'}
                     </button>
                 </td>
                 <td class="p-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="window.previewAdviceModal('${advice.id}')" title="معاينة النصيحة" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center transition-colors">
+                        <button onclick="window.previewAdviceModal('${advice.id}')" title="Preview Advice" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center transition-colors">
                             <i class="fas fa-eye text-xs"></i>
                         </button>
-                        <button onclick="window.openEditAdviceModal('${advice.id}')" title="تعديل" class="w-7 h-7 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 flex items-center justify-center transition-colors">
+                        <button onclick="window.openEditAdviceModal('${advice.id}')" title="Edit" class="w-7 h-7 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 flex items-center justify-center transition-colors">
                             <i class="fas fa-edit text-xs"></i>
                         </button>
-                        <button onclick="window.deleteAdvice('${advice.id}')" title="حذف" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors">
+                        <button onclick="window.deleteAdvice('${advice.id}')" title="Delete" class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>
                     </div>
@@ -472,18 +407,18 @@ function filterAndRenderAdvices() {
                         <h4 class="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-2" dir="auto">${advice.title}</h4>
                     </div>
                     <button onclick="window.toggleAdvicePublish('${advice.id}', ${!advice.is_published})" class="shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${advice.is_published ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30'}">
-                        ${advice.is_published ? '<i class="fas fa-check-circle ml-0.5"></i>منشور' : '<i class="fas fa-pause-circle ml-0.5"></i>مسودة'}
+                        ${advice.is_published ? '<i class="fas fa-check-circle mr-0.5"></i>Published' : '<i class="fas fa-pause-circle mr-0.5"></i>Draft'}
                     </button>
                 </div>
 
                 <!-- Summary snippet -->
-                <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 bg-black/40 p-2 rounded-xl border border-white/5">${advice.summary || 'بدون ملخص خارجي'}</p>
+                <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-2 bg-black/40 p-2 rounded-xl border border-white/5">${advice.summary || 'No external summary'}</p>
 
                 <!-- Tags & Source Strip -->
                 <div class="flex items-center justify-between gap-2 text-[10px] text-gray-400 flex-wrap">
                     <span class="flex items-center gap-1 text-gray-300 font-medium truncate max-w-[150px]">
                         <i class="fas fa-user-graduate text-teal-400"></i>
-                        <span class="truncate">${advice.source || 'غير محدد'}</span>
+                        <span class="truncate">${advice.source || 'Unspecified'}</span>
                     </span>
                     <div class="flex items-center gap-1">
                         ${tags.slice(0, 2).map(t => `<span class="px-1.5 py-0.5 rounded bg-white/5 text-gray-400 text-[9px]">${t}</span>`).join('')}
@@ -495,23 +430,23 @@ function filterAndRenderAdvices() {
                 <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1">
                     <!-- Reorder Up/Down -->
                     <div class="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-lg border border-white/5 text-[11px]">
-                        <span class="text-gray-500 text-[10px] font-bold">ترتيب:</span>
-                        <button onclick="window.moveAdviceOrder('${advice.id}', -1)" title="رفع" class="px-1.5 py-0.5 hover:text-teal-400 ${index === 0 ? 'opacity-20 cursor-not-allowed' : ''}">
+                        <span class="text-gray-500 text-[10px] font-bold">Order:</span>
+                        <button onclick="window.moveAdviceOrder('${advice.id}', -1)" title="Move Up" class="px-1.5 py-0.5 hover:text-teal-400 ${index === 0 ? 'opacity-20 cursor-not-allowed' : ''}">
                             <i class="fas fa-arrow-up text-[10px]"></i>
                         </button>
-                        <button onclick="window.moveAdviceOrder('${advice.id}', 1)" title="إنزال" class="px-1.5 py-0.5 hover:text-teal-400 ${index === filtered.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}">
+                        <button onclick="window.moveAdviceOrder('${advice.id}', 1)" title="Move Down" class="px-1.5 py-0.5 hover:text-teal-400 ${index === filtered.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}">
                             <i class="fas fa-arrow-down text-[10px]"></i>
                         </button>
                     </div>
 
                     <div class="flex items-center gap-1.5">
                         <button onclick="window.previewAdviceModal('${advice.id}')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-all text-xs font-bold flex items-center gap-1">
-                            <i class="fas fa-eye text-[11px]"></i> <span>معاينة</span>
+                            <i class="fas fa-eye text-[11px]"></i> <span>Preview</span>
                         </button>
-                        <button onclick="window.openEditAdviceModal('${advice.id}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
+                        <button onclick="window.openEditAdviceModal('${advice.id}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all flex items-center justify-center text-xs" title="Edit">
                             <i class="fas fa-edit text-[11px]"></i>
                         </button>
-                        <button onclick="window.deleteAdvice('${advice.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
+                        <button onclick="window.deleteAdvice('${advice.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="Delete">
                             <i class="fas fa-trash-alt text-[11px]"></i>
                         </button>
                     </div>
@@ -533,7 +468,7 @@ function filterAndRenderAdvices() {
 // ==========================================
 export function openAddAdviceModal() {
     currentEditingAdviceId = null;
-    document.getElementById('admin-advice-modal-title').textContent = "إضافة نصيحة جديدة من الخبراء";
+    document.getElementById('admin-advice-modal-title').textContent = "Add New Expert Advice";
     
     // Reset Form
     document.getElementById('advice-form-id').value = '';
@@ -554,21 +489,21 @@ export function openAddAdviceModal() {
     // Default Visual Template (Friendly starter content)
     const starterTemplate = `
 <p class="text-gray-200 text-base leading-relaxed mb-4">
-اكتب مقدمة النصيحة هنا... يمكنك شرح الفكرة الأساسية أو السؤال الشائع بين الطلاب.
+Write your advice introduction here... Explain the core idea or a common question students ask.
 </p>
 
 <ul class="advice-block group relative space-y-2 text-gray-300 my-4 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذه القائمة" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>النقطة الأولى:</strong> ركز على المهارات العملية والمشاريع.</span></li>
-    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>النقطة الثانية:</strong> افهم الأساسيات جيداً قبل الدخول في الأدوات المعقدة.</span></li>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this list" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>First Point:</strong> Focus on hands-on skills and real engineering projects.</span></li>
+    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>Second Point:</strong> Master the fundamentals before diving into complex EDA tools.</span></li>
 </ul>
 
 <div class="advice-block group relative bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 my-4">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الصندوق" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this box" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
     <p class="font-bold text-emerald-400 mb-1 flex items-center gap-2">
-        <span>💡</span> نصيحة مهمة:
+        <span>💡</span> Pro Tip:
     </p>
-    <p class="text-gray-300 text-sm">لا تخجل من طلب المساعدة أو توجيه الأسئلة للخبراء، فمعظم المهندسين مستعدون دائماً للدعم.</p>
+    <p class="text-gray-300 text-sm">Never hesitate to ask engineers and mentors for guidance—most industry professionals are happy to support dedicated learners.</p>
 </div>`;
 
     const visualEditor = document.getElementById('advice-visual-editor');
@@ -580,7 +515,7 @@ export function openAddAdviceModal() {
     if (rawEditor) rawEditor.value = starterTemplate;
 
     const previewTitle = document.getElementById('preview-advice-title');
-    if (previewTitle) previewTitle.textContent = "عنوان النصيحة يظهر هنا...";
+    if (previewTitle) previewTitle.textContent = "Advice title appears here...";
 
     updateSourcePreview();
     updateTagsPreview();
@@ -594,7 +529,7 @@ export function openEditAdviceModal(adviceId) {
     if (!advice) return;
 
     currentEditingAdviceId = advice.id;
-    document.getElementById('admin-advice-modal-title').textContent = `تعديل النصيحة: ${advice.title}`;
+    document.getElementById('admin-advice-modal-title').textContent = `Edit Advice: ${advice.title}`;
 
     document.getElementById('advice-form-id').value = advice.id;
     document.getElementById('advice-form-title').value = advice.title || '';
@@ -611,7 +546,7 @@ export function openEditAdviceModal(adviceId) {
     // Reset HTML mode to visual
     if (isHtmlMode) toggleHtmlMode();
 
-    const content = advice.content || '<p class="text-gray-300">اكتب محتوى النصيحة هنا...</p>';
+    const content = advice.content || '<p class="text-gray-300">Write advice content here...</p>';
     const visualEditor = document.getElementById('advice-visual-editor');
     const previewContent = document.getElementById('preview-advice-content');
     const rawEditor = document.getElementById('advice-form-content-raw');
@@ -621,7 +556,7 @@ export function openEditAdviceModal(adviceId) {
     if (rawEditor) rawEditor.value = content;
 
     const previewTitle = document.getElementById('preview-advice-title');
-    if (previewTitle) previewTitle.textContent = advice.title || 'عنوان النصيحة';
+    if (previewTitle) previewTitle.textContent = advice.title || 'Advice Title';
 
     updateSourcePreview();
     updateTagsPreview();
@@ -642,100 +577,100 @@ export function insertSnippet(type) {
     let snippetHtml = '';
 
     switch(type) {
-        case 'tip': // 💡 صندوق نصيحة مهمة (Green Callout)
+        case 'tip': // Green Callout
             snippetHtml = `
 <div class="advice-block group relative bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 my-3">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الصندوق" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this box" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
     <p class="font-bold text-emerald-400 mb-1 flex items-center gap-2">
-        <span>💡</span> نصيحة مهمة:
+        <span>💡</span> Pro Tip:
     </p>
-    <p class="text-gray-300 text-sm">اكتب ملحوظتك المهمة هنا التي تهم الطالب...</p>
+    <p class="text-gray-300 text-sm">Write your key takeaway or important note for students here...</p>
 </div>
 `;
             break;
 
-        case 'stats': // 📈 صندوق إحصائيات وفرص (Cyan Callout)
+        case 'stats': // Cyan Callout
             snippetHtml = `
 <div class="advice-block group relative bg-cyan-950/30 border border-cyan-500/30 rounded-xl p-4 my-3">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الصندوق" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this box" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
     <p class="font-bold text-cyan-400 mb-2 flex items-center gap-2">
-        <span>📈</span> إحصائيات وفرص العمل:
+        <span>📈</span> Industry Stats & Career Opportunities:
     </p>
     <ul class="space-y-1.5 text-gray-300 text-sm list-disc list-inside">
-        <li>فرص العمل في هذا المجال تزيد بنسبة كبيرة للدارسين عملياً.</li>
-        <li>أهم المتطلبات: إتقان المشاريع والتدريب الصيفي الموثق.</li>
+        <li>Hiring demand in this specialization grows significantly for candidates with hands-on project portfolios.</li>
+        <li>Top requirements: Verified RTL/Verification projects and structured summer internships.</li>
     </ul>
 </div>
 `;
             break;
 
-        case 'code': // </> صندوق لغات وأدوات (Purple Callout)
+        case 'code': // Purple Callout
             snippetHtml = `
 <div class="advice-block group relative bg-purple-950/30 border border-purple-500/30 rounded-xl p-4 my-3">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الصندوق" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this box" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
     <p class="font-bold text-purple-400 mb-1 flex items-center gap-2">
-        <span>&lt;/&gt;</span> اللغات والأدوات المستخدمة:
+        <span>&lt;/&gt;</span> Languages & Tools Used:
     </p>
-    <p class="text-gray-300 text-sm">تستخدم لغة <strong class="text-purple-300">SystemVerilog</strong> ومنهجية <strong class="text-purple-300">UVM</strong> بنسبة تتخطى 80% في الشركات.</p>
+    <p class="text-gray-300 text-sm"><strong class="text-purple-300">SystemVerilog</strong> and <strong class="text-purple-300">UVM</strong> methodology are adopted by over 80% of semiconductor companies.</p>
 </div>
 `;
             break;
 
-        case 'warning': // ⚠️ صندوق تحدي / تنبيه (Amber Callout)
+        case 'warning': // Amber Callout
             snippetHtml = `
 <div class="advice-block group relative bg-amber-950/30 border border-amber-500/30 rounded-xl p-4 my-3">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الصندوق" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this box" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
     <p class="font-bold text-amber-400 mb-1 flex items-center gap-2">
-        <span>⚠️</span> تحدي / خطأ شائع:
+        <span>⚠️</span> Common Challenge / Mistake:
     </p>
-    <p class="text-gray-300 text-sm">احذر من الاكتفاء بالجانب النظري، التطبيق باليد هو الفيصل في المقابلات التقنية.</p>
+    <p class="text-gray-300 text-sm">Avoid relying solely on theory—practical implementation and debugging are what decide technical interviews.</p>
 </div>
 `;
             break;
 
-        case 'checklist': // ✔️ قائمة علامات صح ملونة
+        case 'checklist': // Colored Checklist
             snippetHtml = `
 <ul class="advice-block group relative space-y-2 text-gray-300 my-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذه القائمة" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>الخطوة الأولى:</strong> حدد المجال المستهدف وركز على مسار واضح.</span></li>
-    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>الخطوة الثانية:</strong> طبق مشروعاً عملياً بعد كل مرحلة تعلم.</span></li>
-    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>الخطوة الثالثة:</strong> انشر كودك ووثقه على GitHub وLinkedIn.</span></li>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this list" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>Step 1:</strong> Choose your target track and commit to a clear roadmap.</span></li>
+    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>Step 2:</strong> Build a practical project after completing each learning phase.</span></li>
+    <li class="flex items-start gap-2"><span class="text-emerald-400 font-bold">✔</span> <span><strong>Step 3:</strong> Document and showcase your work on GitHub and LinkedIn.</span></li>
 </ul>
 `;
             break;
 
-        case 'list-bullet': // • قائمة نقطية
+        case 'list-bullet': // Bullet List
             snippetHtml = `
 <ul class="advice-block group relative list-disc list-inside space-y-1.5 text-gray-300 my-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذه القائمة" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-    <li>العنصر الأول: تفاصيل الفكرة أو المعلومة هنا.</li>
-    <li>العنصر الثاني: تفاصيل إضافية تدعم النصيحة.</li>
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this list" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+    <li>Item 1: Explain the core concept or detail here.</li>
+    <li>Item 2: Add supporting engineering insight here.</li>
 </ul>
 `;
             break;
 
-        case 'table': // 📊 جدول مقارنة منسق
+        case 'table': // Comparison Table
             snippetHtml = `
 <div class="advice-block group relative bg-black/40 border border-white/10 rounded-xl overflow-hidden my-3">
-    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="حذف هذا الجدول" class="advice-block-del absolute top-2 left-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
-    <table class="w-full text-sm text-right text-gray-300">
+    <button type="button" onclick="this.closest('.advice-block').remove(); window.syncContent('visual');" title="Delete this table" class="advice-block-del absolute top-2 right-2 w-6 h-6 rounded-md bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
+    <table class="w-full text-sm text-left text-gray-300">
         <thead class="bg-white/5 text-teal-400 font-bold border-b border-white/10">
             <tr>
-                <th class="p-3">الميزة</th>
-                <th class="p-3">البديل المفتوح (Open Source)</th>
-                <th class="p-3">الأدوات التجارية (Commercial)</th>
+                <th class="p-3">Feature</th>
+                <th class="p-3">Open-Source Alternative</th>
+                <th class="p-3">Commercial Tools</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
             <tr>
-                <td class="p-3 font-semibold text-white">السعر والترخيص</td>
-                <td class="p-3 text-emerald-400 font-semibold">مجاني تماماً</td>
-                <td class="p-3 text-red-400">مكلف جداً ويتطلب سيرفرات</td>
+                <td class="p-3 font-semibold text-white">Price & Licensing</td>
+                <td class="p-3 text-emerald-400 font-semibold">Completely Free</td>
+                <td class="p-3 text-red-400">Expensive & requires license servers</td>
             </tr>
             <tr>
-                <td class="p-3 font-semibold text-white">الاستخدام المناسب</td>
-                <td class="p-3">التعلم المنزلي والمشاريع الطلابية</td>
-                <td class="p-3">الصناعة وإنتاج الرقائق الفعلي</td>
+                <td class="p-3 font-semibold text-white">Best Use Case</td>
+                <td class="p-3">Self-study & university projects</td>
+                <td class="p-3">Industry & tape-out production</td>
             </tr>
         </tbody>
     </table>
@@ -766,7 +701,7 @@ export function insertSnippet(type) {
 // In-Place Inline Text Formatting (Bold, Green, Red, Teal, Clear)
 export function formatSelectedText(style) {
     if (isHtmlMode) {
-        showToast("التنسيق المباشر متاح في وضع المحرر المرئي، يرجى التبديل إليه.", "info");
+        showToast("Inline formatting is available in Visual Editor mode. Please switch back to it.", "info");
         return;
     }
 
@@ -780,7 +715,7 @@ export function formatSelectedText(style) {
     }
 
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-        showToast("يرجى تظليل الكلمة أو الجملة التي تريد تنسيقها أولاً", "info");
+        showToast("Please highlight the word or sentence you want to format first.", "info");
         return;
     }
 
@@ -798,9 +733,9 @@ export function formatSelectedText(style) {
 
         case 'green':
             document.execCommand('styleWithCSS', false, false);
-            document.execCommand('foreColor', false, '#34d399');
+            document.execCommand('foreColor', false, '#EFECE6');
             if (target) {
-                target.querySelectorAll('font[color="#34d399"], span[style*="52, 211, 153"], span[style*="#34d399"]').forEach(f => {
+                target.querySelectorAll('font[color="#EFECE6"], span[style*="239, 236, 230"], span[style*="#EFECE6"]').forEach(f => {
                     const s = document.createElement('span');
                     s.className = 'text-emerald-400 font-bold';
                     s.innerHTML = f.innerHTML;
@@ -811,9 +746,9 @@ export function formatSelectedText(style) {
 
         case 'red':
             document.execCommand('styleWithCSS', false, false);
-            document.execCommand('foreColor', false, '#f87171');
+            document.execCommand('foreColor', false, '#8E8E8E');
             if (target) {
-                target.querySelectorAll('font[color="#f87171"], span[style*="248, 113, 113"], span[style*="#f87171"]').forEach(f => {
+                target.querySelectorAll('font[color="#8E8E8E"], span[style*="142, 142, 142"], span[style*="#8E8E8E"]').forEach(f => {
                     const s = document.createElement('span');
                     s.className = 'text-red-400 font-bold';
                     s.innerHTML = f.innerHTML;
@@ -824,9 +759,9 @@ export function formatSelectedText(style) {
 
         case 'teal':
             document.execCommand('styleWithCSS', false, false);
-            document.execCommand('foreColor', false, '#2dd4bf');
+            document.execCommand('foreColor', false, '#FFFFFF');
             if (target) {
-                target.querySelectorAll('font[color="#2dd4bf"], span[style*="45, 212, 191"], span[style*="#2dd4bf"]').forEach(f => {
+                target.querySelectorAll('font[color="#FFFFFF"], span[style*="255, 255, 255"], span[style*="#FFFFFF"]').forEach(f => {
                     const s = document.createElement('span');
                     s.className = 'text-teal-300 font-bold';
                     s.innerHTML = f.innerHTML;
@@ -911,7 +846,7 @@ export function toggleHtmlMode() {
             rawEditor.classList.remove('hidden');
             rawEditor.focus();
         }
-        if (label) label.textContent = "العودة للمحرر المرئي (WYSIWYG)";
+        if (label) label.textContent = "Back to Visual Editor (WYSIWYG)";
     } else {
         // Switch to Visual
         if (visualEditor && rawEditor) {
@@ -920,7 +855,7 @@ export function toggleHtmlMode() {
             visualEditor.classList.remove('hidden');
             syncContent('visual');
         }
-        if (label) label.textContent = "كود HTML للمطورين";
+        if (label) label.textContent = "HTML Code Mode";
     }
 }
 
@@ -971,7 +906,7 @@ async function handleFormSubmit(e) {
     const btn = document.getElementById('advice-submit-btn');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin ml-2"></i> جاري الحفظ...`;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Saving...`;
 
     try {
         const title = document.getElementById('advice-form-title').value.trim();
@@ -992,7 +927,7 @@ async function handleFormSubmit(e) {
         const content = cleanHtmlForSave(rawContent);
 
         if (!title || !content) {
-            showToast("يرجى ملء عنوان النصيحة ومحتواها على الأقل", "error");
+            showToast("Please fill in at least the advice title and content.", "error");
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
@@ -1032,12 +967,12 @@ async function handleFormSubmit(e) {
 
         if (res.error) throw res.error;
 
-        showToast(currentEditingAdviceId ? "تم حفظ وتعديل النصيحة بنجاح!" : "تمت إضافة النصيحة لقاعدة البيانات بنجاح!", "success");
+        showToast(currentEditingAdviceId ? "Advice updated and saved successfully!" : "Advice added to the database successfully!", "success");
         closeAdviceModal();
         await fetchAdvices();
     } catch (err) {
         console.error("Save Advice Error:", err);
-        showToast(`فشل حفظ النصيحة: ${err.message || 'خطأ غير معروف'}`, "error");
+        showToast(`Failed to save advice: ${err.message || 'Unknown error'}`, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1051,8 +986,8 @@ export async function deleteAdvice(adviceId) {
     let confirmed = false;
     if (typeof window.confirmAction === 'function') {
         confirmed = await window.confirmAction(
-            "هل أنت متأكد من رغبتك في حذف هذه النصيحة نهائياً؟ لن يمكن استرجاعها.",
-            "حذف النصيحة",
+            "Are you sure you want to permanently delete this advice? This action cannot be undone.",
+            "Delete Advice",
             "danger"
         );
     } else {
@@ -1068,11 +1003,76 @@ export async function deleteAdvice(adviceId) {
             .eq('id', adviceId);
 
         if (error) throw error;
-        showToast("تم حذف النصيحة بنجاح", "success");
+        showToast("Advice deleted successfully.", "success");
         await fetchAdvices();
     } catch (err) {
         console.error("Delete Error:", err);
-        showToast("فشل حذف النصيحة من السيرفر", "error");
+        showToast("Failed to delete advice from server.", "error");
+    }
+}
+
+export async function deleteAllAdvices() {
+    const { data: liveRows, error: listErr } = await supabase
+        .from('expert_advices')
+        .select('id');
+
+    const ids = (!listErr && Array.isArray(liveRows))
+        ? liveRows.map(r => r.id).filter(Boolean)
+        : (allAdvices || []).map(a => a.id).filter(Boolean);
+
+    if (ids.length === 0) {
+        showToast("There are no advice entries to delete.", "info");
+        return;
+    }
+
+    let confirmed = false;
+    if (typeof window.confirmAction === 'function') {
+        confirmed = await window.confirmAction(
+            `Are you sure you want to permanently delete all ${ids.length} expert advice entries from the database? This cannot be undone.`,
+            "Delete All Expert Advice",
+            "danger"
+        );
+    }
+
+    if (!confirmed) return;
+
+    const btn = document.getElementById('btn-delete-all-advices');
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Deleting...</span>';
+    }
+
+    try {
+        let deletedTotal = 0;
+        const chunkSize = 50;
+        for (let i = 0; i < ids.length; i += chunkSize) {
+            const chunk = ids.slice(i, i + chunkSize);
+            const { data: deletedRows, error } = await supabase
+                .from('expert_advices')
+                .delete()
+                .in('id', chunk)
+                .select('id');
+            if (error) throw error;
+            deletedTotal += Array.isArray(deletedRows) ? deletedRows.length : 0;
+        }
+
+        if (deletedTotal === 0) {
+            throw new Error("Permission denied or database policy blocked deletion. Ensure your account has admin delete permissions on expert_advices.");
+        }
+
+        allAdvices = [];
+        showToast(`Deleted ${deletedTotal} expert advice entries permanently.`, "success");
+        await fetchAdvices();
+    } catch (err) {
+        console.error("Delete All Advices Error:", err);
+        showToast(`Failed to delete all advice entries: ${err.message || 'Unknown error'}`, "error");
+        await fetchAdvices();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 }
 
@@ -1084,11 +1084,11 @@ export async function toggleAdvicePublish(adviceId, newStatus) {
             .eq('id', adviceId);
 
         if (error) throw error;
-        showToast(newStatus ? "تم نشر النصيحة للطلاب" : "تم تحويل النصيحة لمسودة", "success");
+        showToast(newStatus ? "Advice published for students." : "Advice moved to drafts.", "success");
         await fetchAdvices();
     } catch (err) {
         console.error("Toggle Publish Error:", err);
-        showToast("تعذر تغيير حالة النشر", "error");
+        showToast("Could not update publish status.", "error");
     }
 }
 
@@ -1113,7 +1113,7 @@ export async function moveAdviceOrder(adviceId, direction) {
         await fetchAdvices();
     } catch (err) {
         console.error("Move Order Error:", err);
-        showToast("تعذر تحديث ترتيب النصيحة", "error");
+        showToast("Could not update advice order.", "error");
     }
 }
 
@@ -1125,7 +1125,7 @@ export function previewAdviceModal(adviceId) {
     if (!modal) return;
 
     document.getElementById('modal-preview-title').textContent = advice.title;
-    document.getElementById('modal-preview-source').innerHTML = `<i class="fas fa-user-graduate ml-1.5 text-teal-400"></i> المصدر: ${advice.source}`;
+    document.getElementById('modal-preview-source').innerHTML = `<i class="fas fa-user-graduate mr-1.5 text-teal-400"></i> Source: ${advice.source}`;
     
     const tagsContainer = document.getElementById('modal-preview-tags');
     if (tagsContainer) {
@@ -1147,7 +1147,7 @@ function showToast(msg, type = "info") {
     if (typeof window.showToast === 'function') {
         window.showToast(msg, type);
     } else if (typeof window.showCustomAlert === 'function') {
-        window.showCustomAlert("إشعار", msg);
+        window.showCustomAlert("Notice", msg);
     } else {
         console.log(`[${type}] ${msg}`);
     }
@@ -1168,6 +1168,7 @@ window.setAdviceSource = setAdviceSource;
 window.toggleAdviceTag = toggleAdviceTag;
 window.syncContent = syncContent;
 window.deleteAdvice = deleteAdvice;
+window.deleteAllAdvices = deleteAllAdvices;
 window.toggleAdvicePublish = toggleAdvicePublish;
 window.moveAdviceOrder = moveAdviceOrder;
 window.previewAdviceModal = previewAdviceModal;

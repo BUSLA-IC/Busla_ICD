@@ -22,7 +22,7 @@ function initMobileMenu() {
 class ExpertBot {
     constructor(adviceData) {
         this.adviceData = adviceData;
-        this.apiKey = "AIzaSyAEA1TD0jGUnA2zUPlan9sbVwpQjvZ9NsE"; // مثال: "AIzaSy..."
+        this.apiKey = "AIzaSyAEA1TD0jGUnA2zUPlan9sbVwpQjvZ9NsE";
         
         this.toggleBtn = document.getElementById('ai-toggle-btn');
         this.closeBtn = document.getElementById('ai-close-btn');
@@ -89,24 +89,24 @@ class ExpertBot {
             ? 'bg-bot-user text-white rounded-tl-none shadow-md' 
             : 'bg-bot-ai text-gray-100 rounded-tr-none border border-gray-700 shadow-md';
 
-        // تنسيق النص (Markdown بسيط)
+        // Simple Markdown formatting
         let formattedContent = content
             .replace(/\*\*(.*?)\*\*/g, '<strong class="text-b-hl-light">$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
             .replace(/\n/g, '<br>');
 
-        // إضافة المصادر (Sources) إذا وجدت
+        // Add sources if available
         let sourcesHtml = '';
         if (sources.length > 0) {
             sourcesHtml = `
                 <div class="mt-3 pt-3 border-t border-gray-700">
-                    <p class="text-[10px] text-gray-400 mb-2">المصادر المستخدمة:</p>
+                    <p class="text-[10px] text-gray-400 mb-2">Sources used:</p>
                     <div class="flex flex-col gap-2">
                         ${sources.map(s => `
                             <div class="bg-black/30 p-2 rounded border border-gray-700 hover:border-b-primary cursor-pointer transition-colors text-xs"
                                  onclick="document.dispatchEvent(new CustomEvent('openAdvice', {detail: '${s.id}'}))">
-                                <i class="fas fa-link text-b-primary ml-1"></i> ${s.title}
+                                <i class="fas fa-link text-b-primary mr-1"></i> ${s.title}
                             </div>
                         `).join('')}
                     </div>
@@ -167,7 +167,7 @@ class ExpertBot {
         } catch (error) {
             console.error("Error:", error);
             this.removeTypingIndicator();
-            this.addMessage("عذراً، حدث خطأ في الاتصال. تأكد من اتصال الإنترنت ومفتاح الـ API.", 'bot');
+            this.addMessage("Sorry, a connection error occurred. Please check your internet connection and try again.", 'bot');
         }
     }
 
@@ -179,12 +179,12 @@ class ExpertBot {
         if (!this.apiKey) {
             if (relevantContext.length > 0) {
                 return {
-                    text: "أنا شغال حالياً بوضعية البحث المباشر (بدون AI). دي النصايح اللي لقيتها مناسبة لسؤالك:",
+                    text: "Currently running in direct search mode. Here are the expert tips matching your question:",
                     sources: relevantContext
                 };
             } else {
                 return {
-                    text: "للأسف ملقيتش نصايح مباشرة عن الموضوع ده في قاعدة البيانات. جرب تبحث بكلمات تانية.",
+                    text: "No matching expert advice was found in the knowledge base. Try searching with different keywords.",
                     sources: []
                 };
             }
@@ -233,26 +233,26 @@ class ExpertBot {
         let contextString = "";
         if (contextItems.length > 0) {
             contextString = contextItems.map((item, index) => 
-                `[نصيحة ${index + 1}]: العنوان: ${item.title} | المحتوى: ${item.summary}`
+                `[Advice ${index + 1}]: Title: ${item.title} | Summary: ${item.summary}`
             ).join('\n\n');
         }
 
         const systemPrompt = `
-        أنت مساعد خبير لطلاب هندسة الإلكترونيات في مصر، اسمك "مساعد بوصلة".
+        You are an expert engineering mentor for Digital IC and electronics students in Egypt, named "ZDC Assistant".
         
-        لديك مجموعة من "نصائح الخبراء" الموثوقة أدناه.
-        مهمتك: الإجابة على سؤال الطالب باستخدام هذه النصائح **فقط**.
+        Below is a curated set of verified "Expert Advice" entries.
+        Your task: Answer the student's question in clear, concise English using these advice entries **first**.
         
-        قواعد صارمة:
-        1. إذا وجدت الإجابة في النصائح، صغها بأسلوبك الودود (مصري هندسي) ولخصها.
-        2. إذا لم تجد الإجابة في النصائح، قل بوضوح: "معنديش نصيحة محددة من الخبراء عن الموضوع ده حالياً، بس بشكل عام..." ثم أجب من معرفتك العامة ولكن باختصار شديد.
-        3. استخدم التنسيق (Bold, Bullet points) لتسهيل القراءة.
-        4. لا تذكر معرفات تقنية (IDs) أو تفاصيل الكود.
+        Strict rules:
+        1. If the answer exists in the provided advice, summarize and present it in a friendly, practical engineering mentor tone.
+        2. If no direct advice matches, clearly state: "I don't have a specific mentor note on this exact topic yet, but in general..." and then give a brief, accurate engineering answer.
+        3. Use Markdown formatting (bold text and bullet points) for readability.
+        4. Never mention internal IDs or implementation details.
 
-        نصائح الخبراء المتاحة (السياق):
-        ${contextString ? contextString : "لا يوجد نصائح مطابقة في قاعدة البيانات لهذا السؤال."}
+        Available Expert Advice (Context):
+        ${contextString ? contextString : "No matching advice entries found in the knowledge base for this question."}
 
-        سؤال الطالب: ${query}
+        Student Question: ${query}
         `;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${this.apiKey}`;
@@ -273,7 +273,7 @@ class ExpertBot {
         
         if (data.error) {
             console.error("API Error:", data.error);
-            return "واجهت مشكلة تقنية بسيطة، حاول تسألني تاني.";
+            return "I ran into a temporary issue. Please try asking again.";
         }
 
         return data.candidates[0].content.parts[0].text;
@@ -282,14 +282,11 @@ class ExpertBot {
     normalizeText(text) {
         if (!text) return "";
         return text.toLowerCase()
-            .replace(/(أ|إ|آ)/g, 'ا')
-            .replace(/ى/g, 'ي')
-            .replace(/ة/g, 'ه')
-            .replace(/[^a-zA-Z0-9\u0600-\u06FF ]/g, ' '); 
+            .replace(/[^a-z0-9 ]/g, ' '); 
     }
 }
 
-// ==================== باقي كود الصفحة (فلاتر وعرض) كما هو ====================
+// ==================== PAGE FILTERS & RENDERING ====================
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const grid = document.getElementById('advice-grid');
@@ -405,13 +402,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                     <div class="mb-4 pt-4 border-t border-b-border">
                         <p class="text-sm text-b-hl-light truncate" title="${advice.source}">
-                            <i class="fas fa-user-graduate ml-1"></i>
+                            <i class="fas fa-user-graduate mr-1"></i>
                             ${advice.source}
                         </p>
                     </div>
                     <button class="w-full py-2 bg-b-primary text-white rounded-lg hover:bg-b-hl-light hover:text-black transition-all font-semibold">
-                        <i class="fas fa-book-open ml-1"></i>
-                        اقرأ المزيد
+                        <i class="fas fa-book-open mr-1"></i>
+                        Read More
                     </button>
                 </div>
             `;
@@ -439,12 +436,12 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="flex flex-wrap gap-2 mb-4">${tagsHtml}</div>
                 <h3 class="text-xl font-bold text-b-hl-yellow mb-4">
-                    <i class="fas fa-star ml-2"></i>
+                    <i class="fas fa-star mr-2"></i>
                     ${story.title}
                 </h3>
                 <div class="text-md text-gray-300 leading-7 space-y-3 story-content">${story.story}</div>
                 <p class="text-sm font-semibold text-b-hl-light mt-6 pt-4 border-t border-b-border">
-                    <i class="fas fa-quote-right ml-2"></i>
+                    <i class="fas fa-quote-left mr-2"></i>
                     ${story.source}
                 </p>
             `;
@@ -463,9 +460,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             faqItem.innerHTML = `
                 <h3>
-                    <button type="button" class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-b-text text-right hover:bg-b-bg transition-colors duration-200">
+                    <button type="button" class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-b-text text-left hover:bg-b-bg transition-colors duration-200">
                         <span class="text-lg">${faq.question}</span>
-                        <span class="accordion-icon flex-shrink-0 mr-3">
+                        <span class="accordion-icon flex-shrink-0 ml-3">
                             <i class="fas fa-chevron-down text-b-primary transition-transform duration-300"></i>
                         </span>
                     </button>
@@ -473,8 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="accordion-content bg-b-bg border-t border-b-border max-h-0 overflow-hidden transition-all duration-300">
                     <div class="p-5 text-gray-300 leading-7 faq-answer">${faq.answer}</div>
                     <p class="px-5 pb-5 text-xs font-semibold text-b-hl-light border-t border-b-border/50 pt-3">
-                        <i class="fas fa-info-circle ml-1"></i>
-                        المصدر: ${faq.source}
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Source: ${faq.source}
                     </p>
                 </div>
             `;
@@ -595,37 +592,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("Supabase expert_advices query:", supaErr);
             }
 
-            try {
-                const response = await fetch('../data/experts_data.json');
-                if (response.ok) {
-                    allData = await response.json();
-                } else {
-                    allData = { filterTags: [], Advice: [] };
-                }
-            } catch(e) {
-                allData = { filterTags: [], Advice: [] };
-            }
-            
-            if (supaAdvice.length > 0) {
-                allAdvice = supaAdvice;
-            } else {
-                allAdvice = allData.Advice || (Array.isArray(allData) ? allData : []);
-            }
+            allData = { filterTags: [], Advice: [] };
+            allAdvice = supaAdvice;
             
             allAdvice = allAdvice.filter((advice, index, self) =>
                 index === self.findIndex(a => a.title === advice.title)
             );
-            
-            if (allData.filterTags) {
-                allData.filterTags.forEach(tagInfo => {
-                    if (tagInfo.tag !== 'All') {
-                        const option = document.createElement('option');
-                        option.value = tagInfo.tag;
-                        option.textContent = tagInfo.name;
-                        filterCategory.appendChild(option);
-                    }
-                });
-            }
             
             const sources = [...new Set(allAdvice.map(a => a.source))];
             sources.forEach(source => {
@@ -638,16 +610,13 @@ document.addEventListener('DOMContentLoaded', () => {
             totalAdviceSpan.textContent = allAdvice.length;
             totalCountSpan.textContent = allAdvice.length;
             renderAdvice(allAdvice);
-            
-            if (allData.expertStories) renderStories(allData.expertStories);
-            if (allData.expertFAQ) renderFAQ(allData.expertFAQ);
 
-            // INITIALIZE EXPERT BOT (The Hybrid One)
+            // INITIALIZE EXPERT BOT
             expertBot = new ExpertBot(allAdvice);
             
         } catch (error) {
             console.error("Fetch error: ", error);
-            grid.innerHTML = '<p class="text-red-500 text-center col-span-full">فشل تحميل بيانات النصائح. برجاء المحاولة لاحقاً.</p>';
+            grid.innerHTML = '<p class="text-red-500 text-center col-span-full">Failed to load expert advice. Please try again later.</p>';
         }
     }
 

@@ -47,12 +47,12 @@ export function parseProjectLinks(rawValue) {
         if (typeof entry === 'string') {
             const url = entry.trim();
             if (!url) return null;
-            return { title: idx === 0 ? 'دليل ومرفقات المشروع' : `رابط مرفق ${idx + 1}`, url };
+            return { title: idx === 0 ? 'Project Guide & Attachments' : `Attached Link ${idx + 1}`, url };
         }
         if (typeof entry === 'object') {
             const url = String(entry.url || entry.href || entry.link || '').trim();
             if (!url) return null;
-            const title = String(entry.title || entry.label || entry.name || '').trim() || `رابط مرفق ${idx + 1}`;
+            const title = String(entry.title || entry.label || entry.name || '').trim() || `Attached Link ${idx + 1}`;
             return { title, url };
         }
         return null;
@@ -85,7 +85,7 @@ export function parseProjectLinks(rawValue) {
         return lines.map((line, idx) => normalizeEntry(line, idx)).filter(Boolean);
     }
 
-    return [{ title: 'دليل ومرفقات المشروع', url: str }];
+    return [{ title: 'Project Guide & Attachments', url: str }];
 }
 
 /**
@@ -107,13 +107,16 @@ export function serializeProjectLinks(links) {
     }
 
     if (cleaned.length === 0) return null;
-    if (cleaned.length === 1 && (!cleaned[0].title || cleaned[0].title === 'دليل ومرفقات المشروع')) {
+    if (
+        cleaned.length === 1 &&
+        (!cleaned[0].title || cleaned[0].title === 'Project Guide & Attachments')
+    ) {
         return cleaned[0].url;
     }
 
     return JSON.stringify(
         cleaned.map((item, idx) => ({
-            title: item.title || `رابط مرفق ${idx + 1}`,
+            title: item.title || `Attached Link ${idx + 1}`,
             url: item.url,
         }))
     );
@@ -125,24 +128,24 @@ function buildCurriculumSourcesSection(selectedVideos = [], selectedDocuments = 
     const sourceLines = [];
 
     if (videos.length > 0) {
-        sourceLines.push('🎬 الفيديوهات (Videos):');
+        sourceLines.push('Videos:');
         videos.forEach((v, idx) => {
-            const title = String(v?.title || `فيديو ${idx + 1}`).trim();
+            const title = String(v?.title || `Video ${idx + 1}`).trim();
             const coursePart = v?.courseTitle ? ` (${v.courseTitle})` : '';
             const url = resolveVideoUrl(v?.video_id);
-            sourceLines.push(url ? `${idx + 1}. ${title}${coursePart}\n   الرابط المباشر: ${url}` : `${idx + 1}. ${title}${coursePart}`);
+            sourceLines.push(url ? `${idx + 1}. ${title}${coursePart}\n   Direct Link: ${url}` : `${idx + 1}. ${title}${coursePart}`);
         });
     }
 
     if (docs.length > 0) {
         if (sourceLines.length > 0) sourceLines.push('');
-        sourceLines.push('📄 المستندات والملفات (Documents):');
+        sourceLines.push('Documents & Files:');
         docs.forEach((d, idx) => {
-            const title = String(d?.title || `مستند ${idx + 1}`).trim();
+            const title = String(d?.title || `Document ${idx + 1}`).trim();
             const docType = d?.document_type ? ` [${d.document_type}]` : '';
             const contextPart = d?.contextLabel ? ` (${d.contextLabel})` : '';
             const url = resolveDocumentUrl(d?.source_url, d?.source_type);
-            sourceLines.push(url ? `${idx + 1}. ${title}${docType}${contextPart}\n   الرابط المباشر: ${url}` : `${idx + 1}. ${title}${docType}${contextPart}`);
+            sourceLines.push(url ? `${idx + 1}. ${title}${docType}${contextPart}\n   Direct Link: ${url}` : `${idx + 1}. ${title}${docType}${contextPart}`);
         });
     }
 
@@ -176,23 +179,23 @@ export function buildQuizPrompt({
     const { totalSources, hasBoth, autoTitles, sourcesBlock } = buildCurriculumSourcesSection(selectedVideos, selectedDocuments);
 
     const resolvedTopic = cleanTopic
-        || (autoTitles.length > 0 ? autoTitles.slice(0, 4).join(' + ') + (autoTitles.length > 4 ? ` (+${autoTitles.length - 4} أخرى)` : '') : '[أدخل الموضوع هنا]');
+        || (autoTitles.length > 0 ? autoTitles.slice(0, 4).join(' + ') + (autoTitles.length > 4 ? ` (+${autoTitles.length - 4} more)` : '') : '[Enter Quiz Topic Here]');
 
-    const finalSourcesBlock = sourcesBlock || '[أدخل المصدر/المحتوى هنا]';
+    const finalSourcesBlock = sourcesBlock || '[Enter Source Material / Content Here]';
 
     const coverageNote = hasBoth
-        ? `\n- وزّع الأسئلة (${count} سؤالاً) بشكل متوازن لتغطية أهم المفاهيم المشروحة في كلٍ من الفيديوهات والمستندات المرفقة معاً.`
+        ? `\n- Distribute the ${count} questions evenly across the core concepts covered in both the attached videos and documents.`
         : totalSources > 1
-            ? `\n- وزّع الأسئلة (${count} سؤالاً) بشكل متوازن لتغطية جميع المصادر المحددة أعلاه (${totalSources} مصادر).`
+            ? `\n- Distribute the ${count} questions evenly to cover all ${totalSources} selected sources above.`
             : '';
 
-    return `أريد إنشاء اختبار (Quiz) لمنصة تعليمية.
-يرجى توفير البيانات بصيغة JSON حصراً، بناءً على الهيكلة التالية بالضبط دون أي نصوص إضافية:
+    return `I want to create a technical assessment quiz for the ZDC engineering learning platform.
+Return ONLY valid JSON strictly matching this exact schema with no extra markdown or commentary:
 
 {
   "quiz": {
-    "title": "عنوان الاختبار (مثال: اختبار في الأساسيات)",
-    "description": "وصف قصير للاختبار",
+    "title": "Quiz Title (e.g. Digital Logic Fundamentals Quiz)",
+    "description": "Concise overview of what this quiz tests",
     "passing_score": 50,
     "max_xp": 100,
     "attempts_allowed": 3,
@@ -200,21 +203,22 @@ export function buildQuizPrompt({
   },
   "questions": [
     {
-      "question_text": "نص السؤال؟",
-      "option_a": "الخيار الأول",
-      "option_b": "الخيار الثاني",
-      "option_c": "الخيار الثالث",
-      "option_d": "الخيار الرابع",
+      "question_text": "Write the technical question here?",
+      "option_a": "First option",
+      "option_b": "Second option",
+      "option_c": "Third option",
+      "option_d": "Fourth option",
       "correct_answer": "A",
-      "hint": "تلميح يظهر إذا أخطأ الطالب (اختياري)"
+      "hint": "Helpful explanation or hint shown if the student answers incorrectly (optional)"
     }
   ]
 }
 
-تعليمات التوليد:
-- موضوع الاختبار: ${resolvedTopic}
-- عدد الأسئلة المطلوبة بالضبط: ${count} سؤالاً (يجب أن تحتوي مصفوفة "questions" على ${count} سؤال بالضبط، وقيمة "questions_to_show" تساوي ${count}).${coverageNote}
-- استخرج المعلومات والأسئلة بدقة من المصادر التالية:
+Generation Requirements:
+- Language: Write all titles, questions, options, and hints in clear, professional English.
+- Quiz Topic: ${resolvedTopic}
+- Exact Question Count: ${count} questions (the "questions" array must contain exactly ${count} items, and "questions_to_show" must equal ${count}).${coverageNote}
+- Extract questions accurately from the following learning sources:
 
 ${finalSourcesBlock}`;
 }
@@ -241,53 +245,54 @@ export function buildProjectPrompt({
 
     const parsedExtra = parseProjectLinks(extraLinks);
     const resolvedTopic = cleanTopic
-        || (autoTitles.length > 0 ? autoTitles.slice(0, 4).join(' + ') + (autoTitles.length > 4 ? ` (+${autoTitles.length - 4} أخرى)` : '') : '[أدخل فكرة أو موضوع المشروع هنا]');
+        || (autoTitles.length > 0 ? autoTitles.slice(0, 4).join(' + ') + (autoTitles.length > 4 ? ` (+${autoTitles.length - 4} more)` : '') : '[Enter Project Topic / Idea Here]');
 
     const exampleLinksJson = parsedExtra.length > 0
         ? JSON.stringify(parsedExtra, null, 6).replace(/\n/g, '\n    ')
         : `[
-      { "title": "دليل المواصفات أو مستودع البدء", "url": "https://..." }
+      { "title": "Specification Guide or Starter Repo", "url": "https://..." }
     ]`;
 
     const extraLinksBlock = parsedExtra.length > 0
-        ? `\n\n🔗 روابط ومرفقات المشروع المرفقة (أدرجها في requirements_links):\n` + parsedExtra.map((l, i) => `${i + 1}. ${l.title}: ${l.url}`).join('\n')
+        ? `\n\nAttached Reference & Starter Links (include these inside requirements_links):\n` + parsedExtra.map((l, i) => `${i + 1}. ${l.title}: ${l.url}`).join('\n')
         : '';
 
-    const finalSourcesBlock = (sourcesBlock || '[أدخل المصدر/المحتوى التعليمي الذي يُبنى عليه المشروع]') + extraLinksBlock;
+    const finalSourcesBlock = (sourcesBlock || '[Enter Learning Sources / Curriculum Content Here]') + extraLinksBlock;
 
     const coverageNote = hasBoth
-        ? `\n- اربط متطلبات المشروع التطبيقية بشكل متكامل بين المفاهيم المشروحة في الفيديوهات والمستندات المرفقة معاً.`
+        ? `\n- Synthesize practical project requirements combining concepts from both the attached videos and documents.`
         : totalSources > 1
-            ? `\n- اربط متطلبات المشروع بتغطية شاملة لجميع المصادر المحددة أعلاه (${totalSources} مصادر).`
+            ? `\n- Align project deliverables to comprehensively cover all ${totalSources} selected sources above.`
             : '';
 
-    return `أريد إنشاء مشروع عملي تطبيقي (Project) مع معايير تقييم (Rubric) لمنصة تعليمية.
-يرجى توفير البيانات بصيغة JSON حصراً، بناءً على الهيكلة التالية بالضبط دون أي نصوص إضافية:
+    return `I want to create a hands-on engineering project with a structured grading rubric for the ZDC learning platform.
+Return ONLY valid JSON strictly matching this exact schema with no extra markdown or commentary:
 
 {
   "project": {
-    "title": "عنوان المشروع العملي",
-    "description": "وصف تفصيلي واضح للمشروع والمتطلبات التقنية والخطوات المطلوبة والمخرجات المتوقعة (يمكن استخدام تنسيق HTML بسيط مثل <ul><li>...</li></ul>)",
+    "title": "Hands-On Project Title",
+    "description": "Clear, structured project brief covering technical requirements, implementation steps, and expected deliverables (simple HTML like <ul><li>...</li></ul> is supported)",
     "requirements_links": ${exampleLinksJson},
     "max_points": ${cleanPoints},
     "submission_method": "${cleanMethod}"
   },
   "rubric": [
     {
-      "aspect": "اسم المعيار (مثال: صحة التصميم والمنطق)",
-      "description": "وصف دقيق لما سيتم تقييمه في هذا المعيار",
+      "aspect": "Criterion Name (e.g. RTL Architecture & Functional Correctness)",
+      "description": "Specific evaluation criteria and expected engineering quality for this aspect",
       "points": ${Math.round(cleanPoints / cleanCriteria)}
     }
   ]
 }
 
-تعليمات التوليد:
-- موضوع المشروع: ${resolvedTopic}
-- إجمالي النقاط (max_points): ${cleanPoints} نقطة.
-- طريقة التسليم المقبولة (submission_method): "${cleanMethod}".
-- عدد معايير التقييم المطلوبة في "rubric" بالضبط: ${cleanCriteria} معايير، ويجب أن يكون مجموع نقاطها مساوياً لـ ${cleanPoints} نقطة بالضبط.
-- يمكنك إضافة رابط أو أكثر داخل "requirements_links" (كل عنصر يحتوي على "title" و "url").${coverageNote}
-- اعتمد على المصادر والمحتوى التعليمي التالي في صياغة متطلبات المشروع:
+Generation Requirements:
+- Language: Write all project titles, descriptions, link titles, and rubric items in clear, professional English.
+- Project Topic: ${resolvedTopic}
+- Total XP Points (max_points): ${cleanPoints} points.
+- Accepted Submission Method (submission_method): "${cleanMethod}".
+- Exact Rubric Criteria Count: ${cleanCriteria} items in "rubric", whose "points" sum to exactly ${cleanPoints}.
+- You may include one or more reference/starter links inside "requirements_links" (each item with "title" and "url").${coverageNote}
+- Base the project requirements and deliverables on the following learning sources:
 
 ${finalSourcesBlock}`;
 }

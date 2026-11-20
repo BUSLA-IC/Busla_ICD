@@ -50,13 +50,13 @@ test('buildQuizPrompt includes exact question count and direct links for multipl
     });
 
     assert.match(prompt, /"questions_to_show": 15/);
-    assert.match(prompt, /عدد الأسئلة المطلوبة بالضبط: 15 سؤالاً/);
-    assert.match(prompt, /موضوع الاختبار: Logic Gates & Boolean Algebra/);
+    assert.match(prompt, /Exact Question Count: 15 questions/);
+    assert.match(prompt, /Quiz Topic: Logic Gates & Boolean Algebra/);
     assert.match(prompt, /https:\/\/www\.youtube\.com\/watch\?v=vidAAA111/);
     assert.match(prompt, /https:\/\/www\.youtube\.com\/watch\?v=vidBBB222/);
     assert.match(prompt, /https:\/\/cdn\.example\.com\/ch1\.pdf/);
     assert.match(prompt, /https:\/\/drive\.google\.com\/file\/d\/driveFileXYZ\/view/);
-    assert.match(prompt, /الفيديوهات والمستندات المرفقة معاً/);
+    assert.match(prompt, /both the attached videos and documents/);
 });
 
 test('buildQuizPrompt works with single video, single document, or no content selected', () => {
@@ -65,13 +65,13 @@ test('buildQuizPrompt works with single video, single document, or no content se
         selectedVideos: [{ content_id: 'cnt_9', title: 'Intro Video', video_id: 'xyz987' }],
     });
     assert.match(singleVideo, /"questions_to_show": 5/);
-    assert.match(singleVideo, /موضوع الاختبار: Intro Video/);
+    assert.match(singleVideo, /Quiz Topic: Intro Video/);
     assert.match(singleVideo, /https:\/\/www\.youtube\.com\/watch\?v=xyz987/);
-    assert.doesNotMatch(singleVideo, /المستندات والملفات/);
+    assert.doesNotMatch(singleVideo, /Documents & Files:/);
 
     const empty = buildQuizPrompt({ questionCount: 8 });
     assert.match(empty, /"questions_to_show": 8/);
-    assert.match(empty, /\[أدخل المصدر\/المحتوى هنا\]/);
+    assert.match(empty, /\[Enter Source Material \/ Content Here\]/);
 });
 
 test('buildProjectPrompt injects rubric count, XP, submission method, videos, documents, and extra links', () => {
@@ -87,24 +87,24 @@ test('buildProjectPrompt injects rubric count, XP, submission method, videos, do
             { id: 'doc_1', title: 'ALU Spec Sheet', document_type: 'PDF', source_type: 'Direct URL', source_url: 'https://example.com/alu.pdf' },
         ],
         extraLinks: [
-            { title: 'Starter Repo', url: 'https://github.com/busla/alu-starter' },
+            { title: 'Starter Repo', url: 'https://github.com/zdc/alu-starter' },
             { title: 'Testbench Guide', url: 'https://docs.example.com/tb' },
         ],
     });
 
     assert.match(prompt, /"max_points": 150/);
     assert.match(prompt, /"submission_method": "github_link"/);
-    assert.match(prompt, /عدد معايير التقييم المطلوبة في "rubric" بالضبط: 5 معايير/);
+    assert.match(prompt, /Exact Rubric Criteria Count: 5 items in "rubric"/);
     assert.match(prompt, /https:\/\/www\.youtube\.com\/watch\?v=aluVid1/);
     assert.match(prompt, /https:\/\/example\.com\/alu\.pdf/);
-    assert.match(prompt, /https:\/\/github\.com\/busla\/alu-starter/);
+    assert.match(prompt, /https:\/\/github\.com\/zdc\/alu-starter/);
     assert.match(prompt, /https:\/\/docs\.example\.com\/tb/);
 });
 
 test('parseProjectLinks & serializeProjectLinks support legacy single URL and multi-links seamlessly', () => {
     // Legacy plain URL
     assert.deepEqual(parseProjectLinks('https://github.com/org/repo'), [
-        { title: 'دليل ومرفقات المشروع', url: 'https://github.com/org/repo' },
+        { title: 'Project Guide & Attachments', url: 'https://github.com/org/repo' },
     ]);
 
     // Multi-link JSON roundtrip

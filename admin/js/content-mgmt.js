@@ -205,69 +205,69 @@ async function buildDynamicFilters() {
 
     let fields = [];
     
-    // إظهار قوائم الفلترة الهرمية مع عناوين واضحة حسب المستوى الحالي
+    // Show hierarchical filter dropdowns with clear labels per current level
     if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         fields.push(fieldWrap(
             'filter-track',
-            'المسار (Track)',
+            'Track',
             'fas fa-globe',
             'text-teal-400',
-            `<option value="all">كل المسارات (${hData.tracks.length})</option>` + hData.tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
+            `<option value="all">All Tracks (${hData.tracks.length})</option>` + hData.tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
         ));
     }
     if (['courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         fields.push(fieldWrap(
             'filter-phase',
-            'المرحلة (Phase)',
+            'Phase',
             'fas fa-layer-group',
             'text-blue-400',
-            `<option value="all">كل المراحل (${hData.phases.length})</option>` + hData.phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('')
+            `<option value="all">All Phases (${hData.phases.length})</option>` + hData.phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('')
         ));
     }
     if (['course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         fields.push(fieldWrap(
             'filter-course',
-            'الكورس (Course)',
+            'Course',
             'fas fa-graduation-cap',
             'text-emerald-400',
-            `<option value="all">كل الكورسات (${hData.courses.length})</option>` + hData.courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('')
+            `<option value="all">All Courses (${hData.courses.length})</option>` + hData.courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('')
         ));
     }
     if (['quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
         fields.push(fieldWrap(
             'filter-content',
-            'الدرس / المحتوى (Content)',
+            'Lesson / Content',
             'fas fa-play-circle',
             'text-purple-400',
-            `<option value="all">كل المحتويات (${hData.contents.length})</option>` + hData.contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('')
+            `<option value="all">All Contents (${hData.contents.length})</option>` + hData.contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('')
         ));
     }
     if (['quiz_questions'].includes(cmCurrentLevel)) {
         fields.push(fieldWrap(
             'filter-quiz',
-            'الاختبار (Quiz)',
+            'Quiz',
             'fas fa-question-circle',
             'text-yellow-400',
-            `<option value="all">كل الاختبارات (${hData.quizzes.length})</option>` + hData.quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('')
+            `<option value="all">All Quizzes (${hData.quizzes.length})</option>` + hData.quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('')
         ));
     }
 
-    // فلتر مخصص لأنواع الكورسات والمحتوى والمستندات
+    // Specific type filter for courses and content materials
     if (cmCurrentLevel === 'courses') {
         fields.push(fieldWrap(
             'filter-type',
-            'نوع الكورس (Type)',
+            'Course Type',
             'fas fa-tag',
             'text-red-400',
-            `<option value="all">كل الأنواع</option><option value="youtube">يوتيوب (YouTube)</option><option value="custom">مخصص (Custom)</option>`
+            `<option value="all">All Types</option><option value="youtube">YouTube</option><option value="custom">Custom</option>`
         ));
     } else if (cmCurrentLevel === 'course_materials') {
         fields.push(fieldWrap(
             'filter-type',
-            'نوع المحتوى (Type)',
+            'Content Type',
             'fas fa-tag',
             'text-amber-400',
-            `<option value="all">كل الأنواع</option><option value="video">درس فيديو (Video)</option><option value="section">فاصل سكشن (Section)</option><option value="quiz">اختبار (Quiz)</option><option value="project">مشروع (Project)</option><option value="resource">مورد (Resource)</option>`
+            `<option value="all">All Types</option><option value="video">Video Lesson</option><option value="section">Section Divider</option><option value="quiz">Quiz</option><option value="project">Project</option><option value="resource">Resource</option>`
         ));
     }
 
@@ -310,7 +310,7 @@ function updateCascadingFilters(level, value, hData) {
         const phaseSelect = document.getElementById('filter-phase');
         if (phaseSelect) {
             const phases = value === 'all' ? hData.phases : hData.phases.filter(p => String(p.track_id) === String(value));
-            phaseSelect.innerHTML = `<option value="all">كل المراحل (${phases.length})</option>` + phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
+            phaseSelect.innerHTML = `<option value="all">All Phases (${phases.length})</option>` + phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
             phaseSelect.value = 'all';
             updateCascadingFilters('phase', 'all', hData);
             return;
@@ -326,7 +326,7 @@ function updateCascadingFilters(level, value, hData) {
                 const validPhaseIds = new Set(hData.phases.filter(p => String(p.track_id) === String(trackVal)).map(p => String(p.phase_id)));
                 courses = hData.courses.filter(c => validPhaseIds.has(String(c.phase_id)));
             }
-            courseSelect.innerHTML = `<option value="all">كل الكورسات (${courses.length})</option>` + courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
+            courseSelect.innerHTML = `<option value="all">All Courses (${courses.length})</option>` + courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
             courseSelect.value = 'all';
             updateCascadingFilters('course', 'all', hData);
             return;
@@ -335,7 +335,7 @@ function updateCascadingFilters(level, value, hData) {
         const contentSelect = document.getElementById('filter-content');
         if (contentSelect) {
             const contents = value === 'all' ? hData.contents : hData.contents.filter(c => String(c.course_id) === String(value));
-            contentSelect.innerHTML = `<option value="all">كل المحتويات (${contents.length})</option>` + contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('');
+            contentSelect.innerHTML = `<option value="all">All Contents (${contents.length})</option>` + contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('');
             contentSelect.value = 'all';
             updateCascadingFilters('content', 'all', hData);
             return;
@@ -348,7 +348,7 @@ function updateCascadingFilters(level, value, hData) {
                 const att = getAttachmentsForTarget(hData.links || [], 'content', value);
                 quizzes = hData.quizzes.filter(q => att.quizzes.includes(String(q.quiz_id)));
             }
-            quizSelect.innerHTML = `<option value="all">كل الاختبارات (${quizzes.length})</option>` + quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('');
+            quizSelect.innerHTML = `<option value="all">All Quizzes (${quizzes.length})</option>` + quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('');
             quizSelect.value = 'all';
         }
     }
@@ -425,20 +425,20 @@ function updateActiveFiltersUI() {
         activeChips.push({ id, label, valueText: val, colorClasses });
     };
 
-    addTextChip('filter-search-name', 'البحث', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
-    addSelectChip('filter-track', 'المسار', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
-    addSelectChip('filter-phase', 'المرحلة', 'bg-blue-500/15 border-blue-500/30 text-blue-300');
-    addSelectChip('filter-course', 'الكورس', 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300');
-    addSelectChip('filter-content', 'المحتوى', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
-    addSelectChip('filter-quiz', 'الاختبار', 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300');
-    addSelectChip('filter-type', 'النوع', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
-    addSelectChip('filter-status', 'الحالة', 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300');
+    addTextChip('filter-search-name', 'Search', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
+    addSelectChip('filter-track', 'Track', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
+    addSelectChip('filter-phase', 'Phase', 'bg-blue-500/15 border-blue-500/30 text-blue-300');
+    addSelectChip('filter-course', 'Course', 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300');
+    addSelectChip('filter-content', 'Content', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
+    addSelectChip('filter-quiz', 'Quiz', 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300');
+    addSelectChip('filter-type', 'Type', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+    addSelectChip('filter-status', 'Status', 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300');
     addTextChip('filter-search-id', 'ID', 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300');
-    addTextChip('filter-search-desc', 'الوصف', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
-    addTextChip('filter-date-from', 'من', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
-    addTextChip('filter-date-to', 'إلى', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+    addTextChip('filter-search-desc', 'Desc', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
+    addTextChip('filter-date-from', 'From', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+    addTextChip('filter-date-to', 'To', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
 
-    // عدد الفلاتر المتقدمة المفعلة (بدون حقل البحث السريع الظاهر دائماً)
+    // Count of active advanced filters (excluding always-visible quick search)
     const advCount = activeChips.filter(c => c.id !== 'filter-search-name').length;
 
     if (countBadge) {
@@ -461,13 +461,13 @@ function updateActiveFiltersUI() {
             chipsBar.classList.remove('hidden');
             chipsBar.classList.add('flex');
             chipsBar.innerHTML = `
-                <span class="text-[10px] font-bold text-gray-400 ml-1 flex items-center gap-1 shrink-0">
-                    <i class="fas fa-filter text-b-primary text-[9px]"></i> فلاتر مفعلة:
+                <span class="text-[10px] font-bold text-gray-400 mr-1 flex items-center gap-1 shrink-0">
+                    <i class="fas fa-filter text-b-primary text-[9px]"></i> Active filters:
                 </span>
                 ${activeChips.map(chip => {
                     const safeVal = String(chip.valueText).replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     return `
-                        <button type="button" onclick="window.cmRemoveSingleFilter('${chip.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 max-w-[240px] cursor-pointer group ${chip.colorClasses}" title="إزالة فلتر ${chip.label}">
+                        <button type="button" onclick="window.cmRemoveSingleFilter('${chip.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 max-w-[240px] cursor-pointer group ${chip.colorClasses}" title="Remove ${chip.label} filter">
                             <span class="opacity-75 shrink-0">${chip.label}:</span>
                             <span class="truncate" dir="auto">${safeVal}</span>
                             <i class="fas fa-times text-[9px] opacity-70 group-hover:opacity-100 shrink-0"></i>
@@ -482,9 +482,9 @@ function updateActiveFiltersUI() {
         const total = Array.isArray(rawData) ? rawData.length : 0;
         const shown = Array.isArray(filteredData) ? filteredData.length : 0;
         if (activeChips.length > 0) {
-            resultsCountEl.innerHTML = `<i class="fas fa-filter text-b-primary text-[10px]"></i><span>عرض <strong class="text-white font-mono">${shown}</strong> من <span class="font-mono text-gray-400">${total}</span></span>`;
+            resultsCountEl.innerHTML = `<i class="fas fa-filter text-b-primary text-[10px]"></i><span>Showing <strong class="text-white font-mono">${shown}</strong> of <span class="font-mono text-gray-400">${total}</span></span>`;
         } else {
-            resultsCountEl.innerHTML = `<i class="fas fa-layer-group text-b-primary text-[10px]"></i><span>الإجمالي: <strong class="text-white font-mono">${total}</strong></span>`;
+            resultsCountEl.innerHTML = `<i class="fas fa-layer-group text-b-primary text-[10px]"></i><span>Total: <strong class="text-white font-mono">${total}</strong></span>`;
         }
     }
 }
@@ -602,89 +602,89 @@ async function loadTableData() {
     
     const mobileCards = document.getElementById('cm-mobile-cards-view');
     if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></td></tr>`;
-    if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-b-primary text-xl"><i class="fas fa-spinner fa-spin"></i><p class="text-xs text-gray-400 mt-2 font-bold">جاري تحميل البيانات...</p></div>`;
+    if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center text-b-primary text-xl"><i class="fas fa-spinner fa-spin"></i><p class="text-xs text-gray-400 mt-2 font-bold">Loading data...</p></div>`;
 
     try {
         let query;
         if (cmCurrentLevel === 'tracks') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[280px]">اسم المسار (Track)</th>
-                <th class="p-4 text-center min-w-[150px]">تاريخ الإنشاء</th>
-                <th class="p-4 text-center min-w-[120px]">الحالة</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[280px]">Track Name</th>
+                <th class="p-4 text-center min-w-[150px]">Created Date</th>
+                <th class="p-4 text-center min-w-[120px]">Status</th>
+                <th class="p-4 text-center min-w-[180px]">Actions</th>
             </tr>`;
             query = supabase.from('tracks').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'phases') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[280px]">المرحلة (Phase)</th>
-                <th class="p-4 text-center min-w-[260px]">المسار المرتبط</th>
-                <th class="p-4 text-center min-w-[120px]">الحالة</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[280px]">Phase</th>
+                <th class="p-4 text-center min-w-[260px]">Linked Track</th>
+                <th class="p-4 text-center min-w-[120px]">Status</th>
+                <th class="p-4 text-center min-w-[180px]">Actions</th>
             </tr>`;
             query = supabase.from('phases').select('*, tracks(name)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'courses') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[300px]">الكورس (Course)</th>
-                <th class="p-4 text-center min-w-[220px]">المرحلة المرتبطة</th>
-                <th class="p-4 text-center min-w-[200px]">المرفقات (كويز/مشروع/مستند)</th>
-                <th class="p-4 text-center min-w-[120px]">النوع</th>
-                <th class="p-4 text-center min-w-[110px]">الحالة</th>
-                <th class="p-4 text-center min-w-[210px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[300px]">Course</th>
+                <th class="p-4 text-center min-w-[220px]">Linked Phase</th>
+                <th class="p-4 text-center min-w-[200px]">Attachments (Quiz/Project/Doc)</th>
+                <th class="p-4 text-center min-w-[120px]">Type</th>
+                <th class="p-4 text-center min-w-[110px]">Status</th>
+                <th class="p-4 text-center min-w-[210px]">Actions</th>
             </tr>`;
             query = supabase.from('courses').select('*, phases(title)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'course_materials') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[280px]">المحتوى (Content)</th>
-                <th class="p-4 text-center min-w-[220px]">الكورس المرتبط</th>
-                <th class="p-4 text-center min-w-[210px]">المرفقات (كويز/مشروع/مستند)</th>
-                <th class="p-4 text-center min-w-[110px]">النوع</th>
-                <th class="p-4 text-center min-w-[90px]">الترتيب</th>
-                <th class="p-4 text-center min-w-[110px]">الحالة</th>
-                <th class="p-4 text-center min-w-[210px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[280px]">Content / Lesson</th>
+                <th class="p-4 text-center min-w-[220px]">Linked Course</th>
+                <th class="p-4 text-center min-w-[210px]">Attachments (Quiz/Project/Doc)</th>
+                <th class="p-4 text-center min-w-[110px]">Type</th>
+                <th class="p-4 text-center min-w-[90px]">Order</th>
+                <th class="p-4 text-center min-w-[110px]">Status</th>
+                <th class="p-4 text-center min-w-[210px]">Actions</th>
             </tr>`;
             query = supabase.from('course_materials').select('*, courses(title)').order('order_index', { ascending: true });
         } else if (cmCurrentLevel === 'quizzes') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[280px]">عنوان الاختبار (Quiz)</th>
-                <th class="p-4 text-center min-w-[250px]">الربط بالمنهج</th>
-                <th class="p-4 text-center min-w-[120px]">النقاط (XP)</th>
-                <th class="p-4 text-center min-w-[120px]">درجة النجاح</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[280px]">Quiz Title</th>
+                <th class="p-4 text-center min-w-[250px]">Curriculum Link</th>
+                <th class="p-4 text-center min-w-[120px]">Points (XP)</th>
+                <th class="p-4 text-center min-w-[120px]">Pass Score</th>
+                <th class="p-4 text-center min-w-[180px]">Actions</th>
             </tr>`;
             query = supabase.from('quizzes').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'quiz_questions') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[320px]">السؤال (Question)</th>
-                <th class="p-4 text-center min-w-[260px]">الاختبار المرتبط</th>
-                <th class="p-4 text-center min-w-[130px]">الإجابة الصحيحة</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[320px]">Question</th>
+                <th class="p-4 text-center min-w-[260px]">Linked Quiz</th>
+                <th class="p-4 text-center min-w-[130px]">Correct Answer</th>
+                <th class="p-4 text-center min-w-[180px]">Actions</th>
             </tr>`;
             query = supabase.from('quiz_questions').select('*, quizzes(title)').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'projects') {
             thead.innerHTML = `<tr>
                 <th class="p-4 w-12 text-center text-gray-400 font-bold">#</th>
-                <th class="p-4 text-right min-w-[280px]">عنوان المشروع (Project)</th>
-                <th class="p-4 text-center min-w-[250px]">الربط بالمنهج</th>
-                <th class="p-4 text-center min-w-[120px]">النقاط (XP)</th>
-                <th class="p-4 text-center min-w-[140px]">طريقة التسليم</th>
-                <th class="p-4 text-center min-w-[180px]">إجراءات</th>
+                <th class="p-4 text-left min-w-[280px]">Project Title</th>
+                <th class="p-4 text-center min-w-[250px]">Curriculum Link</th>
+                <th class="p-4 text-center min-w-[120px]">Points (XP)</th>
+                <th class="p-4 text-center min-w-[140px]">Submission Method</th>
+                <th class="p-4 text-center min-w-[180px]">Actions</th>
             </tr>`;
             query = supabase.from('projects').select('*').order('created_at', { ascending: false });
         } else if (cmCurrentLevel === 'curriculum_documents') {
             thead.innerHTML = `<tr>
                 <th class="p-3 w-10 text-center text-gray-400 font-bold">#</th>
-                <th class="p-3 text-right min-w-[200px]">اسم المستند (Document)</th>
-                <th class="p-3 text-center min-w-[80px]">النوع</th>
-                <th class="p-3 text-center min-w-[180px]">الربط بالمنهج</th>
-                <th class="p-3 text-center min-w-[90px]">المصدر</th>
-                <th class="p-3 text-center min-w-[80px]">العرض</th>
-                <th class="p-3 text-center min-w-[125px]">إجراءات</th>
+                <th class="p-3 text-left min-w-[200px]">Document Title</th>
+                <th class="p-3 text-center min-w-[80px]">Type</th>
+                <th class="p-3 text-center min-w-[180px]">Curriculum Link</th>
+                <th class="p-3 text-center min-w-[90px]">Source</th>
+                <th class="p-3 text-center min-w-[80px]">View Mode</th>
+                <th class="p-3 text-center min-w-[125px]">Actions</th>
             </tr>`;
             query = supabase.from('curriculum_documents').select('*').order('created_at', { ascending: false });
         }
@@ -778,8 +778,8 @@ function renderTable() {
     const mobileCards = document.getElementById('cm-mobile-cards-view');
 
     if (filteredData.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">لا توجد بيانات مطابقة للبحث أو لم يتم الإضافة بعد.</td></tr>`;
-        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">لا توجد بيانات مطابقة للبحث أو لم يتم الإضافة بعد.</div>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-500">No matching records found or none added yet.</td></tr>`;
+        if (mobileCards) mobileCards.innerHTML = `<div class="p-8 text-center bg-b-surface/60 border border-white/5 rounded-2xl text-gray-500 text-xs">No matching records found or none added yet.</div>`;
         return;
     }
 
@@ -796,8 +796,8 @@ function renderTable() {
         const statusHtml = isActive === undefined 
             ? '-' 
             : isActive 
-                ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> مفعل</span>' 
-                : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> معطل</span>';
+                ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active</span>' 
+                : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Inactive</span>';
 
         // Columns for Desktop Table
         let middleColumn = '';
@@ -806,13 +806,13 @@ function renderTable() {
 
         if (cmCurrentLevel === 'tracks') {
             middleColumn = `
-                <td class="p-4 text-center text-xs font-mono text-gray-400">${new Date(item.created_at).toLocaleDateString()}</td>
+                <td class="p-4 text-center text-xs font-mono text-gray-400">${new Date(item.created_at).toLocaleDateString('en-US')}</td>
                 <td class="p-4 text-center">${statusHtml}</td>
             `;
             mobileMetaHtml = `
                 <div class="flex items-center gap-2 text-[11px] text-gray-400">
                     <i class="far fa-calendar-alt text-teal-400"></i>
-                    <span>تاريخ الإنشاء: ${new Date(item.created_at).toLocaleDateString()}</span>
+                    <span>Created: ${new Date(item.created_at).toLocaleDateString('en-US')}</span>
                 </div>
             `;
         }
@@ -821,7 +821,7 @@ function renderTable() {
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-purple-500/15 transition-colors">
                         <i class="fas fa-layer-group text-[11px] opacity-70 shrink-0"></i>
-                        <span dir="auto" class="break-words">${item.tracks?.name || 'بدون مسار'}</span>
+                        <span dir="auto" class="break-words">${item.tracks?.name || 'Unlinked Track'}</span>
                     </span>
                 </td>
                 <td class="p-4 text-center">${statusHtml}</td>
@@ -830,7 +830,7 @@ function renderTable() {
                 <div class="flex items-center gap-2 text-[11px]">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold truncate max-w-full">
                         <i class="fas fa-layer-group text-[10px]"></i>
-                        <span class="truncate">المسار: ${item.tracks?.name || 'بدون مسار'}</span>
+                        <span class="truncate">Track: ${item.tracks?.name || 'Unlinked'}</span>
                     </span>
                 </div>
             `;
@@ -841,7 +841,7 @@ function renderTable() {
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-blue-500/15 transition-colors">
                         <i class="fas fa-sitemap text-[11px] opacity-70 shrink-0"></i>
-                        <span dir="auto" class="break-words">${item.phases?.title || 'بدون مرحلة'}</span>
+                        <span dir="auto" class="break-words">${item.phases?.title || 'Unlinked Phase'}</span>
                     </span>
                 </td>
                 <td class="p-4 text-center">${attHtml}</td>
@@ -852,7 +852,7 @@ function renderTable() {
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold truncate max-w-[200px]">
                         <i class="fas fa-sitemap text-[10px]"></i>
-                        <span class="truncate">${item.phases?.title || 'بدون مرحلة'}</span>
+                        <span class="truncate">${item.phases?.title || 'Unlinked Phase'}</span>
                     </span>
                     ${renderTypeBadge(item.type)}
                     <div class="w-full pt-1">${attHtml}</div>
@@ -865,7 +865,7 @@ function renderTable() {
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-red-500/15 transition-colors">
                         <i class="fas fa-book-reader text-[11px] opacity-70 shrink-0"></i>
-                        <span dir="auto" class="break-words">${item.courses?.title || 'بدون كورس'}</span>
+                        <span dir="auto" class="break-words">${item.courses?.title || 'Unlinked Course'}</span>
                     </span>
                 </td>
                 <td class="p-4 text-center">${attHtml}</td>
@@ -879,10 +879,10 @@ function renderTable() {
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-bold truncate max-w-[180px]">
                         <i class="fas fa-book-reader text-[10px]"></i>
-                        <span class="truncate">${item.courses?.title || 'بدون كورس'}</span>
+                        <span class="truncate">${item.courses?.title || 'Unlinked Course'}</span>
                     </span>
                     ${renderTypeBadge(item.type)}
-                    <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">الترتيب: #${item.order_index || 0}</span>
+                    <span class="font-mono text-yellow-400 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">Order: #${item.order_index || 0}</span>
                     <div class="w-full pt-1">${attHtml}</div>
                 </div>
             `;
@@ -897,7 +897,7 @@ function renderTable() {
             mobileMetaHtml = `
                 <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_xp || 50} XP</span>
-                    <span class="text-xs font-mono text-gray-300 font-bold bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">درجة النجاح: ${item.passing_score || 50}%</span>
+                    <span class="text-xs font-mono text-gray-300 font-bold bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">Pass Score: ${item.passing_score || 50}%</span>
                     <div class="w-full pt-1">${linksHtml}</div>
                 </div>
             `;
@@ -907,18 +907,18 @@ function renderTable() {
                 <td class="p-4 text-center">
                     <span class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold leading-relaxed max-w-sm text-center shadow-sm hover:bg-orange-500/15 transition-colors">
                         <i class="fas fa-question text-[11px] opacity-70 shrink-0"></i>
-                        <span dir="auto" class="break-words">${item.quizzes?.title || 'بدون اختبار'}</span>
+                        <span dir="auto" class="break-words">${item.quizzes?.title || 'Unlinked Quiz'}</span>
                     </span>
                 </td>
-                <td class="p-4 text-center"><span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase font-mono tracking-wider">خيار (${item.correct_answer})</span></td>
+                <td class="p-4 text-center"><span class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase font-mono tracking-wider">Option (${item.correct_answer})</span></td>
             `;
             mobileMetaHtml = `
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 font-bold truncate max-w-[200px]">
                         <i class="fas fa-question text-[10px]"></i>
-                        <span class="truncate">${item.quizzes?.title || 'بدون اختبار'}</span>
+                        <span class="truncate">${item.quizzes?.title || 'Unlinked Quiz'}</span>
                     </span>
-                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">خيار (${item.correct_answer})</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">Option (${item.correct_answer})</span>
                 </div>
             `;
         }
@@ -932,7 +932,7 @@ function renderTable() {
             mobileMetaHtml = `
                 <div class="flex flex-wrap items-center gap-2 text-[11px]">
                     <span class="text-xs font-mono text-yellow-400 font-bold bg-yellow-500/10 px-2.5 py-1 rounded-lg border border-yellow-500/20">${item.max_points || 100} XP</span>
-                    <span class="text-xs font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">تسليم: ${item.submission_method || '-'}</span>
+                    <span class="text-xs font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">Method: ${item.submission_method || '-'}</span>
                     <div class="w-full pt-1">${linksHtml}</div>
                 </div>
             `;
@@ -958,8 +958,8 @@ function renderTable() {
         let drillDownBtn = '';
         let mobileDrillDownBtn = '';
         if (['tracks', 'phases', 'courses', 'quizzes'].includes(cmCurrentLevel)) {
-            drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-xs"></i></button>`;
-            mobileDrillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="استعراض المحتوى الداخلي"><i class="fas fa-folder-open text-[11px]"></i> <span>محتوى</span></button>`;
+            drillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Browse Nested Content"><i class="fas fa-folder-open text-xs"></i></button>`;
+            mobileDrillDownBtn = `<button onclick="window.cmViewDetails('${id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Browse Nested Content"><i class="fas fa-folder-open text-[11px]"></i> <span>Content</span></button>`;
         }
 
         let previewBtn = '';
@@ -967,27 +967,27 @@ function renderTable() {
         let mobilePreviewBtn = '';
 
         if (cmCurrentLevel === 'course_materials' && item.type === 'video' && item.video_id) {
-            previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all shadow-sm" title="معاينة الفيديو"><i class="fas fa-play text-xs"></i></button>`;
-            mobilePreviewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة الفيديو"><i class="fas fa-play text-[11px]"></i> <span>معاينة</span></button>`;
+            previewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all shadow-sm" title="Preview Video"><i class="fas fa-play text-xs"></i></button>`;
+            mobilePreviewBtn = `<button onclick="window.cmPreviewTableRow('${id}', '${item.video_id.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Preview Video"><i class="fas fa-play text-[11px]"></i> <span>Preview</span></button>`;
         } else if (cmCurrentLevel === 'quizzes') {
-            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all shadow-sm" title="معاينة الاختبار"><i class="fas fa-eye text-xs"></i></button>`;
-            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة الاختبار"><i class="fas fa-eye text-[11px]"></i> <span>معاينة</span></button>`;
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all shadow-sm" title="Preview Quiz"><i class="fas fa-eye text-xs"></i></button>`;
+            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('quiz', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Preview Quiz"><i class="fas fa-eye text-[11px]"></i> <span>Preview</span></button>`;
         } else if (cmCurrentLevel === 'projects') {
-            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="معاينة المشروع"><i class="fas fa-eye text-xs"></i></button>`;
-            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="معاينة المشروع"><i class="fas fa-eye text-[11px]"></i> <span>معاينة</span></button>`;
+            previewQuizOrProjectBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all shadow-sm" title="Preview Project"><i class="fas fa-eye text-xs"></i></button>`;
+            mobilePreviewBtn = `<button onclick="window.cmPreviewItem('project', '${id}')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Preview Project"><i class="fas fa-eye text-[11px]"></i> <span>Preview</span></button>`;
         }
 
         let reorderBtn = '';
         let mobileReorderBtn = '';
         if (cmCurrentLevel === 'courses') {
-            reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-xs"></i></button>`;
-            mobileReorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب المحتويات"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
+            reorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Reorder Course Materials"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Reorder Course Materials"><i class="fas fa-sort text-[11px]"></i> <span>Order</span></button>`;
         } else if (cmCurrentLevel === 'phases') {
-            reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب الكورسات داخل هذه المرحلة"><i class="fas fa-sort text-xs"></i></button>`;
-            mobileReorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب الكورسات"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
+            reorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Reorder Courses in Phase"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenCoursesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Reorder Courses"><i class="fas fa-sort text-[11px]"></i> <span>Order</span></button>`;
         } else if (cmCurrentLevel === 'tracks') {
-            reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="إعادة ترتيب المراحل داخل هذا المسار"><i class="fas fa-sort text-xs"></i></button>`;
-            mobileReorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إعادة ترتيب المراحل"><i class="fas fa-sort text-[11px]"></i> <span>ترتيب</span></button>`;
+            reorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all shadow-sm" title="Reorder Phases in Track"><i class="fas fa-sort text-xs"></i></button>`;
+            mobileReorderBtn = `<button onclick="window.cmOpenPhasesReorderModal('${id}', '${title.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Reorder Phases"><i class="fas fa-sort text-[11px]"></i> <span>Order</span></button>`;
         }
 
         let attachBtn = '';
@@ -995,8 +995,8 @@ function renderTable() {
         if (cmCurrentLevel === 'courses' || cmCurrentLevel === 'course_materials') {
             const targetType = cmCurrentLevel === 'courses' ? 'course' : 'content';
             const safeTitleArg = title.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            attachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all shadow-sm" title="إدارة المرفقات (كويزات/مشاريع/مستندات)"><i class="fas fa-paperclip text-xs"></i></button>`;
-            mobileAttachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="إدارة المرفقات"><i class="fas fa-paperclip text-[11px]"></i> <span>مرفقات</span></button>`;
+            attachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all shadow-sm" title="Manage Attachments (Quizzes/Projects/Docs)"><i class="fas fa-paperclip text-xs"></i></button>`;
+            mobileAttachBtn = `<button onclick="window.cmOpenAttachmentsModal('${targetType}', '${id}', '${safeTitleArg}')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="Manage Attachments"><i class="fas fa-paperclip text-[11px]"></i> <span>Attachments</span></button>`;
         }
 
         // Desktop Table Row
@@ -1020,14 +1020,14 @@ function renderTable() {
                 ${middleColumn}
                 <td class="p-4 text-center">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="عرض التفاصيل"><i class="fas fa-info-circle text-xs"></i></button>
+                        <button onclick="window.cmShowInfo('${id}')" class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="View Details"><i class="fas fa-info-circle text-xs"></i></button>
                         ${attachBtn}
                         ${drillDownBtn}
                         ${reorderBtn}
                         ${previewBtn}
                         ${previewQuizOrProjectBtn}
-                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="تعديل"><i class="fas fa-pen text-xs"></i></button>` : ''}
-                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="حذف"><i class="fas fa-trash text-xs"></i></button>` : ''}
+                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="Edit"><i class="fas fa-pen text-xs"></i></button>` : ''}
+                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete"><i class="fas fa-trash text-xs"></i></button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -1047,7 +1047,7 @@ function renderTable() {
                             <div class="text-[10px] font-mono text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
                                 <span class="text-gray-500 font-bold">#${index + 1}</span>
                                 <span class="text-white/15">•</span>
-                                <span class="text-gray-400 select-all truncate max-w-[165px]" title="${id}">${id || 'بدون معرف'}</span>
+                                <span class="text-gray-400 select-all truncate max-w-[165px]" title="${id}">${id || 'No ID'}</span>
                             </div>
                         </div>
                     </div>
@@ -1062,8 +1062,8 @@ function renderTable() {
                 <!-- Compact Single-Row Action Bar -->
                 <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1.5">
                     <div class="flex items-center gap-1 flex-wrap min-w-0">
-                        <button onclick="window.cmShowInfo('${id}')" class="px-2 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer" title="عرض التفاصيل">
-                            <i class="fas fa-info-circle text-[10px]"></i> <span>تفاصيل</span>
+                        <button onclick="window.cmShowInfo('${id}')" class="px-2 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer" title="View Details">
+                            <i class="fas fa-info-circle text-[10px]"></i> <span>Details</span>
                         </button>
                         ${mobileAttachBtn}
                         ${mobileDrillDownBtn}
@@ -1071,10 +1071,10 @@ function renderTable() {
                         ${mobilePreviewBtn}
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="تعديل">
+                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="Edit">
                             <i class="fas fa-pen text-[11px]"></i>
                         </button>` : ''}
-                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="حذف">
+                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="Delete">
                             <i class="fas fa-trash text-[11px]"></i>
                         </button>` : ''}
                     </div>
@@ -1108,7 +1108,7 @@ async function loadAndBuildTree() {
         curriculumTree = buildCurriculumTree(tracksRes.data, phasesRes.data, coursesRes.data, materialsRes.data);
         renderTreeViewHTML();
     } catch (err) {
-        document.getElementById('cm-view-tree').innerHTML = `<div class="text-red-500 text-center p-6">خطأ في بناء الشجرة: ${err.message}</div>`;
+        document.getElementById('cm-view-tree').innerHTML = `<div class="text-red-500 text-center p-6">Error building tree: ${err.message}</div>`;
     }
 }
 
@@ -1146,7 +1146,7 @@ function buildCurriculumTree(tracks, phases, courses, materials) {
 function renderTreeViewHTML() {
     const container = document.getElementById('cm-view-tree');
     if (curriculumTree.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold border border-dashed border-white/10 rounded-xl bg-black/20">لا توجد بيانات منهجية متاحة. قم بإضافة مسار (Track) للبدء.</div>';
+        container.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold border border-dashed border-white/10 rounded-xl bg-black/20">No curriculum data available. Add a Track to get started.</div>';
         return;
     }
 
@@ -1314,9 +1314,9 @@ window.runHealthCheck = async () => {
         });
     });
 
-    let html = `<h3 class="text-lg font-bold mb-4 text-white">نتائج الفحص الشامل (Health Check)</h3><ul class="space-y-2 dir-ltr text-left">`;
+    let html = `<h3 class="text-lg font-bold mb-4 text-white">Comprehensive Health Check Results</h3><ul class="space-y-2 dir-ltr text-left">`;
     if(issues.length === 0) {
-        html += `<li class="text-green-500 bg-green-500/10 p-4 rounded-xl border border-green-500/20 font-bold"><i class="fas fa-check-circle mr-2"></i> المنهج سليم 100% ولا توجد أخطاء هيكلية!</li>`;
+        html += `<li class="text-green-500 bg-green-500/10 p-4 rounded-xl border border-green-500/20 font-bold"><i class="fas fa-check-circle mr-2"></i> Curriculum is 100% healthy with no structural errors!</li>`;
     } else {
         issues.forEach(iss => {
             const color = iss.severity === 'critical' ? 'text-red-500 bg-red-500/10 border-red-500/20' : iss.severity === 'error' ? 'text-orange-500 bg-orange-500/10 border-orange-500/20' : 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
@@ -1338,7 +1338,7 @@ window.cmViewDetails = (id) => {
     let filterIdToSet = '';
     let cascadeLevel = '';
 
-    // تحديد التاب الهدف، واسم الفلتر الذي سيتم تعبئته، ومستوى الفلترة الهرمية
+    // Determine target tab, filter ID to populate, and cascading filter level
     if (sourceLevel === 'tracks') { 
         targetTab = 'phases'; 
         filterIdToSet = 'filter-track'; 
@@ -1361,18 +1361,18 @@ window.cmViewDetails = (id) => {
     }
     
     if (targetTab) {
-        // 💡 تسجيل طلب الفلترة في المتغير العام ليتم تنفيذه بدقة بعد انتهاء التحميل
+        // Record pending filter request in global state to run after load completes
         window.pendingDrillDown = {
             filterId: filterIdToSet,
             value: id,
             cascade: cascadeLevel
         };
 
-        // الانتقال للتاب (الجدول) الخاص بالمحتوى الداخلي
+        // Switch to target content tab
         document.querySelector(`[data-level="${targetTab}"]`).click(); 
         
         if (typeof window.showToast === 'function') {
-            window.showToast("جاري فتح وتصفية المحتوى المرتبط...", "info"); 
+            window.showToast("Opening and filtering linked content...", "info"); 
         }
     }
 };
@@ -1391,7 +1391,7 @@ window.cmShowInfo = (id) => {
                 displayValue = `<div class="flex flex-col gap-1.5 mt-1">${parsedLinks.map((lnk, idx) => `
                     <a href="${escapeHtml(lnk.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs text-emerald-300 hover:text-emerald-200 underline underline-offset-2 break-all">
                         <i class="fas fa-external-link-alt text-[10px] shrink-0"></i>
-                        <span>${escapeHtml(lnk.title || `رابط ${idx + 1}`)} — ${escapeHtml(lnk.url)}</span>
+                        <span>${escapeHtml(lnk.title || `Link ${idx + 1}`)} — ${escapeHtml(lnk.url)}</span>
                     </a>`).join('')}</div>`;
             } else {
                 displayValue = '<span class="text-gray-600">Null/Empty</span>';
@@ -1427,15 +1427,15 @@ function ensureDetailsModalExists() {
                                 <i class="fas fa-info-circle"></i>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-white">بطاقة التفاصيل (Record Details)</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">عرض تفصيلي لجميع البيانات المرتبطة بالسجل</p>
+                                <h3 class="text-xl font-bold text-white">Record Details</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Comprehensive view of all fields associated with this record</p>
                             </div>
                         </div>
                         <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i class="fas fa-times text-base"></i></button>
                     </div>
-                    <div id="cm-details-content" class="p-6 md:p-8 overflow-y-auto custom-scroll flex-1 bg-[url('../assets/patterns/circuit.png')] bg-opacity-5 text-right"></div>
+                    <div id="cm-details-content" class="p-6 md:p-8 overflow-y-auto custom-scroll flex-1 bg-[url('../assets/patterns/circuit.png')] bg-opacity-5 text-left"></div>
                     <div class="p-4 sm:p-5 border-t border-white/10 flex justify-end shrink-0 bg-b-surface">
-                        <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">إغلاق النافذة</button>
+                        <button onclick="document.getElementById('cm-details-modal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all">Close Window</button>
                     </div>
                 </div>
             </div>
@@ -1444,16 +1444,16 @@ function ensureDetailsModalExists() {
 }
 
 // ==========================================
-// 🛠️ FULL DATABASE FORMS (نماذج الإدخال)
+// 🛠️ FULL DATABASE FORMS
 // ==========================================
 window.cmOpenModal = async () => {
     if (!getCmPermission('create', cmCurrentLevel)) {
-        window.showToast?.('ليس لديك صلاحية لإضافة سجل جديد في هذا القسم.', 'error');
+        window.showToast?.('You do not have permission to create a new record in this section.', 'error');
         return;
     }
     cmCurrentEditId = null;
     cmIsEditMode = false;
-    document.getElementById('cm-modal-title').innerText = `إضافة سجل جديد`;
+    document.getElementById('cm-modal-title').innerText = `Create New Record`;
     await generateFormFields(null);
     document.getElementById('cm-crud-modal').classList.remove('hidden');
     if (window.initSearchableSelects) window.initSearchableSelects();
@@ -1467,17 +1467,15 @@ window.cmCloseModal = () => {
 
 async function generateFormFields(data = null) {
     const container = document.getElementById('cm-form-fields');
-    container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-3xl mb-3 text-b-primary"></i><br><span class="text-sm font-medium">جاري تجهيز حقول النموذج والبيانات...</span></div>';
+    container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-3xl mb-3 text-b-primary"></i><br><span class="text-sm font-medium">Preparing form fields and data...</span></div>';
     
-    const hData = await fetchHierarchyData(); // الاعتماد على الذاكرة لسرعة فائقة
+    const hData = await fetchHierarchyData();
     let html = '';
-    const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-b-primary outline-none transition-all dir-rtl text-right focus:bg-black/80";
-    const labelStyle = "text-xs text-gray-300 mb-1.5 font-bold block dir-rtl text-right";
+    const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-b-primary outline-none transition-all text-left focus:bg-black/80";
+    const labelStyle = "text-xs text-gray-300 mb-1.5 font-bold block text-left";
     
-    // دالة مساعدة لإنشاء الخيارات (تتجاهل السجلات ذات المعرفات الفارغة)
     const buildOpts = (items, valKey, textKey, selectedVal) => items.filter(i => i && i[valKey] !== undefined && i[valKey] !== null && String(i[valKey]).trim() !== '').map(i => `<option value="${i[valKey]}" ${String(i[valKey]) === String(selectedVal) ? 'selected' : ''}>${i[textKey]}</option>`).join('');
 
-    // --- اكتشاف المسار العكسي (لتسهيل التعديل) ---
     let initTrack = '', initPhase = '', initCourse = '', initContent = '', initQuiz = '';
     if (data) {
         if (cmCurrentLevel === 'phases') initTrack = data.track_id;
@@ -1501,19 +1499,19 @@ async function generateFormFields(data = null) {
 
     if (cmCurrentLevel === 'tracks') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">اسم المسار التعليمي (Track Name) *</label>
-                    <input type="text" id="f-name" required value="${data?.name || ''}" placeholder="مثال: Digital IC Design & Verification" class="${inputStyle}">
+                    <label class="${labelStyle}">Track Name *</label>
+                    <input type="text" id="f-name" required value="${data?.name || ''}" placeholder="e.g. Digital IC Design & Verification" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">الوصف التفصيلي (Description)</label>
-                    <textarea id="f-desc" rows="4" placeholder="اكتب نبذة شاملة عن المسار وأهدافه والجمهور المستهدف..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <label class="${labelStyle}">Detailed Description</label>
+                    <textarea id="f-desc" rows="4" placeholder="Write a comprehensive overview of the track, its objectives, and target audience..." class="${inputStyle}">${data?.description || ''}</textarea>
                 </div>
                 <div class="md:col-span-2 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
                     <div>
-                        <span class="text-sm font-bold text-white block">حالة التفعيل للطلاب</span>
-                        <span class="text-xs text-gray-400 mt-0.5 block">إتاحة هذا المسار التعليمي وظهوره في لوحة الطلاب والمناهج</span>
+                        <span class="text-sm font-bold text-white block">Active for Students</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">Make this learning track visible to students in their dashboard and roadmap</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-b-primary bg-black border-white/20 focus:ring-b-primary">
@@ -1524,23 +1522,23 @@ async function generateFormFields(data = null) {
     } 
     else if (cmCurrentLevel === 'phases') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                 <!-- Hierarchy Card -->
                 <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
                     <div class="flex items-center gap-2 text-purple-400 font-bold text-sm">
                         <i class="fas fa-layer-group"></i>
-                        <span>المسار التابع له والمُعرف</span>
+                        <span>Parent Track & System ID</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="md:col-span-2">
-                            <label class="${labelStyle}">المسار التابع له (Track) *</label>
+                            <label class="${labelStyle}">Parent Track *</label>
                             <select id="f-track-id" required class="${inputStyle}">
-                                <option value="" disabled ${!data ? 'selected' : ''}>-- اختر المسار التعليمي --</option>
+                                <option value="" disabled ${!data ? 'selected' : ''}>-- Select Learning Track --</option>
                                 ${buildOpts(hData.tracks, 'id', 'name', data?.track_id)}
                             </select>
                         </div>
                         <div>
-                            <label class="${labelStyle}">معرف المرحلة (تلقائي)</label>
+                            <label class="${labelStyle}">Phase ID (Auto)</label>
                             <input type="text" id="f-phase-id" readonly value="${data?.phase_id || generateSystemID('ph')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
                         </div>
                     </div>
@@ -1548,35 +1546,35 @@ async function generateFormFields(data = null) {
 
                 <!-- Basic Info -->
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">عنوان المرحلة التعليمية *</label>
-                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: المرحلة الأولى - الأساسيات الرقمية والتصميم المنطقي" class="${inputStyle}">
+                    <label class="${labelStyle}">Phase Title *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="e.g. Phase 1 - Digital Fundamentals & Logic Design" class="${inputStyle}">
                 </div>
                 <div>
-                    <label class="${labelStyle}">المدة الزمنية التقديرية</label>
-                    <input type="text" id="f-module-time" value="${data?.['Module Time'] || ''}" placeholder="مثال: 8 أسابيع / شهرين" class="${inputStyle}">
+                    <label class="${labelStyle}">Estimated Duration</label>
+                    <input type="text" id="f-module-time" value="${data?.['Module Time'] || ''}" placeholder="e.g. 8 Weeks / 2 Months" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">رابط صورة المرحلة (Image URL)</label>
+                    <label class="${labelStyle}">Phase Cover Image URL</label>
                     <input type="text" id="f-img-url" value="${data?.image_url || ''}" placeholder="https://example.com/phase-cover.jpg" class="${inputStyle} dir-ltr">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">الوصف التفصيلي للمرحلة</label>
-                    <textarea id="f-desc" rows="3" placeholder="وصف محتوى وأهداف هذه المرحلة التعليمية بالتفصيل..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <label class="${labelStyle}">Detailed Phase Description</label>
+                    <textarea id="f-desc" rows="3" placeholder="Describe the content and goals of this learning phase in detail..." class="${inputStyle}">${data?.description || ''}</textarea>
                 </div>
                 <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="${labelStyle}">المتطلبات السابقة (Prerequisites)</label>
-                        <textarea id="f-prereq" rows="3" placeholder="المعارف والمهارات المطلوبة من الطالب قبل الالتحاق بهذه المرحلة..." class="${inputStyle}">${data?.prerequisites || ''}</textarea>
+                        <label class="${labelStyle}">Prerequisites</label>
+                        <textarea id="f-prereq" rows="3" placeholder="Required knowledge and skills before starting this phase..." class="${inputStyle}">${data?.prerequisites || ''}</textarea>
                     </div>
                     <div>
-                        <label class="${labelStyle}">ماذا ستتعلم في هذه المرحلة؟ (What You'll Learn)</label>
-                        <textarea id="f-will-learn" rows="3" placeholder="المهارات والمخرجات التعليمية التي سيكتسبها الطالب..." class="${inputStyle}">${data?.will_learn || ''}</textarea>
+                        <label class="${labelStyle}">What You'll Learn</label>
+                        <textarea id="f-will-learn" rows="3" placeholder="Key skills and learning outcomes students will gain..." class="${inputStyle}">${data?.will_learn || ''}</textarea>
                     </div>
                 </div>
                 <div class="md:col-span-3 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5">
                     <div>
-                        <span class="text-sm font-bold text-white block">تفعيل المرحلة للطلاب</span>
-                        <span class="text-xs text-gray-400 mt-0.5 block">ظهور المرحلة للطلاب في خارطة الطريق التعليمية للمسار</span>
+                        <span class="text-sm font-bold text-white block">Activate Phase for Students</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">Display this phase on the track's learning roadmap</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-purple-500 bg-black border-white/20">
@@ -1587,33 +1585,33 @@ async function generateFormFields(data = null) {
     }
     else if (cmCurrentLevel === 'courses') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                 <!-- Hierarchy Placement Card -->
                 <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
                         <div class="flex items-center gap-2 text-b-primary font-bold text-sm">
                             <i class="fas fa-sitemap"></i>
-                            <span>تحديد موقع الكورس داخل المنهج (Curriculum Placement)</span>
+                            <span>Curriculum Placement</span>
                         </div>
-                        <span class="text-xs text-gray-400">حدد المسار لتصفية المراحل التعليمية</span>
+                        <span class="text-xs text-gray-400">Select a track to filter phases</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="${labelStyle}">تصفية بالمسار (Track)</label>
+                            <label class="${labelStyle}">Filter by Track</label>
                             <select id="modal-filter-track" class="${inputStyle}">
-                                <option value="">-- كل المسارات --</option>
+                                <option value="">-- All Tracks --</option>
                                 ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
                             </select>
                         </div>
                         <div>
-                            <label class="${labelStyle}">المرحلة التابع لها (Phase) *</label>
+                            <label class="${labelStyle}">Parent Phase *</label>
                             <select id="f-phase-id" required class="${inputStyle} border-b-primary/50">
-                                <option value="">-- اختر المرحلة --</option>
+                                <option value="">-- Select Phase --</option>
                                 ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
                             </select>
                         </div>
                         <div>
-                            <label class="${labelStyle}">معرف الكورس (تلقائي)</label>
+                            <label class="${labelStyle}">Course ID (Auto)</label>
                             <input type="text" id="f-course-id" readonly value="${data?.course_id || generateSystemID('cr')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
                         </div>
                     </div>
@@ -1621,47 +1619,47 @@ async function generateFormFields(data = null) {
 
                 <!-- Course Core Info -->
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">عنوان الكورس *</label>
-                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: Digital IC Design: Front-end to Back-end" class="${inputStyle}">
+                    <label class="${labelStyle}">Course Title *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="e.g. Digital IC Design: Front-end to Back-end" class="${inputStyle}">
                 </div>
                 <div>
-                    <label class="${labelStyle}">نوع الكورس</label>
+                    <label class="${labelStyle}">Course Type</label>
                     <select id="f-type" class="${inputStyle}">
-                        <option value="youtube" ${data?.type === 'youtube' ? 'selected' : ''}>يوتيوب (YouTube)</option>
-                        <option value="custom" ${data?.type === 'custom' ? 'selected' : ''}>مخصص (Custom)</option>
+                        <option value="youtube" ${data?.type === 'youtube' ? 'selected' : ''}>YouTube</option>
+                        <option value="custom" ${data?.type === 'custom' ? 'selected' : ''}>Custom</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">كورس مرتبط بـ (اختياري)</label>
+                    <label class="${labelStyle}">Related Course (Optional)</label>
                     <select id="f-related" class="${inputStyle}">
-                        <option value="">بدون ارتباط</option>
+                        <option value="">None (Standalone)</option>
                         ${buildOpts(hData.courses, 'course_id', 'title', data?.related_with)}
                     </select>
                 </div>
                 <div>
-                    <label class="${labelStyle}">معرف قائمة اليوتيوب (Playlist ID)</label>
+                    <label class="${labelStyle}">YouTube Playlist ID</label>
                     <input type="text" id="f-playlist" value="${data?.playlist_id || ''}" placeholder="PL..." class="${inputStyle} dir-ltr">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">رابط صورة غلاف الكورس (Image URL)</label>
+                    <label class="${labelStyle}">Course Cover Image URL</label>
                     <input type="text" id="f-img-url" value="${data?.image_url || ''}" placeholder="https://example.com/course-thumbnail.jpg" class="${inputStyle} dir-ltr">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">الوصف التفصيلي للكورس</label>
-                    <textarea id="f-desc" rows="3" placeholder="اكتب نبذة واضحة عن محتوى هذا الكورس وموضوعاته..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <label class="${labelStyle}">Detailed Course Description</label>
+                    <textarea id="f-desc" rows="3" placeholder="Write a clear overview of the course syllabus and covered topics..." class="${inputStyle}">${data?.description || ''}</textarea>
                 </div>
                 <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex items-center justify-between bg-black/40 p-4 rounded-2xl border border-white/5">
                         <div>
-                            <span class="text-sm font-bold text-white block">مفعل للطلاب مباشرة</span>
-                            <span class="text-xs text-gray-400">إتاحة الكورس للطلاب في لوحة التعلم</span>
+                            <span class="text-sm font-bold text-white block">Active for Students</span>
+                            <span class="text-xs text-gray-400">Make this course accessible in the learning dashboard</span>
                         </div>
                         <input type="checkbox" id="f-active" ${!data || data?.is_active ? 'checked' : ''} class="w-5 h-5 rounded text-blue-500 bg-black border-white/20">
                     </div>
                     <div class="flex items-center justify-between bg-black/40 p-4 rounded-2xl border border-white/5">
                         <div>
-                            <span class="text-sm font-bold text-white block">مزامنة تلقائية مع يوتيوب</span>
-                            <span class="text-xs text-gray-400">تحديث الفيديوهات والدروس تلقائياً</span>
+                            <span class="text-sm font-bold text-white block">Auto-Sync with YouTube</span>
+                            <span class="text-xs text-gray-400">Automatically sync playlist videos and lessons</span>
                         </div>
                         <input type="checkbox" id="f-auto-sync" ${!data || data?.auto_sync ? 'checked' : ''} class="w-5 h-5 rounded text-blue-500 bg-black border-white/20">
                     </div>
@@ -1673,35 +1671,35 @@ async function generateFormFields(data = null) {
     }
     else if (cmCurrentLevel === 'course_materials') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                 <!-- Hierarchy Selection Card -->
                 <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-3">
                     <div class="flex items-center justify-between border-b border-white/5 pb-3">
                         <div class="flex items-center gap-2 text-b-primary font-bold text-sm">
                             <i class="fas fa-sitemap"></i>
-                            <span>تحديد الكورس التابع له الدرس (Course Selection & Hierarchy)</span>
+                            <span>Course Selection & Hierarchy</span>
                         </div>
-                        <span class="text-xs text-gray-400">اختر المسار والمرحلة لفلترة قائمة الكورسات</span>
+                        <span class="text-xs text-gray-400">Select track and phase to filter courses</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="${labelStyle}">المسار (للفلترة)</label>
+                            <label class="${labelStyle}">Track (Filter)</label>
                             <select id="modal-filter-track" class="${inputStyle}">
-                                <option value="">-- كل المسارات --</option>
+                                <option value="">-- All Tracks --</option>
                                 ${buildOpts(hData.tracks, 'id', 'name', initTrack)}
                             </select>
                         </div>
                         <div>
-                            <label class="${labelStyle}">المرحلة (للفلترة)</label>
+                            <label class="${labelStyle}">Phase (Filter)</label>
                             <select id="modal-filter-phase" class="${inputStyle}">
-                                <option value="">-- كل المراحل --</option>
+                                <option value="">-- All Phases --</option>
                                 ${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}
                             </select>
                         </div>
                         <div>
-                            <label class="${labelStyle}">الكورس التابع له *</label>
+                            <label class="${labelStyle}">Parent Course *</label>
                             <select id="f-course-id" required class="${inputStyle} border-b-primary/50">
-                                <option value="">-- اختر الكورس التابع له --</option>
+                                <option value="">-- Select Parent Course --</option>
                                 ${buildOpts(hData.courses, 'course_id', 'title', initCourse)}
                             </select>
                         </div>
@@ -1711,20 +1709,20 @@ async function generateFormFields(data = null) {
                 <!-- Lesson Main Info -->
                 <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div class="md:col-span-3">
-                        <label class="${labelStyle}">معرف المحتوى (تلقائي)</label>
+                        <label class="${labelStyle}">Content ID (Auto)</label>
                         <input type="text" id="f-content-id" readonly value="${data?.content_id || generateSystemID('cnt')}" class="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-sm text-gray-400 font-mono cursor-not-allowed">
                     </div>
                     <div class="md:col-span-6">
-                        <label class="${labelStyle}">عنوان المحتوى (الدرس) *</label>
-                        <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: مقدمة إلى التصميم الرقمي وشرائح السيليكون" class="${inputStyle}">
+                        <label class="${labelStyle}">Lesson / Content Title *</label>
+                        <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="e.g. Introduction to Digital Design & Silicon Chips" class="${inputStyle}">
                     </div>
                     <div class="md:col-span-3">
-                        <label class="${labelStyle}">نوع المحتوى *</label>
+                        <label class="${labelStyle}">Content Type *</label>
                         <select id="f-type" required class="${inputStyle}">
-                            <option value="video" ${data?.type==='video'?'selected':''}>فيديو (Video)</option>
-                            <option value="section" ${data?.type==='section'?'selected':''}>قسم فرعي (Section)</option>
-                            <option value="quiz" ${data?.type==='quiz'?'selected':''}>اختبار (Quiz)</option>
-                            <option value="project" ${data?.type==='project'?'selected':''}>مشروع (Project)</option>
+                            <option value="video" ${data?.type==='video'?'selected':''}>Video</option>
+                            <option value="section" ${data?.type==='section'?'selected':''}>Section Divider</option>
+                            <option value="quiz" ${data?.type==='quiz'?'selected':''}>Quiz</option>
+                            <option value="project" ${data?.type==='project'?'selected':''}>Project</option>
                         </select>
                     </div>
                 </div>
@@ -1734,25 +1732,25 @@ async function generateFormFields(data = null) {
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
                             <i class="fab fa-youtube"></i>
-                            <span>رابط الفيديو ومصدر المحتوى التعليمي</span>
+                            <span>Video URL & Learning Content Source</span>
                         </div>
                         <span class="text-[11px] text-teal-400/90 font-medium flex items-center gap-1.5 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20">
-                            <i class="fas fa-magic text-teal-400"></i> جلب المدة والبيانات تلقائياً عبر API
+                            <i class="fas fa-magic text-teal-400"></i> Auto-fetch duration & metadata via API
                         </span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                         <div class="md:col-span-8">
-                            <label class="${labelStyle}">رابط الفيديو أو معرف اليوتيوب (Video URL / ID)</label>
-                            <input type="text" id="f-video-id" placeholder="مثال: https://www.youtube.com/watch?v=... أو معرف الفيديو" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
+                            <label class="${labelStyle}">Video URL or YouTube ID</label>
+                            <input type="text" id="f-video-id" placeholder="e.g. https://www.youtube.com/watch?v=... or Video ID" value="${data?.video_id || ''}" class="${inputStyle} dir-ltr">
                         </div>
                         <div class="md:col-span-4 flex gap-2">
                             <button type="button" id="btn-fetch-video-meta" onclick="window.fetchAndPreviewAdminVideo(true, false)" class="flex-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm text-xs">
                                 <i class="fas fa-wand-magic-sparkles"></i>
-                                <span>جلب المدة</span>
+                                <span>Fetch Duration</span>
                             </button>
                             <button type="button" onclick="window.previewAdminVideo()" class="flex-1 bg-b-primary/10 hover:bg-b-primary/20 border border-b-primary/30 text-b-primary font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm text-xs">
                                 <i class="fas fa-play-circle text-sm"></i>
-                                <span>معاينة</span>
+                                <span>Preview</span>
                             </button>
                         </div>
                     </div>
@@ -1763,8 +1761,8 @@ async function generateFormFields(data = null) {
                     <!-- Video Preview Screen -->
                     <div id="admin-video-preview-wrapper" class="hidden bg-black/80 border border-white/10 rounded-2xl p-4 transition-all duration-300 space-y-3">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-bold text-gray-300 flex items-center gap-2"><i class="fas fa-tv text-teal-400"></i> شاشة المعاينة الفورية</span>
-                            <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-400 hover:text-red-400 text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">إغلاق المعاينة <i class="fas fa-times ml-1"></i></button>
+                            <span class="text-xs font-bold text-gray-300 flex items-center gap-2"><i class="fas fa-tv text-teal-400"></i> Live Preview Screen</span>
+                            <button type="button" onclick="document.getElementById('admin-video-preview-wrapper').classList.add('hidden')" class="text-gray-400 hover:text-red-400 text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">Close Preview <i class="fas fa-times ml-1"></i></button>
                         </div>
                         <div id="admin-video-preview-content" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border border-white/10 shadow-inner"></div>
                         <div id="admin-video-preview-details" class="hidden p-3 bg-white/[0.03] border border-white/5 rounded-xl text-xs space-y-1.5"></div>
@@ -1774,18 +1772,18 @@ async function generateFormFields(data = null) {
                 <!-- Order, Duration & XP -->
                 <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="${labelStyle}">ترتيب العرض (Index Order)</label>
+                        <label class="${labelStyle}">Display Order (Index Order)</label>
                         <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
                     </div>
                     <div>
                         <label class="${labelStyle} flex items-center justify-between">
-                            <span>المدة بالدقائق (Duration in Minutes)</span>
-                            <span class="text-[10px] text-teal-400 font-normal">تلقائي من الفيديو</span>
+                            <span>Duration in Minutes</span>
+                            <span class="text-[10px] text-teal-400 font-normal">Auto from video</span>
                         </label>
                         <input type="number" step="any" id="f-duration" value="${data?.duration ? (data.duration / 60).toFixed(1).replace('.0', '') : 0}" class="${inputStyle}">
                     </div>
                     <div>
-                        <label class="${labelStyle} text-yellow-400/90 flex items-center gap-1.5"><i class="fas fa-star text-yellow-400 text-xs"></i> النقاط المكتسبة (XP)</label>
+                        <label class="${labelStyle} text-yellow-400/90 flex items-center gap-1.5"><i class="fas fa-star text-yellow-400 text-xs"></i> Earned Points (XP)</label>
                         <input type="number" id="f-base-xp" min="0" value="${data?.base_xp ?? 10}" placeholder="10" class="${inputStyle} border-yellow-500/30 focus:border-yellow-500 text-yellow-400 font-bold">
                     </div>
                 </div>
@@ -1796,8 +1794,8 @@ async function generateFormFields(data = null) {
                 <!-- Active Toggle -->
                 <div class="md:col-span-3 flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5">
                     <div>
-                        <span class="text-sm font-bold text-white block">تفعيل المحتوى للطلاب مباشرة</span>
-                        <span class="text-xs text-gray-400 mt-0.5 block">ظهور هذا الدرس مباشرة للطلاب داخل مشغل الكورس</span>
+                        <span class="text-sm font-bold text-white block">Activate Content for Students</span>
+                        <span class="text-xs text-gray-400 mt-0.5 block">Display this lesson immediately inside the course player</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="f-status" ${!data || data?.status ? 'checked' : ''} class="w-5 h-5 rounded text-b-primary bg-black border-white/20">
@@ -1811,28 +1809,28 @@ async function generateFormFields(data = null) {
         if (cmCurrentLevel === 'quizzes') {
             coreFields = `
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">عنوان الاختبار *</label>
-                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: اختبار تقييم الفهم - أساسيات المعالجات" class="${inputStyle}">
+                    <label class="${labelStyle}">Quiz Title *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="e.g. Comprehension Quiz - Processor Fundamentals" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">الوصف والتعليمات</label>
-                    <textarea id="f-desc" rows="3" placeholder="وصف موجز لموضوع الاختبار وتعليمات الإجابة..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <label class="${labelStyle}">Description & Instructions</label>
+                    <textarea id="f-desc" rows="3" placeholder="Brief summary of the quiz topic and instructions..." class="${inputStyle}">${data?.description || ''}</textarea>
                 </div>
                 <div>
-                    <label class="${labelStyle}">نسبة النجاح المطلوبة (%)</label>
+                    <label class="${labelStyle}">Passing Score (%)</label>
                     <input type="number" id="f-pass" value="${data?.passing_score || 50}" class="${inputStyle}">
                 </div>
                 <div>
-                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs ml-1"></i> النقاط المكتسبة (XP)</label>
+                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs mr-1"></i> Earned Points (XP)</label>
                     <input type="number" id="f-max-xp" value="${data?.max_xp || 50}" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
                 </div>
                 <div>
-                    <label class="${labelStyle}">عدد المحاولات المسموحة</label>
+                    <label class="${labelStyle}">Allowed Attempts</label>
                     <input type="number" id="f-attempts" value="${data?.attempts_allowed || 3}" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">عدد الأسئلة المعروضة للطالب عشوائياً</label>
-                    <input type="number" id="f-q-show" value="${data?.questions_to_show || ''}" placeholder="اتركه فارغاً لعرض جميع الأسئلة المسجلة في بنك الأسئلة" class="${inputStyle}">
+                    <label class="${labelStyle}">Random Questions Shown to Student</label>
+                    <input type="number" id="f-q-show" value="${data?.questions_to_show || ''}" placeholder="Leave empty to show all questions in the question bank" class="${inputStyle}">
                 </div>
             `;
         } else {
@@ -1848,19 +1846,19 @@ async function generateFormFields(data = null) {
 
             const linkRowHtml = (lnk = { title: '', url: '' }) => `
                 <div class="cm-proj-link-row flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-black/40 border border-white/10 rounded-xl p-2">
-                    <input type="text" value="${escapeHtml(lnk.title || '')}" placeholder="اسم الرابط (مثال: مستودع GitHub أو ملف المواصفات)" class="cm-proj-link-title sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
-                    <input type="url" value="${escapeHtml(lnk.url || '')}" placeholder="https://github.com/... أو رابط Google Drive" class="cm-proj-link-url flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-cyan-300 font-mono placeholder-gray-500 outline-none dir-ltr text-left">
-                    <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="حذف الرابط"><i class="fas fa-trash text-[11px]"></i></button>
+                    <input type="text" value="${escapeHtml(lnk.title || '')}" placeholder="Link Title (e.g. GitHub Repo or Spec Doc)" class="cm-proj-link-title sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+                    <input type="url" value="${escapeHtml(lnk.url || '')}" placeholder="https://github.com/... or Google Drive link" class="cm-proj-link-url flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-cyan-300 font-mono placeholder-gray-500 outline-none dir-ltr text-left">
+                    <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="Remove Link"><i class="fas fa-trash text-[11px]"></i></button>
                 </div>
             `;
 
             const rubricRowHtml = (crit = { aspect: '', description: '', points: 25 }) => `
                 <div class="cm-proj-rubric-row bg-black/40 border border-white/10 rounded-xl p-2.5 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                    <input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" placeholder="المعيار (مثال: صحة التصميم)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
-                    <input type="text" value="${escapeHtml(crit.description || '')}" placeholder="وصف المعيار (اختياري)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
+                    <input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" placeholder="Criterion (e.g. Functional Correctness)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+                    <input type="text" value="${escapeHtml(crit.description || '')}" placeholder="Criterion Description (optional)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <input type="number" min="0" value="${crit.points ?? 0}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="نقاط المعيار">
-                        <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-[11px]"></i></button>
+                        <input type="number" min="0" value="${crit.points ?? 0}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="Criterion Points">
+                        <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="Remove Criterion"><i class="fas fa-trash text-[11px]"></i></button>
                     </div>
                 </div>
             `;
@@ -1870,23 +1868,23 @@ async function generateFormFields(data = null) {
 
             coreFields = `
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">عنوان المشروع *</label>
-                    <input type="text" id="f-title" required value="${escapeHtml(data?.title || '')}" placeholder="مثال: مشروع تصميم معالج RISC-V مبسط" class="${inputStyle}">
+                    <label class="${labelStyle}">Project Title *</label>
+                    <input type="text" id="f-title" required value="${escapeHtml(data?.title || '')}" placeholder="e.g. Simplified RISC-V Processor Design Project" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">الوصف والمتطلبات الفنية *</label>
-                    <textarea id="f-desc" rows="4" required placeholder="المتطلبات التقنية ومعايير التقييم وطريقة العمل..." class="${inputStyle}">${escapeHtml(data?.description || '')}</textarea>
+                    <label class="${labelStyle}">Description & Technical Specifications *</label>
+                    <textarea id="f-desc" rows="4" required placeholder="Technical requirements, evaluation criteria, and deliverables..." class="${inputStyle}">${escapeHtml(data?.description || '')}</textarea>
                 </div>
 
                 <!-- Multi-Links Editor -->
                 <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> روابط المستندات وملفات البدء (يمكن إضافة أكثر من رابط)</label>
-                            <p class="text-[11px] text-gray-500 mt-0.5">أضف رابط GitHub أو Google Drive أو دليل المواصفات أو أي مراجع مساعدة للطالب</p>
+                            <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> Starter Files & Reference Links (Multiple Allowed)</label>
+                            <p class="text-[11px] text-gray-500 mt-0.5">Add GitHub, Google Drive, specification docs, or any helpful reference links for students</p>
                         </div>
                         <button type="button" onclick="window.cmAddProjectLinkRow()" class="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة رابط</span>
+                            <i class="fas fa-plus text-[10px]"></i> <span>Add Link</span>
                         </button>
                     </div>
                     <div id="cm-project-links-list" class="space-y-2">
@@ -1896,12 +1894,12 @@ async function generateFormFields(data = null) {
 
                 <!-- XP & Submission Method -->
                 <div>
-                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs ml-1"></i> النقاط المكتسبة (XP)</label>
+                    <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs mr-1"></i> Earned Points (XP)</label>
                     <input type="number" id="f-max-pts" value="${curMaxPts}" oninput="window.cmUpdateManualRubricSum()" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
                 </div>
                 <div class="md:col-span-2 space-y-1.5">
-                    <label class="${labelStyle}">طريقة التسليم المقبولة</label>
-                    <input type="text" id="f-method" value="${escapeHtml(data?.submission_method || 'github_link')}" placeholder="مثال: github_link أو drive_link أو zip_file" class="${inputStyle} dir-ltr text-left">
+                    <label class="${labelStyle}">Accepted Submission Method</label>
+                    <input type="text" id="f-method" value="${escapeHtml(data?.submission_method || 'github_link')}" placeholder="e.g. github_link, drive_link, or zip_file" class="${inputStyle} dir-ltr text-left">
                     <div class="flex flex-wrap gap-1.5 pt-0.5">
                         ${['github_link', 'drive_link', 'zip_file', 'pull_request', 'live_url', 'video_demo'].map(m => `
                             <button type="button" onclick="document.getElementById('f-method').value='${m}'" class="px-2 py-0.5 rounded-md bg-white/5 hover:bg-emerald-500/20 text-[10px] font-mono text-gray-400 hover:text-emerald-300 border border-white/10 transition-colors cursor-pointer">${m}</button>
@@ -1913,22 +1911,22 @@ async function generateFormFields(data = null) {
                 <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <label class="text-xs font-bold text-emerald-400 flex items-center gap-1.5"><i class="fas fa-list-check"></i> معايير التقييم (Rubric - اختياري)</label>
-                            <span id="cm-manual-rubric-sum" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${rubricSum === curMaxPts && existingRubric.length > 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 border border-white/10'}">مجموع المعايير: ${rubricSum} / ${curMaxPts}</span>
+                            <label class="text-xs font-bold text-emerald-400 flex items-center gap-1.5"><i class="fas fa-list-check"></i> Evaluation Rubric (Optional)</label>
+                            <span id="cm-manual-rubric-sum" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${rubricSum === curMaxPts && existingRubric.length > 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 border border-white/10'}">Criteria Total: ${rubricSum} / ${curMaxPts}</span>
                         </div>
                         <button type="button" onclick="window.cmAddManualRubricRow()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
-                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة معيار</span>
+                            <i class="fas fa-plus text-[10px]"></i> <span>Add Criterion</span>
                         </button>
                     </div>
                     <div id="cm-project-rubric-list" class="space-y-2">
-                        ${existingRubric.length > 0 ? existingRubric.map(r => rubricRowHtml(r)).join('') : '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم مضافة بعد — اضغط "إضافة معيار" لتوزيع درجات المشروع.</div>'}
+                        ${existingRubric.length > 0 ? existingRubric.map(r => rubricRowHtml(r)).join('') : '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">No rubric criteria added yet — click "Add Criterion" to distribute project points.</div>'}
                     </div>
                 </div>
             `;
         }
 
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                 ${coreFields}
                 <div id="cm-item-targets-slot" class="md:col-span-3 mt-2"></div>
             </div>
@@ -1936,95 +1934,95 @@ async function generateFormFields(data = null) {
     }
     else if (cmCurrentLevel === 'quiz_questions') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 dir-rtl text-right pb-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-left pb-10">
                 <!-- Cascading Filter Bar -->
                 <div class="md:col-span-2 p-4 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3">
                     <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
-                        <i class="fas fa-filter"></i> فلاتر تصفية الاختبارات
+                        <i class="fas fa-filter"></i> Quiz Filter Controls
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div><label class="${labelStyle}">تصفية بالمسار</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- كل المسارات --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
-                        <div><label class="${labelStyle}">تصفية بالمرحلة</label><select id="modal-filter-phase" class="${inputStyle}"><option value="">-- كل المراحل --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
-                        <div><label class="${labelStyle}">تصفية بالكورس</label><select id="modal-filter-course" class="${inputStyle}"><option value="">-- كل الكورسات --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
-                        <div><label class="${labelStyle}">الدرس المرتبط</label><select id="modal-filter-content" class="${inputStyle}"><option value="">-- كل الدروس --</option>${buildOpts(hData.contents, 'content_id', 'title', initContent)}</select></div>
+                        <div><label class="${labelStyle}">Filter by Track</label><select id="modal-filter-track" class="${inputStyle}"><option value="">-- All Tracks --</option>${buildOpts(hData.tracks, 'id', 'name', initTrack)}</select></div>
+                        <div><label class="${labelStyle}">Filter by Phase</label><select id="modal-filter-phase" class="${inputStyle}"><option value="">-- All Phases --</option>${buildOpts(hData.phases, 'phase_id', 'title', initPhase)}</select></div>
+                        <div><label class="${labelStyle}">Filter by Course</label><select id="modal-filter-course" class="${inputStyle}"><option value="">-- All Courses --</option>${buildOpts(hData.courses, 'course_id', 'title', initCourse)}</select></div>
+                        <div><label class="${labelStyle}">Linked Lesson</label><select id="modal-filter-content" class="${inputStyle}"><option value="">-- All Lessons --</option>${buildOpts(hData.contents, 'content_id', 'title', initContent)}</select></div>
                     </div>
                 </div>
                 
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">الاختبار التابع له (Quiz) *</label>
+                    <label class="${labelStyle}">Parent Quiz *</label>
                     <select id="f-quiz-id" required class="${inputStyle} border-b-primary/50">
-                        <option value="" disabled ${!data ? 'selected' : ''}>-- اختر الاختبار التابع له --</option>
+                        <option value="" disabled ${!data ? 'selected' : ''}>-- Select Parent Quiz --</option>
                         ${buildOpts(hData.quizzes, 'quiz_id', 'title', data?.quiz_id)}
                     </select>
                 </div>
                 
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">نص السؤال *</label>
-                    <textarea id="f-q-text" rows="3" required placeholder="أدخل صيغة السؤال بوضوح تام..." class="${inputStyle}">${data?.question_text || ''}</textarea>
+                    <label class="${labelStyle}">Question Text *</label>
+                    <textarea id="f-q-text" rows="3" required placeholder="Enter the question prompt clearly..." class="${inputStyle}">${data?.question_text || ''}</textarea>
                 </div>
                 
                 <div class="space-y-1">
-                    <label class="${labelStyle} text-blue-400 font-bold">الخيار أ (Option A) *</label>
+                    <label class="${labelStyle} text-blue-400 font-bold">Option A *</label>
                     <input type="text" id="f-opt-a" required value="${data?.option_a || ''}" class="${inputStyle}">
                 </div>
                 <div class="space-y-1">
-                    <label class="${labelStyle} text-green-400 font-bold">الخيار ب (Option B) *</label>
+                    <label class="${labelStyle} text-green-400 font-bold">Option B *</label>
                     <input type="text" id="f-opt-b" required value="${data?.option_b || ''}" class="${inputStyle}">
                 </div>
                 <div class="space-y-1">
-                    <label class="${labelStyle} text-amber-400 font-bold">الخيار ج (Option C)</label>
+                    <label class="${labelStyle} text-amber-400 font-bold">Option C</label>
                     <input type="text" id="f-opt-c" value="${data?.option_c || ''}" class="${inputStyle}">
                 </div>
                 <div class="space-y-1">
-                    <label class="${labelStyle} text-red-400 font-bold">الخيار د (Option D)</label>
+                    <label class="${labelStyle} text-red-400 font-bold">Option D</label>
                     <input type="text" id="f-opt-d" value="${data?.option_d || ''}" class="${inputStyle}">
                 </div>
                 
                 <div>
-                    <label class="${labelStyle} text-b-primary font-bold">الإجابة الصحيحة *</label>
+                    <label class="${labelStyle} text-b-primary font-bold">Correct Answer *</label>
                     <select id="f-correct" required class="${inputStyle} border-b-primary">
-                        <option value="A" ${data?.correct_answer === 'A' ? 'selected' : ''}>الخيار أ (A)</option>
-                        <option value="B" ${data?.correct_answer === 'B' ? 'selected' : ''}>الخيار ب (B)</option>
-                        <option value="C" ${data?.correct_answer === 'C' ? 'selected' : ''}>الخيار ج (C)</option>
-                        <option value="D" ${data?.correct_answer === 'D' ? 'selected' : ''}>الخيار د (D)</option>
+                        <option value="A" ${data?.correct_answer === 'A' ? 'selected' : ''}>Option A</option>
+                        <option value="B" ${data?.correct_answer === 'B' ? 'selected' : ''}>Option B</option>
+                        <option value="C" ${data?.correct_answer === 'C' ? 'selected' : ''}>Option C</option>
+                        <option value="D" ${data?.correct_answer === 'D' ? 'selected' : ''}>Option D</option>
                     </select>
                 </div>
                 <div>
-                    <label class="${labelStyle}">تلميح للسؤال (Hint) - اختياري</label>
-                    <textarea id="f-hint" rows="1" placeholder="تلميح يظهر للطالب عند الحاجة..." class="${inputStyle}">${data?.hint || ''}</textarea>
+                    <label class="${labelStyle}">Question Hint (Optional)</label>
+                    <textarea id="f-hint" rows="1" placeholder="Hint displayed to the student when needed..." class="${inputStyle}">${data?.hint || ''}</textarea>
                 </div>
             </div>
         `;
     }
     else if (cmCurrentLevel === 'curriculum_documents') {
         html += `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 dir-rtl text-right pb-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-left pb-10">
                 <!-- Basic Data -->
                 <div class="md:col-span-3 border-b border-white/10 pb-2">
-                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-file-alt"></i> البيانات الأساسية للوثيقة أو المرجع</h4>
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-file-alt"></i> Core Document / Reference Information</h4>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">العنوان الكامل للوثيقة / الكتاب *</label>
-                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: كتاب تصميم الدوائر الرقمية المتكاملة - Digital Integrated Circuits" class="${inputStyle}">
+                    <label class="${labelStyle}">Full Document / Book Title *</label>
+                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="e.g. Digital Integrated Circuits: A Design Perspective" class="${inputStyle}">
                 </div>
                 <div>
-                    <label class="${labelStyle}">الاسم المختصر</label>
-                    <input type="text" id="f-short-title" value="${data?.short_title || ''}" placeholder="مثال: مرجع ASIC" class="${inputStyle}">
+                    <label class="${labelStyle}">Short Title</label>
+                    <input type="text" id="f-short-title" value="${data?.short_title || ''}" placeholder="e.g. ASIC Reference" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="${labelStyle}">الوصف ومحتوى الوثيقة</label>
-                    <textarea id="f-desc" rows="3" placeholder="وصف موجز لمحتويات الملف أو الكتاب..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <label class="${labelStyle}">Document Description & Contents</label>
+                    <textarea id="f-desc" rows="3" placeholder="Brief summary of the document or book contents..." class="${inputStyle}">${data?.description || ''}</textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">رابط صورة الغلاف (Cover URL)</label>
+                    <label class="${labelStyle}">Cover Image URL</label>
                     <input type="text" id="f-cover-url" value="${data?.cover_url || ''}" placeholder="https://..." class="${inputStyle} dir-ltr">
                 </div>
                 <div>
-                    <label class="${labelStyle}">رابط المصغر (Thumbnail URL)</label>
+                    <label class="${labelStyle}">Thumbnail URL</label>
                     <input type="text" id="f-thumbnail-url" value="${data?.thumbnail_url || ''}" placeholder="https://..." class="${inputStyle} dir-ltr">
                 </div>
                 <div>
-                    <label class="${labelStyle}">نوع الوثيقة *</label>
+                    <label class="${labelStyle}">Document Type *</label>
                     <select id="f-doc-type" required class="${inputStyle}">
                         <option value="PDF" ${data?.document_type === 'PDF'?'selected':''}>PDF</option>
                         <option value="Book" ${data?.document_type === 'Book'?'selected':''}>Book</option>
@@ -2038,15 +2036,15 @@ async function generateFormFields(data = null) {
                     </select>
                 </div>
                 <div>
-                    <label class="${labelStyle}">الأهمية للطلاب *</label>
+                    <label class="${labelStyle}">Student Importance *</label>
                     <select id="f-importance" required class="${inputStyle}">
-                        <option value="Required" ${data?.importance === 'Required'?'selected':''}>إلزامي (Required)</option>
-                        <option value="Recommended" ${data?.importance === 'Recommended'?'selected':''}>موصى به (Recommended)</option>
-                        <option value="Optional" ${data?.importance === 'Optional'?'selected':''}>اختياري (Optional)</option>
+                        <option value="Required" ${data?.importance === 'Required'?'selected':''}>Required</option>
+                        <option value="Recommended" ${data?.importance === 'Recommended'?'selected':''}>Recommended</option>
+                        <option value="Optional" ${data?.importance === 'Optional'?'selected':''}>Optional</option>
                     </select>
                 </div>
                 <div>
-                    <label class="${labelStyle}">ترتيب العرض (Display Order)</label>
+                    <label class="${labelStyle}">Display Order</label>
                     <input type="number" id="f-order" value="${data?.order_index || 0}" class="${inputStyle}">
                 </div>
 
@@ -2055,12 +2053,12 @@ async function generateFormFields(data = null) {
 
                 <!-- Source & View Mode -->
                 <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
-                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-cloud"></i> المصدر وطريقة العرض</h4>
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-cloud"></i> Source & View Mode</h4>
                 </div>
                 <div>
-                    <label class="${labelStyle}">المصدر *</label>
+                    <label class="${labelStyle}">Source Type *</label>
                     <select id="f-source-type" required class="${inputStyle}">
-                        <option value="Direct URL" ${data?.source_type === 'Direct URL'?'selected':''}>رابط مباشر (Direct URL)</option>
+                        <option value="Direct URL" ${data?.source_type === 'Direct URL'?'selected':''}>Direct URL</option>
                         <option value="Google Drive" ${data?.source_type === 'Google Drive'?'selected':''}>Google Drive</option>
                         <option value="OneDrive" ${data?.source_type === 'OneDrive'?'selected':''}>OneDrive</option>
                         <option value="Dropbox" ${data?.source_type === 'Dropbox'?'selected':''}>Dropbox</option>
@@ -2069,38 +2067,38 @@ async function generateFormFields(data = null) {
                         <option value="Supabase Storage" ${data?.source_type === 'Supabase Storage'?'selected':''}>Supabase Storage</option>
                     </select>
                 </div>
-                <div class="md:col-span-2"><label class="${labelStyle}">رابط أو معرف الملف (Source URL / ID) *</label><input type="text" id="f-source-url" required value="${data?.source_url || ''}" placeholder="https://... أو معرف الملف" class="${inputStyle} dir-ltr"></div>
+                <div class="md:col-span-2"><label class="${labelStyle}">Source URL / File ID *</label><input type="text" id="f-source-url" required value="${data?.source_url || ''}" placeholder="https://... or File ID" class="${inputStyle} dir-ltr"></div>
                 <div>
-                    <label class="${labelStyle}">طريقة العرض *</label>
+                    <label class="${labelStyle}">View Mode *</label>
                     <select id="f-view-mode" required class="${inputStyle}">
-                        <option value="embed" ${data?.view_mode === 'embed'?'selected':''}>تضمين داخل المنصة (Embed)</option>
-                        <option value="external" ${data?.view_mode === 'external'?'selected':''}>فتح نافذة خارجية (Open External)</option>
+                        <option value="embed" ${data?.view_mode === 'embed'?'selected':''}>Embed Inside Platform</option>
+                        <option value="external" ${data?.view_mode === 'external'?'selected':''}>Open in External Tab</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="${labelStyle}">شرط اعتبار المقال مقروءاً (Completion Trigger) *</label>
+                    <label class="${labelStyle}">Completion Trigger *</label>
                     <select id="f-completion-trigger" required class="${inputStyle}">
-                        <option value="mark_complete" ${data?.completion_trigger === 'mark_complete'?'selected':''}>الضغط على زر الإكمال (Mark as Complete)</option>
-                        <option value="open" ${data?.completion_trigger === 'open'?'selected':''}>بمجرد فتح الملف (Open)</option>
-                        <option value="pages" ${data?.completion_trigger === 'pages'?'selected':''}>قراءة عدد محدد من الصفحات (Pages Read)</option>
-                        <option value="last_page" ${data?.completion_trigger === 'last_page'?'selected':''}>الوصول لآخر صفحة (Last Page)</option>
-                        <option value="time" ${data?.completion_trigger === 'time'?'selected':''}>قضاء وقت محدد من الزمن (Time Spent)</option>
+                        <option value="mark_complete" ${data?.completion_trigger === 'mark_complete'?'selected':''}>Click "Mark as Complete" Button</option>
+                        <option value="open" ${data?.completion_trigger === 'open'?'selected':''}>Upon Opening File</option>
+                        <option value="pages" ${data?.completion_trigger === 'pages'?'selected':''}>Read Specific Page Count</option>
+                        <option value="last_page" ${data?.completion_trigger === 'last_page'?'selected':''}>Reach Last Page</option>
+                        <option value="time" ${data?.completion_trigger === 'time'?'selected':''}>Spend Specific Reading Time</option>
                     </select>
                 </div>
 
                 <!-- Gamification -->
                 <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
-                    <h4 class="text-sm font-bold text-yellow-400 flex items-center gap-2"><i class="fas fa-star"></i> إعدادات الإكمال والـ XP</h4>
+                    <h4 class="text-sm font-bold text-yellow-400 flex items-center gap-2"><i class="fas fa-star"></i> Completion & XP Settings</h4>
                 </div>
-                <div><label class="${labelStyle}">عدد الصفحات المطلوب قراءتها (إن وجد)</label><input type="number" id="f-completion-pages" value="${data?.completion_pages_count || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الوقت المطلوب بالثواني (إن وجد)</label><input type="number" id="f-completion-time" value="${data?.completion_time_seconds || ''}" class="${inputStyle}"></div>
-                <div><label class="${labelStyle}">الوقت المتوقع للقراءة بالدقائق</label><input type="number" id="f-reading-time" value="${data?.estimated_reading_time || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">Required Pages Count (if applicable)</label><input type="number" id="f-completion-pages" value="${data?.completion_pages_count || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">Required Time in Seconds (if applicable)</label><input type="number" id="f-completion-time" value="${data?.completion_time_seconds || ''}" class="${inputStyle}"></div>
+                <div><label class="${labelStyle}">Estimated Reading Time (Minutes)</label><input type="number" id="f-reading-time" value="${data?.estimated_reading_time || ''}" class="${inputStyle}"></div>
                 <div class="md:col-span-3 p-5 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center shrink-0"><i class="fas fa-star text-base"></i></div>
                         <div>
-                            <span class="text-sm font-bold text-white block">نقاط الـ XP المكتسبة عند إكمال القراءة</span>
-                            <span class="text-xs text-gray-400 mt-0.5 block">تُضاف مباشرة لرصيد الطالب عند تحقيق شرط الإكمال</span>
+                            <span class="text-sm font-bold text-white block">XP Reward on Completion</span>
+                            <span class="text-xs text-gray-400 mt-0.5 block">Awarded directly to the student upon meeting the completion condition</span>
                         </div>
                     </div>
                     <input type="number" id="f-base-xp" min="0" value="${data?.xp_reward ?? 10}" class="${inputStyle} border-yellow-500/40 focus:border-yellow-500 text-yellow-400 font-bold w-32 text-center text-base">
@@ -2108,15 +2106,15 @@ async function generateFormFields(data = null) {
 
                 <!-- Permissions -->
                 <div class="md:col-span-3 border-b border-white/10 pb-2 pt-3">
-                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-shield-alt"></i> الصلاحيات وتاريخ الصلاحية</h4>
+                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-2"><i class="fas fa-shield-alt"></i> Permissions & Expiration Date</h4>
                 </div>
                 <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/40 p-4 rounded-2xl border border-white/5">
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-download" ${!data || data?.allow_download ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالتحميل</label>
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-print" ${!data || data?.allow_print ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالطباعة</label>
-                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-copy" ${!data || data?.allow_copy ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> السماح بالنسخ</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-download" ${!data || data?.allow_download ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> Allow Download</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-print" ${!data || data?.allow_print ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> Allow Print</label>
+                    <label class="flex items-center gap-2 text-white cursor-pointer"><input type="checkbox" id="f-allow-copy" ${!data || data?.allow_copy ? 'checked' : ''} class="w-4 h-4 rounded text-cyan-500"> Allow Copy</label>
                 </div>
                 <div>
-                    <label class="${labelStyle}">إخفاء الملف تلقائياً بعد تاريخ</label>
+                    <label class="${labelStyle}">Auto-Hide Document After Date</label>
                     <input type="datetime-local" id="f-expiry-date" value="${data?.available_until ? new Date(data.available_until).toISOString().slice(0, 16) : ''}" class="${inputStyle} dir-ltr">
                 </div>
             </div>
@@ -2176,8 +2174,8 @@ function bindModalCascading(hData) {
         if (pSel) {
             const prevPhase = pSel.value;
             const optDefault = pSel.id === 'f-phase-id' 
-                ? '<option value="">-- اختر المرحلة --</option>' 
-                : (isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>');
+                ? '<option value="">-- Select Phase --</option>' 
+                : (isFilter ? '<option value="">-- All --</option>' : '<option value="">-- Unlinked --</option>');
             const filteredPhases = hData.phases.filter(x => x.phase_id && (!v || String(x.track_id) === String(v)));
             pSel.innerHTML = optDefault + filteredPhases.map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
             const keepPrev = prevPhase && filteredPhases.some(x => String(x.phase_id) === String(prevPhase));
@@ -2192,8 +2190,8 @@ function bindModalCascading(hData) {
         if (cSel) {
             const prevCourse = cSel.value;
             const optDefault = cSel.id === 'f-course-id'
-                ? '<option value="">-- اختر الكورس --</option>'
-                : (isFilter ? '<option value="">-- الكل --</option>' : (cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>'));
+                ? '<option value="">-- Select Course --</option>'
+                : (isFilter ? '<option value="">-- All --</option>' : (cSel.id === 'f-related' ? '<option value="">None (Standalone)</option>' : '<option value="">-- Unlinked --</option>'));
             const filteredCourses = hData.courses.filter(x => x.course_id && (!v || String(x.phase_id) === String(v)));
             cSel.innerHTML = optDefault + filteredCourses.map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
             const keepPrev = prevCourse && filteredCourses.some(x => String(x.course_id) === String(prevCourse));
@@ -2205,7 +2203,7 @@ function bindModalCascading(hData) {
     if (cSel) cSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-course' || cSel.id === 'f-related';
-        const optDefault = isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>';
+        const optDefault = isFilter ? '<option value="">-- All --</option>' : '<option value="">-- Unlinked --</option>';
         if (cntSel) {
             const prevCnt = cntSel.value;
             const filteredContents = hData.contents.filter(x => !v || String(x.course_id) === String(v));
@@ -2218,7 +2216,7 @@ function bindModalCascading(hData) {
 
     if (cntSel) cntSel.addEventListener('change', (e) => {
         const v = e.target.value;
-        if (qSel) qSel.innerHTML = '<option value="">-- اختر الاختبار --</option>' + hData.quizzes.filter(x => {
+        if (qSel) qSel.innerHTML = '<option value="">-- Select Quiz --</option>' + hData.quizzes.filter(x => {
             if (!v) return true;
             const att = getAttachmentsForTarget(hData.links || [], 'content', v);
             return att.quizzes.includes(String(x.quiz_id));
@@ -2231,17 +2229,17 @@ async function handleFormSubmit(e) {
     const btn = document.getElementById('cm-btn-save');
     const originalText = btn.innerHTML;
 
-    // التحقق المسبق من الحقول الإجبارية وإظهار تنبيه لطيف إذا كان هناك حقل ناقص
+    // Validate required fields beforehand and display a friendly warning if any is missing
     const reqFields = Array.from(document.querySelectorAll('#cm-form-fields [required]'));
     for (const f of reqFields) {
         if (!f.value || !f.value.trim()) {
-            const label = f.closest('div')?.querySelector('label')?.innerText.replace('*', '').trim() || 'أحد الحقول المطلوبة';
-            window.showToast(`يرجى تحديد أو إدخال: ${label}`, 'warning');
+            const label = f.closest('div')?.querySelector('label')?.innerText.replace('*', '').trim() || 'a required field';
+            window.showToast(`Please fill in or select: ${label}`, 'warning');
             return;
         }
     }
 
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     btn.disabled = true;
 
     try {
@@ -2347,17 +2345,17 @@ async function handleFormSubmit(e) {
                 const repairedId = (payload[pk] && String(payload[pk]).trim()) || generateSystemID(pkPrefixes[cmCurrentLevel]);
                 payload[pk] = repairedId;
 
-                // 1. محاولة إنشاء النسخة السليمة بالمعرف الجديد أولاً
+                // 1. Create the repaired record with the new ID first
                 const { data: clonedRows, error: cloneErr } = await supabase
                     .from(cmCurrentLevel)
                     .insert([payload])
                     .select();
                 if (cloneErr) throw cloneErr;
                 if (!clonedRows || clonedRows.length === 0) {
-                    throw new Error('تعذر إنشاء السجل المصحح — تأكد من صلاحيات الإضافة (RLS).');
+                    throw new Error('Could not create repaired record — check insert RLS permissions.');
                 }
 
-                // 2. نقل كافة الجداول التابعة من المعرف الفارغ القديم إلى المعرف الجديد
+                // 2. Repoint dependent tables from the old empty ID to the new ID
                 try {
                     if (cmCurrentLevel === 'courses') {
                         await supabase.from('course_materials').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId);
@@ -2374,16 +2372,16 @@ async function handleFormSubmit(e) {
                         await supabase.from('team_tasks').update({ content_id: repairedId }).eq('content_id', cmCurrentEditId);
                         try { await supabase.from('curriculum_documents').update({ lesson_id: repairedId }).eq('lesson_id', cmCurrentEditId); } catch (_) {}
                     }
-                    // 3. حذف السجل القديم الفارغ بعد نقل كل الارتباطات
+                    // 3. Delete the old empty-ID record after repointing all links
                     await supabase.from(cmCurrentLevel).delete().eq(pk, cmCurrentEditId);
                 } catch (repointErr) {
-                    // التراجع عن النسخة الجديدة إن فشل النقل
+                    // Roll back the new record if repointing fails
                     await supabase.from(cmCurrentLevel).delete().eq(pk, repairedId);
                     throw repointErr;
                 }
                 insertedId = repairedId;
             } else {
-                // في التعديل العادي: لا نسمح أبداً بتغيير أو مسح المفتاح الأساسي (Primary Key)
+                // Standard edit: never overwrite or clear Primary Key
                 if (hasManualPk && Object.prototype.hasOwnProperty.call(payload, pk)) {
                     delete payload[pk];
                 }
@@ -2394,7 +2392,7 @@ async function handleFormSubmit(e) {
                     .select();
                 if (error) throw error;
                 if (!updatedRows || updatedRows.length === 0) {
-                    throw new Error('لم يتم تعديل أي سجل في قاعدة البيانات (تأكد من صلاحيات التعديل RLS أو صحة معرف السجل).');
+                    throw new Error('No database record was updated (check update RLS policies or record ID).');
                 }
                 insertedId = updatedRows[0]?.[pk] ?? cmCurrentEditId;
             }
@@ -2407,7 +2405,7 @@ async function handleFormSubmit(e) {
             if (inserted && inserted.length > 0) insertedId = inserted[0][pk];
         }
 
-        // 💡 حفظ الروابط المتعددة (الكورسات والمحتويات <-> الكويزات والمشاريع والمستندات)
+        // Save multi-links (Courses & Contents <-> Quizzes, Projects, Documents)
         let migrationWarn = false;
         if (insertedId && pendingTargetAttachments && (cmCurrentLevel === 'courses' || cmCurrentLevel === 'course_materials')) {
             const targetType = cmCurrentLevel === 'courses' ? 'course' : 'content';
@@ -2420,16 +2418,16 @@ async function handleFormSubmit(e) {
         }
 
         if (migrationWarn) {
-            window.showToast("تم حفظ السجل، لكن لحفظ الروابط المتعددة يرجى تشغيل ملف docs/create_curriculum_links.sql في Supabase أولاً.", "warning");
+            window.showToast("Record saved, but to persist multiple links please run docs/create_curriculum_links.sql in Supabase first.", "warning");
         } else {
-            window.showToast(isEditing ? "تم التحديث وحفظ جميع الروابط بنجاح!" : "تمت الإضافة وحفظ جميع الروابط بنجاح!", "success");
+            window.showToast(isEditing ? "Record and all links updated!" : "Record and all links created!", "success");
         }
         window.cmCloseModal();
-        hierarchyCache = null; // تفريغ الذاكرة لضمان تحديث القوائم في الإضافات القادمة
+        hierarchyCache = null;
         loadTableData(); 
 
     } catch (err) {
-        window.showToast("حدث خطأ أثناء الحفظ: " + err.message, "error");
+        window.showToast("Error saving record: " + err.message, "error");
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -2439,26 +2437,26 @@ async function handleFormSubmit(e) {
 window.cmEditItem = async (id) => {
     const item = rawData.find(r => String(r[getPrimaryKey()] ?? '') === String(id ?? ''));
     if (!item) {
-        window.showToast?.('لم يتم العثور على السجل المطلوب تعديله.', 'error');
+        window.showToast?.('Could not find the requested record to edit.', 'error');
         return;
     }
     if (!getCmPermission('edit', cmCurrentLevel, item)) {
-        window.showToast?.('ليس لديك صلاحية لتعديل هذا السجل.', 'error');
+        window.showToast?.('You do not have permission to edit this record.', 'error');
         return;
     }
     cmIsEditMode = true;
     cmCurrentEditId = item[getPrimaryKey()];
-    document.getElementById('cm-modal-title').innerText = `تعديل السجل`;
+    document.getElementById('cm-modal-title').innerText = `Edit Record`;
     document.getElementById('cm-crud-modal').classList.remove('hidden');
     await generateFormFields(item);
     if (window.initSearchableSelects) window.initSearchableSelects();
 };
 
-// 💡 نافذة الإدارة السريعة للمرفقات (لأي كورس أو درس/فيديو بدون فتح نموذج التعديل الكامل)
+// Quick attachments modal for any course or lesson/video without opening full edit modal
 window.cmOpenAttachmentsModal = async (targetType, targetId, targetTitle) => {
     const level = targetType === 'course' ? 'courses' : 'course_materials';
     if (!getCmPermission('edit', level)) {
-        window.showToast?.('ليس لديك صلاحية لتعديل مرفقات هذا العنصر.', 'error');
+        window.showToast?.('You do not have permission to edit attachments for this item.', 'error');
         return;
     }
     const hData = await fetchHierarchyData();
@@ -2471,9 +2469,9 @@ window.cmOpenAttachmentsModal = async (targetType, targetId, targetTitle) => {
         onSave: async (values) => {
             const res = await syncTargetAttachments(supabase, targetType, targetId, values, hData);
             if (res.needsMigrationForExtraLinks) {
-                window.showToast?.('تم تحديث الارتباطات الأساسية، ولتفعيل حفظ الروابط المتعددة يرجى تشغيل docs/create_curriculum_links.sql في Supabase.', 'warning');
+                window.showToast?.('Core links updated. To enable unlimited multi-links, run docs/create_curriculum_links.sql in Supabase.', 'warning');
             } else {
-                window.showToast?.('تم حفظ وتنظيم المرفقات بنجاح!', 'success');
+                window.showToast?.('Attachments saved and organized!', 'success');
             }
             hierarchyCache = null;
             await loadTableData();
@@ -2488,15 +2486,15 @@ function ensureDeleteModalExists() {
     
     const container = document.createElement('div');
     container.innerHTML = `
-        <div id="cm-delete-modal" class="fixed inset-0 z-[1000] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity dir-rtl">
-            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-fade-in relative text-right">
+        <div id="cm-delete-modal" class="fixed inset-0 z-[1000] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity">
+            <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-fade-in relative text-left">
                 <!-- Glowing Accent -->
-                <div class="absolute top-0 right-0 w-full h-32 bg-red-500/5 blur-[50px] pointer-events-none"></div>
+                <div class="absolute top-0 left-0 w-full h-32 bg-red-500/5 blur-[50px] pointer-events-none"></div>
                 
                 <div class="p-5 border-b border-white/10 bg-white/5 flex justify-between items-center relative z-10">
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
                         <i class="fas fa-trash-alt text-red-500"></i>
-                        <span id="cm-delete-title">تأكيد الحذف المتقدم</span>
+                        <span id="cm-delete-title">Advanced Delete Confirmation</span>
                     </h3>
                     <button onclick="document.getElementById('cm-delete-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-400 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
                         <i class="fas fa-times"></i>
@@ -2511,8 +2509,8 @@ function ensureDeleteModalExists() {
                     </div>
                     
                     <div class="pt-4 border-t border-white/10 flex gap-3">
-                        <button type="button" id="cm-delete-btn-cancel" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all text-xs">إلغاء</button>
-                        <button type="button" id="cm-delete-btn-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all text-xs">تأكيد الحذف</button>
+                        <button type="button" id="cm-delete-btn-cancel" class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold transition-all text-xs">Cancel</button>
+                        <button type="button" id="cm-delete-btn-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all text-xs">Confirm Delete</button>
                     </div>
                 </div>
             </div>
@@ -2532,18 +2530,18 @@ function showCustomDeleteModal(level, itemName) {
         const confirmBtn = document.getElementById('cm-delete-btn-confirm');
         const cancelBtn = document.getElementById('cm-delete-btn-cancel');
         
-        titleEl.textContent = "تأكيد الحذف المتقدم";
+        titleEl.textContent = "Advanced Delete Confirmation";
         
         let levelTitle = LEVELS[level]?.title || level;
-        if (level === 'tracks') levelTitle = 'مسار (Track)';
-        else if (level === 'phases') levelTitle = 'مرحلة (Phase)';
-        else if (level === 'courses') levelTitle = 'كورس (Course)';
-        else if (level === 'course_materials') levelTitle = 'مادة تعليمية (Content)';
-        else if (level === 'quizzes') levelTitle = 'اختبار (Quiz)';
-        else if (level === 'quiz_questions') levelTitle = 'سؤال اختبار';
-        else if (level === 'projects') levelTitle = 'مشروع (Project)';
+        if (level === 'tracks') levelTitle = 'Track';
+        else if (level === 'phases') levelTitle = 'Phase';
+        else if (level === 'courses') levelTitle = 'Course';
+        else if (level === 'course_materials') levelTitle = 'Learning Material';
+        else if (level === 'quizzes') levelTitle = 'Quiz';
+        else if (level === 'quiz_questions') levelTitle = 'Quiz Question';
+        else if (level === 'projects') levelTitle = 'Project';
         
-        messageEl.innerHTML = `أنت على وشك حذف <strong>${itemName}</strong> (${levelTitle}).<br>برجاء تحديد الإجراء المطلوب للبيانات المرتبطة به:`;
+        messageEl.innerHTML = `You are about to delete <strong>${itemName}</strong> (${levelTitle}).<br>Please choose how to handle linked data:`;
         
         // Dynamic checkboxes based on level
         let optionsHtml = '';
@@ -2551,14 +2549,14 @@ function showCustomDeleteModal(level, itemName) {
             optionsHtml = `
                 <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
                     <input type="checkbox" id="cm-del-cascade-phases" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0">
-                    <span>🔥 حذف جميع المراحل (Phases) المرتبطة بهذا المسار</span>
+                    <span>🔥 Delete all Phases linked to this Track</span>
                 </label>
             `;
         } else if (level === 'phases') {
             optionsHtml = `
                 <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
                     <input type="checkbox" id="cm-del-cascade-courses" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0">
-                    <span>🔥 حذف جميع الكورسات (Courses) المرتبطة بهذه المرحلة</span>
+                    <span>🔥 Delete all Courses linked to this Phase</span>
                 </label>
             `;
         } else if (level === 'courses') {
@@ -2566,16 +2564,16 @@ function showCustomDeleteModal(level, itemName) {
                 <div class="space-y-2">
                     <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
                         <input type="checkbox" id="cm-del-cascade-materials" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
-                        <span>🎬 حذف مواد ومحتويات هذا الكورس (فيديوهات، ملفات، إلخ)</span>
+                        <span>🎬 Delete course materials & lessons (videos, sections, etc.)</span>
                     </label>
-                    <div id="cm-course-child-options" class="mr-6 space-y-2">
+                    <div id="cm-course-child-options" class="ml-6 space-y-2">
                         <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 transition-all">
                             <input type="checkbox" id="cm-del-cascade-quizzes" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
-                            <span>📝 حذف الاختبارات (Quizzes) المرتبطة بمواد هذا الكورس</span>
+                            <span>📝 Delete Quizzes linked to this course's materials</span>
                         </label>
                         <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 transition-all">
                             <input type="checkbox" id="cm-del-cascade-projects" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
-                            <span>💻 حذف المشاريع (Projects) المرتبطة بمواد هذا الكورس</span>
+                            <span>💻 Delete Projects linked to this course's materials</span>
                         </label>
                     </div>
                 </div>
@@ -2585,16 +2583,16 @@ function showCustomDeleteModal(level, itemName) {
                 <div class="space-y-2">
                     <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
                         <input type="checkbox" id="cm-del-cascade-mat-quiz" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
-                        <span>📝 حذف الاختبار المرتبط (Quiz) إن وجد</span>
+                        <span>📝 Delete linked Quiz (if any)</span>
                     </label>
                     <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 hover:bg-white/10 p-3 rounded-xl border border-white/5 transition-all">
                         <input type="checkbox" id="cm-del-cascade-mat-project" class="w-4 h-4 rounded border-white/10 text-b-primary bg-black focus:ring-0 focus:ring-offset-0" checked>
-                        <span>💻 حذف المشروع المرتبط (Project) إن وجد</span>
+                        <span>💻 Delete linked Project (if any)</span>
                     </label>
                 </div>
             `;
         } else {
-            optionsHtml = `<p class="text-xs text-yellow-500 font-bold bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl"><i class="fas fa-exclamation-triangle"></i> سيتم حذف هذا السجل نهائياً. لا توجد تبعيات معقدة بحاجة للاختيار.</p>`;
+            optionsHtml = `<p class="text-xs text-yellow-500 font-bold bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl"><i class="fas fa-exclamation-triangle"></i> This record will be permanently deleted. No nested dependencies require selection.</p>`;
         }
         
         optionsContainer.innerHTML = optionsHtml;
@@ -2645,7 +2643,7 @@ function showCustomDeleteModal(level, itemName) {
     });
 }
 
-// Helpers for cascading deletes (مع التحقق الفعلي من حذف الصف من قاعدة البيانات ومنع الكذب عند فشل RLS أو المعرف الفارغ)
+// Helpers for cascading deletes (verifying row deletion from DB)
 async function assertDeletedRow(tableName, pkColumn, idValue, entityLabel) {
     const { data: deletedRows, error } = await supabase
         .from(tableName)
@@ -2654,7 +2652,7 @@ async function assertDeletedRow(tableName, pkColumn, idValue, entityLabel) {
         .select(pkColumn);
     if (error) throw error;
     if (!deletedRows || deletedRows.length === 0) {
-        throw new Error(`لم يتم حذف ${entityLabel} من قاعدة البيانات — يرجى التحقق من سياسات الصلاحيات (RLS Policy) في Supabase للجدول "${tableName}" أو من وجود السجل.`);
+        throw new Error(`Could not delete ${entityLabel} from the database — please verify Supabase RLS policies for table "${tableName}" or confirm the record exists.`);
     }
     return deletedRows;
 }
@@ -2679,7 +2677,7 @@ async function deleteQuizCascade(quizId) {
     if (errMat) console.warn("Could not unlink ref_quiz_id from course_materials:", errMat);
 
     // 5. delete quiz (verify deletion)
-    await assertDeletedRow('quizzes', 'quiz_id', quizId, 'الاختبار');
+    await assertDeletedRow('quizzes', 'quiz_id', quizId, 'Quiz');
 }
 
 async function deleteProjectCascade(projectId) {
@@ -2694,7 +2692,7 @@ async function deleteProjectCascade(projectId) {
     if (errMat) console.warn("Could not unlink ref_project_id from course_materials:", errMat);
 
     // 3. delete project (verify deletion)
-    await assertDeletedRow('projects', 'id', projectId, 'المشروع');
+    await assertDeletedRow('projects', 'id', projectId, 'Project');
 }
 
 async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true, deleteProject: true }) {
@@ -2741,7 +2739,7 @@ async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true,
     }
     
     // 6. Delete the material itself (verify deletion)
-    await assertDeletedRow('course_materials', 'content_id', contentId, 'المحتوى التعليمي');
+    await assertDeletedRow('course_materials', 'content_id', contentId, 'Learning Material');
 }
 
 async function deleteCourseCascade(courseId, selections = { deleteMaterials: true, deleteQuizzes: true, deleteProjects: true }) {
@@ -2810,7 +2808,7 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
                 .select('content_id');
             if (delMatErr) throw delMatErr;
             if (!deletedMats || deletedMats.length === 0) {
-                throw new Error('تعذر حذف مواد الكورس (course_materials) — يرجى التحقق من صلاحيات الحذف (RLS) في Supabase.');
+                throw new Error('Could not delete course materials (course_materials) — please check delete RLS permissions in Supabase.');
             }
         }
     } else {
@@ -2819,7 +2817,7 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
     }
     
     // 5. Delete the course itself (verify deletion)
-    await assertDeletedRow('courses', 'course_id', courseId, 'الكورس');
+    await assertDeletedRow('courses', 'course_id', courseId, 'Course');
 }
 
 async function deletePhaseCascade(phaseId, selections = { deleteCourses: true }) {
@@ -2845,7 +2843,7 @@ async function deletePhaseCascade(phaseId, selections = { deleteCourses: true })
         if (unlinkErr) throw unlinkErr;
     }
     
-    await assertDeletedRow('phases', 'phase_id', phaseId, 'المرحلة');
+    await assertDeletedRow('phases', 'phase_id', phaseId, 'Phase');
 }
 
 async function deleteTrackCascade(trackId, selections = { deletePhases: true }) {
@@ -2871,29 +2869,29 @@ async function deleteTrackCascade(trackId, selections = { deletePhases: true }) 
         if (unlinkErr) throw unlinkErr;
     }
     
-    await assertDeletedRow('tracks', 'id', trackId, 'المسار');
+    await assertDeletedRow('tracks', 'id', trackId, 'Track');
 }
 
 window.cmDeleteItem = async (id) => {
     const pk = getPrimaryKey();
     const item = rawData.find(r => String(r[pk] ?? '') === String(id ?? ''));
     if (!item) {
-        window.showToast("لم يتم العثور على العنصر المراد حذفه.", "error");
+        window.showToast("Could not find the item to delete.", "error");
         return;
     }
     if (!getCmPermission('delete', cmCurrentLevel, item)) {
-        window.showToast?.('ليس لديك صلاحية لحذف هذا السجل.', 'error');
+        window.showToast?.('You do not have permission to delete this record.', 'error');
         return;
     }
     
     const actualId = item[pk];
     const titleKey = LEVELS[cmCurrentLevel]?.title || 'title';
-    const itemName = item[titleKey] || item.name || actualId || '(بدون معرف)';
+    const itemName = item[titleKey] || item.name || actualId || '(No ID)';
     
     const { confirmed, selections } = await showCustomDeleteModal(cmCurrentLevel, itemName);
     if (!confirmed) return;
     
-    window.showToast("جاري تنفيذ عملية الحذف...", "info");
+    window.showToast("Executing deletion...", "info");
     
     try {
         if (cmCurrentLevel === 'tracks') {
@@ -2910,20 +2908,20 @@ window.cmDeleteItem = async (id) => {
             await deleteProjectCascade(actualId);
         } else if (cmCurrentLevel === 'curriculum_documents') {
             if (String(actualId).trim() !== '') await deleteLinksForItem(supabase, 'document', actualId);
-            await assertDeletedRow('curriculum_documents', 'id', actualId, 'المستند');
+            await assertDeletedRow('curriculum_documents', 'id', actualId, 'Document');
         } else {
-            await assertDeletedRow(cmCurrentLevel, pk, actualId, 'السجل');
+            await assertDeletedRow(cmCurrentLevel, pk, actualId, 'Record');
         }
         
         // Reset the cache so that filters are reloaded with fresh database values
         hierarchyCache = null;
         
-        window.showToast("تم الحذف بنجاح", "success");
+        window.showToast("Deleted successfully", "success");
         loadTableData();
     } catch (err) {
         console.error("Delete Error:", err);
         const detailMsg = err.details || err.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-        window.showToast("فشل الحذف: " + detailMsg, "error");
+        window.showToast("Deletion failed: " + detailMsg, "error");
     }
 };
 
@@ -2966,34 +2964,34 @@ window.ytImportEngine = {
         if (step1) { step1.classList.remove('hidden', '-translate-x-full', 'translate-x-full'); step1.classList.add('flex'); }
         if (step2) { step2.classList.add('hidden'); step2.classList.remove('flex', 'translate-x-full', '-translate-x-full'); }
         document.getElementById('yt-import-wizard').classList.remove('hidden');
-        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 1: إدخال رابط قائمة التشغيل';
+        document.getElementById('yt-wizard-step-text').innerText = 'Step 1: Enter Playlist URL';
         const backBtn = document.getElementById('btn-yt-back-step1');
         if (backBtn) {
             backBtn.classList.add('hidden');
             backBtn.classList.remove('flex');
         }
         
-        // جلب المسارات 
+        // Fetch tracks
         const { data: tracks } = await supabase.from('tracks').select('id, name');
         const trackSelect = document.getElementById('yt-course-track');
-        trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار (Track) --</option>' + 
+        trackSelect.innerHTML = '<option value="" disabled selected>-- Select Track --</option>' + 
             (tracks || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
             
-        // جلب الكورسات للارتباط
+        // Fetch courses for linking
         const { data: courses } = await supabase.from('courses').select('course_id, title');
         const relatedSelect = document.getElementById('yt-course-related');
         if (relatedSelect) {
-            relatedSelect.innerHTML = '<option value="">بدون ارتباط (مستقل)</option>' + 
+            relatedSelect.innerHTML = '<option value="">None (Standalone)</option>' + 
                 (courses || []).map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
         }
 
-        // إعادة تعيين المرحلة
+        // Reset phase select
         const phaseSelect = document.getElementById('yt-course-phase');
-        phaseSelect.innerHTML = '<option value="" disabled selected>-- يرجى اختيار المسار أولاً --</option>';
+        phaseSelect.innerHTML = '<option value="" disabled selected>-- Select a Track first --</option>';
         phaseSelect.disabled = true;
         phaseSelect.classList.replace('bg-black', 'bg-black/50');
 
-        // ربط حدث تحديث الكورسات المرتبطة مرة واحدة فقط
+        // Bind related courses update event once
         if (!ytImportEngine.eventsBound) {
             phaseSelect.addEventListener('change', async (e) => {
                 const phaseId = e.target.value;
@@ -3001,7 +2999,7 @@ window.ytImportEngine = {
                 if (!phaseId) return;
                 const { data: relatedCourses } = await supabase.from('courses').select('course_id, title').eq('phase_id', phaseId);
                 if (relatedSelect) {
-                    relatedSelect.innerHTML = '<option value="">بدون ارتباط (مستقل)</option>' + 
+                    relatedSelect.innerHTML = '<option value="">None (Standalone)</option>' + 
                         (relatedCourses || []).map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
                     relatedSelect.dispatchEvent(new Event('change'));
                 }
@@ -3016,7 +3014,7 @@ window.ytImportEngine = {
         const step2 = document.getElementById('yt-step-2');
         if (step1) { step1.classList.remove('hidden', '-translate-x-full', 'translate-x-full'); step1.classList.add('flex'); }
         if (step2) { step2.classList.add('hidden'); step2.classList.remove('flex', 'translate-x-full', '-translate-x-full'); }
-        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 1: إدخال رابط قائمة التشغيل';
+        document.getElementById('yt-wizard-step-text').innerText = 'Step 1: Enter Playlist URL';
         const backBtn = document.getElementById('btn-yt-back-step1');
         if (backBtn) {
             backBtn.classList.add('hidden');
@@ -3039,12 +3037,11 @@ window.ytImportEngine = {
             panelSettings.classList.add('flex');
             panelVideos.classList.add('hidden');
             panelVideos.classList.remove('flex');
-            // استعادة العرض على الشاشات الكبيرة lg+
             panelVideos.classList.add('lg:flex');
 
             if (btnSettings) btnSettings.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-b-primary text-black shadow-md cursor-pointer";
             if (btnVideos) btnVideos.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 border border-white/10 cursor-pointer";
-            if (footerSwitchText) footerSwitchText.innerText = 'عرض الفيديوهات';
+            if (footerSwitchText) footerSwitchText.innerText = 'View Videos';
         } else {
             panelVideos.classList.remove('hidden');
             panelVideos.classList.add('flex');
@@ -3054,7 +3051,7 @@ window.ytImportEngine = {
 
             if (btnVideos) btnVideos.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-b-primary text-black shadow-md cursor-pointer";
             if (btnSettings) btnSettings.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 border border-white/10 cursor-pointer";
-            if (footerSwitchText) footerSwitchText.innerText = 'إعدادات الكورس';
+            if (footerSwitchText) footerSwitchText.innerText = 'Course Settings';
         }
     },
 
@@ -3063,7 +3060,7 @@ window.ytImportEngine = {
         const phaseSelect = document.getElementById('yt-course-phase');
         phaseSelect.disabled = false;
         phaseSelect.classList.replace('bg-black/50', 'bg-black');
-        phaseSelect.innerHTML = '<option value="" disabled selected>-- اختر المرحلة (Phase) --</option>' + 
+        phaseSelect.innerHTML = '<option value="" disabled selected>-- Select Phase --</option>' + 
             (phases || []).map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
         
         phaseSelect.dispatchEvent(new Event('change'));
@@ -3075,20 +3072,20 @@ window.ytImportEngine = {
     fetchPlaylist: async () => {
         const input = document.getElementById('yt-input-url').value.trim();
         const btn = document.getElementById('btn-yt-fetch');
-        if (!input) return window.showToast("يرجى إدخال الرابط أولاً", "error");
+        if (!input) return window.showToast("Please enter a playlist URL first", "error");
 
         const match = input.match(/[?&]list=([^#\&\?]*)/) || input.match(/^([a-zA-Z0-9_-]{12,42})$/);
-        if (!match) return window.showToast("عفواً، الرابط غير صالح. يرجى التأكد من أنه رابط أو ID لقائمة تشغيل يوتيوب.", "warning");
+        if (!match) return window.showToast("Invalid URL. Please enter a valid YouTube playlist URL or ID.", "warning");
         const playlistId = match[1];
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التحليل...</span>';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Analyzing...</span>';
         btn.disabled = true;
 
         try {
             const plRes = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${YOUTUBE_API_KEY}`);
             const plData = await plRes.json();
             if (plData.error) throw new Error(plData.error.message);
-            if (!plData.items || plData.items.length === 0) throw new Error("قائمة التشغيل غير موجودة أو خاصة (Private)");
+            if (!plData.items || plData.items.length === 0) throw new Error("Playlist not found or is Private");
             
             ytImportEngine.state.playlistId = playlistId;
             ytImportEngine.state.courseTitle = plData.items[0].snippet.title;
@@ -3122,13 +3119,13 @@ window.ytImportEngine = {
             ytImportEngine.state.videos = allItems.map((item, i) => {
                 const vId = item.contentDetails?.videoId || '';
                 const snippet = item.snippet || {};
-                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../../assets/icons/BUSLA-icon.png';
+                const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../../assets/icons/zdc-icon-192.png';
                 const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
                 return {
                     id: `vid_${Date.now()}_${i}`,
                     videoId: vId,
-                    title: snippet.title || `درس ${i + 1}`,
-                    originalTitle: snippet.title || `درس ${i + 1}`,
+                    title: snippet.title || `Lesson ${i + 1}`,
+                    originalTitle: snippet.title || `Lesson ${i + 1}`,
                     duration: durationsMap[vId] || 0,
                     thumbnail: thumb,
                     order_index: i + 1,
@@ -3142,9 +3139,9 @@ window.ytImportEngine = {
             ytImportEngine.renderBuilder();
 
         } catch (err) {
-            window.showToast("خطأ: " + err.message, "error");
+            window.showToast("Error: " + err.message, "error");
         } finally {
-            btn.innerHTML = '<i class="fas fa-magic"></i> <span>تحليل القائمة</span>';
+            btn.innerHTML = '<i class="fas fa-magic"></i> <span>Analyze Playlist</span>';
             btn.disabled = false;
         }
     },
@@ -3171,7 +3168,7 @@ window.ytImportEngine = {
         const step2 = document.getElementById('yt-step-2');
         if (step1) { step1.classList.add('hidden'); step1.classList.remove('flex', '-translate-x-full', 'translate-x-full'); }
         if (step2) { step2.classList.remove('hidden', 'translate-x-full', '-translate-x-full'); step2.classList.add('flex'); }
-        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 2: تنظيم المحتوى، السكاشن، وإعدادات الكورس';
+        document.getElementById('yt-wizard-step-text').innerText = 'Step 2: Organize Content, Sections & Course Settings';
         const backBtn = document.getElementById('btn-yt-back-step1');
         if (backBtn) {
             backBtn.classList.remove('hidden');
@@ -3200,7 +3197,7 @@ window.ytImportEngine = {
                 handle: '.yt-drag-handle',
                 ghostClass: 'opacity-40',
                 onEnd: function (evt) {
-                    if (ytImportEngine.state.searchQuery) return; // منع إعادة الترتيب أثناء تصفية البحث
+                    if (ytImportEngine.state.searchQuery) return;
                     const movedItem = ytImportEngine.state.videos.splice(evt.oldIndex, 1)[0];
                     ytImportEngine.state.videos.splice(evt.newIndex, 0, movedItem);
                     ytImportEngine.updateVideosUI();
@@ -3268,12 +3265,12 @@ window.ytImportEngine = {
 
             const safeTitle = String(vid.title || '').replace(/"/g, '&quot;');
 
-            // 1. تصميم خاص ومميز لبطاقة فاصل السكشن (Section Divider Card)
+            // 1. Section Divider Card
             if (isSection) {
                 return `
-                <div class="group rounded-2xl border transition-all p-3 sm:p-3.5 ${vid.is_excluded ? 'bg-red-950/20 border-red-500/20 opacity-50' : 'bg-gradient-to-l from-purple-950/40 via-purple-900/20 to-black/80 border-purple-500/40 shadow-lg'}">
+                <div class="group rounded-2xl border transition-all p-3 sm:p-3.5 ${vid.is_excluded ? 'bg-red-950/20 border-red-500/20 opacity-50' : 'bg-gradient-to-r from-purple-950/40 via-purple-900/20 to-black/80 border-purple-500/40 shadow-lg'}">
                     <div class="flex items-center gap-2.5 sm:gap-3">
-                        <div class="yt-drag-handle flex items-center justify-center w-7 h-8 rounded-lg bg-purple-500/10 text-purple-300 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="اسحب لتغيير مكان السكشن">
+                        <div class="yt-drag-handle flex items-center justify-center w-7 h-8 rounded-lg bg-purple-500/10 text-purple-300 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="Drag to reorder section">
                             <i class="fas fa-grip-vertical text-xs"></i>
                         </div>
                         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
@@ -3281,18 +3278,18 @@ window.ytImportEngine = {
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[10px] font-black">فاصل سكشن #${sectionCounter || index + 1}</span>
-                                ${vid.is_custom_section ? '<span class="text-[10px] text-gray-400">مضاف يدوياً</span>' : '<span class="text-[10px] text-gray-400">محول من عنصر</span>'}
+                                <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[10px] font-black">Section Divider #${sectionCounter || index + 1}</span>
+                                ${vid.is_custom_section ? '<span class="text-[10px] text-gray-400">Added Manually</span>' : '<span class="text-[10px] text-gray-400">Converted from Item</span>'}
                             </div>
-                            <input type="text" dir="auto" value="${safeTitle}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" placeholder="أدخل عنوان السكشن أو الفصل..." class="w-full bg-black/50 border border-purple-500/30 focus:border-purple-400 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-black text-white outline-none transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
+                            <input type="text" dir="auto" value="${safeTitle}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" placeholder="Enter section or module title..." class="w-full bg-black/50 border border-purple-500/30 focus:border-purple-400 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-black text-white outline-none transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             ${!vid.is_custom_section ? `
-                                <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'video'); ytImportEngine.updateVideosUI();" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="إرجاع كدرس فيديو">
-                                    <i class="fas fa-video ml-1"></i> كفيديو
+                                <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'video'); ytImportEngine.updateVideosUI();" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="Revert to Video Lesson">
+                                    <i class="fas fa-video mr-1"></i> As Video
                                 </button>
                             ` : ''}
-                            <button type="button" onclick="ytImportEngine.removeOrExcludeSection(${index})" class="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all cursor-pointer" title="${vid.is_custom_section ? 'حذف السكشن' : (vid.is_excluded ? 'استعادة' : 'استبعاد')}">
+                            <button type="button" onclick="ytImportEngine.removeOrExcludeSection(${index})" class="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all cursor-pointer" title="${vid.is_custom_section ? 'Delete Section' : (vid.is_excluded ? 'Restore' : 'Exclude')}">
                                 <i class="fas ${vid.is_custom_section ? 'fa-trash-alt' : (vid.is_excluded ? 'fa-undo' : 'fa-ban')} text-xs"></i>
                             </button>
                         </div>
@@ -3300,13 +3297,13 @@ window.ytImportEngine = {
                 </div>`;
             }
 
-            // 2. بطاقة درس الفيديو المتجاوبة بالكامل (Responsive Video Lesson Card)
+            // 2. Responsive Video Lesson Card
             return `
             <div class="group rounded-2xl border transition-all p-2.5 sm:p-3.5 ${vid.is_excluded ? 'bg-red-950/15 border-red-500/20 opacity-55' : 'bg-b-surface/80 hover:bg-b-surface border-white/10 hover:border-white/20 shadow-md'}">
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
                     <!-- Top Row on Mobile: Drag Handle + Thumbnail + Editable Title -->
                     <div class="flex items-start sm:items-center gap-2.5 flex-1 min-w-0">
-                        <div class="yt-drag-handle flex flex-col items-center justify-center w-6 sm:w-7 py-1 rounded-lg bg-white/5 text-gray-400 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="اسحب لإعادة الترتيب">
+                        <div class="yt-drag-handle flex flex-col items-center justify-center w-6 sm:w-7 py-1 rounded-lg bg-white/5 text-gray-400 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="Drag to reorder">
                             <i class="fas fa-grip-vertical text-xs"></i>
                             <span class="text-[9px] font-mono text-gray-400 mt-0.5">${index + 1}</span>
                         </div>
@@ -3320,23 +3317,23 @@ window.ytImportEngine = {
                         <div class="flex-1 min-w-0 space-y-1">
                             <input type="text" dir="auto" value="${safeTitle}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" class="w-full bg-black/50 border border-white/10 hover:border-white/20 focus:border-b-primary rounded-xl px-2.5 py-1.5 text-xs sm:text-sm font-bold text-white outline-none transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
                             <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-400">
-                                <span class="px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20">درس #${lessonCounter || index + 1}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20">Lesson #${lessonCounter || index + 1}</span>
                                 ${vid.videoId ? `<span class="font-mono text-gray-500">ID: ${vid.videoId}</span>` : ''}
                             </div>
                         </div>
                     </div>
 
                     <!-- Bottom/Side Action Controls Strip -->
-                    <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-r border-white/5 sm:pr-3 shrink-0">
+                    <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-white/5 sm:pl-3 shrink-0">
                         <!-- Insert Section Divider Before This Video -->
-                        <button type="button" onclick="ytImportEngine.addSectionDivider(${index})" class="px-2 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer" title="إدراج فاصل سكشن قبل هذا الفيديو" ${vid.is_excluded ? 'disabled' : ''}>
+                        <button type="button" onclick="ytImportEngine.addSectionDivider(${index})" class="px-2 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer" title="Insert section divider before this video" ${vid.is_excluded ? 'disabled' : ''}>
                             <i class="fas fa-folder-plus text-[10px]"></i>
-                            <span>+ سكشن قبل</span>
+                            <span>+ Section Before</span>
                         </button>
 
                         <!-- Convert Video to Section -->
-                        <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'section'); ytImportEngine.updateVideosUI();" class="px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="تحويل هذا العنصر نفسه إلى عنوان سكشن" ${vid.is_excluded ? 'disabled' : ''}>
-                            <span>كسكشن</span>
+                        <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'section'); ytImportEngine.updateVideosUI();" class="px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="Convert this item into a section header" ${vid.is_excluded ? 'disabled' : ''}>
+                            <span>As Section</span>
                         </button>
 
                         <!-- XP Input Pill -->
@@ -3347,7 +3344,7 @@ window.ytImportEngine = {
                         </div>
 
                         <!-- Exclude / Restore Button -->
-                        <button type="button" onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer ${vid.is_excluded ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30' : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20'}" title="${vid.is_excluded ? 'استعادة الدرس' : 'استبعاد الدرس من الكورس'}">
+                        <button type="button" onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer ${vid.is_excluded ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30' : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20'}" title="${vid.is_excluded ? 'Restore Lesson' : 'Exclude Lesson from Course'}">
                             <i class="fas ${vid.is_excluded ? 'fa-undo' : 'fa-ban'} text-xs"></i>
                         </button>
                     </div>
@@ -3356,7 +3353,7 @@ window.ytImportEngine = {
         }).filter(Boolean);
 
         if (cardsHtml.length === 0) {
-            container.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs bg-white/5 rounded-2xl border border-white/10">لا توجد فيديوهات مطابقة لبحثك "${ytImportEngine.state.searchQuery}".</div>`;
+            container.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs bg-white/5 rounded-2xl border border-white/10">No videos match your search "${ytImportEngine.state.searchQuery}".</div>`;
         } else {
             container.innerHTML = cardsHtml.join('');
         }
@@ -3380,10 +3377,10 @@ window.ytImportEngine = {
         const newSection = {
             id: `sec_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
             videoId: '',
-            title: `السكشن ${existingSectionsCount + 1}: عنوان الفصل`,
-            originalTitle: `السكشن ${existingSectionsCount + 1}: عنوان الفصل`,
+            title: `Section ${existingSectionsCount + 1}: Module Title`,
+            originalTitle: `Section ${existingSectionsCount + 1}: Module Title`,
             duration: 0,
-            thumbnail: ytImportEngine.state.videos[0]?.thumbnail || '../../assets/icons/BUSLA-icon.png',
+            thumbnail: ytImportEngine.state.videos[0]?.thumbnail || '../../assets/icons/zdc-icon-192.png',
             order_index: 1,
             type: 'section',
             is_excluded: false,
@@ -3399,7 +3396,7 @@ window.ytImportEngine = {
 
         ytImportEngine.updateVideosUI();
         ytImportEngine.runHealthCheck();
-        window.showToast("تم إدراج فاصل سكشن جديد — يمكنك تعديل عنوانه أو سحبه لأي مكان", "success");
+        window.showToast("Section divider inserted — you can edit its title or drag it anywhere", "success");
     },
 
     removeOrExcludeSection: (index) => {
@@ -3417,13 +3414,12 @@ window.ytImportEngine = {
     cleanVideoTitles: () => {
         if (!ytImportEngine.state.videos.length) return;
         if (ytImportEngine.state.titlesCleaned) {
-            // استعادة العناوين الأصلية
             ytImportEngine.state.videos.forEach(v => {
                 if (v.originalTitle && !v.is_custom_section) v.title = v.originalTitle;
             });
             ytImportEngine.state.titlesCleaned = false;
             ytImportEngine.updateVideosUI();
-            window.showToast("تمت استعادة العناوين الأصلية للفيديوهات", "info");
+            window.showToast("Original video titles restored", "info");
             return;
         }
 
@@ -3432,10 +3428,10 @@ window.ytImportEngine = {
             if (v.is_custom_section) return;
             const orig = v.title || '';
             let cleaned = orig
-                .replace(/\[[^\]]*\]/g, '') // إزالة الأكواد بين أقواس مربعة مثل [CSE111s]
-                .replace(/^\s*(?:lecture|lec|ep|episode|part|video|درس|محاضرة)\s*#?\d+\s*[-:|–—]?\s*/i, '')
+                .replace(/\[[^\]]*\]/g, '')
+                .replace(/^\s*(?:lecture|lec|ep|episode|part|video)\s*#?\d+\s*[-:|–—]?\s*/i, '')
                 .replace(/^\s*\d+\s*[-.|)\]:–—]\s*/, '')
-                .replace(/\s*[-|–—]\s*(?:dr\.?|prof\.?|eng\.?|د\.|م\.)[^-|–—]+$/i, '')
+                .replace(/\s*[-|–—]\s*(?:dr\.?|prof\.?|eng\.?)[^-|–—]+$/i, '')
                 .replace(/\s{2,}/g, ' ')
                 .trim();
 
@@ -3447,7 +3443,7 @@ window.ytImportEngine = {
 
         ytImportEngine.state.titlesCleaned = true;
         ytImportEngine.updateVideosUI();
-        window.showToast(cleanedCount > 0 ? `تم تنظيف وتنسيق ${cleanedCount} عنوان بنجاح (اضغط مرة أخرى للتراجع)` : "العناوين منظمة بالفعل", "success");
+        window.showToast(cleanedCount > 0 ? `Cleaned and formatted ${cleanedCount} titles (click again to undo)` : "Titles are already clean", "success");
     },
 
     toggleAllVideos: () => {
@@ -3458,32 +3454,31 @@ window.ytImportEngine = {
         nonCustom.forEach(v => { v.is_excluded = targetExcluded; });
         ytImportEngine.updateVideosUI();
         ytImportEngine.runHealthCheck();
-        window.showToast(targetExcluded ? "تم استبعاد جميع العناصر مؤقتاً" : "تم تفعيل وتضمين جميع الدروس", "info");
+        window.showToast(targetExcluded ? "All items temporarily excluded" : "All lessons included and activated", "info");
     },
 
     applyBulkXP: () => {
         const val = parseInt(document.getElementById('yt-bulk-xp').value) || 10;
         ytImportEngine.state.videos.forEach(vid => { if (vid.type !== 'section') vid.base_xp = val; });
         ytImportEngine.updateVideosUI();
-        window.showToast(`تم تطبيق ${val} XP على جميع الفيديوهات`, 'success');
+        window.showToast(`Applied ${val} XP to all videos`, 'success');
     },
 
     autoSplitSections: () => {
         let converted = 0;
         ytImportEngine.state.videos.forEach(vid => {
             const t = (vid.title || '').toLowerCase();
-            if (t.includes('part') || t.includes('chapter') || t.includes('module') || t.includes('section') || t.includes('مقدمة') || t.includes('فصل') || t.includes('وحدة')) {
+            if (t.includes('part') || t.includes('chapter') || t.includes('module') || t.includes('section') || t.includes('intro')) {
                 vid.type = 'section';
                 converted++;
             }
         });
-        // إذا لم يوجد أي فيديو يحمل كلمة فصل/مقدمة، نضيف سكشن تمهيدي في البداية لتسهيل التنظيم
         if (converted === 0 && !ytImportEngine.state.videos.some(v => v.type === 'section')) {
             ytImportEngine.addSectionDivider(0);
             return;
         }
         ytImportEngine.updateVideosUI();
-        window.showToast(`تم تطبيق التقسيم الذكي (${converted} سكشن)`, "success");
+        window.showToast(`Applied smart section split (${converted} sections)`, "success");
     },
 
     runHealthCheck: () => {
@@ -3495,17 +3490,17 @@ window.ytImportEngine = {
 
         let errors = [];
         let warnings = [];
-        if (activeVids.length === 0) errors.push("الكورس لا يحتوي على أي دروس مفعلة!");
-        if (activeVids.some(v => v.title.trim() === '')) errors.push("هناك عناصر بدون عنوان.");
-        if (!titleVal) warnings.push("يرجى إدخال عنوان الكورس في الإعدادات.");
-        if (!phaseVal) warnings.push("يتبقى اختيار المسار والمرحلة (Phase) قبل الحفظ.");
+        if (activeVids.length === 0) errors.push("Course contains no active lessons!");
+        if (activeVids.some(v => v.title.trim() === '')) errors.push("Some items have empty titles.");
+        if (!titleVal) warnings.push("Please enter the course title in settings.");
+        if (!phaseVal) warnings.push("Select a Track and Phase before saving.");
 
         const saveBtn = document.getElementById('btn-yt-save');
 
         if (errors.length > 0) {
             if (banner) {
                 banner.className = "p-3 rounded-xl text-xs font-bold border border-red-500/30 bg-red-500/10 text-red-400 block";
-                banner.innerHTML = `<i class="fas fa-exclamation-triangle ml-1"></i> ` + errors.join('<br>');
+                banner.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> ` + errors.join('<br>');
             }
             if (footerStatus) {
                 footerStatus.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate flex items-center gap-1.5";
@@ -3518,7 +3513,7 @@ window.ytImportEngine = {
         } else if (warnings.length > 0) {
             if (banner) {
                 banner.className = "p-3 rounded-xl text-xs font-bold border border-amber-500/30 bg-amber-500/10 text-amber-300 block";
-                banner.innerHTML = `<i class="fas fa-info-circle ml-1"></i> ` + warnings.join('<br>');
+                banner.innerHTML = `<i class="fas fa-info-circle mr-1"></i> ` + warnings.join('<br>');
             }
             if (footerStatus) {
                 footerStatus.className = "text-[11px] sm:text-xs font-bold text-amber-400 truncate flex items-center gap-1.5";
@@ -3531,11 +3526,11 @@ window.ytImportEngine = {
         } else {
             if (banner) {
                 banner.className = "p-3 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 block";
-                banner.innerHTML = `<i class="fas fa-check-circle ml-1"></i> الكورس مكتمل وجاهز للحفظ الهيكلي.`;
+                banner.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Course structure is complete and ready to save.`;
             }
             if (footerStatus) {
                 footerStatus.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate flex items-center gap-1.5";
-                footerStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>الكورس جاهز للحفظ (${activeVids.length} عنصر)</span>`;
+                footerStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>Ready to save (${activeVids.length} items)</span>`;
             }
             if (saveBtn) {
                 saveBtn.disabled = false;
@@ -3563,10 +3558,10 @@ window.ytImportEngine = {
 
         if (!title || !phaseId) {
             ytImportEngine.switchMobileTab('settings');
-            return window.showToast("يرجى اختيار المسار والمرحلة (Phase) والتأكد من عنوان الكورس", "warning");
+            return window.showToast("Please select a Track and Phase and confirm the course title", "warning");
         }
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الحفظ...</span>';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Saving...</span>';
         btn.disabled = true;
 
         try {
@@ -3608,7 +3603,7 @@ window.ytImportEngine = {
             if (matErr) throw matErr;
 
             hierarchyCache = null;
-            window.showToast("🎉 تم إنشاء الكورس واستيراد جميع الفيديوهات بنجاح!", "success");
+            window.showToast("🎉 Course created and all videos imported!", "success");
             ytImportEngine.closeWizard();
             
             if (typeof loadTableData === 'function') loadTableData();
@@ -3616,9 +3611,9 @@ window.ytImportEngine = {
 
         } catch (err) {
             console.error(err);
-            window.showToast("فشل الحفظ: " + err.message, "error");
+            window.showToast("Save failed: " + err.message, "error");
         } finally {
-            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> <span>اعتماد وحفظ الكورس</span>';
+            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> <span>Confirm & Save Course</span>';
             btn.disabled = false;
         }
     }
@@ -3648,9 +3643,9 @@ window.initSearchableSelects = () => {
         select.style.border = 'none';
 
         const ui = document.createElement('div');
-        ui.className = 'custom-select-ui relative w-full dir-rtl text-right';
+        ui.className = 'custom-select-ui relative w-full text-left';
 
-        // الزر الذي يظهر للمستخدم
+        // Button trigger shown to user
         const trigger = document.createElement('div');
         trigger.className = 'w-full bg-black/60 border border-white/10 hover:border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:border-b-primary outline-none transition-all cursor-pointer flex justify-between items-center gap-2 shadow-inner';
         
@@ -3666,16 +3661,16 @@ window.initSearchableSelects = () => {
         trigger.appendChild(textSpan);
         trigger.appendChild(icon);
 
-        // القائمة المنسدلة وشريط البحث
+        // Dropdown menu and search bar
         const dropdown = document.createElement('div');
-        dropdown.className = 'absolute z-[999] right-0 min-w-full w-max max-w-[min(90vw,560px)] bg-[#121212] border border-white/15 rounded-2xl mt-1.5 hidden shadow-2xl flex flex-col max-h-72 overflow-hidden backdrop-blur-xl animate-fade-in';
+        dropdown.className = 'absolute z-[999] left-0 min-w-full w-max max-w-[min(90vw,560px)] bg-[#161616] border border-b-border rounded-2xl mt-1.5 hidden shadow-2xl flex flex-col max-h-72 overflow-hidden backdrop-blur-xl animate-fade-in';
 
         const searchWrap = document.createElement('div');
-        searchWrap.className = 'p-2.5 border-b border-white/10 bg-[#1a1a1a] shrink-0';
+        searchWrap.className = 'p-2.5 border-b border-b-border bg-[#222222] shrink-0';
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = '🔍 ابحث بالاسم أو المعرف...';
-        searchInput.className = 'w-full bg-black/80 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-b-primary dir-rtl text-right placeholder-gray-500';
+        searchInput.placeholder = '🔍 Search by name or ID...';
+        searchInput.className = 'w-full bg-black/80 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-b-primary text-left placeholder-gray-500';
         searchWrap.appendChild(searchInput);
 
         const optionsContainer = document.createElement('div');
@@ -3689,10 +3684,10 @@ window.initSearchableSelects = () => {
         
         select.parentNode.insertBefore(ui, select.nextSibling);
 
-        // دالة تحديث الواجهة عند تغير القائمة الأصلية (مثال: الفلترة الهرمية)
+        // Update UI when original select changes
         const updateUI = () => {
             const selectedOpt = select.options[select.selectedIndex];
-            const currentText = selectedOpt ? selectedOpt.text : 'اختر...';
+            const currentText = selectedOpt ? selectedOpt.text : 'Select...';
             textSpan.innerText = currentText;
             textSpan.title = currentText;
             trigger.title = currentText;
@@ -3705,7 +3700,7 @@ window.initSearchableSelects = () => {
             
             optionsContainer.innerHTML = '';
             Array.from(select.options).forEach((opt) => {
-                if (opt.disabled && opt.value === "") return; // تجاهل الـ Placeholder
+                if (opt.disabled && opt.value === "") return;
                 const div = document.createElement('div');
                 div.className = 'px-3.5 py-2.5 text-xs sm:text-sm text-gray-300 hover:bg-b-primary/20 hover:text-white cursor-pointer rounded-xl transition-all whitespace-normal break-words leading-relaxed mb-1 border border-transparent flex items-center justify-between gap-2';
                 div.setAttribute('dir', 'auto');
@@ -3731,7 +3726,7 @@ window.initSearchableSelects = () => {
                 div.onclick = (e) => {
                     e.stopPropagation();
                     select.value = opt.value;
-                    select.dispatchEvent(new Event('change')); // إطلاق حدث التغيير لتفعيل الفلترة المتسلسلة
+                    select.dispatchEvent(new Event('change'));
                     dropdown.classList.add('hidden');
                     icon.style.transform = 'rotate(0deg)';
                     updateUI();
@@ -3740,7 +3735,7 @@ window.initSearchableSelects = () => {
             });
         };
 
-        // تفعيل شريط البحث الداخلي
+        // Enable internal search filter
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             Array.from(optionsContainer.children).forEach(item => {
@@ -3749,7 +3744,7 @@ window.initSearchableSelects = () => {
             });
         });
 
-        // فتح وإغلاق القائمة
+        // Open and close dropdown
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             document.querySelectorAll('.custom-select-ui .absolute').forEach(d => {
@@ -3767,11 +3762,11 @@ window.initSearchableSelects = () => {
             if (!isHidden) {
                 searchInput.value = '';
                 searchInput.dispatchEvent(new Event('input')); 
-                searchInput.focus(); // نقل المؤشر فوراً لشريط البحث
+                searchInput.focus();
             }
         });
 
-        // إغلاق القائمة عند الضغط خارجها
+        // Close dropdown on outside click
         document.addEventListener('click', (e) => {
             if (!ui.contains(e.target)) {
                 dropdown.classList.add('hidden');
@@ -3779,7 +3774,7 @@ window.initSearchableSelects = () => {
             }
         });
 
-        // مراقبة القائمة الأصلية للتحديث التلقائي
+        // Watch original select for automatic updates
         select.addEventListener('change', updateUI);
         const observer = new MutationObserver(updateUI);
         observer.observe(select, { childList: true });
@@ -3819,9 +3814,9 @@ window.cmAddProjectLinkRow = (containerId = 'cm-project-links-list', initial = {
     const row = document.createElement('div');
     row.className = `${isAi ? 'ai-proj-link-row' : 'cm-proj-link-row'} flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-black/40 border border-white/10 rounded-xl p-2`;
     row.innerHTML = `
-        <input type="text" value="${escapeHtml(initial.title || '')}" placeholder="اسم الرابط (مثال: GitHub Starter أو ملف PDF)" class="${isAi ? 'ai-proj-link-title' : 'cm-proj-link-title'} sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+        <input type="text" value="${escapeHtml(initial.title || '')}" placeholder="Link Title (e.g. GitHub Starter or Spec PDF)" class="${isAi ? 'ai-proj-link-title' : 'cm-proj-link-title'} sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
         <input type="url" value="${escapeHtml(initial.url || '')}" placeholder="https://..." class="${isAi ? 'ai-proj-link-url' : 'cm-proj-link-url'} flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-cyan-300 font-mono placeholder-gray-500 outline-none dir-ltr text-left">
-        <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="حذف الرابط"><i class="fas fa-trash text-[11px]"></i></button>
+        <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="Remove Link"><i class="fas fa-trash text-[11px]"></i></button>
     `;
     list.appendChild(row);
     if (containerId === 'project-ai-step1-links') {
@@ -3845,11 +3840,11 @@ window.cmAddManualRubricRow = (initial = { aspect: '', description: '', points: 
     const row = document.createElement('div');
     row.className = 'cm-proj-rubric-row bg-black/40 border border-white/10 rounded-xl p-2.5 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center';
     row.innerHTML = `
-        <input type="text" value="${escapeHtml(initial.aspect || '')}" placeholder="المعيار (مثال: صحة التصميم)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
-        <input type="text" value="${escapeHtml(initial.description || '')}" placeholder="وصف المعيار (اختياري)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
+        <input type="text" value="${escapeHtml(initial.aspect || '')}" placeholder="Criterion (e.g. Functional Correctness)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+        <input type="text" value="${escapeHtml(initial.description || '')}" placeholder="Criterion Description (optional)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
         <div class="flex items-center gap-1.5 shrink-0">
-            <input type="number" min="0" value="${initial.points ?? 25}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="نقاط المعيار">
-            <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-[11px]"></i></button>
+            <input type="number" min="0" value="${initial.points ?? 25}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="Criterion Points">
+            <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="Remove Criterion"><i class="fas fa-trash text-[11px]"></i></button>
         </div>
     `;
     list.appendChild(row);
@@ -3861,7 +3856,7 @@ window.cmRemoveManualRubricRow = (btn) => {
     const list = document.getElementById('cm-project-rubric-list');
     if (row) row.remove();
     if (list && list.querySelectorAll('.cm-proj-rubric-row').length === 0) {
-        list.innerHTML = '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم مضافة بعد — اضغط "إضافة معيار" لتوزيع درجات المشروع.</div>';
+        list.innerHTML = '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">No rubric criteria added yet — click "Add Criterion" to distribute project points.</div>';
     }
     window.cmUpdateManualRubricSum();
 };
@@ -3872,7 +3867,7 @@ window.cmUpdateManualRubricSum = () => {
     const maxPts = parseInt(document.getElementById('f-max-pts')?.value, 10) || 100;
     const rows = Array.from(document.querySelectorAll('#cm-project-rubric-list .cm-proj-r-points'));
     const sum = rows.reduce((acc, el) => acc + (parseInt(el.value, 10) || 0), 0);
-    badge.innerText = `مجموع المعايير: ${sum} / ${maxPts}`;
+    badge.innerText = `Criteria Total: ${sum} / ${maxPts}`;
     if (rows.length > 0 && sum === maxPts) {
         badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
     } else if (rows.length > 0 && sum > maxPts) {
@@ -3919,7 +3914,7 @@ function buildPromptContentCatalog(hData) {
                 key: `video:${m.content_id}`,
                 id: String(m.content_id),
                 content_id: String(m.content_id),
-                title: m.title || 'درس بدون عنوان',
+                title: m.title || 'Untitled Lesson',
                 video_id: m.video_id || '',
                 directUrl: resolveVideoUrl(m.video_id),
                 course_id: course ? String(course.course_id) : String(m.course_id || ''),
@@ -3963,7 +3958,7 @@ function buildPromptContentCatalog(hData) {
                 kind: 'document',
                 key: `document:${d.id}`,
                 id: String(d.id),
-                title: d.title || 'مستند بدون عنوان',
+                title: d.title || 'Untitled Document',
                 document_type: d.document_type || 'PDF',
                 source_type: d.source_type || '',
                 source_url: d.source_url || '',
@@ -3986,14 +3981,14 @@ function populatePromptFilterSelects(prefix, hData, changedLevel = 'init') {
     if (!tSel || !pSel || !cSel) return;
 
     if (changedLevel === 'init') {
-        tSel.innerHTML = '<option value="">كل المسارات (Tracks)</option>' +
+        tSel.innerHTML = '<option value="">All Tracks</option>' +
             (hData.tracks || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
     }
     const tVal = tSel.value;
     if (changedLevel === 'init' || changedLevel === 'track') {
         const prevP = pSel.value;
         const phases = (hData.phases || []).filter(p => p.phase_id && (!tVal || String(p.track_id) === String(tVal)));
-        pSel.innerHTML = '<option value="">كل المراحل (Phases)</option>' +
+        pSel.innerHTML = '<option value="">All Phases</option>' +
             phases.map(p => `<option value="${escapeHtml(p.phase_id)}">${escapeHtml(p.title)}</option>`).join('');
         pSel.value = phases.some(p => String(p.phase_id) === String(prevP)) ? prevP : '';
     }
@@ -4009,7 +4004,7 @@ function populatePromptFilterSelects(prefix, hData, changedLevel = 'init') {
             if (tVal) return allowedPhaseIds.has(String(c.phase_id));
             return true;
         });
-        cSel.innerHTML = '<option value="">كل الكورسات (Courses)</option>' +
+        cSel.innerHTML = '<option value="">All Courses</option>' +
             courses.map(c => `<option value="${escapeHtml(c.course_id)}">${escapeHtml(c.title)}</option>`).join('');
         cSel.value = courses.some(c => String(c.course_id) === String(prevC)) ? prevC : '';
     }
@@ -4045,7 +4040,7 @@ function renderSharedContentPickerUI({ prefix, engineName, accent, catalog, type
     const visibleItems = getFilteredCatalogItems(prefix, catalog, typeFilter);
 
     if (visibleItems.length === 0) {
-        listEl.innerHTML = '<div class="text-center py-6 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد فيديوهات أو مستندات مطابقة للفلتر الحالي.</div>';
+        listEl.innerHTML = '<div class="text-center py-6 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">No videos or documents match the current filter.</div>';
     } else {
         const activeBorder = accent === 'emerald' ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-purple-500/50 bg-purple-500/10';
         const activeCheck = accent === 'emerald' ? 'bg-emerald-500 border-emerald-400 text-black' : 'bg-purple-500 border-purple-400 text-white';
@@ -4054,15 +4049,15 @@ function renderSharedContentPickerUI({ prefix, engineName, accent, catalog, type
             const isSel = selectedKeys.has(item.key);
             const isVid = item.kind === 'video';
             const badgeHtml = isVid
-                ? '<span class="px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25 text-[10px] font-bold shrink-0"><i class="fab fa-youtube ml-0.5"></i>فيديو</span>'
-                : `<span class="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/25 text-[10px] font-bold shrink-0"><i class="fas fa-file-pdf ml-0.5"></i>${escapeHtml(item.document_type || 'مستند')}</span>`;
+                ? '<span class="px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25 text-[10px] font-bold shrink-0"><i class="fab fa-youtube mr-0.5"></i>Video</span>'
+                : `<span class="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/25 text-[10px] font-bold shrink-0"><i class="fas fa-file-pdf mr-0.5"></i>${escapeHtml(item.document_type || 'Document')}</span>`;
             const linkBadge = item.directUrl
-                ? '<span class="text-[10px] text-emerald-400/90 font-mono shrink-0" title="سيُدرج الرابط المباشر تلقائياً"><i class="fas fa-link ml-0.5"></i>رابط جاهز</span>'
-                : '<span class="text-[10px] text-amber-400/80 shrink-0"><i class="fas fa-exclamation-circle ml-0.5"></i>بدون رابط</span>';
+                ? '<span class="text-[10px] text-emerald-400/90 font-mono shrink-0" title="Direct URL will be embedded automatically"><i class="fas fa-link mr-0.5"></i>Link Ready</span>'
+                : '<span class="text-[10px] text-amber-400/80 shrink-0"><i class="fas fa-exclamation-circle mr-0.5"></i>No Link</span>';
             const safeKey = escapeHtml(item.key).replace(/'/g, '&#39;');
 
             return `
-                <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="w-full text-right flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${isSel ? activeBorder : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15'}">
+                <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="w-full text-left flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${isSel ? activeBorder : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15'}">
                     <span class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 text-[10px] transition-colors ${isSel ? activeCheck : 'border-white/20 bg-black/50 text-transparent'}">
                         <i class="fas fa-check"></i>
                     </span>
@@ -4088,9 +4083,9 @@ function renderSharedContentPickerUI({ prefix, engineName, accent, catalog, type
             const vidCount = selectedItems.filter(i => i.kind === 'video').length;
             const docCount = selectedItems.filter(i => i.kind === 'document').length;
             const parts = [];
-            if (vidCount > 0) parts.push(`${vidCount} فيديو`);
-            if (docCount > 0) parts.push(`${docCount} مستند`);
-            labelEl.innerText = `المختار لإدراج روابطه (${parts.join(' + ')}):`;
+            if (vidCount > 0) parts.push(`${vidCount} Video${vidCount === 1 ? '' : 's'}`);
+            if (docCount > 0) parts.push(`${docCount} Document${docCount === 1 ? '' : 's'}`);
+            labelEl.innerText = `Selected to embed links (${parts.join(' + ')}):`;
             stripEl.classList.remove('hidden');
             chipsEl.innerHTML = selectedItems.map(item => {
                 const safeKey = escapeHtml(item.key).replace(/'/g, '&#39;');
@@ -4102,7 +4097,7 @@ function renderSharedContentPickerUI({ prefix, engineName, accent, catalog, type
                     <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-bold max-w-[230px] ${chipColor}">
                         <i class="${iconCls} text-[10px] shrink-0"></i>
                         <span class="truncate" dir="auto">${escapeHtml(item.title)}</span>
-                        <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="hover:text-white opacity-75 hover:opacity-100 cursor-pointer shrink-0" title="إزالة"><i class="fas fa-times text-[10px]"></i></button>
+                        <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="hover:text-white opacity-75 hover:opacity-100 cursor-pointer shrink-0" title="Remove"><i class="fas fa-times text-[10px]"></i></button>
                     </span>
                 `;
             }).join('');
@@ -4140,7 +4135,7 @@ window.quizAiEngine = {
         document.getElementById('quiz-ai-step-1').classList.remove('-translate-x-full', 'translate-x-full');
         document.getElementById('quiz-ai-step-2').classList.add('translate-x-full');
         document.getElementById('quiz-ai-wizard').classList.remove('hidden');
-        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: تجهيز البرومت وإدخال JSON';
+        document.getElementById('quiz-ai-step-text').innerText = 'Step 1: Configure Prompt & Input JSON';
 
         const hData = await fetchHierarchyData();
         quizAiEngine.state.hData = hData;
@@ -4155,7 +4150,7 @@ window.quizAiEngine = {
     backToStep1: () => {
         document.getElementById('quiz-ai-step-2').classList.add('translate-x-full');
         document.getElementById('quiz-ai-step-1').classList.remove('-translate-x-full');
-        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: تجهيز البرومت وإدخال JSON';
+        document.getElementById('quiz-ai-step-text').innerText = 'Step 1: Configure Prompt & Input JSON';
     },
 
     setQuestionCount: (val) => {
@@ -4264,16 +4259,16 @@ window.quizAiEngine = {
         const total = selectedVideos.length + selectedDocuments.length;
         const summary = document.getElementById('quiz-ai-builder-summary');
         if (summary) {
-            const parts = [`${count} سؤال`];
-            if (selectedVideos.length > 0) parts.push(`${selectedVideos.length} فيديو`);
-            if (selectedDocuments.length > 0) parts.push(`${selectedDocuments.length} مستند`);
-            if (total === 0) parts.push('بدون مصادر محددة');
+            const parts = [`${count} Question${count === 1 ? '' : 's'}`];
+            if (selectedVideos.length > 0) parts.push(`${selectedVideos.length} Video${selectedVideos.length === 1 ? '' : 's'}`);
+            if (selectedDocuments.length > 0) parts.push(`${selectedDocuments.length} Document${selectedDocuments.length === 1 ? '' : 's'}`);
+            if (total === 0) parts.push('No Specific Sources');
             summary.innerText = parts.join(' • ');
         }
 
         const copyBtn = document.getElementById('btn-quiz-ai-copy-prompt');
         if (copyBtn) {
-            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. نسخ أمر التوليد الذكي (${count} سؤال${total > 0 ? ` • ${total} رابط` : ''})</span>`;
+            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. Copy Smart Prompt (${count} Qs${total > 0 ? ` • ${total} Link${total === 1 ? '' : 's'}` : ''})</span>`;
         }
 
         const preview = document.getElementById('quiz-ai-prompt-preview');
@@ -4295,24 +4290,24 @@ window.quizAiEngine = {
             await copyTextWithFallback(prompt);
             const total = selectedVideos.length + selectedDocuments.length;
             const detail = total > 0
-                ? `تم نسخ البرومت (${count} سؤالاً + ${total} رابط مباشر)!`
-                : `تم نسخ البرومت (${count} سؤالاً)! يمكنك لصقه في Gemini الآن.`;
+                ? `Prompt copied (${count} questions + ${total} direct link${total === 1 ? '' : 's'})!`
+                : `Prompt copied (${count} questions)! Paste it into Gemini now.`;
             window.showToast(detail, "success");
         } catch (err) {
-            window.showToast("تعذر النسخ التلقائي — افتح معاينة البرومت وانسخه يدوياً.", "warning");
+            window.showToast("Auto-copy failed — open the prompt preview and copy it manually.", "warning");
         }
     },
 
     processJSON: async () => {
         const jsonString = document.getElementById('quiz-ai-json-input').value.trim();
-        if (!jsonString) return window.showToast("يرجى إدخال كود الـ JSON أولاً", "error");
+        if (!jsonString) return window.showToast("Please paste the JSON code first", "error");
 
         try {
             const cleanJson = jsonString.replace(/```json/g, '').replace(/```/g, '');
             const parsed = JSON.parse(cleanJson);
 
             if (!parsed.quiz || !parsed.questions || !Array.isArray(parsed.questions)) {
-                throw new Error("الهيكلة غير صحيحة. يجب أن تحتوي على 'quiz' و 'questions'.");
+                throw new Error("Invalid structure. JSON must include 'quiz' and 'questions' array.");
             }
 
             quizAiEngine.state.quiz = parsed.quiz;
@@ -4320,7 +4315,7 @@ window.quizAiEngine = {
             await quizAiEngine.renderReview();
 
         } catch (e) {
-            window.showToast("خطأ في قراءة JSON: " + e.message, "error");
+            window.showToast("Error parsing JSON: " + e.message, "error");
         }
     },
 
@@ -4337,18 +4332,18 @@ window.quizAiEngine = {
             <div id="ai-quiz-targets-slot" class="mb-6"></div>
 
             <div class="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6">
-                <h3 class="text-lg sm:text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs ml-2"></i> إعدادات الاختبار</h3>
+                <h3 class="text-lg sm:text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs mr-2"></i> Quiz Settings</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان الاختبار *</label><input type="text" id="ai-q-title" value="${escapeHtml(q.title || '')}" class="${inputStyle}"></div>
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف</label><input type="text" id="ai-q-desc" value="${escapeHtml(q.description || '')}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">نسبة النجاح المطلوبة (%)</label><input type="number" id="ai-q-pass" value="${q.passing_score || 50}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">النقاط (XP)</label><input type="number" id="ai-q-xp" value="${q.max_xp || 50}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">عدد المحاولات</label><input type="number" id="ai-q-attempts" value="${q.attempts_allowed || 3}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">عدد الأسئلة المعروضة</label><input type="number" id="ai-q-show" value="${q.questions_to_show || quizAiEngine.state.questions.length || ''}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">Quiz Title *</label><input type="text" id="ai-q-title" value="${escapeHtml(q.title || '')}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">Description</label><input type="text" id="ai-q-desc" value="${escapeHtml(q.description || '')}" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Passing Score (%)</label><input type="number" id="ai-q-pass" value="${q.passing_score || 50}" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Reward (XP)</label><input type="number" id="ai-q-xp" value="${q.max_xp || 50}" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Allowed Attempts</label><input type="number" id="ai-q-attempts" value="${q.attempts_allowed || 3}" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Questions to Show</label><input type="number" id="ai-q-show" value="${q.questions_to_show || quizAiEngine.state.questions.length || ''}" class="${inputStyle}"></div>
                 </div>
             </div>
             
-            <h3 class="text-lg sm:text-xl font-bold text-white mt-6 mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-purple-500"></i> مراجعة الأسئلة (${quizAiEngine.state.questions.length})</h3>
+            <h3 class="text-lg sm:text-xl font-bold text-white mt-6 mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-purple-500"></i> Review Questions (${quizAiEngine.state.questions.length})</h3>
             <div class="space-y-4">
         `;
 
@@ -4359,16 +4354,16 @@ window.quizAiEngine = {
                         <span class="text-purple-400 font-bold font-mono">Question #${idx + 1}</span>
                     </div>
                     <div class="space-y-3">
-                        <div class="dir-ltr text-left"><label class="text-xs text-gray-500 mb-1 block text-right">نص السؤال</label><textarea class="ai-q-text ${inputStyle}" rows="2">${escapeHtml(question.question_text || '')}</textarea></div>
+                        <div class="dir-ltr text-left"><label class="text-xs text-gray-500 mb-1 block text-left">Question Text</label><textarea class="ai-q-text ${inputStyle}" rows="2">${escapeHtml(question.question_text || '')}</textarea></div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 dir-ltr text-left">
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (A)</label><input type="text" class="ai-q-opt-a ${inputStyle}" value="${escapeHtml(question.option_a || '')}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (B)</label><input type="text" class="ai-q-opt-b ${inputStyle}" value="${escapeHtml(question.option_b || '')}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (C)</label><input type="text" class="ai-q-opt-c ${inputStyle}" value="${escapeHtml(question.option_c || '')}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (D)</label><input type="text" class="ai-q-opt-d ${inputStyle}" value="${escapeHtml(question.option_d || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-left">Option (A)</label><input type="text" class="ai-q-opt-a ${inputStyle}" value="${escapeHtml(question.option_a || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-left">Option (B)</label><input type="text" class="ai-q-opt-b ${inputStyle}" value="${escapeHtml(question.option_b || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-left">Option (C)</label><input type="text" class="ai-q-opt-c ${inputStyle}" value="${escapeHtml(question.option_c || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-left">Option (D)</label><input type="text" class="ai-q-opt-d ${inputStyle}" value="${escapeHtml(question.option_d || '')}"></div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="text-xs text-green-400 mb-1 block font-bold">الإجابة الصحيحة</label>
+                                <label class="text-xs text-green-400 mb-1 block font-bold">Correct Answer</label>
                                 <select class="ai-q-correct ${inputStyle}">
                                     <option value="A" ${question.correct_answer === 'A' ? 'selected' : ''}>A</option>
                                     <option value="B" ${question.correct_answer === 'B' ? 'selected' : ''}>B</option>
@@ -4376,7 +4371,7 @@ window.quizAiEngine = {
                                     <option value="D" ${question.correct_answer === 'D' ? 'selected' : ''}>D</option>
                                 </select>
                             </div>
-                            <div class="dir-ltr text-left"><label class="text-xs text-blue-400 mb-1 block font-bold text-right">تلميح (Hint)</label><input type="text" class="ai-q-hint ${inputStyle}" value="${escapeHtml(question.hint || '')}"></div>
+                            <div class="dir-ltr text-left"><label class="text-xs text-blue-400 mb-1 block font-bold text-left">Hint</label><input type="text" class="ai-q-hint ${inputStyle}" value="${escapeHtml(question.hint || '')}"></div>
                         </div>
                     </div>
                 </div>
@@ -4386,7 +4381,6 @@ window.quizAiEngine = {
         html += `</div>`;
         container.innerHTML = html;
 
-        // 💡 تفعيل محرر الربط المتعدد مع تجهيزه مسبقاً بالمحتوى الذي تم اختياره في الخطوة 1
         mountItemTargetsEditor(document.getElementById('ai-quiz-targets-slot'), {
             itemType: 'quiz',
             initialTargets,
@@ -4398,7 +4392,7 @@ window.quizAiEngine = {
 
         document.getElementById('quiz-ai-step-1').classList.add('-translate-x-full');
         document.getElementById('quiz-ai-step-2').classList.remove('translate-x-full');
-        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 2: المراجعة والتعديل النهائي';
+        document.getElementById('quiz-ai-step-text').innerText = 'Step 2: Final Review & Edit';
     },
 
     saveAll: async () => {
@@ -4406,9 +4400,9 @@ window.quizAiEngine = {
         const title = document.getElementById('ai-q-title').value.trim();
         const selectedTargets = getItemTargetsValue(document.getElementById('ai-quiz-targets-slot'));
         
-        if (!title) return window.showToast("يجب إدخال عنوان الاختبار", "error");
+        if (!title) return window.showToast("Quiz title is required", "error");
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
         try {
@@ -4445,16 +4439,16 @@ window.quizAiEngine = {
                 await appendItemTargets(supabase, 'quiz', newQuizId, selectedTargets, hData);
             }
 
-            window.showToast("🎉 تم استيراد الاختبار وجميع الأسئلة بنجاح!", "success");
+            window.showToast("Quiz and all questions imported successfully!", "success");
             quizAiEngine.closeWizard();
             hierarchyCache = null;
             
             if (typeof loadTableData === 'function') loadTableData();
 
         } catch (e) {
-            window.showToast("خطأ أثناء الحفظ: " + e.message, "error");
+            window.showToast("Error saving quiz: " + e.message, "error");
         } finally {
-            btn.innerHTML = '<i class="fas fa-save"></i> حفظ الكويز والأسئلة';
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Quiz & Questions';
             btn.disabled = false;
         }
     }
@@ -4499,7 +4493,7 @@ window.projectAiEngine = {
         document.getElementById('project-ai-step-1').classList.remove('-translate-x-full', 'translate-x-full');
         document.getElementById('project-ai-step-2').classList.add('translate-x-full');
         document.getElementById('project-ai-wizard').classList.remove('hidden');
-        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: تجهيز برومت المشروع وإدخال JSON';
+        document.getElementById('project-ai-step-text').innerText = 'Step 1: Configure Project Prompt & Input JSON';
 
         const hData = await fetchHierarchyData();
         projectAiEngine.state.hData = hData;
@@ -4514,7 +4508,7 @@ window.projectAiEngine = {
     backToStep1: () => {
         document.getElementById('project-ai-step-2').classList.add('translate-x-full');
         document.getElementById('project-ai-step-1').classList.remove('-translate-x-full');
-        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: تجهيز برومت المشروع وإدخال JSON';
+        document.getElementById('project-ai-step-text').innerText = 'Step 1: Configure Project Prompt & Input JSON';
     },
 
     setCriteriaCount: (val) => {
@@ -4649,14 +4643,14 @@ window.projectAiEngine = {
         const totalLinks = selectedVideos.length + selectedDocuments.length + extraLinks.length;
         const summary = document.getElementById('project-ai-builder-summary');
         if (summary) {
-            const parts = [`${criteriaCount} معايير`, `${maxPoints} XP`];
-            if (totalLinks > 0) parts.push(`${totalLinks} رابط`);
+            const parts = [`${criteriaCount} Criteria`, `${maxPoints} XP`];
+            if (totalLinks > 0) parts.push(`${totalLinks} Link${totalLinks === 1 ? '' : 's'}`);
             summary.innerText = parts.join(' • ');
         }
 
         const copyBtn = document.getElementById('btn-project-ai-copy-prompt');
         if (copyBtn) {
-            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. نسخ أمر التوليد الذكي (${criteriaCount} معايير${totalLinks > 0 ? ` • ${totalLinks} رابط` : ''})</span>`;
+            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. Copy Smart Prompt (${criteriaCount} Criteria${totalLinks > 0 ? ` • ${totalLinks} Link${totalLinks === 1 ? '' : 's'}` : ''})</span>`;
         }
 
         const preview = document.getElementById('project-ai-prompt-preview');
@@ -4679,24 +4673,24 @@ window.projectAiEngine = {
             const totalLinks = selectedVideos.length + selectedDocuments.length + extraLinks.length;
             window.showToast(
                 totalLinks > 0
-                    ? `تم نسخ برومت المشروع (${criteriaCount} معايير + ${totalLinks} رابط مباشر)!`
-                    : `تم نسخ برومت المشروع (${criteriaCount} معايير)! يمكنك لصقه في Gemini الآن.`,
+                    ? `Project prompt copied (${criteriaCount} criteria + ${totalLinks} direct link${totalLinks === 1 ? '' : 's'})!`
+                    : `Project prompt copied (${criteriaCount} criteria)! Paste it into Gemini now.`,
                 "success"
             );
         } catch (_) {
-            window.showToast("تعذر النسخ التلقائي — افتح معاينة البرومت وانسخه يدوياً.", "warning");
+            window.showToast("Auto-copy failed — open the prompt preview and copy it manually.", "warning");
         }
     },
 
     processJSON: async () => {
         const jsonString = document.getElementById('project-ai-json-input').value.trim();
-        if (!jsonString) return window.showToast("يرجى إدخال كود الـ JSON أولاً", "error");
+        if (!jsonString) return window.showToast("Please paste the JSON code first", "error");
 
         try {
             const cleanJson = jsonString.replace(/```json/g, '').replace(/```/g, '');
             const parsed = JSON.parse(cleanJson);
 
-            if (!parsed.project) throw new Error("الهيكلة غير صحيحة. يجب أن تحتوي على مفتاح 'project'.");
+            if (!parsed.project) throw new Error("Invalid structure. JSON must include a 'project' key.");
 
             projectAiEngine.state.project = parsed.project;
             projectAiEngine.state.rubric = Array.isArray(parsed.rubric)
@@ -4705,7 +4699,7 @@ window.projectAiEngine = {
             await projectAiEngine.renderReview();
 
         } catch (e) {
-            window.showToast("خطأ في قراءة JSON: " + e.message, "error");
+            window.showToast("Error parsing JSON: " + e.message, "error");
         }
     },
 
@@ -4717,11 +4711,11 @@ window.projectAiEngine = {
         const row = document.createElement('div');
         row.className = 'bg-black/30 border border-white/10 p-3 sm:p-4 rounded-xl flex flex-col md:flex-row gap-2.5 items-stretch md:items-end rubric-item';
         row.innerHTML = `
-            <div class="w-full md:w-1/4"><label class="text-[11px] text-gray-500 block mb-1">المعيار (Aspect)</label><input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" class="r-aspect ${inputStyle}"></div>
-            <div class="flex-1 w-full"><label class="text-[11px] text-gray-500 block mb-1">الوصف (Description)</label><input type="text" value="${escapeHtml(crit.description || '')}" class="r-desc ${inputStyle}"></div>
+            <div class="w-full md:w-1/4"><label class="text-[11px] text-gray-500 block mb-1">Criterion (Aspect)</label><input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" class="r-aspect ${inputStyle}"></div>
+            <div class="flex-1 w-full"><label class="text-[11px] text-gray-500 block mb-1">Description</label><input type="text" value="${escapeHtml(crit.description || '')}" class="r-desc ${inputStyle}"></div>
             <div class="flex items-end gap-2 shrink-0">
-                <div class="w-24"><label class="text-[11px] text-emerald-400 block font-bold mb-1">النقاط</label><input type="number" min="0" value="${crit.points ?? 0}" oninput="projectAiEngine.updateReviewRubricSum()" class="r-points ${inputStyle} border-emerald-500/30 text-center text-emerald-400 font-bold"></div>
-                <button type="button" onclick="projectAiEngine.removeReviewRubricRow(this)" class="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-xs"></i></button>
+                <div class="w-24"><label class="text-[11px] text-emerald-400 block font-bold mb-1">Points</label><input type="number" min="0" value="${crit.points ?? 0}" oninput="projectAiEngine.updateReviewRubricSum()" class="r-points ${inputStyle} border-emerald-500/30 text-center text-emerald-400 font-bold"></div>
+                <button type="button" onclick="projectAiEngine.removeReviewRubricRow(this)" class="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center cursor-pointer" title="Delete Criterion"><i class="fas fa-trash text-xs"></i></button>
             </div>
         `;
         list.appendChild(row);
@@ -4733,7 +4727,7 @@ window.projectAiEngine = {
         const list = document.getElementById('ai-p-rubric-list');
         if (row) row.remove();
         if (list && list.querySelectorAll('.rubric-item').length === 0) {
-            list.innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم. يمكنك إضافة معيار جديد بالزر أعلاه.</div>';
+            list.innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">No evaluation criteria yet. Click "+ Add Criterion" above.</div>';
         }
         projectAiEngine.updateReviewRubricSum();
     },
@@ -4743,7 +4737,7 @@ window.projectAiEngine = {
         if (!badge) return;
         const maxPts = parseInt(document.getElementById('ai-p-xp')?.value, 10) || 100;
         const sum = Array.from(document.querySelectorAll('#ai-p-rubric-list .r-points')).reduce((a, el) => a + (parseInt(el.value, 10) || 0), 0);
-        badge.innerText = `مجموع النقاط: ${sum} / ${maxPts}`;
+        badge.innerText = `Points Sum: ${sum} / ${maxPts}`;
         badge.className = sum === maxPts
             ? 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
             : 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30';
@@ -4778,20 +4772,20 @@ window.projectAiEngine = {
             <div id="ai-project-targets-slot" class="mb-5"></div>
 
             <div class="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 space-y-4">
-                <h3 class="text-lg sm:text-xl font-bold text-emerald-400 border-b border-white/5 pb-3"><i class="fas fa-cogs ml-2"></i> تفاصيل المشروع الأساسية</h3>
+                <h3 class="text-lg sm:text-xl font-bold text-emerald-400 border-b border-white/5 pb-3"><i class="fas fa-cogs mr-2"></i> Core Project Details</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان المشروع *</label><input type="text" id="ai-p-title" value="${escapeHtml(p.title || '')}" class="${inputStyle}"></div>
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف والمتطلبات (يدعم HTML) *</label><textarea id="ai-p-desc" rows="4" class="${inputStyle}">${escapeHtml(p.description || '')}</textarea></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">إجمالي النقاط (XP)</label><input type="number" id="ai-p-xp" value="${p.max_points || 100}" oninput="projectAiEngine.updateReviewRubricSum()" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">طريقة التسليم (مثال: github_link)</label><input type="text" id="ai-p-method" value="${escapeHtml(p.submission_method || 'github_link')}" class="${inputStyle} dir-ltr text-left"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">Project Title *</label><input type="text" id="ai-p-title" value="${escapeHtml(p.title || '')}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">Description & Requirements (HTML supported) *</label><textarea id="ai-p-desc" rows="4" class="${inputStyle}">${escapeHtml(p.description || '')}</textarea></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Total Points (XP)</label><input type="number" id="ai-p-xp" value="${p.max_points || 100}" oninput="projectAiEngine.updateReviewRubricSum()" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">Submission Method (e.g. github_link)</label><input type="text" id="ai-p-method" value="${escapeHtml(p.submission_method || 'github_link')}" class="${inputStyle} dir-ltr text-left"></div>
                 </div>
 
                 <!-- Multi-Links Editor in Review Step -->
                 <div class="pt-3 border-t border-white/10 space-y-2.5">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> روابط دليل ومرفقات المشروع (متعددة)</label>
+                        <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> Project Guide & Attachment Links (Multi-Link)</label>
                         <button type="button" onclick="window.cmAddProjectLinkRow('ai-p-links-list')" class="px-3 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer">
-                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة رابط</span>
+                            <i class="fas fa-plus text-[10px]"></i> <span>Add Link</span>
                         </button>
                     </div>
                     <div id="ai-p-links-list" class="space-y-2"></div>
@@ -4800,11 +4794,11 @@ window.projectAiEngine = {
             
             <div class="flex flex-wrap items-center justify-between gap-2 mt-6 mb-3">
                 <div class="flex items-center gap-2.5 flex-wrap">
-                    <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-list-check text-emerald-500"></i> معايير التقييم (Rubrics)</h3>
+                    <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-list-check text-emerald-500"></i> Evaluation Criteria (Rubrics)</h3>
                     <span id="ai-p-rubric-sum" class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"></span>
                 </div>
                 <button type="button" onclick="projectAiEngine.addReviewRubricRow()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-plus text-[10px]"></i> <span>إضافة معيار</span>
+                    <i class="fas fa-plus text-[10px]"></i> <span>Add Criterion</span>
                 </button>
             </div>
             <div class="space-y-3" id="ai-p-rubric-list"></div>
@@ -4817,7 +4811,7 @@ window.projectAiEngine = {
         if (projectAiEngine.state.rubric.length > 0) {
             projectAiEngine.state.rubric.forEach(crit => projectAiEngine.addReviewRubricRow(crit));
         } else {
-            document.getElementById('ai-p-rubric-list').innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم. يمكنك إضافة معيار جديد بالزر أعلاه.</div>';
+            document.getElementById('ai-p-rubric-list').innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">No evaluation criteria yet. Click "+ Add Criterion" above.</div>';
             projectAiEngine.updateReviewRubricSum();
         }
 
@@ -4832,7 +4826,7 @@ window.projectAiEngine = {
 
         document.getElementById('project-ai-step-1').classList.add('-translate-x-full');
         document.getElementById('project-ai-step-2').classList.remove('translate-x-full');
-        document.getElementById('project-ai-step-text').innerText = 'الخطوة 2: المراجعة والتعديل النهائي';
+        document.getElementById('project-ai-step-text').innerText = 'Step 2: Final Review & Edit';
     },
 
     saveAll: async () => {
@@ -4840,9 +4834,9 @@ window.projectAiEngine = {
         const title = document.getElementById('ai-p-title').value.trim();
         const selectedTargets = getItemTargetsValue(document.getElementById('ai-project-targets-slot'));
         
-        if (!title) return window.showToast("يجب إدخال عنوان المشروع", "error");
+        if (!title) return window.showToast("Project title is required", "error");
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
         try {
@@ -4880,16 +4874,16 @@ window.projectAiEngine = {
                 await appendItemTargets(supabase, 'project', newProjectId, selectedTargets, hData);
             }
 
-            window.showToast("🎉 تم استيراد المشروع وجميع الروابط والمعايير بنجاح!", "success");
+            window.showToast("Project, links, and rubric imported successfully!", "success");
             projectAiEngine.closeWizard();
             hierarchyCache = null;
             
             if (typeof loadTableData === 'function') loadTableData();
 
         } catch (e) {
-            window.showToast("خطأ أثناء الحفظ: " + e.message, "error");
+            window.showToast("Error saving project: " + e.message, "error");
         } finally {
-            btn.innerHTML = '<i class="fas fa-save"></i> حفظ المشروع والمعايير';
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Project & Rubric';
             btn.disabled = false;
         }
     }
@@ -4934,10 +4928,10 @@ function formatDurationArabic(seconds) {
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     const parts = [];
-    if (h > 0) parts.push(`${h} ${h === 1 ? 'ساعة' : (h === 2 ? 'ساعتان' : (h <= 10 ? 'ساعات' : 'ساعة'))}`);
-    if (m > 0) parts.push(`${m} ${m === 1 ? 'دقيقة' : (m === 2 ? 'دقيقتان' : (m <= 10 ? 'دقائق' : 'دقيقة'))}`);
-    if (sec > 0 && h === 0) parts.push(`${sec} ثانية`);
-    return parts.join(' و ') || 'أقل من دقيقة';
+    if (h > 0) parts.push(`${h} ${h === 1 ? 'hr' : 'hrs'}`);
+    if (m > 0) parts.push(`${m} ${m === 1 ? 'min' : 'mins'}`);
+    if (sec > 0 && h === 0) parts.push(`${sec} sec`);
+    return parts.join(' ') || 'Less than a minute';
 }
 
 function formatMinutesValue(seconds) {
@@ -5030,8 +5024,8 @@ async function fetchVideoMetadata(source) {
                 resolve({
                     type: 'direct',
                     videoId: cleanSource,
-                    title: cleanSource.split('/').pop().split('?')[0] || 'فيديو مباشر',
-                    channelTitle: 'فيديو مباشر',
+                    title: cleanSource.split('/').pop().split('?')[0] || 'Direct Video',
+                    channelTitle: 'Direct Video',
                     durationSec: dur,
                     thumbnail: '',
                     embedUrl: cleanSource
@@ -5121,23 +5115,23 @@ function applyVideoMetadataToForm(meta, notify = true) {
         badgeEl.classList.remove('hidden');
         badgeEl.className = 'text-xs py-2.5 px-4 rounded-xl border transition-all duration-300 bg-teal-500/10 border-teal-500/30 text-teal-300 flex flex-wrap items-center justify-between gap-3';
         
-        const durText = meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'جاري فحص المدة...';
-        const minsText = meta.durationSec > 0 ? `(${formatMinutesValue(meta.durationSec)} دقيقة)` : '';
-        const titleText = meta.title ? `<strong class="text-white">${escapeHtml(meta.title)}</strong>` : 'فيديو تعليمي';
+        const durText = meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'Checking duration...';
+        const minsText = meta.durationSec > 0 ? `(${formatMinutesValue(meta.durationSec)} min)` : '';
+        const titleText = meta.title ? `<strong class="text-white">${escapeHtml(meta.title)}</strong>` : 'Educational Video';
         const authorText = meta.channelTitle ? `<span class="text-gray-400">(${escapeHtml(meta.channelTitle)})</span>` : '';
 
         let badgeHtml = `
             <div class="flex items-center gap-2 flex-wrap">
                 <i class="fas fa-check-circle text-teal-400"></i>
-                <span>تم جلب البيانات: ${titleText} ${authorText}</span>
-                <span class="text-yellow-400 font-bold mr-2"><i class="fas fa-stopwatch ml-1"></i> ${durText} ${minsText}</span>
+                <span>Metadata fetched: ${titleText} ${authorText}</span>
+                <span class="text-yellow-400 font-bold ml-2"><i class="fas fa-stopwatch mr-1"></i> ${durText} ${minsText}</span>
             </div>
         `;
 
         if (titleInput && meta.title && !titleUpdated && titleInput.value.trim() !== meta.title) {
             badgeHtml += `
                 <button type="button" id="btn-use-video-title" class="text-[11px] bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 px-2.5 py-1 rounded-lg border border-teal-500/40 transition-colors">
-                    اعتماد هذا العنوان للدرس ↩
+                    Apply Title to Lesson ↩
                 </button>
             `;
         }
@@ -5151,7 +5145,7 @@ function applyVideoMetadataToForm(meta, notify = true) {
                     titleInput.value = meta.title;
                     titleInput.classList.add('ring-2', 'ring-cyan-500', 'bg-cyan-500/10');
                     setTimeout(() => titleInput.classList.remove('ring-2', 'ring-cyan-500', 'bg-cyan-500/10'), 2500);
-                    window.showToast("تم اعتماد عنوان الفيديو بنجاح", "success");
+                    window.showToast("Video title applied successfully", "success");
                     useTitleBtn.remove();
                 }
             };
@@ -5163,18 +5157,18 @@ function applyVideoMetadataToForm(meta, notify = true) {
         detailsEl.classList.remove('hidden');
         detailsEl.innerHTML = `
             <div class="flex items-center justify-between text-gray-300">
-                <span class="font-bold text-white"><i class="fab fa-youtube text-red-500 ml-1"></i> ${escapeHtml(meta.title || 'فيديو يوتيوب')}</span>
-                <span class="text-teal-400 font-mono text-xs"><i class="fas fa-clock ml-1"></i> ${meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'جاري الفحص...'}</span>
+                <span class="font-bold text-white"><i class="fab fa-youtube text-red-500 mr-1"></i> ${escapeHtml(meta.title || 'YouTube Video')}</span>
+                <span class="text-teal-400 font-mono text-xs"><i class="fas fa-clock mr-1"></i> ${meta.durationSec > 0 ? formatDurationArabic(meta.durationSec) : 'Checking...'}</span>
             </div>
-            ${meta.channelTitle ? `<p class="text-[11px] text-gray-400 flex items-center gap-1"><i class="fas fa-user-circle"></i> القناة / المصدر: ${escapeHtml(meta.channelTitle)}</p>` : ''}
+            ${meta.channelTitle ? `<p class="text-[11px] text-gray-400 flex items-center gap-1"><i class="fas fa-user-circle"></i> Channel / Source: ${escapeHtml(meta.channelTitle)}</p>` : ''}
         `;
     }
 
     if (notify) {
         if (meta.durationSec > 0) {
-            window.showToast(`✓ تم جلب مدة الفيديو: ${formatMinutesValue(meta.durationSec)} دقيقة (${formatDurationArabic(meta.durationSec)})`, "success");
+            window.showToast(`✓ Video duration fetched: ${formatMinutesValue(meta.durationSec)} min (${formatDurationArabic(meta.durationSec)})`, "success");
         } else if (meta.title) {
-            window.showToast(`✓ تم استخراج بيانات الفيديو: ${meta.title}`, "info");
+            window.showToast(`✓ Video metadata extracted: ${meta.title}`, "info");
         }
     }
 }
@@ -5272,7 +5266,7 @@ function renderVideoPreview(meta) {
         iframe.setAttribute('allowfullscreen', '');
         previewContent.appendChild(iframe);
     } else {
-        previewContent.innerHTML = `<p class="text-gray-400 text-sm">عذراً، لم نتمكن من تحديد نوع الرابط للمعاينة.</p>`;
+        previewContent.innerHTML = `<p class="text-gray-400 text-sm">Sorry, unable to determine link type for preview.</p>`;
     }
 }
 
@@ -5286,19 +5280,19 @@ window.fetchAndPreviewAdminVideo = async function(isManual = false, showPreview 
     if (!videoInput) return;
     const source = videoInput.value.trim();
     if (!source) {
-        if (isManual) window.showToast("برجاء إدخال رابط أو معرف الفيديو أولاً!", "warning");
+        if (isManual) window.showToast("Please enter a video URL or ID first!", "warning");
         return;
     }
 
     if (fetchBtn) {
         fetchBtn.disabled = true;
-        fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الجلب...</span>';
+        fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Fetching...</span>';
     }
 
     if (badgeEl) {
         badgeEl.classList.remove('hidden');
         badgeEl.className = 'text-xs py-2 px-3 rounded-xl border bg-cyan-500/10 border-cyan-500/20 text-cyan-300 flex items-center gap-2';
-        badgeEl.innerHTML = '<i class="fas fa-spinner fa-spin text-cyan-400"></i> <span>جاري فحص الرابط واستخراج المدة والبيانات عبر الـ API...</span>';
+        badgeEl.innerHTML = '<i class="fas fa-spinner fa-spin text-cyan-400"></i> <span>Inspecting link and extracting duration & metadata via API...</span>';
     }
 
     try {
@@ -5310,7 +5304,7 @@ window.fetchAndPreviewAdminVideo = async function(isManual = false, showPreview 
                 renderVideoPreview(meta);
             }
         } else {
-            if (isManual) window.showToast("لم نتمكن من تحليل هذا الرابط، يمكنك إدخال المدة يدوياً.", "info");
+            if (isManual) window.showToast("Could not analyze this URL; you can enter the duration manually.", "info");
             if (showPreview && previewWrapper && previewContent) {
                 previewContent.innerHTML = '';
                 previewWrapper.classList.remove('hidden');
@@ -5324,11 +5318,11 @@ window.fetchAndPreviewAdminVideo = async function(isManual = false, showPreview 
         }
     } catch (err) {
         console.error("Error in fetchAndPreviewAdminVideo:", err);
-        if (isManual) window.showToast("حدث خطأ أثناء جلب بيانات الفيديو: " + err.message, "error");
+        if (isManual) window.showToast("Error fetching video metadata: " + err.message, "error");
     } finally {
         if (fetchBtn) {
             fetchBtn.disabled = false;
-            fetchBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>جلب المدة</span>';
+            fetchBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Fetch Duration</span>';
         }
     }
 };
@@ -5370,7 +5364,7 @@ function bindVideoMetadataAutoFetch() {
 window.cmPreviewTableRow = function(contentId, videoId) {
     const source = videoId.trim();
     if (!source) {
-        window.showToast("لا يوجد رابط فيديو متوفر لمعاينته!", "error");
+        window.showToast("No video link available to preview!", "error");
         return;
     }
 
@@ -5452,7 +5446,7 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
     let loadingDiv = document.createElement('div');
     loadingDiv.id = 'cm-reorder-loading';
     loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
-    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل المحتويات للترتيب...</p></div>';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">Loading materials for reordering...</p></div>';
     document.body.appendChild(loadingDiv);
 
     try {
@@ -5466,7 +5460,7 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
 
         if (error) throw error;
         if (!materials || materials.length === 0) {
-            window.showToast("هذا الكورس لا يحتوي على أي مواد تعليمية لترتيبها!", "info");
+            window.showToast("This course has no materials to reorder!", "info");
             return;
         }
 
@@ -5475,8 +5469,8 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
-            modal.setAttribute('dir', 'rtl');
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-left';
+            modal.setAttribute('dir', 'ltr');
             document.body.appendChild(modal);
         }
 
@@ -5489,7 +5483,7 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
             return `
                 <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.content_id}">
                     <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="Drag to reorder"><i class="fas fa-grip-vertical text-sm"></i></div>
                         <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
@@ -5499,9 +5493,9 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
-                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">Order:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Up"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Down"><i class="fas fa-chevron-down"></i></button>
                         <input type="number" value="${item.order_index}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
@@ -5513,8 +5507,8 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
-                        <h3 class="font-bold text-white text-base">إعادة ترتيب محتويات الكورس</h3>
-                        <p class="text-xs text-gray-400 mt-1">كورس: ${courseTitle}</p>
+                        <h3 class="font-bold text-white text-base">Reorder Course Materials</h3>
+                        <p class="text-xs text-gray-400 mt-1">Course: ${courseTitle}</p>
                     </div>
                     <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                         <i class="fas fa-times"></i>
@@ -5526,10 +5520,10 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
                 </div>
                 <!-- Footer -->
                 <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
-                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">Cancel</button>
                     <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
                         <i class="fas fa-save"></i>
-                        <span>حفظ الترتيب الجديد</span>
+                        <span>Save New Order</span>
                     </button>
                 </div>
             </div>
@@ -5542,7 +5536,7 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
         document.getElementById('cm-save-order-btn').onclick = async () => {
             const saveBtn = document.getElementById('cm-save-order-btn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             const items = Array.from(document.querySelectorAll('.reorder-item'));
             const updates = items.map((item, index) => {
@@ -5556,20 +5550,20 @@ window.cmOpenReorderModal = async function(courseId, courseTitle) {
 
             try {
                 await Promise.all(updates);
-                window.showToast("🎉 تم حفظ الترتيب الجديد للمحتويات بنجاح!", "success");
+                window.showToast("New material order saved successfully!", "success");
                 document.getElementById(modalId).remove();
                 if (typeof loadTableData === 'function') loadTableData();
             } catch (e) {
-                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+                window.showToast("Error saving order: " + e.message, "error");
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>Save New Order</span>';
             }
         };
 
     } catch (e) {
         if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
-        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
+        window.showToast("Error loading data for reordering: " + e.message, "error");
     }
 };
 
@@ -5650,7 +5644,7 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
     let loadingDiv = document.createElement('div');
     loadingDiv.id = 'cm-reorder-loading';
     loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
-    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل الكورسات للترتيب...</p></div>';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">Loading courses for reordering...</p></div>';
     document.body.appendChild(loadingDiv);
 
     try {
@@ -5664,7 +5658,7 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
 
         if (error) throw error;
         if (!courses || courses.length === 0) {
-            window.showToast("هذه المرحلة لا تحتوي على أي كورسات لترتيبها!", "info");
+            window.showToast("This phase has no courses to reorder!", "info");
             return;
         }
 
@@ -5673,8 +5667,8 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
-            modal.setAttribute('dir', 'rtl');
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-left';
+            modal.setAttribute('dir', 'ltr');
             document.body.appendChild(modal);
         }
 
@@ -5683,7 +5677,7 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
             return `
                 <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.course_id}">
                     <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="Drag to reorder"><i class="fas fa-grip-vertical text-sm"></i></div>
                         <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
@@ -5693,9 +5687,9 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
-                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">Order:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Up"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Down"><i class="fas fa-chevron-down"></i></button>
                         <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
@@ -5707,8 +5701,8 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
-                        <h3 class="font-bold text-white text-base">إعادة ترتيب الكورسات</h3>
-                        <p class="text-xs text-gray-400 mt-1">المرحلة: ${phaseTitle}</p>
+                        <h3 class="font-bold text-white text-base">Reorder Courses</h3>
+                        <p class="text-xs text-gray-400 mt-1">Phase: ${phaseTitle}</p>
                     </div>
                     <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                         <i class="fas fa-times"></i>
@@ -5720,10 +5714,10 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
                 </div>
                 <!-- Footer -->
                 <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
-                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">Cancel</button>
                     <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
                         <i class="fas fa-save"></i>
-                        <span>حفظ الترتيب الجديد</span>
+                        <span>Save New Order</span>
                     </button>
                 </div>
             </div>
@@ -5734,7 +5728,7 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
         document.getElementById('cm-save-order-btn').onclick = async () => {
             const saveBtn = document.getElementById('cm-save-order-btn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             const items = Array.from(document.querySelectorAll('.reorder-item'));
             const updates = items.map((item, index) => {
@@ -5748,20 +5742,20 @@ window.cmOpenCoursesReorderModal = async function(phaseId, phaseTitle) {
 
             try {
                 await Promise.all(updates);
-                window.showToast("🎉 تم حفظ الترتيب الجديد للكورسات بنجاح!", "success");
+                window.showToast("New course order saved successfully!", "success");
                 document.getElementById(modalId).remove();
                 if (typeof loadTableData === 'function') loadTableData();
             } catch (e) {
-                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+                window.showToast("Error saving order: " + e.message, "error");
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>Save New Order</span>';
             }
         };
 
     } catch (e) {
         if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
-        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
+        window.showToast("Error loading data for reordering: " + e.message, "error");
     }
 };
 
@@ -5770,7 +5764,7 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
     let loadingDiv = document.createElement('div');
     loadingDiv.id = 'cm-reorder-loading';
     loadingDiv.className = 'fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center';
-    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">جاري تحميل المراحل للترتيب...</p></div>';
+    loadingDiv.innerHTML = '<div class="text-center text-teal-400"><i class="fas fa-spinner fa-spin text-4xl mb-3"></i><p class="text-sm font-bold">Loading phases for reordering...</p></div>';
     document.body.appendChild(loadingDiv);
 
     try {
@@ -5784,7 +5778,7 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
 
         if (error) throw error;
         if (!phases || phases.length === 0) {
-            window.showToast("هذا المسار لا يحتوي على أي مراحل لترتيبها!", "info");
+            window.showToast("This track has no phases to reorder!", "info");
             return;
         }
 
@@ -5793,8 +5787,8 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = modalId;
-            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-right';
-            modal.setAttribute('dir', 'rtl');
+            modal.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 text-left';
+            modal.setAttribute('dir', 'ltr');
             document.body.appendChild(modal);
         }
 
@@ -5803,7 +5797,7 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
             return `
                 <div class="reorder-item flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-black/40 border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-move group gap-3" draggable="true" data-id="${item.phase_id}">
                     <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
-                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="اسحب للترتيب"><i class="fas fa-grip-vertical text-sm"></i></div>
+                        <div class="drag-handle text-gray-500 group-hover:text-gray-300 cursor-grab p-1 shrink-0" title="Drag to reorder"><i class="fas fa-grip-vertical text-sm"></i></div>
                         <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal-400 text-xs shrink-0">
                             <i class="fas ${icon}"></i>
                         </div>
@@ -5813,9 +5807,9 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
                         </div>
                     </div>
                     <div class="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-t-0">
-                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">الترتيب:</span>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأعلى"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="نقل لأسفل"><i class="fas fa-chevron-down"></i></button>
+                        <span class="text-[10px] text-gray-500 font-bold sm:hidden">Order:</span>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'up')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Up"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" onclick="window.cmMoveOrderItem(this, 'down')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center text-xs transition-colors active:scale-95" title="Move Down"><i class="fas fa-chevron-down"></i></button>
                         <input type="number" value="${item.order_index || 0}" class="w-14 bg-black border border-white/15 rounded-lg px-2 py-1 text-center font-mono text-xs sm:text-sm font-bold text-yellow-400 focus:border-teal-500 outline-none order-input" onchange="window.cmOrderInputChange(this)">
                     </div>
                 </div>
@@ -5827,8 +5821,8 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
                 <!-- Header -->
                 <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/40 shrink-0">
                     <div>
-                        <h3 class="font-bold text-white text-base">إعادة ترتيب المراحل</h3>
-                        <p class="text-xs text-gray-400 mt-1">المسار: ${trackTitle}</p>
+                        <h3 class="font-bold text-white text-base">Reorder Phases</h3>
+                        <p class="text-xs text-gray-400 mt-1">Track: ${trackTitle}</p>
                     </div>
                     <button onclick="document.getElementById('${modalId}').remove()" class="w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                         <i class="fas fa-times"></i>
@@ -5840,10 +5834,10 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
                 </div>
                 <!-- Footer -->
                 <div class="p-5 border-t border-white/10 bg-black/40 flex gap-3 justify-end shrink-0">
-                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">إلغاء</button>
+                    <button onclick="document.getElementById('${modalId}').remove()" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold transition-all text-sm">Cancel</button>
                     <button id="cm-save-order-btn" class="px-5 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all text-sm flex items-center gap-2">
                         <i class="fas fa-save"></i>
-                        <span>حفظ الترتيب الجديد</span>
+                        <span>Save New Order</span>
                     </button>
                 </div>
             </div>
@@ -5854,7 +5848,7 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
         document.getElementById('cm-save-order-btn').onclick = async () => {
             const saveBtn = document.getElementById('cm-save-order-btn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             const items = Array.from(document.querySelectorAll('.reorder-item'));
             const updates = items.map((item, index) => {
@@ -5868,19 +5862,19 @@ window.cmOpenPhasesReorderModal = async function(trackId, trackTitle) {
 
             try {
                 await Promise.all(updates);
-                window.showToast("🎉 تم حفظ الترتيب الجديد للمراحل بنجاح!", "success");
+                window.showToast("New phase order saved successfully!", "success");
                 document.getElementById(modalId).remove();
                 if (typeof loadTableData === 'function') loadTableData();
             } catch (e) {
-                window.showToast("خطأ أثناء حفظ الترتيب: " + e.message, "error");
+                window.showToast("Error saving order: " + e.message, "error");
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>حفظ الترتيب الجديد</span>';
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>Save New Order</span>';
             }
         };
 
     } catch (e) {
         if(document.getElementById('cm-reorder-loading')) document.getElementById('cm-reorder-loading').remove();
-        window.showToast("خطأ أثناء جلب البيانات للترتيب: " + e.message, "error");
+        window.showToast("Error loading data for reordering: " + e.message, "error");
     }
 };

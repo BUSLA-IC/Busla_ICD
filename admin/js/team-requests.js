@@ -7,7 +7,7 @@ import { supabase } from '../../js/supabase-config.js';
 let teamRequestsData = [];
 let tracksMap = {};
 
-// 1. تهيئة وتحميل مسارات التخصص
+// 1. Initialize and load specialization tracks
 async function loadTracks() {
     try {
         const { data, error } = await supabase.from('tracks').select('id, name');
@@ -21,7 +21,7 @@ async function loadTracks() {
     }
 }
 
-// 2. جلب البيانات من الداتابيز
+// 2. Fetch requests from database
 window.fetchTeamRequests = async () => {
     const tbody = document.getElementById('team-requests-table-body');
     if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center"><i class="fas fa-spinner fa-spin text-teal-500 text-2xl"></i></td></tr>`;
@@ -42,11 +42,11 @@ window.fetchTeamRequests = async () => {
         
     } catch (err) {
         console.error("Fetch Team Requests Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">حدث خطأ أثناء جلب البيانات.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500">An error occurred while fetching data.</td></tr>`;
     }
 };
 
-// 3. تحديث الإحصائيات الفورية
+// 3. Update live statistics
 function updateTeamStats() {
     document.getElementById('stat-total-teams').innerText = teamRequestsData.length;
     document.getElementById('stat-pending-teams').innerText = teamRequestsData.filter(t => t.status === 'pending').length;
@@ -55,7 +55,7 @@ function updateTeamStats() {
     document.getElementById('stat-archived-teams').innerText = teamRequestsData.filter(t => t.status === 'archived').length;
 }
 
-// 4. الفلترة الفورية
+// 4. Live filtering
 window.filterTeamRequests = () => {
     const search = document.getElementById('team-filter-search')?.value.toLowerCase() || '';
     const status = document.getElementById('team-filter-status')?.value || 'all';
@@ -77,13 +77,13 @@ window.filterTeamRequests = () => {
     renderTeamRequestsTable(filtered);
 };
 
-// 5. رسم جدول الطلبات في الصفحة
+// 5. Render requests table
 function renderTeamRequestsTable(data) {
     const tbody = document.getElementById('team-requests-table-body');
     if (!tbody) return;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">لا توجد طلبات مطابقة للبحث.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">No requests match your search criteria.</td></tr>`;
         return;
     }
 
@@ -92,18 +92,18 @@ function renderTeamRequestsTable(data) {
         
         let statusBadge = '';
         if (req.status === 'approved') {
-            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">معتمد</span>';
+            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Approved</span>';
         } else if (req.status === 'rejected') {
-            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">مرفوض</span>';
+            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-red-500/10 border border-red-500/20 text-red-400">Rejected</span>';
         } else if (req.status === 'archived') {
-            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">مؤرشف</span>';
+            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">Archived</span>';
         } else if (req.status === 'cancelled') {
-            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">ملغي</span>';
+            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-gray-500/10 border border-gray-500/20 text-gray-400">Cancelled</span>';
         } else {
-            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">قيد المراجعة</span>';
+            statusBadge = '<span class="px-2 py-1 rounded-md text-[10px] font-bold bg-yellow-500/10 border border-yellow-500/20 text-yellow-500">Under Review</span>';
         }
 
-        const leaderName = req.requester?.full_name || 'غير معروف';
+        const leaderName = req.requester?.full_name || 'Unknown';
 
         return `
             <tr class="hover:bg-white/5 transition-colors border-b border-white/5">
@@ -117,7 +117,7 @@ function renderTeamRequestsTable(data) {
                 <td class="p-4 text-center">${statusBadge}</td>
                 <td class="p-4 text-center">
                     <button onclick="openTeamRequestDetails('${req.id}')" class="px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white transition-all text-xs font-bold border border-teal-500/20">
-                        عرض التفاصيل
+                        View Details
                     </button>
                 </td>
             </tr>
@@ -125,7 +125,7 @@ function renderTeamRequestsTable(data) {
     }).join('');
 }
 
-// 6. فتح بيانات طلب التأسيس بالكامل في الـ Modal المعاينة
+// 6. Open full team request details modal
 window.openTeamRequestDetails = (id) => {
     const req = teamRequestsData.find(r => r.id === id);
     if (!req) return;
@@ -134,7 +134,7 @@ window.openTeamRequestDetails = (id) => {
     
     // Header
     document.getElementById('modal-team-req-name').innerText = req.team_name;
-    document.getElementById('modal-team-req-leader-email').innerText = req.requester?.email || 'بدون إيميل';
+    document.getElementById('modal-team-req-leader-email').innerText = req.requester?.email || 'No email';
     
     const badge = document.getElementById('modal-team-req-status-badge');
     badge.className = `px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
@@ -144,10 +144,10 @@ window.openTeamRequestDetails = (id) => {
         req.status === 'cancelled' ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20' :
         'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
     }`;
-    badge.innerText = req.status === 'approved' ? 'معتمد' : 
-                      req.status === 'rejected' ? 'مرفوض' : 
-                      req.status === 'archived' ? 'مؤرشف' : 
-                      req.status === 'cancelled' ? 'ملغي' : 'قيد المراجعة';
+    badge.innerText = req.status === 'approved' ? 'Approved' : 
+                      req.status === 'rejected' ? 'Rejected' : 
+                      req.status === 'archived' ? 'Archived' : 
+                      req.status === 'cancelled' ? 'Cancelled' : 'Under Review';
 
     // Logo & Preview
     const previewImg = document.getElementById('modal-team-req-logo-preview');
@@ -163,14 +163,14 @@ window.openTeamRequestDetails = (id) => {
     }
 
     // Basic details
-    document.getElementById('modal-team-req-leader-name').innerText = req.requester?.full_name || 'غير معروف';
+    document.getElementById('modal-team-req-leader-name').innerText = req.requester?.full_name || 'Unknown';
     document.getElementById('modal-team-req-date').innerText = new Date(req.submitted_at).toLocaleString('en-GB');
     document.getElementById('modal-team-req-uni').innerText = req.university || '--';
     document.getElementById('modal-team-req-gov').innerText = req.governorate || '--';
 
     // Advanced Info
     document.getElementById('modal-team-req-spec').innerText = tracksMap[req.specialization] || req.specialization || '--';
-    document.getElementById('modal-team-req-size').innerText = req.expected_size ? `${req.expected_size} أفراد` : '--';
+    document.getElementById('modal-team-req-size').innerText = req.expected_size ? `${req.expected_size} members` : '--';
     document.getElementById('modal-team-req-gpa').innerText = req.leader_gpa || '--';
 
     // Reason Text
@@ -183,7 +183,7 @@ window.openTeamRequestDetails = (id) => {
     document.getElementById('team-request-details-modal').classList.remove('hidden');
 };
 
-// 7. اتخاذ القرار وإجراءات المشرف
+// 7. Admin decision & actions
 window.updateTeamRequestStatus = async (newStatus) => {
     const reqId = document.getElementById('modal-current-team-req-id').value;
     const decisionNote = document.getElementById('modal-team-req-notes').value.trim();
@@ -194,13 +194,13 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("لم يتم العثور على جلسة المشرف الفعالة");
+        if (!user) throw new Error("Active admin session not found.");
 
         if (newStatus === 'approved') {
-            // التحقق من إدخال الملاحظات أو استخدام رسالة افتراضية
-            const finalNote = decisionNote || 'تهانينا، تم اعتماد تأسيس فريقك بنجاح!';
+            // Verify notes or use default approval message
+            const finalNote = decisionNote || 'Congratulations, your team has been approved!';
             
-            // 💡 1. إنشاء الفريق في جدول teams
+            // 1. Create team in teams table
             const { data: newTeam, error: teamError } = await supabase
                 .from('teams')
                 .insert([{
@@ -216,7 +216,7 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
             if (teamError) throw teamError;
 
-            // 💡 2. ترقية الطالب مقدم الطلب إلى Leader وربطه بالفريق
+            // 2. Promote requester to Leader and link to team
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({
@@ -227,7 +227,7 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
             if (profileError) throw profileError;
 
-            // 💡 3. تحديث حالة الطلب
+            // 3. Update request status
             const { error: reqError } = await supabase
                 .from('team_requests')
                 .update({
@@ -240,11 +240,11 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
             if (reqError) throw reqError;
 
-            window.showToast("تم اعتماد الفريق وتعيين القائد بنجاح!", "success");
+            window.showToast("Team approved and leader assigned successfully!", "success");
 
         } else if (newStatus === 'rejected') {
             if (!decisionNote) {
-                window.showToast("يجب إدخال سبب الرفض في حقل الملاحظات!", "error");
+                window.showToast("Please enter a rejection reason in the notes field!", "error");
                 return;
             }
 
@@ -260,7 +260,7 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
             if (reqError) throw reqError;
 
-            window.showToast("تم رفض طلب تأسيس الفريق وتسجيل السبب.", "success");
+            window.showToast("Team creation request rejected and reason logged.", "success");
 
         } else if (newStatus === 'archived') {
             const { error: reqError } = await supabase
@@ -275,24 +275,24 @@ window.updateTeamRequestStatus = async (newStatus) => {
 
             if (reqError) throw reqError;
 
-            window.showToast("تم نقل طلب تأسيس الفريق إلى الأرشيف.", "success");
+            window.showToast("Team creation request moved to archive.", "success");
         }
 
-        // إغلاق النافذة وتحديث الجدول
+        // Close modal and refresh table
         document.getElementById('team-request-details-modal').classList.add('hidden');
         await window.fetchTeamRequests();
 
     } catch (err) {
         console.error(err);
-        window.showToast("حدث خطأ أثناء تنفيذ الإجراء: " + err.message, "error");
+        window.showToast("Error executing action: " + err.message, "error");
     }
 };
 
-// 💡 دالة تحويل رابط شعار الفريق من Google Drive لعرضه مباشرة
+// Resolve Google Drive / Dropbox team logo URL for direct display
 function resolveImageUrl(url) {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../../assets/icons/BUSLA-icon.png';
+            return '../../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkAuthAndLoadState() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = 'auth.html';
         return;
     }
     currentUser = user;
@@ -120,13 +120,13 @@ function showStatusView(request, daysLeft) {
 
     if (request.status === 'pending') {
         badgeContainer.innerHTML = '<span class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-hourglass-half mr-1"></i> Under Admin Review</span>';
-        headerBg.style.background = 'linear-gradient(to right, #eab308, transparent)';
+        headerBg.style.background = 'linear-gradient(to right, #EFECE6, transparent)';
         rejectionAlert.classList.add('hidden');
         actionBtns.classList.remove('hidden');
     } 
     else if (request.status === 'rejected') {
         badgeContainer.innerHTML = '<span class="bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-times-circle mr-1"></i> Application Rejected</span>';
-        headerBg.style.background = 'linear-gradient(to right, #ef4444, transparent)';
+        headerBg.style.background = 'linear-gradient(to right, #8E8E8E, transparent)';
         
         rejectionAlert.classList.remove('hidden');
         document.getElementById('rejection-reason-text').innerText = request.rejection_reason || 'No specific reason provided.';
@@ -134,7 +134,7 @@ function showStatusView(request, daysLeft) {
     }
     else if (request.status === 'cancelled') {
         badgeContainer.innerHTML = '<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-ban mr-1"></i> Application Cancelled</span>';
-        headerBg.style.background = 'linear-gradient(to right, #6b7280, transparent)';
+        headerBg.style.background = 'linear-gradient(to right, #5A5A5A, transparent)';
         rejectionAlert.classList.add('hidden');
         actionBtns.classList.add('hidden'); 
     }

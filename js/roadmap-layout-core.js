@@ -435,10 +435,10 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
     }
 
     const attachmentColor = (node) => {
-        if (node.type === 'quiz') return '#A78BFA';
-        if (node.type === 'project') return '#FB923C';
-        if (node.type === 'document') return '#22D3EE';
-        return '#14B8A6';
+        if (node.type === 'quiz') return '#D4CFC6';
+        if (node.type === 'project') return '#FFFFFF';
+        if (node.type === 'document') return '#B8B4AC';
+        return '#EFECE6';
     };
 
     // 1. Vertical Spine ('core'): Track -> Phase 1 -> Phase 2 -> ...
@@ -454,8 +454,8 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
             className: 'link-backbone',
             useArrow: false,
         });
-        addPort(fe.cx, fe.bottom, '#00F5FF', 4.5);
-        addPort(te.cx, te.top, '#3B82F6', 4.5);
+        addPort(fe.cx, fe.bottom, '#FFFFFF', 4.5);
+        addPort(te.cx, te.top, '#EFECE6', 4.5);
     });
 
     // 2. Phase -> Phase Children (Courses & Phase-level Documents)
@@ -464,8 +464,8 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
         emitSmoothFan(phase, children, {
             defaultClass: 'link-phase-branch',
             leafClassFn: (child) => child.type === 'document' ? 'link-subnode-document' : 'link-phase-branch',
-            parentPortColor: '#3B82F6',
-            childPortColorFn: (child) => child.type === 'document' ? '#22D3EE' : '#22C45D',
+            parentPortColor: '#EFECE6',
+            childPortColorFn: (child) => child.type === 'document' ? '#B8B4AC' : '#EFECE6',
         });
     });
 
@@ -482,8 +482,8 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
                 }
                 return 'link-course-branch';
             },
-            parentPortColor: '#22C45D',
-            childPortColorFn: (child) => child.isCourseAttachment ? attachmentColor(child) : '#22C45D',
+            parentPortColor: '#EFECE6',
+            childPortColorFn: (child) => child.isCourseAttachment ? attachmentColor(child) : '#8E8E8E',
         });
     });
 
@@ -498,7 +498,7 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
                 if (sub.type === 'document') return 'link-subnode-document';
                 return 'link-subnode-trunk';
             },
-            parentPortColor: '#14B8A6',
+            parentPortColor: '#8E8E8E',
             childPortColorFn: attachmentColor,
         });
     });
@@ -510,7 +510,7 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
         const pe = edge(parentCourse);
         const startX = pe.lx + 28;
         const startY = pe.bottom;
-        addPort(startX, startY, '#00F5FF', 4);
+        addPort(startX, startY, '#EFECE6', 4);
 
         rels.forEach(rel => {
             const re = edge(rel);
@@ -522,7 +522,7 @@ export function buildRoadmapEdgeGeometry(computedNodes, computedLinks, measuredS
                 className: 'link-related-branch',
                 useArrow: false,
             });
-            addPort(re.lx, re.cy, '#00F5FF', 3.8);
+            addPort(re.lx, re.cy, '#EFECE6', 3.8);
         });
     });
 

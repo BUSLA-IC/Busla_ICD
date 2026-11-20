@@ -10,7 +10,7 @@ let confirmCallback = null;
 // =========================================================
 
 function getDirectImageLink(url) {
-    if (!url || url.trim() === "") return "../assets/icons/BUSLA-icon.png";
+    if (!url || url.trim() === "") return "../assets/icons/zdc-icon-192.png";
     try {
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/(.*?)(?:\/|$)/) || url.match(/id=(.*?)(?:&|$)/);
@@ -30,7 +30,7 @@ function getDirectImageLink(url) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
@@ -135,7 +135,7 @@ export async function openSettings() {
         console.error("[Settings] FATAL ERROR:", error.message);
         showToast("Error loading data", "error");
     } finally {
-        if (btn) btn.innerHTML = '<i class="fas fa-cog"></i> الإعدادات';
+        if (btn) btn.innerHTML = '<i class="fas fa-cog"></i> Settings';
     }
 }
 
@@ -217,7 +217,7 @@ async function handleCustomPasswordReset() {
 
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
+            redirectTo: `${window.location.origin}/reset-password.html`
         });
         if (error) throw new Error(error.message);
         
@@ -237,7 +237,7 @@ function showToast(msg, type = 'info') {
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.className = 'fixed bottom-4 left-4 z-50 flex flex-col gap-2 pointer-events-none';
+        container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none';
         document.body.appendChild(container);
     }
 

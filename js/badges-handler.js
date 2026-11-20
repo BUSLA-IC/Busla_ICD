@@ -103,7 +103,7 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
     // 💡 إنشاء شبكة البادجات (منور ومظلم)
     const badgesGridHtml = RANKS_DATA.map((rank, index) => {
         const isUnlocked = points >= rank.points_required;
-        const hexColor = rank.stage_color || '#006A67';
+        const hexColor = rank.stage_color || '#EFECE6';
         const badgeUrl = `../assets/user-badge/lv${rank.level}.png`;
 
         // 💡 التظليم للبادجات التي لم يتم الحصول عليها
@@ -160,13 +160,13 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
 
                     <div class="text-center space-y-2 mb-8">
                         <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono tracking-widest text-gray-400 backdrop-blur-md">
-                            <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: ${currentRank.stage_color}"></span>
-                            رتبتك الحالية
+                            <span class="w-2 h-2 rounded-full" style="background-color: ${currentRank.stage_color}"></span>
+                            YOUR CURRENT RANK
                         </div>
                         <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 tracking-tight drop-shadow-lg uppercase">
                             ${currentRank.title}
                         </h1>
-                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 pl-4 text-right" style="border-left-color: ${currentRank.stage_color}">
+                        <p class="text-lg text-gray-400 italic max-w-lg mx-auto leading-relaxed border-l-2 pl-4 text-left" style="border-left-color: ${currentRank.stage_color}">
                             "${currentRank.lore}"
                         </p>
                     </div>
@@ -176,11 +176,11 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
                         
                         <div class="flex justify-between items-end mb-3">
                             <div>
-                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">نقاط الخبرة (XP)</span>
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Experience Points (XP)</span>
                                 <span class="text-3xl font-black text-white font-mono">${points.toLocaleString()}</span>
                             </div>
                             <div class="text-right">
-                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">الهدف القادم</span>
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Next Target</span>
                                 <span class="text-base font-bold" style="color: ${currentRank.stage_color}">
                                     ${nextRank ? nextRank.title : 'MAX RANK'}
                                 </span>
@@ -194,8 +194,8 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
                             </div>
                         </div>
                         
-                        <p class="text-xs text-gray-400 mt-3 text-right">
-                            ${nextRank ? `متبقي <span class="text-white font-bold">${pointsNeeded.toLocaleString()}</span> نقطة للترقية` : 'أنت في القمة!'}
+                        <p class="text-xs text-gray-400 mt-3 text-left">
+                            ${nextRank ? `<span class="text-white font-bold">${pointsNeeded.toLocaleString()}</span> XP remaining until promotion` : 'You have reached the summit!'}
                         </p>
                     </div>
                 </div>
@@ -206,8 +206,8 @@ function renderCinematicPage(container, currentRank, nextRank, points, currentIn
             <div class="flex items-center gap-3 mb-8 border-b border-white/10 pb-4">
                 <i class="fas fa-medal text-3xl text-b-primary"></i>
                 <div>
-                    <h2 class="text-2xl font-black text-white">سجل البادجات</h2>
-                    <p class="text-sm text-gray-400">جميع الرتب المتاحة. المظلمة لم يتم فتحها بعد!</p>
+                    <h2 class="text-2xl font-black text-white">Badge Vault</h2>
+                    <p class="text-sm text-gray-400">All available ranks. Dimmed badges are still locked.</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -237,7 +237,7 @@ window.openBadgeModal = (badgeKey, userXp) => {
     const pointsLeft = badge.points_required - userXp;
     const progressPercent = isUnlocked ? 100 : Math.min(100, Math.max(0, (userXp / (badge.points_required || 1)) * 100));
     
-    const hexColor = badge.stage_color || '#006A67';
+    const hexColor = badge.stage_color || '#EFECE6';
     const badgeImgUrl = `../assets/user-badge/lv${badge.level}.png`;
     
     modal.innerHTML = `
@@ -268,7 +268,7 @@ window.openBadgeModal = (badgeKey, userXp) => {
                     <i class="fas fa-layer-group"></i> ${badge.stage_name} | ${badge.rarity}
                 </div>
 
-                <div class="bg-black/50 rounded-xl p-5 border border-white/5 mb-6 text-right relative overflow-hidden">
+                <div class="bg-black/50 rounded-xl p-5 border border-white/5 mb-6 text-left relative overflow-hidden">
                     <div class="absolute left-0 top-0 w-1 h-full" style="background: ${hexColor};"></div>
                     <p class="text-gray-400 text-xs font-serif italic mb-3 leading-relaxed">"${badge.lore}"</p>
                     <p class="text-gray-200 text-sm leading-relaxed">${badge.description}</p>
@@ -276,8 +276,8 @@ window.openBadgeModal = (badgeKey, userXp) => {
 
                 <div class="bg-white/5 rounded-2xl p-6 border border-white/10">
                     <div class="flex justify-between text-sm font-bold mb-3">
-                        <span class="text-gray-400">نقاطك: <span class="text-white text-base">${userXp.toLocaleString()}</span></span>
-                        <span class="text-gray-400">الهدف: <span class="text-white text-base">${badge.points_required.toLocaleString()}</span> XP</span>
+                        <span class="text-gray-400">Your XP: <span class="text-white text-base">${userXp.toLocaleString()}</span></span>
+                        <span class="text-gray-400">Target: <span class="text-white text-base">${badge.points_required.toLocaleString()}</span> XP</span>
                     </div>
                     
                     <div class="w-full h-3 bg-black rounded-full overflow-hidden border border-white/10 mb-4 relative">
@@ -286,8 +286,8 @@ window.openBadgeModal = (badgeKey, userXp) => {
                     </div>
 
                     ${isUnlocked 
-                        ? `<div class="text-base font-black animate-pulse mt-2 flex items-center justify-center gap-2" style="color: ${hexColor};"><i class="fas fa-unlock-alt"></i> تم الحصول على البادج بنجاح!</div>`
-                        : `<div class="text-yellow-500/90 text-sm font-bold mt-2 flex items-center justify-center gap-2"><i class="fas fa-lock text-xs"></i> متبقي <span class="text-yellow-400 font-mono text-base">${pointsLeft.toLocaleString()}</span> XP للفتح</div>`
+                        ? `<div class="text-base font-black mt-2 flex items-center justify-center gap-2" style="color: ${hexColor};"><i class="fas fa-unlock-alt"></i> Badge Unlocked!</div>`
+                        : `<div class="text-yellow-500/90 text-sm font-bold mt-2 flex items-center justify-center gap-2"><i class="fas fa-lock text-xs"></i> <span class="text-yellow-400 font-mono text-base">${pointsLeft.toLocaleString()}</span> XP left to unlock</div>`
                     }
                 </div>
             </div>

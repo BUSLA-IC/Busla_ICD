@@ -1,8 +1,6 @@
 /* experts-ai.js
    Client-only Expert Assistant
-   - Requires: ./data/experts_data.json (your existing data file)
-   - Optional: add CSS tweaks in global.css if you want
-   - Integration: safe to include after experts.js in experts.html
+   - Reads active expert advice loaded in memory (no static JSON auto-load)
 */
 
 /* ======= Helper DOM inject ======= */
@@ -14,9 +12,9 @@
   // create floating button
   const fab = document.createElement('button');
   fab.id = 'expert-fab';
-  fab.setAttribute('aria-label','اسأل مساعد الخبراء');
-  fab.className = 'fixed bottom-6 left-6 z-50 bg-b-hl-light text-black rounded-full p-3 shadow-2xl flex items-center gap-3';
-  fab.innerHTML = '<span style="font-size:20px">🧠</span><span class="font-semibold">اسأل مساعد الخبراء</span>';
+  fab.setAttribute('aria-label','Ask Expert Assistant');
+  fab.className = 'fixed bottom-6 right-6 z-50 bg-b-hl-light text-black rounded-full p-3 shadow-2xl flex items-center gap-3';
+  fab.innerHTML = '<span style="font-size:20px">🧠</span><span class="font-semibold">Ask Expert Assistant</span>';
   document.body.appendChild(fab);
 
   // create modal container
@@ -26,35 +24,35 @@
   modal.innerHTML = `
     <div class="bg-b-surface w-full max-w-2xl rounded-2xl p-4 border border-b-border">
       <div class="flex justify-between items-start gap-4">
-        <h2 class="text-xl font-bold text-b-hl-medium">مساعد نصائح الخبراء</h2>
+        <h2 class="text-xl font-bold text-b-hl-medium">ZDC Expert Advice Assistant</h2>
         <button id="expert-close" class="text-2xl">&times;</button>
       </div>
       <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="col-span-1">
           <h3 class="font-semibold mb-2">History</h3>
-          <div id="expert-history" class="space-y-2 max-h-64 overflow-y-auto p-2 bg-[#0f0f0f] rounded-lg"></div>
+          <div id="expert-history" class="space-y-2 max-h-64 overflow-y-auto p-2 bg-[#0D0D0D] rounded-lg"></div>
         </div>
         <div class="col-span-1 md:col-span-2">
-          <h3 class="font-semibold mb-2">اسأل (AR/EN)</h3>
-          <textarea id="expert-query" rows="4" class="w-full p-3 rounded-lg bg-[#0b0b0b] border border-b-border" placeholder="اكتب سؤالك هنا..."></textarea>
+          <h3 class="font-semibold mb-2">Ask a Question</h3>
+          <textarea id="expert-query" rows="4" class="w-full p-3 rounded-lg bg-[#0D0D0D] border border-b-border" placeholder="Type your question here..."></textarea>
           <div class="flex gap-2 mt-3">
-            <button id="expert-send" class="px-4 py-2 rounded-lg bg-b-primary text-white font-semibold">Ask</button>
-            <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="اعمل لي ملخص لنصايح GP">ملخص نصايح GP</button>
-            <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="إيه أشهر أخطاء الطلاب في MATLAB؟">أخطاء MATLAB</button>
+            <button id="expert-send" class="px-4 py-2 rounded-lg bg-b-primary text-[#0D0D0D] font-semibold">Ask</button>
+            <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="Summarize graduation project advice">GP Advice Summary</button>
+            <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="What are common MATLAB mistakes?">MATLAB Mistakes</button>
           </div>
-          <div id="expert-answer" class="mt-4 bg-[#0f0f0f] p-3 rounded-lg max-h-60 overflow-y-auto hidden"></div>
+          <div id="expert-answer" class="mt-4 bg-[#0D0D0D] p-3 rounded-lg max-h-60 overflow-y-auto hidden"></div>
         </div>
       </div>
       <div class="mt-4">
         <h4 class="font-semibold">Suggested prompts</h4>
         <div class="flex flex-wrap gap-2 mt-2">
-          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="اعمل لي ملخص لنصايح GP">اعمل لي ملخص لنصايح GP</button>
-          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="إيه أشهر أخطاء الطلاب في MATLAB؟">إيه أشهر أخطاء الطلاب في MATLAB؟</button>
-          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="قولّي أحسن 5 نصائح في الـ Presentation">أحسن 5 نصائح Presentation</button>
-          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="لو أنا هشتغل Verification، أذاكر إيه؟">لو هشتغل Verification</button>
+          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="Summarize graduation project advice">Summarize GP advice</button>
+          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="What are common student mistakes in MATLAB?">Common MATLAB mistakes</button>
+          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="Give me the top 5 presentation tips">Top 5 Presentation tips</button>
+          <button class="expert-suggest px-3 py-2 rounded-lg border" data-q="What should I study to work in Verification?">Verification roadmap</button>
         </div>
       </div>
-      <div class="mt-4 text-sm text-gray-300">ملاحظة: الإجابات تأتي فقط من قاعدة نصائح الخبراء المحلية.</div>
+      <div class="mt-4 text-sm text-gray-300">Note: Answers are retrieved directly from active ZDC expert advice entries.</div>
     </div>
   `;
   document.body.appendChild(modal);
@@ -76,26 +74,19 @@
   function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   renderHistory();
 
-  // load your experts data (file used by site: experts_data.json)
   let DOCS = [];
   async function loadData(){
     try {
-      const resp = await fetch('../data/experts_data.json');
-      if(!resp.ok) throw new Error('failed load experts_data.json');
-      const json = await resp.json();
-      // your file may use keys like Advice or an array; normalize:
-      const arr = json.Advice || json || [];
-      // normalize each doc to have id, title, summary/fullText (depends on format)
+      const arr = Array.isArray(window.publicAdvicesList) ? window.publicAdvicesList : [];
       DOCS = arr.map(d => ({
         id: d.id || d.ID || (d.title ? d.title.slice(0,12) : 'unknown'),
         title: d.title || d.name || '',
         short: d.summary || d.short || '',
-        advice: d.fullText || d.advice || d.fullText || d.text || '',
-        source: d.source || d.author || 'مصدر',
+        advice: d.content || d.fullText || d.advice || d.text || '',
+        source: d.source || d.author || 'Source',
         tags: d.tags || d.tag || []
       }));
     } catch(e){
-      console.warn('Expert AI: failed to load data', e);
       DOCS = [];
     }
   }
@@ -145,15 +136,15 @@
 
   // compose answer from top docs (with citations)
   function composeAnswer(query, topDocs, limit=6){
-    if(!topDocs || topDocs.length===0) return 'لم أجد نصائح متطابقة في قاعدة الخبراء.';
+    if(!topDocs || topDocs.length===0) return 'No matching expert advice found in the knowledge base.';
     const qtokens = uniq(tok(query));
     const excerpts = [];
     for(const d of topDocs.slice(0,limit)){
       const ex = bestExcerpt(d, qtokens) || d.short || d.title;
       excerpts.push({txt: ex, src: d});
     }
-    const lead = `مستندًا على نصائح الخبراء، هذه نقاط مرتبطة بسؤالك: "${query}"\n\n`;
-    const lines = excerpts.map(e => `- ${e.txt} (${e.src.source || 'مصدر'}${e.src.id? ' | ' + e.src.id: ''})`);
+    const lead = `Based on ZDC expert advice, here are relevant highlights for "${query}":\n\n`;
+    const lines = excerpts.map(e => `- ${e.txt} (${e.src.source || 'Source'}${e.src.id? ' | ' + e.src.id: ''})`);
     return lead + lines.join('\n');
   }
 
@@ -171,13 +162,13 @@
     const q = queryBox.value.trim();
     if(!q) return;
     answerBox.classList.remove('hidden');
-    answerBox.innerHTML = '<div class="flex items-center gap-3"><div class="spinner" style="border-top:3px solid #22C45D;width:26px;height:26px;border-radius:50%;animation:spin 1s linear infinite"></div><div>جاري تجهيز الإجابة...</div></div>';
+    answerBox.innerHTML = '<div class="flex items-center gap-3"><div class="spinner" style="border-top:3px solid #EFECE6;width:26px;height:26px;border-radius:50%;animation:spin 1s linear infinite"></div><div>Preparing answer...</div></div>';
     if(DOCS.length===0) await loadData();
     const scored = scoreDocs(q);
     const top = scored.filter(d=>d.score>0).slice(0,8);
     const used = top.length ? top : DOCS.slice(0,4);
     const answer = composeAnswer(q, used, 6);
-    answerBox.innerHTML = '<pre style="white-space:pre-wrap;direction:rtl;text-align:right">'+ escapeHtml(answer) +'</pre>';
+    answerBox.innerHTML = '<pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+ escapeHtml(answer) +'</pre>';
 
     // update history
     history.push({q, a: answer, t: Date.now()});
@@ -192,7 +183,7 @@
   // small spinner css
   const style = document.createElement('style');
   style.textContent = `
-    .spinner{ border:3px solid rgba(255,255,255,0.06); border-top:3px solid #22C45D; border-radius:50%; width:20px; height:20px; animation:spin 1s linear infinite}
+    .spinner{ border:3px solid rgba(255,255,255,0.06); border-top:3px solid #EFECE6; border-radius:50%; width:20px; height:20px; animation:spin 1s linear infinite}
     @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
   `;
   document.head.appendChild(style);

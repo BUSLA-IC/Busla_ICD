@@ -2,3 +2,202 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Backgrounds */
+  --bg-main: #0D0D0D;
+  --bg-card: #161616;
+  --bg-surface: #222222;
+
+  /* Borders */
+  --border-subtle: #2E2E2E;
+
+  /* Accents & Highlights */
+  --accent-warm-white: #EFECE6;
+  --accent-pure-white: #FFFFFF;
+
+  /* Typography */
+  --text-primary: #EFECE6;
+  --text-secondary: #8E8E8E;
+  --text-muted: #5A5A5A;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+  }
+
+  ::selection {
+    background-color: var(--accent-warm-white);
+    color: var(--bg-main);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--accent-warm-white);
+  }
+}
+
+/* Signature Vertical Display Headline Gradient (Pure White -> Warm Off-White -> Dimmed Charcoal) */
+.headline-gradient,
+.gradient-text,
+.section-title {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFECE6 55%, #5A5A5A 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Featured Spotlight Bento Card (Warm Off-White Surface with Dark Obsidian Ink) */
+.bento-card-featured {
+  background-color: var(--accent-warm-white) !important;
+  color: var(--bg-main) !important;
+  border: 1px solid var(--accent-pure-white) !important;
+  box-shadow: 0 18px 45px rgba(239, 236, 230, 0.14) !important;
+}
+.bento-card-featured h1,
+.bento-card-featured h2,
+.bento-card-featured h3,
+.bento-card-featured h4,
+.bento-card-featured .featured-title {
+  color: #0D0D0D !important;
+}
+.bento-card-featured p,
+.bento-card-featured .featured-subtitle {
+  color: #222222 !important;
+}
+.bento-card-featured .featured-badge {
+  background-color: #0D0D0D !important;
+  color: #EFECE6 !important;
+  border-color: #222222 !important;
+}
+
+/* High-Contrast Dark Ink (#0D0D0D) on Solid Warm Off-White (#EFECE6) Primary Buttons & Badges */
+.bg-b-primary:not(.bg-clip-text),
+.bg-b-hl-light:not(.bg-clip-text),
+.bg-b-accent:not(.bg-clip-text),
+.bg-teal-400:not(.bg-clip-text),
+.bg-teal-500:not(.bg-clip-text),
+.bg-teal-600:not(.bg-clip-text),
+.bg-emerald-400:not(.bg-clip-text),
+.bg-emerald-500:not(.bg-clip-text),
+.bg-emerald-600:not(.bg-clip-text),
+.bg-cyan-400:not(.bg-clip-text),
+.bg-cyan-500:not(.bg-clip-text),
+.bg-cyan-600:not(.bg-clip-text),
+.bg-blue-500:not(.bg-clip-text),
+.bg-blue-600:not(.bg-clip-text),
+.bg-indigo-500:not(.bg-clip-text),
+.bg-indigo-600:not(.bg-clip-text),
+.bg-purple-500:not(.bg-clip-text),
+.bg-purple-600:not(.bg-clip-text),
+.bg-amber-400:not(.bg-clip-text),
+.bg-amber-500:not(.bg-clip-text),
+.bg-amber-600:not(.bg-clip-text),
+.bg-yellow-400:not(.bg-clip-text),
+.bg-yellow-500:not(.bg-clip-text),
+.bg-green-500:not(.bg-clip-text),
+.bg-green-600:not(.bg-clip-text),
+.bg-red-500:not(.bg-clip-text),
+.bg-red-600:not(.bg-clip-text),
+.bg-orange-500:not(.bg-clip-text),
+.bg-orange-600:not(.bg-clip-text),
+.bg-pink-500:not(.bg-clip-text),
+.bg-pink-600:not(.bg-clip-text),
+.from-b-primary:not(.bg-clip-text),
+.from-teal-500:not(.bg-clip-text),
+.from-teal-600:not(.bg-clip-text),
+.from-emerald-500:not(.bg-clip-text),
+.from-emerald-600:not(.bg-clip-text),
+.from-blue-600:not(.bg-clip-text),
+.from-purple-600:not(.bg-clip-text),
+.from-amber-500:not(.bg-clip-text),
+.from-amber-600:not(.bg-clip-text) {
+  color: #0D0D0D !important;
+}
+
+.bg-b-primary:not(.bg-clip-text) > span,
+.bg-b-primary:not(.bg-clip-text) > i,
+.bg-teal-500:not(.bg-clip-text) > span,
+.bg-teal-500:not(.bg-clip-text) > i,
+.bg-teal-600:not(.bg-clip-text) > span,
+.bg-teal-600:not(.bg-clip-text) > i,
+.bg-emerald-500:not(.bg-clip-text) > span,
+.bg-emerald-500:not(.bg-clip-text) > i,
+.bg-emerald-600:not(.bg-clip-text) > span,
+.bg-emerald-600:not(.bg-clip-text) > i,
+.bg-blue-600:not(.bg-clip-text) > span,
+.bg-blue-600:not(.bg-clip-text) > i,
+.bg-purple-600:not(.bg-clip-text) > span,
+.bg-purple-600:not(.bg-clip-text) > i,
+.bg-amber-500:not(.bg-clip-text) > span,
+.bg-amber-500:not(.bg-clip-text) > i,
+.bg-red-500:not(.bg-clip-text) > span,
+.bg-red-500:not(.bg-clip-text) > i,
+.bg-red-600:not(.bg-clip-text) > span,
+.bg-red-600:not(.bg-clip-text) > i,
+.from-b-primary:not(.bg-clip-text) > span,
+.from-b-primary:not(.bg-clip-text) > i,
+.from-teal-500:not(.bg-clip-text) > span,
+.from-teal-500:not(.bg-clip-text) > i,
+.from-teal-600:not(.bg-clip-text) > span,
+.from-teal-600:not(.bg-clip-text) > i,
+.from-emerald-500:not(.bg-clip-text) > span,
+.from-emerald-500:not(.bg-clip-text) > i,
+.from-emerald-600:not(.bg-clip-text) > span,
+.from-emerald-600:not(.bg-clip-text) > i {
+  color: #0D0D0D !important;
+}
+
+/* Primary CTA Hover States -> Pure White (#FFFFFF) with Dark Ink (#0D0D0D) */
+.hover\:bg-b-primary:hover,
+.hover\:bg-b-hl-light:hover,
+.hover\:bg-teal-400:hover,
+.hover\:bg-teal-500:hover,
+.hover\:bg-teal-600:hover,
+.hover\:bg-teal-700:hover,
+.hover\:bg-emerald-400:hover,
+.hover\:bg-emerald-500:hover,
+.hover\:bg-emerald-600:hover,
+.hover\:bg-emerald-700:hover,
+.hover\:bg-cyan-500:hover,
+.hover\:bg-cyan-600:hover,
+.hover\:bg-blue-500:hover,
+.hover\:bg-blue-600:hover,
+.hover\:bg-blue-700:hover,
+.hover\:bg-purple-500:hover,
+.hover\:bg-purple-600:hover,
+.hover\:bg-purple-700:hover,
+.hover\:bg-amber-500:hover,
+.hover\:bg-amber-600:hover,
+.hover\:bg-red-500:hover,
+.hover\:bg-red-600:hover {
+  background-color: #FFFFFF !important;
+  color: #0D0D0D !important;
+}
+
+.hover\:bg-b-primary:hover > span,
+.hover\:bg-b-primary:hover > i,
+.hover\:bg-teal-500:hover > span,
+.hover\:bg-teal-500:hover > i,
+.hover\:bg-teal-600:hover > span,
+.hover\:bg-teal-600:hover > i,
+.hover\:bg-emerald-500:hover > span,
+.hover\:bg-emerald-500:hover > i,
+.hover\:bg-emerald-600:hover > span,
+.hover\:bg-emerald-600:hover > i {
+  color: #0D0D0D !important;
+}
+
+/* Enforce strict monochrome on raster brand logo assets and any legacy ui-avatars */
+img[src*="logo.png"],
+img[src*="zdc-icon"] {
+  filter: grayscale(100%) contrast(1.15) brightness(1.12) !important;
+}
+
+img[src*="ui-avatars.com"]:not([src*="background=222222"]) {
+  filter: grayscale(100%) brightness(0.75) contrast(1.2) !important;
+}
+
+
+

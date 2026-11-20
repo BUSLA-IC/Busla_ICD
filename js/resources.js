@@ -66,14 +66,14 @@
             // Get type label
             function getTypeLabel(type) {
                 const labels = {
-                    'video': 'كورس فيديو',
-                    'book': 'كتاب',
-                    'article': 'مقال',
-                    'project': 'مشروع',
-                    'internship': 'تدريب',
-                    'diploma': 'دبلومة',
-                    'resource': 'مصدر',
-                    'community': 'مجتمع'
+                    'video': 'Video Course',
+                    'book': 'Book',
+                    'article': 'Article',
+                    'project': 'Project',
+                    'internship': 'Internship',
+                    'diploma': 'Diploma',
+                    'resource': 'Resource',
+                    'community': 'Community'
                 };
                 return labels[type] || type;
             }
@@ -114,7 +114,7 @@
                             </div>
                             <h3 class="text-xl font-bold text-b-text mb-2 hover:text-b-hl-medium transition-colors">${resource.title}</h3>
                             <p class="text-sm text-gray-400 mb-3 flex items-center">
-                                <i class="fas fa-user text-xs ml-1"></i>
+                                <i class="fas fa-user text-xs mr-1"></i>
                                 ${resource.author}
                             </p>
                             <p class="text-md text-gray-300 line-clamp-2 mb-4">${resource.description}</p>
@@ -125,8 +125,8 @@
                                 ${moreTagsHtml}
                             </div>
                             <button class="w-full py-2 bg-b-primary text-white rounded-lg hover:bg-b-hl-medium hover:text-black transition-all font-semibold">
-                                <i class="fas fa-info-circle ml-1"></i>
-                                عرض التفاصيل
+                                <i class="fas fa-info-circle mr-1"></i>
+                                View Details
                             </button>
                         </div>
                     `;
@@ -149,7 +149,7 @@
                     const li = document.createElement('li');
                     li.className = 'flex items-start text-gray-300 text-lg';
                     li.innerHTML = `
-                        <i class="fas fa-check-circle text-b-hl-medium mt-1 ml-2 flex-shrink-0"></i>
+                        <i class="fas fa-check-circle text-b-hl-medium mt-1 mr-2 flex-shrink-0"></i>
                         <span>${feature}</span>
                     `;
                     modalFeatures.appendChild(li);
@@ -164,7 +164,7 @@
                     modalUrlSoon.classList.remove('hidden');
                 }
 
-                modalContributorName.textContent = resource.contributor.name || 'مساهم غير معروف';
+                modalContributorName.textContent = resource.contributor.name || 'Unknown Contributor';
                 
                 modalContributorLinks.innerHTML = '';
                 if (resource.contributor.linkedin && resource.contributor.linkedin !== 'null') {
@@ -231,116 +231,12 @@
                 applyFilters();
             }
 
-            // Load resources from JSON
+            // Static resources JSON removed; default to empty collection
             async function loadResources() {
-                try {
-                    // Using the JSON data from the previous response
-                    const response = await fetch('../data/resources-data.json');
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    allResources = await response.json();
-                    totalResourcesSpan.textContent = allResources.length;
-                    totalCountSpan.textContent = allResources.length;
-                    applyFilters();
-                } catch (error) {
-                    console.error("Fetch error: ", error);
-                    
-                    // Fallback: Use inline sample data for demo
-                    allResources = [
-                        {
-                            "id": "res001",
-                            "title": "كورس Verilog - Anas Verilog",
-                            "author": "Anas Verilog",
-                            "description": "كورس شامل يبدأ من الصفر في لغة Verilog، يركز على التطبيق العملي باستخدام Vivado ويغطي أساسيات الـ FPGA Flow.",
-                            "type": "video",
-                            "tags": ["Verilog", "FPGA", "عربي", "مبتدئ", "Vivado"],
-                            "stage": "stage1",
-                            "track": "fpga",
-                            "details": {
-                                "level": "مبتدئ",
-                                "roadmap": "المرحلة الأولى: الأساسيات",
-                                "summary": "الأفضل للمبتدئين باللغة العربية. يشرح الدكتور أناس لغة Verilog بطريقة عملية باستخدام برنامج Vivado، ويغطي Flow الـ FPGA بشكل كامل.",
-                                "features": [
-                                    "شرح كامل لـ FPGA Flow",
-                                    "مشاريع عملية كثيرة يمكن إضافتها للـ CV",
-                                    "يستخدم Vivado في الشرح",
-                                    "مناسب جداً للمبتدئين"
-                                ],
-                                "url": "https://www.youtube.com/playlist?list=PLMSpr7v8N3uwTdb8RSLu3f7BhCRcpsz4r"
-                            },
-                            "contributor": {
-                                "name": "Yousef Sherif",
-                                "linkedin": "https://www.linkedin.com/in/yousef-sherif-6343b219b/",
-                                "github": null,
-                                "email": "shirefy49@gmail.com"
-                            }
-                        },
-                        {
-                            "id": "res002",
-                            "title": "Digital VLSI Design Course - Adam Teman",
-                            "author": "Adam Teman",
-                            "description": "كورس شامل يغطي ASIC Flow بالتفصيل مع التركيز على RTL Design و Physical Design.",
-                            "type": "video",
-                            "tags": ["ASIC", "RTL", "Physical Design", "STA", "English"],
-                            "stage": "stage1",
-                            "track": "design",
-                            "details": {
-                                "level": "متوسط إلى متقدم",
-                                "roadmap": "المرحلة الأولى والثانية",
-                                "summary": "كورس ممتاز من جامعة إسرائيلية يشرح ASIC Flow بشكل كامل، من RTL حتى Physical Design. يتميز بشرح عملي وواقعي.",
-                                "features": [
-                                    "يمشي معك في ASIC Flow كاملاً",
-                                    "شرح ممتاز لـ STA في المحاضرة رقم 5",
-                                    "فيديو مهم عن How to write Synthesizeable RTL",
-                                    "يتكلم عن Conventions مهمة لكتابة Clean Code"
-                                ],
-                                "url": "https://www.youtube.com/playlist?list=PLMSpr7v8N3uwTdb8RSLu3f7BhCRcpsz4r"
-                            },
-                            "contributor": {
-                                "name": "Yousef Sherif",
-                                "linkedin": "https://www.linkedin.com/in/yousef-sherif-6343b219b/",
-                                "github": null,
-                                "email": "shirefy49@gmail.com"
-                            }
-                        },
-                        {
-                            "id": "book001",
-                            "title": "Principles of Digital RTL Design",
-                            "author": "Multiple Authors",
-                            "description": "كتاب أساسي يغطي أساسيات Digital Design و RTL و STA و Power Reduction و DFT.",
-                            "type": "book",
-                            "tags": ["RTL", "STA", "Power", "DFT", "كتاب"],
-                            "stage": "stage1",
-                            "track": "design",
-                            "details": {
-                                "level": "متوسط إلى متقدم",
-                                "roadmap": "جميع المراحل - مرجع أساسي",
-                                "summary": "كتاب ممتاز جداً ومهم للمجال. يغطي أساسيات كثيرة ويشرح STA و Power Reduction Techniques و DFT بشكل ممتاز.",
-                                "features": [
-                                    "يشرح أساسيات المجال",
-                                    "فصول ممتازة عن STA",
-                                    "يغطي Power Reduction Techniques",
-                                    "يشرح DFT",
-                                    "مرجع أساسي يجب العودة إليه"
-                                ],
-                                "url": null
-                            },
-                            "contributor": {
-                                "name": "Yousef Sherif",
-                                "linkedin": "https://www.linkedin.com/in/yousef-sherif-6343b219b/",
-                                "github": null,
-                                "email": "shirefy49@gmail.com"
-                            }
-                        }
-                    ];
-                    
-                    totalResourcesSpan.textContent = allResources.length;
-                    totalCountSpan.textContent = allResources.length;
-                    applyFilters();
-                }
+                allResources = [];
+                totalResourcesSpan.textContent = allResources.length;
+                totalCountSpan.textContent = allResources.length;
+                applyFilters();
             }
 
             // Event listeners
