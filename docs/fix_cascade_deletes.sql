@@ -93,37 +93,31 @@ BEGIN
     END IF;
 END $$;
 
--- 10. ADMIN RLS DELETE POLICIES
--- Ensure authenticated Admins can delete student records from enrollments and completed_materials
+-- 10. ADMIN RLS DELETE & UPDATE POLICIES
+-- Ensure authenticated Admins can update/delete curriculum & dependent records cleanly
 DO $$
+DECLARE
+    tbl text;
+    pol_name text;
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE schemaname = 'public' AND tablename = 'enrollments' AND policyname = 'Allow admins to delete enrollments'
-    ) THEN
-        CREATE POLICY "Allow admins to delete enrollments"
-            ON public.enrollments FOR DELETE TO authenticated
-            USING (
-                EXISTS (
-                    SELECT 1 FROM public.profiles 
-                    WHERE profiles.id = auth.uid() 
-                    AND LOWER(profiles.role) IN ('owner', 'admin', 'master admin', 'content manager')
-                )
-            );
-    END IF;
+    FOREACH tbl IN ARRAY ARRAY['tracks', 'phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'enrollments', 'completed_materials', 'quiz_attempts', 'active_quiz_states', 'project_submissions', 'team_tasks']
+    LOOP
+        IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = tbl) THEN
+            pol_name := 'Allow admins full delete on ' || tbl;
+            IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = tbl AND policyname = pol_name) THEN
+                EXECUTE format(
+                    'CREATE POLICY %I ON public.%I FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND LOWER(profiles.role) IN (''owner'', ''admin'', ''master admin'', ''content manager'')))',
+                    pol_name, tbl
+                );
+            END IF;
 
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE schemaname = 'public' AND tablename = 'completed_materials' AND policyname = 'Allow admins to delete completed_materials'
-    ) THEN
-        CREATE POLICY "Allow admins to delete completed_materials"
-            ON public.completed_materials FOR DELETE TO authenticated
-            USING (
-                EXISTS (
-                    SELECT 1 FROM public.profiles 
-                    WHERE profiles.id = auth.uid() 
-                    AND LOWER(profiles.role) IN ('owner', 'admin', 'master admin', 'content manager')
-                )
-            );
-    END IF;
+            pol_name := 'Allow admins full update on ' || tbl;
+            IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = tbl AND policyname = pol_name) THEN
+                EXECUTE format(
+                    'CREATE POLICY %I ON public.%I FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND LOWER(profiles.role) IN (''owner'', ''admin'', ''master admin'', ''content manager''))) WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND LOWER(profiles.role) IN (''owner'', ''admin'', ''master admin'', ''content manager'')))',
+                    pol_name, tbl
+                );
+            END IF;
+        END IF;
+    END LOOP;
 END $$;

@@ -1,5 +1,5 @@
 /* ============================================
-   بوصلة - Global Styles
+   ZDC (Zagazig Digital Community) - Global Styles
    Color Scheme:
    - Primary: #006A67
    - Highlight Light: #22C45D
@@ -19,7 +19,7 @@
 }
 
 body {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
     background-color: #000000;
     color: #F6F6F6;
     overflow-x: hidden;
@@ -191,7 +191,7 @@ html {
 .resource-link::before {
     content: '';
     position: absolute;
-    right: 0;
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
     width: 3px;
@@ -569,7 +569,7 @@ code {
     padding: 0.2rem 0.4rem;
     border-radius: 0.25rem;
     font-size: 0.875em;
-    font-family: 'Courier New', monospace;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 pre {
@@ -594,7 +594,7 @@ table {
 
 th, td {
     padding: 0.75rem;
-    text-align: right;
+    text-align: left;
     border-bottom: 1px solid #222222;
 }
 
@@ -613,7 +613,7 @@ tr:hover {
     padding: 1rem 1.5rem;
     border-radius: 0.5rem;
     margin: 1rem 0;
-    border-right: 4px solid;
+    border: 1px solid;
 }
 
 .alert-info {
@@ -700,7 +700,7 @@ tr:hover {
 }
 
 
-/* إضافات لملف global.css الموجود */
+/* Additional ZDC utility styles */
 
 /* Gradient Text Effect */
 .gradient-text {

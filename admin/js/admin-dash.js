@@ -1486,14 +1486,36 @@ function setupTabNavigation() {
                 window.closeAdminSidebar();
             }
 
-            // Adjust main panel layout for roadmap tab (needs to be full-screen, no padding/scroll)
+            // Adjust main panel layout cleanly per tab (edge-to-edge on mobile, spacious on desktop)
+            const mobileTopbar = document.getElementById('admin-mobile-topbar');
+            const mobileTopbarTitle = document.getElementById('admin-mobile-topbar-title');
+            const mobileTopbarIcon = document.getElementById('admin-mobile-topbar-icon');
+            if (mobileTopbar) {
+                if (targetId === 'dashboard') {
+                    mobileTopbar.classList.add('hidden');
+                    mobileTopbar.classList.remove('flex');
+                } else {
+                    mobileTopbar.classList.remove('hidden');
+                    mobileTopbar.classList.add('flex');
+                    const btnLabel = btn.querySelector('span')?.textContent?.trim();
+                    const btnIconClass = btn.querySelector('i')?.className;
+                    if (mobileTopbarTitle && btnLabel) mobileTopbarTitle.textContent = btnLabel;
+                    if (mobileTopbarIcon && btnIconClass) {
+                        mobileTopbarIcon.className = btnIconClass.replace(/\bw-\d+\b/g, '').trim() + ' text-teal-400 text-xs';
+                    }
+                }
+            }
+
             if (mainPanel) {
+                mainPanel.classList.remove('!p-0', '!overflow-hidden', 'p-8', 'p-3', 'p-2', 'p-0', 'sm:p-5', 'sm:p-4', 'md:p-8', 'md:p-6', 'md:p-5', 'lg:p-8');
                 if (targetId === 'learning-roadmap') {
                     mainPanel.classList.add('!p-0', '!overflow-hidden');
-                    mainPanel.classList.remove('overflow-y-auto', 'p-8');
+                    mainPanel.classList.remove('overflow-y-auto');
+                } else if (targetId === 'dashboard') {
+                    mainPanel.classList.add('overflow-y-auto', 'p-2', 'sm:p-4', 'md:p-6', 'lg:p-8');
                 } else {
-                    mainPanel.classList.remove('!p-0', '!overflow-hidden');
-                    mainPanel.classList.add('overflow-y-auto', 'p-8');
+                    // Full-bleed workspace tabs: zero wasted outer margin on mobile, comfortable framing on desktop
+                    mainPanel.classList.add('overflow-y-auto', 'p-0', 'md:p-5', 'lg:p-8');
                 }
             }
 
@@ -1517,12 +1539,7 @@ window.closeAdminSidebar = function() {
     if (sidebar) sidebar.classList.add('translate-x-full');
     if (overlay) overlay.classList.add('hidden');
     if (window.innerWidth < 768 && reopenBtn) {
-        const activeTab = document.querySelector('.tab-content.active');
-        if (activeTab && activeTab.id !== 'dashboard') {
-            reopenBtn.classList.remove('hidden');
-        } else {
-            reopenBtn.classList.add('hidden');
-        }
+        reopenBtn.classList.add('hidden');
     }
 };
 
@@ -1533,16 +1550,9 @@ window.toggleAdminSidebar = function() {
     if (!sidebar) return;
 
     if (window.innerWidth < 768) {
-        const isClosed = sidebar.classList.toggle('translate-x-full');
+        sidebar.classList.toggle('translate-x-full');
         if (overlay) overlay.classList.toggle('hidden');
-        if (reopenBtn) {
-            const activeTab = document.querySelector('.tab-content.active');
-            if (isClosed && activeTab && activeTab.id !== 'dashboard') {
-                reopenBtn.classList.remove('hidden');
-            } else {
-                reopenBtn.classList.add('hidden');
-            }
-        }
+        if (reopenBtn) reopenBtn.classList.add('hidden');
     } else {
         const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
         localStorage.setItem('busla_admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');

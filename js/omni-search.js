@@ -1,17 +1,16 @@
 /**
- * BUSLA LMS - Omni-Search Engine (Ctrl + K)
+ * ZDC (Zagazig Digital Community) - Omni-Search Engine (Ctrl + K)
  * Global Spotlight Search across Courses, Lessons, References, Tools, Experts & Navigation.
- * Vanilla JavaScript (ES6+) with Supabase Integration.
  */
 
 (function () {
-    if (window.BUSLA_OMNI_SEARCH_INITIALIZED) return;
-    window.BUSLA_OMNI_SEARCH_INITIALIZED = true;
+    if (window.ZDC_OMNI_SEARCH_INITIALIZED) return;
+    window.ZDC_OMNI_SEARCH_INITIALIZED = true;
 
     // 1. Dynamic Path Resolution
     let pathPrefix = './';
     const loc = window.location.pathname;
-    if (loc.includes('/admin/html/')) {
+    if (loc.includes('/admin/html/') || loc.includes('/pages/legal/')) {
         pathPrefix = '../../';
     } else if (loc.includes('/pages/') || loc.includes('/admin/')) {
         pathPrefix = '../';
@@ -69,109 +68,109 @@
                 id: 'nav-home',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'تنقل',
+                badgeText: 'Nav',
                 badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
                 icon: 'fas fa-home',
-                title: 'الصفحة الرئيسية',
-                subtitle: 'استكشف منصة بوصلة وأقسامها الأساسية',
+                title: 'Home Page',
+                subtitle: 'Explore ZDC and its core engineering tracks',
                 url: `${pathPrefix}index.html#hero`,
-                tags: ['رئيسية', 'home', 'بوصلة', 'start']
+                tags: ['home', 'zdc', 'zagazig', 'start', 'landing']
             },
             {
                 id: 'nav-roadmap',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'المسار',
+                badgeText: 'Roadmap',
                 badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
                 icon: 'fas fa-map-signs',
-                title: 'خريطة المسار التعليمي (Roadmap)',
-                subtitle: 'شجرة ومراحل تخصص Digital IC Design',
+                title: 'Interactive Learning Roadmap',
+                subtitle: 'Structured Digital IC Design phases and curriculum tree',
                 url: `${pathPrefix}index.html#roadmap`,
-                tags: ['مسار', 'roadmap', 'خريطة', 'شجرة', 'مراحل', 'phases']
+                tags: ['roadmap', 'track', 'phases', 'curriculum', 'rtl', 'asic', 'fpga']
             },
             {
                 id: 'nav-courses',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'الدورات',
+                badgeText: 'Courses',
                 badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                 icon: 'fas fa-graduation-cap',
-                title: 'مكتبة الدورات التدريبية',
-                subtitle: 'قائمة شاملة لكافة كورسات ومحتويات المنصة',
+                title: 'Courses Library',
+                subtitle: 'Browse all engineering courses and video lectures',
                 url: `${pathPrefix}index.html#courses`,
-                tags: ['دورات', 'courses', 'تدريب', 'شروحات', 'فيديوهات']
+                tags: ['courses', 'training', 'lectures', 'videos', 'lessons']
             },
             {
                 id: 'nav-references',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'المكتبة',
+                badgeText: 'Library',
                 badgeClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
                 icon: 'fas fa-book-reader',
-                title: 'المكتبة العلمية والمراجع',
-                subtitle: 'كتب، أوراق بحثية، وأدلة ومذكرات رقمية',
+                title: 'Technical Reference Library',
+                subtitle: 'Textbooks, IEEE papers, guides, and cheat sheets',
                 url: `${pathPrefix}index.html#references`,
-                tags: ['مراجع', 'مكتبة', 'كتب', 'references', 'books', 'papers', 'cheatsheet']
+                tags: ['references', 'library', 'books', 'papers', 'cheatsheet', 'pdf']
             },
             {
                 id: 'nav-tools',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'الأدوات',
+                badgeText: 'Tools',
                 badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
                 icon: 'fas fa-tools',
-                title: 'أدوات التصميم البرمجية (EDA Tools)',
-                subtitle: 'أدوات المحاكاة والـ Synthesis والـ Layout',
+                title: 'EDA Software & Tools',
+                subtitle: 'Simulation, synthesis, verification, and layout tools',
                 url: `${pathPrefix}index.html#tools`,
-                tags: ['ادوات', 'tools', 'eda', 'modelsim', 'vivado', 'synopsys', 'cadence', 'software']
+                tags: ['tools', 'eda', 'modelsim', 'vivado', 'synopsys', 'cadence', 'software']
             },
             {
                 id: 'nav-experts',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'الخبراء',
+                badgeText: 'Experts',
                 badgeClass: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
                 icon: 'fas fa-user-astronaut',
-                title: 'مجلس الخبراء والنصائح',
-                subtitle: 'نصائح مهندسي وخبراء المجال لمشاريع التخرج والعمل',
+                title: 'Industry Experts & Mentors',
+                subtitle: 'Career guidance and engineering insights from silicon professionals',
                 url: `${pathPrefix}index.html#experts`,
-                tags: ['خبراء', 'experts', 'نصائح', 'ارشاد', 'mentors']
+                tags: ['experts', 'advice', 'mentors', 'career', 'industry']
             },
             {
                 id: 'nav-student-dash',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'لوحة التحكم',
+                badgeText: 'Dashboard',
                 badgeClass: 'bg-green-500/20 text-green-400 border-green-500/30',
                 icon: 'fas fa-user-graduate',
-                title: 'لوحة تحكم الطالب (Student Dashboard)',
-                subtitle: 'المهام الأسبوعية، التقويم، التقدم، ومجموع النقاط',
+                title: 'Student Dashboard',
+                subtitle: 'Weekly tasks, calendar, course progress, and XP rank',
                 url: `${pathPrefix}pages/student-dash.html`,
-                tags: ['طالب', 'student', 'dashboard', 'مهام', 'تقويم', 'نقاط', 'xp']
+                tags: ['student', 'dashboard', 'tasks', 'calendar', 'xp', 'progress']
             },
             {
                 id: 'nav-leader-dash',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'لوحة القيادة',
+                badgeText: 'Squad',
                 badgeClass: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
                 icon: 'fas fa-user-shield',
-                title: 'لوحة تحكم القائد (Leader Dashboard)',
-                subtitle: 'إدارة الفريق، تعيين المهام، والتصحيح ورتب الفريق',
+                title: 'Leader Dashboard',
+                subtitle: 'Manage your squad, assign tasks, grade submissions, and track rankings',
                 url: `${pathPrefix}pages/leader-dash.html`,
-                tags: ['قائد', 'leader', 'فريق', 'squad', 'تصحيح', 'مهام']
+                tags: ['leader', 'squad', 'team', 'grading', 'tasks', 'management']
             },
             {
                 id: 'nav-create-team',
                 type: 'nav',
                 category: 'nav',
-                badgeText: 'الفرق',
+                badgeText: 'Squads',
                 badgeClass: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
                 icon: 'fas fa-users-plus',
-                title: 'تكوين فريق جديد',
-                subtitle: 'إنشاء فريق دراسي لمشاريع التخرج أو الدراسة المشتركة',
+                title: 'Create a New Squad',
+                subtitle: 'Form a study or graduation project team inside ZDC',
                 url: `${pathPrefix}pages/create-team.html`,
-                tags: ['تكوين فريق', 'انشاء فريق', 'create team', 'فرق', 'team']
+                tags: ['create team', 'squad', 'new team', 'group']
             }
         ];
     }
@@ -226,13 +225,13 @@
                         type: 'course',
                         category: 'courses',
                         courseId: c.course_id,
-                        badgeText: 'دورة',
+                        badgeText: 'Course',
                         badgeClass: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
                         icon: 'fas fa-graduation-cap',
                         title: c.title,
-                        subtitle: c.description || 'دورة تدريبية متخصصة',
+                        subtitle: c.description || 'Specialized engineering course',
                         url: `${pathPrefix}pages/course-player.html?course=${encodeURIComponent(c.course_id)}`,
-                        tags: [c.type || '', 'كورس', 'دورة']
+                        tags: [c.type || '', 'course', 'training']
                     });
                 });
             }
@@ -241,15 +240,15 @@
             if (materialsRes.status === 'fulfilled' && materialsRes.value.data) {
                 materialsRes.value.data.forEach(m => {
                     let icon = 'fas fa-play-circle';
-                    let badge = 'فيديو';
+                    let badge = 'Video';
                     let badgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
                     if (m.type === 'quiz') {
                         icon = 'fas fa-question-circle';
-                        badge = 'اختبار';
+                        badge = 'Quiz';
                         badgeColor = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
                     } else if (m.type === 'project') {
                         icon = 'fas fa-project-diagram';
-                        badge = 'مشروع';
+                        badge = 'Project';
                         badgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
                     }
 
@@ -263,9 +262,9 @@
                         badgeClass: badgeColor,
                         icon: icon,
                         title: m.title,
-                        subtitle: `${m.duration ? `${m.duration} دقيقة • ` : ''}${m.base_xp ? `${m.base_xp} XP` : 'درس تعليمي'}`,
+                        subtitle: `${m.duration ? `${m.duration} min • ` : ''}${m.base_xp ? `${m.base_xp} XP` : 'Lesson'}`,
                         url: `${pathPrefix}pages/course-player.html?course=${encodeURIComponent(m.course_id)}&content=${encodeURIComponent(m.content_id)}`,
-                        tags: [m.type, 'درس', 'محتوى']
+                        tags: [m.type, 'lesson', 'content']
                     });
                 });
             }
@@ -278,12 +277,12 @@
                         type: 'reference',
                         category: 'references',
                         refId: r.id,
-                        badgeText: r.type || 'مرجع',
+                        badgeText: r.type || 'Reference',
                         badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
                         icon: 'fas fa-book',
                         title: r.title,
-                        subtitle: `${r.author || 'مؤلف معتمد'} • ${r.experience_level || 'عام'}`,
-                        tags: [...(r.tags || []), r.short_title || '', r.type || '', 'كتاب', 'مرجع', 'ورقة علمية']
+                        subtitle: `${r.author || 'Verified Author'} • ${r.experience_level || 'General'}`,
+                        tags: [...(r.tags || []), r.short_title || '', r.type || '', 'book', 'reference', 'paper']
                     });
                 });
             }
@@ -297,12 +296,12 @@
                         type: 'tool',
                         category: 'tools',
                         toolId: t.id,
-                        badgeText: t.type || 'أداة',
+                        badgeText: t.type || 'Tool',
                         badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
                         icon: 'fas fa-screwdriver-wrench',
                         title: t.name,
-                        subtitle: desc ? (desc.length > 80 ? desc.substring(0, 80) + '...' : desc) : 'برنامج تصميم EDA',
-                        tags: [...(t.tags || []), t.short_name || '', t.type || '', 'برنامج', 'eda', 'اداة'].filter(Boolean)
+                        subtitle: desc ? (desc.length > 80 ? desc.substring(0, 80) + '...' : desc) : 'EDA Engineering Software',
+                        tags: [...(t.tags || []), t.short_name || '', t.type || '', 'software', 'eda', 'tool'].filter(Boolean)
                     });
                 });
             }
@@ -314,13 +313,13 @@
                         id: `expert-${e.id}`,
                         type: 'expert',
                         category: 'nav',
-                        badgeText: 'خبير',
+                        badgeText: 'Expert',
                         badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
                         icon: 'fas fa-user-check',
                         title: e.name,
-                        subtitle: e.role || 'خبير استشاري في هندسة الرقائق',
+                        subtitle: e.role || 'Silicon Engineering Advisor',
                         url: `${pathPrefix}index.html#experts`,
-                        tags: [e.role || '', 'خبير', 'نصيحة', 'mentor']
+                        tags: [e.role || '', 'expert', 'advice', 'mentor']
                     });
                 });
             }
@@ -335,9 +334,9 @@
 
     // 8. Inject Stylesheet
     function injectStyles() {
-        if (document.getElementById('busla-omni-search-styles')) return;
+        if (document.getElementById('zdc-omni-search-styles')) return;
         const style = document.createElement('style');
-        style.id = 'busla-omni-search-styles';
+        style.id = 'zdc-omni-search-styles';
         style.innerHTML = `
             #omni-search-modal-backdrop {
                 opacity: 0;
@@ -361,9 +360,8 @@
             }
             .omni-result-item.omni-selected .omni-action-icon {
                 opacity: 1;
-                transform: translateX(-3px);
+                transform: translateX(3px);
             }
-            /* Clean scrollbar for search results */
             #omni-results-list::-webkit-scrollbar {
                 width: 6px;
             }
@@ -387,31 +385,31 @@
 
         const modalDiv = document.createElement('div');
         modalDiv.id = 'omni-search-modal-backdrop';
-        modalDiv.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-start justify-center p-3 sm:p-6 pt-10 sm:pt-20 font-cairo';
+        modalDiv.className = 'fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-start justify-center p-3 sm:p-6 pt-10 sm:pt-20';
         modalDiv.setAttribute('role', 'dialog');
         modalDiv.setAttribute('aria-modal', 'true');
-        modalDiv.setAttribute('aria-label', 'لوحة البحث الشامل');
+        modalDiv.setAttribute('aria-label', 'ZDC Global Search');
 
         modalDiv.innerHTML = `
             <div id="omni-search-container" class="w-full max-w-2xl bg-[#0c1014] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[85vh] transition-all">
-                
+
                 <!-- Search Input Header -->
                 <div class="p-3 sm:p-4 border-b border-white/10 flex items-center gap-3 bg-white/[0.02]">
                     <div class="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
                         <i class="fas fa-search text-sm"></i>
                     </div>
-                    <input 
-                        type="text" 
-                        id="omni-search-input" 
-                        class="flex-1 bg-transparent border-0 outline-none text-white text-sm sm:text-base placeholder-gray-500 font-medium font-cairo text-right"
-                        placeholder="ابحث عن درس، مرجع، أداة، أو تنقل سريع... (Ctrl + K)"
+                    <input
+                        type="text"
+                        id="omni-search-input"
+                        class="flex-1 bg-transparent border-0 outline-none text-white text-sm sm:text-base placeholder-gray-500 font-medium text-left"
+                        placeholder="Search courses, lessons, references, EDA tools, or jump to a page... (Ctrl + K)"
                         autocomplete="off"
                         spellcheck="false"
                     >
-                    <button id="omni-clear-btn" class="hidden text-gray-500 hover:text-white transition-colors p-1 text-sm shrink-0" title="مسح">
+                    <button id="omni-clear-btn" class="hidden text-gray-500 hover:text-white transition-colors p-1 text-sm shrink-0" title="Clear">
                         <i class="fas fa-times-circle"></i>
                     </button>
-                    <button onclick="window.closeOmniSearch()" class="text-gray-400 hover:text-white transition-colors w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-sm shrink-0" title="إغلاق">
+                    <button onclick="window.closeOmniSearch()" class="text-gray-400 hover:text-white transition-colors w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center text-sm shrink-0" title="Close">
                         <kbd class="hidden sm:inline-block text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono text-gray-400 border border-white/10">Esc</kbd>
                         <i class="fas fa-times sm:hidden"></i>
                     </button>
@@ -420,19 +418,19 @@
                 <!-- Category Filters Tabs -->
                 <div class="flex items-center gap-1.5 px-3 sm:px-4 py-2 border-b border-white/5 bg-black/40 overflow-x-auto no-scrollbar text-xs">
                     <button class="omni-tab-btn active px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 bg-teal-500/20 text-teal-300 border border-teal-500/30" data-filter="all">
-                        <i class="fas fa-asterisk text-[9px] ml-1"></i> الكل
+                        <i class="fas fa-asterisk text-[9px] mr-1"></i> All
                     </button>
                     <button class="omni-tab-btn px-3 py-1.5 rounded-xl font-medium transition-all shrink-0 text-gray-400 hover:bg-white/5 hover:text-white" data-filter="courses">
-                        <i class="fas fa-graduation-cap text-[10px] ml-1"></i> الدورات والدروس
+                        <i class="fas fa-graduation-cap text-[10px] mr-1"></i> Courses & Lessons
                     </button>
                     <button class="omni-tab-btn px-3 py-1.5 rounded-xl font-medium transition-all shrink-0 text-gray-400 hover:bg-white/5 hover:text-white" data-filter="references">
-                        <i class="fas fa-book text-[10px] ml-1"></i> المراجع والكتب
+                        <i class="fas fa-book text-[10px] mr-1"></i> References
                     </button>
                     <button class="omni-tab-btn px-3 py-1.5 rounded-xl font-medium transition-all shrink-0 text-gray-400 hover:bg-white/5 hover:text-white" data-filter="tools">
-                        <i class="fas fa-tools text-[10px] ml-1"></i> الأدوات (EDA)
+                        <i class="fas fa-tools text-[10px] mr-1"></i> EDA Tools
                     </button>
                     <button class="omni-tab-btn px-3 py-1.5 rounded-xl font-medium transition-all shrink-0 text-gray-400 hover:bg-white/5 hover:text-white" data-filter="nav">
-                        <i class="fas fa-compass text-[10px] ml-1"></i> التنقل السريع
+                        <i class="fas fa-compass text-[10px] mr-1"></i> Quick Jump
                     </button>
                 </div>
 
@@ -447,22 +445,22 @@
                         <span class="flex items-center gap-1.5">
                             <kbd class="bg-white/10 px-1 py-0.5 rounded font-mono text-[9px] border border-white/10">↑</kbd>
                             <kbd class="bg-white/10 px-1 py-0.5 rounded font-mono text-[9px] border border-white/10">↓</kbd>
-                            <span>للتنقل</span>
+                            <span>Navigate</span>
                         </span>
                         <span class="text-white/20">•</span>
                         <span class="flex items-center gap-1.5">
                             <kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">Enter ↵</kbd>
-                            <span>للاختيار</span>
+                            <span>Open</span>
                         </span>
                         <span class="text-white/20">•</span>
                         <span class="flex items-center gap-1.5">
                             <kbd class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[9px] border border-white/10">Esc</kbd>
-                            <span>للإغلاق</span>
+                            <span>Close</span>
                         </span>
                     </div>
-                    <div class="flex items-center gap-1 mr-auto text-teal-400 font-bold" id="omni-results-count">
+                    <div class="flex items-center gap-1 ml-auto text-teal-400 font-bold" id="omni-results-count">
                         <i class="fas fa-bolt text-[10px]"></i>
-                        <span id="omni-count-text">جاهز للبحث</span>
+                        <span id="omni-count-text">Ready to search</span>
                     </div>
                 </div>
 
@@ -611,7 +609,7 @@
         if (!container) return;
 
         if (countText) {
-            countText.textContent = `${results.length} نتيجة`;
+            countText.textContent = `${results.length} ${results.length === 1 ? 'result' : 'results'}`;
         }
 
         if (results.length === 0) {
@@ -620,8 +618,8 @@
                     <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-500 text-lg">
                         <i class="fas fa-search-minus"></i>
                     </div>
-                    <p class="text-white font-bold text-sm">لم نجد أي نتائج مطابقة</p>
-                    <p class="text-gray-500 text-xs mt-1">جرّب البحث بكلمات أبسط أو اختر قسماً آخر من الأعلى</p>
+                    <p class="text-white font-bold text-sm">No matching results found</p>
+                    <p class="text-gray-500 text-xs mt-1">Try simpler keywords or switch to another category above</p>
                 </div>
             `;
             return;
@@ -633,8 +631,8 @@
             const highlightedSubtitle = highlightMatch(item.subtitle, query);
 
             return `
-                <div 
-                    class="omni-result-item ${isSelected ? 'omni-selected' : ''} group flex items-center justify-between p-3 rounded-xl border border-white/5 hover:border-teal-500/30 hover:bg-white/[0.04] transition-all cursor-pointer text-right"
+                <div
+                    class="omni-result-item ${isSelected ? 'omni-selected' : ''} group flex items-center justify-between p-3 rounded-xl border border-white/5 hover:border-teal-500/30 hover:bg-white/[0.04] transition-all cursor-pointer text-left"
                     data-index="${idx}"
                     onclick="window._handleOmniItemClick(${idx})"
                 >
@@ -656,8 +654,8 @@
                             </p>
                         </div>
                     </div>
-                    <div class="omni-action-icon opacity-0 group-hover:opacity-100 transition-all text-teal-400 text-xs mr-2 shrink-0">
-                        <i class="fas fa-arrow-left"></i>
+                    <div class="omni-action-icon opacity-0 group-hover:opacity-100 transition-all text-teal-400 text-xs ml-2 shrink-0">
+                        <i class="fas fa-arrow-right"></i>
                     </div>
                 </div>
             `;

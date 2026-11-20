@@ -1,28 +1,29 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Busla Course Player</title>
-    <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <title>Course Player | ZDC — Zagazig Digital Community</title>
+    <link rel="icon" type="image/png" href="../assets/icons/zdc-icon-192.png">
     <link rel="manifest" href="../manifest.webmanifest">
     <meta name="theme-color" content="#006A67">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="بوصلة">
-    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
+    <meta name="apple-mobile-web-app-title" content="ZDC">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
 
     <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #000; overflow: hidden; }
-        /* Custom Scrollbar */
+    <style>
+        body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background-color: #000; overflow: hidden; }
+        h1, h2, h3, h4 { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        /* Video Overlay to prevent native clicks */
         #video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
     </style>
 </head>
@@ -30,13 +31,12 @@
 
 <div id="sidebar-overlay" onclick="window.toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <aside id="right-sidebar" class="fixed inset-y-0 right-0 z-50 w-80 bg-b-surface border-l border-white/10 flex flex-col h-full transform translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none">
-
+    <aside id="right-sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-b-surface border-r border-white/10 flex flex-col h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none">
 
         <div class="p-4 border-b border-white/10 bg-black/40 flex items-center justify-between shrink-0">
             <button onclick="window.goBackToDashboard()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-bold group">
-                <i class="fas fa-arrow-right group-hover:-translate-x-1 transition-transform"></i>
-                الرجوع للوحة التحكم
+                <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+                Back to Dashboard
             </button>
             <button onclick="window.toggleSidebar()" class="lg:hidden text-gray-400 hover:text-red-400 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 transition-colors">
                 <i class="fas fa-times"></i>
@@ -48,68 +48,65 @@
             <p id="instructor-name" class="text-xs text-gray-400">...</p>
             <div class="mt-4">
                 <div class="flex justify-between text-xs mb-1">
-                    <span>نسبة الإكمال</span>
-                    <span id="total-progress-txt">0%</span>
+                    <span>Completion</span>
+                    <span id="total-progress-txt" class="font-mono">0%</span>
                 </div>
                 <div class="h-1.5 w-full bg-black rounded-full overflow-hidden">
                     <div id="total-progress-bar" class="h-full bg-b-primary w-0 transition-all duration-500"></div>
                 </div>
-
             </div>
-            <br>
-            <br>
         </div>
-        
-        <div id="playlist-container" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll">
-            </div>
+
+        <div id="playlist-container" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scroll"></div>
     </aside>
-<main class="relative w-full lg:w-[calc(100%-20rem)] lg:mr-80 h-[100dvh] flex flex-col transition-all duration-300 overflow-hidden">
-        
+
+<main class="relative w-full lg:w-[calc(100%-20rem)] lg:ml-80 h-[100dvh] flex flex-col transition-all duration-300 overflow-hidden">
+
 <div id="view-video" class="content-view hidden flex-1 min-h-0 w-full flex flex-col group/video-container relative">
-            
-            <div id="video-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
-                
+
+            <div id="video-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-2.5 sm:p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-2.5 sm:gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
+
                 <div class="flex items-start gap-3 w-full lg:w-auto flex-1">
                     <div class="flex lg:hidden items-center gap-2 shrink-0 mt-1">
                         <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
                             <i class="fas fa-list-ul"></i>
                         </button>
-                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
-                            <i class="fas fa-arrow-right"></i>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="Back to Dashboard">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
-                    
+
                     <div class="flex-1 space-y-2 md:space-y-3">
                         <div class="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm font-medium">
-                            <span id="header-course-title" class="bg-white/5 text-gray-300 px-3 py-1 rounded-full border border-white/5">اسم الكورس</span>
+                            <span id="header-course-title" class="bg-white/5 text-gray-300 px-3 py-1 rounded-full border border-white/5">Course Title</span>
                             <div class="flex items-center gap-2 text-gray-400">
                                 <i class="fas fa-user-tie"></i>
-                                <span id="header-author">المحاضر</span>
+                                <span id="header-author">Instructor</span>
                             </div>
-                            <div id="header-points-badge" class="hidden flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full animate-pulse">
+                            <div id="header-points-badge" class="hidden flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full">
                                 <i class="fas fa-star text-[10px] md:text-xs"></i>
                                 <span class="font-bold font-mono" id="header-points-text">0</span>
                                 <span class="text-[10px] uppercase tracking-wider">XP</span>
                             </div>
-                            <button onclick="window.openOmniSearch()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs transition-colors cursor-pointer" title="البحث الشامل (Ctrl + K)">
+                            <button onclick="window.openOmniSearch && window.openOmniSearch()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 text-xs transition-colors cursor-pointer" title="Global Search (Ctrl + K)">
                                 <i class="fas fa-search text-teal-400 text-[10px]"></i>
-                                <span class="hidden sm:inline">بحث</span>
+                                <span class="hidden sm:inline">Search</span>
                                 <kbd class="hidden md:inline-block text-[9px] font-mono text-gray-500">Ctrl K</kbd>
                             </button>
                         </div>
                         <h1 id="header-video-title" class="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight tracking-wide drop-shadow-md">
-                            عنوان الفيديو
+                            Video Title
                         </h1>
                     </div>
                 </div>
 
-                <div id="header-note-container" class="hidden w-full lg:w-1/3 bg-blue-500/5 border-r-4 border-blue-500 rounded-l-xl p-3 md:p-4 relative overflow-hidden group hover:bg-blue-500/10 transition-colors">
+                <div id="header-note-container" class="hidden w-full lg:w-1/3 bg-blue-500/5 border-l-4 border-blue-500 rounded-r-xl p-3 md:p-4 relative overflow-hidden group hover:bg-blue-500/10 transition-colors">
                     <div class="flex items-start gap-3">
                         <div class="bg-blue-500/20 p-2 rounded-lg text-blue-400 mt-1">
                             <i class="fas fa-info-circle text-lg"></i>
                         </div>
                         <div>
-                            <h4 class="text-blue-400 font-bold text-xs uppercase mb-1 tracking-widest">ملاحظة هامة</h4>
+                            <h4 class="text-blue-400 font-bold text-xs uppercase mb-1 tracking-widest">Important Note</h4>
                             <p id="header-note-text" class="text-xs md:text-sm text-gray-200 leading-relaxed font-light"></p>
                         </div>
                     </div>
@@ -117,21 +114,21 @@
             </div>
 
             <div id="video-wrapper" class="relative flex-1 flex flex-col bg-black overflow-hidden min-h-0">
-                
+
                 <div id="player-container" class="relative w-full aspect-video lg:aspect-auto lg:flex-1 flex items-center justify-center bg-black min-h-0 shrink-0 lg:shrink">
                     <div id="youtube-player" class="w-full h-full"></div>
                     <div id="video-overlay" class="absolute inset-0 z-10 bg-transparent hidden"></div>
                 </div>
-                
+
                 <div id="video-controls-bar" class="h-14 md:h-16 bg-b-surface/90 backdrop-blur-sm border-t border-white/10 flex items-center justify-between px-3 md:px-6 z-50 shrink-0">
                     <div class="flex items-center gap-2 md:gap-4">
                         <button id="btn-play" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-b-primary flex items-center justify-center hover:bg-teal-600 transition shadow-lg group shrink-0">
                             <i class="fas fa-play text-white group-hover:scale-110 transition-transform text-sm md:text-base"></i>
                         </button>
-                        <button id="btn-restart" class="text-gray-400 hover:text-white transition p-1 md:p-2" title="إعادة البدء">
+                        <button id="btn-restart" class="text-gray-400 hover:text-white transition p-1 md:p-2" title="Restart Video">
                             <i class="fas fa-undo text-sm md:text-lg"></i>
                         </button>
-                        <button id="btn-rewind" class="text-gray-400 hover:text-white transition p-1 md:p-2 flex items-center gap-1" title="رجوع 10s">
+                        <button id="btn-rewind" class="text-gray-400 hover:text-white transition p-1 md:p-2 flex items-center gap-1" title="Rewind 10s">
                             <i class="fas fa-history text-sm md:text-base"></i>
                             <span class="text-[10px] font-mono hidden sm:inline">-10s</span>
                         </button>
@@ -163,26 +160,26 @@
                     <div class="flex items-center gap-3 w-full justify-center">
                         <button id="btn-iframe-complete" class="px-6 py-2.5 rounded-xl bg-b-primary text-white font-bold text-sm hover:bg-teal-600 transition flex items-center gap-2 shadow-lg">
                             <i class="fas fa-check-circle"></i>
-                            <span>تأكيد مشاهدة الفيديو والحصول على النقاط</span>
+                            <span>Mark Video Completed & Claim XP</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="toast-container" class="fixed top-24 left-6 z- flex flex-col gap-3 pointer-events-none"></div>
+        <div id="toast-container" class="fixed top-24 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
         <div id="view-quiz" class="content-view hidden h-full overflow-y-auto p-4 md:p-8 max-w-4xl mx-auto w-full custom-scroll">
             <div class="bg-b-surface border border-white/10 rounded-2xl p-6 md:p-8">
-                
+
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                     <div class="flex items-start gap-3">
                         <div class="flex lg:hidden items-center gap-2 shrink-0">
                             <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
                                 <i class="fas fa-list-ul"></i>
                             </button>
-                            <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
-                                <i class="fas fa-arrow-right"></i>
+                            <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="Back to Dashboard">
+                                <i class="fas fa-arrow-left"></i>
                             </button>
                         </div>
                         <div>
@@ -190,9 +187,9 @@
                             <p id="quiz-desc" class="text-gray-400 text-xs md:text-sm"></p>
                         </div>
                     </div>
-                    <span class="bg-yellow-500/20 text-yellow-500 text-[10px] md:text-xs px-3 py-1 rounded-full border border-yellow-500/30 shrink-0">اختبار</span>
+                    <span class="bg-yellow-500/20 text-yellow-500 text-[10px] md:text-xs px-3 py-1 rounded-full border border-yellow-500/30 shrink-0 font-bold">Quiz</span>
                 </div>
-                
+
                 <div id="quiz-questions-container" class="space-y-8"></div>
                 <div id="quiz-result-area" class="hidden mt-8 p-6 bg-black/40 rounded-xl border border-white/10 text-center"></div>
             </div>
@@ -202,32 +199,33 @@
             <div class="bg-b-surface border border-white/10 rounded-2xl p-6 md:p-8 mb-6 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-laptop-code text-9xl text-purple-500"></i></div>
                 <div class="relative z-10">
-                    
+
                     <div class="flex lg:hidden items-center gap-2 mb-4">
                         <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
                             <i class="fas fa-list-ul"></i>
                         </button>
-                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
-                            <i class="fas fa-arrow-right"></i>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="Back to Dashboard">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
-                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] md:text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider"><i class="fas fa-code-branch mr-1"></i> مشروع عملي</span>
+                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] md:text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider"><i class="fas fa-code-branch mr-1"></i> Hands-On Project</span>
                         <span id="project-lesson-tag" class="text-gray-400 text-[10px] md:text-xs bg-black/30 px-3 py-1 rounded-full border border-white/5"></span>
                     </div>
                     <h2 id="project-title" class="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight"></h2>
                     <div id="project-desc" class="text-gray-300 text-xs md:text-sm leading-relaxed bg-black/20 p-4 rounded-xl border border-white/5 mb-6"></div>
-                    <div class="flex flex-wrap gap-4">
-                        <a id="btn-project-requirements" href="#" target="_blank" class="hidden px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs md:text-sm font-bold border border-white/10 transition-all flex items-center gap-2"><i class="fas fa-external-link-alt text-purple-400"></i> دليل المشروع</a>
-                        <div class="px-5 py-2.5 rounded-xl bg-black/40 border border-white/5 text-gray-400 text-xs md:text-sm flex items-center gap-2"><i class="fas fa-star text-yellow-500"></i> إجمالي النقاط: <span id="project-max-points" class="text-white font-bold">0</span></div>
+                    <div class="flex flex-wrap gap-2.5 sm:gap-3 items-center">
+                        <div id="project-requirements-links" class="hidden flex-wrap gap-2"></div>
+                        <a id="btn-project-requirements" href="#" target="_blank" class="hidden px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs md:text-sm font-bold border border-white/10 transition-all flex items-center gap-2"><i class="fas fa-external-link-alt text-purple-400"></i> Project Brief</a>
+                        <div class="px-4 py-2.5 rounded-xl bg-black/40 border border-white/5 text-gray-400 text-xs md:text-sm flex items-center gap-2"><i class="fas fa-star text-yellow-500"></i> Total XP: <span id="project-max-points" class="text-white font-bold font-mono">0</span></div>
                     </div>
                 </div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6">
                     <div class="bg-b-surface border border-white/10 rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-list-check text-purple-500"></i> معايير التقييم</h3>
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fas fa-list-check text-purple-500"></i> Evaluation Rubric</h3>
                         <div id="project-rubric-container" class="space-y-3"></div>
                     </div>
                 </div>
@@ -238,54 +236,52 @@
         </div>
 
         <!-- PDF/Document Viewer -->
-        <div id="view-document" class="content-view hidden flex-1 min-h-0 h-full flex flex-col bg-b-surface border border-white/10 rounded-2xl overflow-hidden relative">
-            <!-- Document Header (Matches video-header style) -->
-            <div id="document-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
+        <div id="view-document" class="content-view hidden flex-1 min-h-0 h-full flex flex-col bg-b-surface border-0 sm:border border-white/10 rounded-none sm:rounded-2xl overflow-hidden relative">
+            <div id="document-header" class="bg-gradient-to-r from-b-surface via-[#1a1a1a] to-black border-b border-white/10 p-2.5 sm:p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start gap-2.5 sm:gap-4 md:gap-6 z-30 transition-all duration-300 shadow-2xl shrink-0">
                 <div class="flex items-start gap-3 w-full lg:w-auto flex-1">
                     <div class="flex lg:hidden items-center gap-2 shrink-0 mt-1">
                         <button onclick="window.toggleSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-b-primary transition-colors shadow-lg">
                             <i class="fas fa-list-ul"></i>
                         </button>
-                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="رجوع للوحة التحكم">
-                            <i class="fas fa-arrow-right"></i>
+                        <button onclick="window.goBackToDashboard()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors shadow-lg" title="Back to Dashboard">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
-                    
+
                     <div class="flex-1 space-y-2 md:space-y-3">
                         <div class="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm font-medium">
-
-                            <span id="doc-header-type-badge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-full">نوع المستند</span>
+                            <span id="doc-header-type-badge" class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-full">Document</span>
                             <div class="flex items-center gap-2 text-gray-400">
                                 <i class="fas fa-user-tie"></i>
-                                <span id="doc-header-author">المؤلف / المصدر</span>
+                                <span id="doc-header-author">Author / Source</span>
                             </div>
-                            <div id="doc-header-points-badge" class="hidden flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full animate-pulse">
+                            <div id="doc-header-points-badge" class="hidden flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full">
                                 <i class="fas fa-star text-[10px] md:text-xs"></i>
                                 <span class="font-bold font-mono" id="doc-header-points-text">0</span>
                                 <span class="text-[10px] uppercase tracking-wider">XP</span>
                             </div>
                             <div id="doc-header-status-badge" class="flex items-center gap-1.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 px-3 py-1 rounded-full">
                                 <i class="fas fa-circle-notch text-[10px]"></i>
-                                <span id="doc-header-status-text">جاهز للقراءة</span>
+                                <span id="doc-header-status-text">Ready to Read</span>
                             </div>
                             <div id="doc-header-meta-badge" class="flex items-center gap-3 bg-white/5 text-gray-400 border border-white/15 px-3 py-1 rounded-full font-mono text-xs">
-                                <span id="doc-header-pages-count"><i class="fas fa-file-lines mr-1"></i> -- صفحة</span>
-                                <span id="doc-header-file-size" class="hidden"><i class="fas fa-weight-hanging mr-1"></i> -- ميجابايت</span>
+                                <span id="doc-header-pages-count"><i class="fas fa-file-lines mr-1"></i> -- pages</span>
+                                <span id="doc-header-file-size" class="hidden"><i class="fas fa-weight-hanging mr-1"></i> -- MB</span>
                             </div>
                         </div>
                         <h1 id="doc-header-title" class="text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight tracking-wide drop-shadow-md">
-                            عنوان المستند
+                            Document Title
                         </h1>
                     </div>
                 </div>
 
-                <div id="doc-header-note-container" class="hidden w-full lg:w-1/3 bg-blue-500/5 border-r-4 border-blue-500 rounded-l-xl p-3 md:p-4 relative overflow-hidden group hover:bg-blue-500/10 transition-colors">
+                <div id="doc-header-note-container" class="hidden w-full lg:w-1/3 bg-blue-500/5 border-l-4 border-blue-500 rounded-r-xl p-3 md:p-4 relative overflow-hidden group hover:bg-blue-500/10 transition-colors">
                     <div class="flex items-start gap-3">
                         <div class="bg-blue-500/20 p-2 rounded-lg text-blue-400 mt-1">
                             <i class="fas fa-info-circle text-lg"></i>
                         </div>
                         <div>
-                            <h4 class="text-blue-400 font-bold text-xs uppercase mb-1 tracking-widest">الوصف</h4>
+                            <h4 class="text-blue-400 font-bold text-xs uppercase mb-1 tracking-widest">Description</h4>
                             <p id="doc-header-note-text" class="text-xs md:text-sm text-gray-200 leading-relaxed font-light"></p>
                         </div>
                     </div>
@@ -295,78 +291,78 @@
             <!-- PDF Viewer Controls Bar -->
             <div id="pdf-toolbar" class="relative z-30 bg-black/60 border-b border-white/10 p-3 flex flex-wrap items-center justify-between gap-3 select-none">
                 <div class="flex items-center gap-1.5">
-                    <button id="pdf-toggle-sidebar" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الفهرس / الصفحات">
+                    <button id="pdf-toggle-sidebar" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Outline / Pages">
                         <i class="fas fa-bars text-xs md:text-sm"></i>
                     </button>
                     <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-                    <button id="pdf-first-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة الأولى">
-                        <i class="fas fa-angles-right text-xs md:text-sm"></i>
+                    <button id="pdf-first-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="First Page">
+                        <i class="fas fa-angles-left text-xs md:text-sm"></i>
                     </button>
-                    <button id="pdf-prev-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة السابقة">
-                        <i class="fas fa-chevron-right text-xs md:text-sm"></i>
+                    <button id="pdf-prev-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Previous Page">
+                        <i class="fas fa-chevron-left text-xs md:text-sm"></i>
                     </button>
                     <div class="flex items-center gap-1 text-sm font-mono">
                         <input type="number" id="pdf-page-num" min="1" value="1" class="w-12 bg-black border border-white/15 rounded text-center py-1 text-white text-xs outline-none">
                         <span class="text-gray-500">/</span>
                         <span id="pdf-page-count" class="text-gray-400">1</span>
                     </div>
-                    <button id="pdf-next-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة التالية">
-                        <i class="fas fa-chevron-left text-xs md:text-sm"></i>
+                    <button id="pdf-next-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Next Page">
+                        <i class="fas fa-chevron-right text-xs md:text-sm"></i>
                     </button>
-                    <button id="pdf-last-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الصفحة الأخيرة">
-                        <i class="fas fa-angles-left text-xs md:text-sm"></i>
+                    <button id="pdf-last-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Last Page">
+                        <i class="fas fa-angles-right text-xs md:text-sm"></i>
                     </button>
                 </div>
-                
+
                 <div class="flex items-center gap-2">
-                    <button id="pdf-zoom-out" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تصغير">
+                    <button id="pdf-zoom-out" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Zoom Out">
                         <i class="fas fa-magnifying-glass-minus text-xs md:text-sm"></i>
                     </button>
-                    <button id="pdf-zoom-reset" class="text-xs font-mono text-gray-300 w-14 text-center hover:text-white hover:bg-white/5 py-1 rounded" title="إعادة تعيين 100%">
+                    <button id="pdf-zoom-reset" class="text-xs font-mono text-gray-300 w-14 text-center hover:text-white hover:bg-white/5 py-1 rounded" title="Reset to 100%">
                         <span id="pdf-zoom-val">100%</span>
                     </button>
-                    <button id="pdf-zoom-in" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تكبير">
+                    <button id="pdf-zoom-in" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Zoom In">
                         <i class="fas fa-magnifying-glass-plus text-xs md:text-sm"></i>
                     </button>
                     <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-                    <button id="pdf-fit-width" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="ملاءمة العرض">
-                        ملاءمة العرض
+                    <button id="pdf-fit-width" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="Fit Width">
+                        Fit Width
                     </button>
-                    <button id="pdf-fit-page" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="ملاءمة الصفحة">
-                        ملاءمة الصفحة
+                    <button id="pdf-fit-page" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-xs font-bold" title="Fit Page">
+                        Fit Page
                     </button>
-                    <button id="pdf-rotate" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تدوير الصفحة">
+                    <button id="pdf-rotate" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Rotate Page">
                         <i class="fas fa-rotate text-xs md:text-sm"></i>
                     </button>
-                    <button id="pdf-scroll-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تبديل وضع التمرير">
-                        <i class="fas fa-arrows-up-down text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">تمرير</span>
+                    <button id="pdf-scroll-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Toggle Scroll Mode">
+                        <i class="fas fa-arrows-up-down text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">Scroll</span>
                     </button>
                     <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-                    <button id="pdf-auto-scroll" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="تشغيل التمرير التلقائي">
-                        <i class="fas fa-play text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">تمرير تلقائي</span>
+                    <button id="pdf-auto-scroll" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Auto-Scroll">
+                        <i class="fas fa-play text-xs md:text-sm"></i> <span class="text-[10px] hidden md:inline ml-1">Auto-Scroll</span>
                     </button>
-                    <button id="pdf-auto-scroll-speed" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-[10px] font-bold hidden" title="سرعة التمرير التلقائي">
+                    <button id="pdf-auto-scroll-speed" class="text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5 text-[10px] font-bold hidden" title="Auto-Scroll Speed">
                         1x
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button id="pdf-search-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="بحث داخل النص">
+                    <button id="pdf-search-btn" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Search in Document">
                         <i class="fas fa-search text-xs md:text-sm"></i>
                     </button>
-                    <button id="pdf-dark-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="الوضع الداكن">
+                    <button id="pdf-dark-mode" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Dark Reading Mode">
                         <i class="fas fa-moon text-xs md:text-sm"></i>
                     </button>
-                    <a id="pdf-download" href="#" download target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="تحميل">
+                    <a id="pdf-download" href="#" download target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="Download">
                         <i class="fas fa-download text-xs md:text-sm"></i>
                     </a>
-                    <button id="pdf-print" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="طباعة">
+                    <button id="pdf-print" class="text-gray-400 hover:text-white p-2 rounded bg-white/5 hidden" title="Print">
                         <i class="fas fa-print text-xs md:text-sm"></i>
                     </button>
-                    <a id="pdf-open-source" href="#" target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="فتح المصدر الأصلي">
+                    <a id="pdf-open-source" href="#" target="_blank" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Open Original Source">
                         <i class="fas fa-external-link-alt text-xs md:text-sm"></i>
                     </a>
-                    <button id="pdf-fullscreen" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="ملء الشاشة">
+                    <button id="pdf-fullscreen" class="text-gray-400 hover:text-white p-2 rounded bg-white/5" title="Fullscreen">
                         <i class="fas fa-expand text-xs md:text-sm"></i>
                     </button>
                 </div>
@@ -375,7 +371,7 @@
             <!-- Search Overlay -->
             <div id="pdf-search-bar" class="relative z-20 bg-black/80 border-b border-white/10 p-2 flex items-center justify-between gap-2 hidden">
                 <div class="flex items-center gap-2 flex-1">
-                    <input type="text" id="pdf-search-input" placeholder="اكتب للبحث داخل الـ PDF..." class="w-full max-w-md bg-black/60 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white outline-none">
+                    <input type="text" id="pdf-search-input" placeholder="Search inside PDF..." class="w-full max-w-md bg-black/60 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white outline-none">
                     <span id="pdf-search-results" class="text-xs text-gray-500 font-mono">0 / 0</span>
                     <button id="pdf-search-prev" class="text-gray-400 hover:text-white p-1 rounded bg-white/5"><i class="fas fa-chevron-up text-xs"></i></button>
                     <button id="pdf-search-next" class="text-gray-400 hover:text-white p-1 rounded bg-white/5"><i class="fas fa-chevron-down text-xs"></i></button>
@@ -385,82 +381,71 @@
 
             <!-- Main Workspace (Sidebar + Canvas scroll area) -->
             <div class="flex-1 flex min-h-0 relative">
-                <!-- Collapsible Sidebar (Thumbnails / TOC / Bookmarks) -->
-                <div id="pdf-sidebar" class="w-64 bg-black/40 border-l border-white/10 flex flex-col shrink-0 hidden">
+                <div id="pdf-sidebar" class="w-64 bg-black/40 border-r border-white/10 flex flex-col shrink-0 hidden">
                     <div class="flex border-b border-white/10 text-xs text-center">
-                        <button id="pdf-tab-thumbs" class="flex-1 py-3 border-b-2 border-b-primary font-bold text-white">مصغرات</button>
-                        <button id="pdf-tab-toc" class="flex-1 py-3 border-b-2 border-transparent font-bold text-gray-400 hover:text-white">الفهرس</button>
+                        <button id="pdf-tab-thumbs" class="flex-1 py-3 border-b-2 border-b-primary font-bold text-white">Thumbnails</button>
+                        <button id="pdf-tab-toc" class="flex-1 py-3 border-b-2 border-transparent font-bold text-gray-400 hover:text-white">Outline</button>
                     </div>
-                    <div id="pdf-sidebar-content" class="flex-1 overflow-y-auto p-3 custom-scroll">
-                    </div>
+                    <div id="pdf-sidebar-content" class="flex-1 overflow-y-auto p-3 custom-scroll"></div>
                 </div>
 
-                <!-- Canvas Container -->
                 <div id="pdf-viewport" class="flex-1 overflow-auto bg-[#1e1e1e] p-6 relative flex flex-col items-center select-none" style="scroll-behavior: smooth;">
-                    <div id="pdf-canvas-container" class="relative shadow-2xl flex flex-col items-center gap-6">
-                    </div>
+                    <div id="pdf-canvas-container" class="relative shadow-2xl flex flex-col items-center gap-6"></div>
                 </div>
             </div>
 
-            <!-- PDF Completion Indicator / Manual Completion Button -->
+            <!-- PDF Completion Indicator -->
             <div id="pdf-footer-actions" class="relative z-30 bg-black/60 border-t border-white/10 p-3 flex justify-between items-center">
                 <div class="text-xs text-gray-400">
-                    <span>التقدم: </span><span id="pdf-reading-percent" class="font-bold text-teal-400">0%</span>
+                    <span>Progress: </span><span id="pdf-reading-percent" class="font-bold text-teal-400 font-mono">0%</span>
                 </div>
-                <div id="pdf-completion-btn-container">
-                </div>
+                <div id="pdf-completion-btn-container"></div>
             </div>
         </div>
 
     </main>
 
-    <aside class="hidden xl:flex w-72 bg-b-surface border-r border-white/10 flex-col p-6 gap-6 z-20 shrink-0 overflow-y-auto custom-scroll">
+    <aside class="hidden xl:flex w-72 bg-b-surface border-l border-white/10 flex-col p-6 gap-6 z-20 shrink-0 overflow-y-auto custom-scroll">
         <div class="text-center relative">
             <div class="w-24 h-24 mx-auto mb-3 relative">
-                <img id="user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-full h-full rounded-full object-cover border-2 border-b-primary p-1 bg-black">
+                <img id="user-avatar" src="../assets/icons/zdc-icon-192.png" class="w-full h-full rounded-full object-cover border-2 border-b-primary p-1 bg-black">
                 <div class="absolute -bottom-2 -right-2 bg-black rounded-full border border-white/10 p-1"><i class="fas fa-medal text-yellow-500 text-lg"></i></div>
             </div>
-            <h3 id="user-name" class="font-bold text-lg text-white">جاري التحميل...</h3>
+            <h3 id="user-name" class="font-bold text-lg text-white">Loading...</h3>
             <p id="user-rank-title" class="text-xs text-b-primary font-bold uppercase tracking-wider mt-1">Student</p>
         </div>
         <div class="space-y-4 bg-black/20 p-4 rounded-xl border border-white/5">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2 mb-2"><span class="text-gray-400 text-xs">نقاط الكورس</span><span id="stat-points" class="font-mono font-bold text-b-primary">0</span></div>
-            <div class="flex justify-between items-center"><span class="text-gray-400 text-xs"><i class="fas fa-check-circle text-green-500 mr-2"></i>الإنجاز</span><span id="stat-completion" class="font-mono font-bold">0%</span></div>
-            <div class="flex justify-between items-center"><span class="text-gray-400 text-xs"><i class="fas fa-clipboard-question text-blue-500 mr-2"></i>الكويزات</span><span id="stat-quizzes" class="font-mono font-bold">0</span></div>
+            <div class="flex justify-between items-center border-b border-white/5 pb-2 mb-2"><span class="text-gray-400 text-xs">Course XP</span><span id="stat-points" class="font-mono font-bold text-b-primary">0</span></div>
+            <div class="flex justify-between items-center"><span class="text-gray-400 text-xs"><i class="fas fa-check-circle text-green-500 mr-2"></i>Progress</span><span id="stat-completion" class="font-mono font-bold">0%</span></div>
+            <div class="flex justify-between items-center"><span class="text-gray-400 text-xs"><i class="fas fa-clipboard-question text-blue-500 mr-2"></i>Quizzes</span><span id="stat-quizzes" class="font-mono font-bold">0</span></div>
         </div>
         <div id="video-progress-panel" class="hidden space-y-3 bg-black/20 p-4 rounded-xl border border-white/5 shadow-lg animate-fade-in">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2"><span class="text-gray-400 text-xs"><i class="fas fa-history text-b-primary mr-2"></i>استئناف</span><span id="saved-time-display" class="font-mono text-xs text-white">--:--</span></div>
+            <div class="flex justify-between items-center border-b border-white/5 pb-2"><span class="text-gray-400 text-xs"><i class="fas fa-history text-b-primary mr-2"></i>Resume</span><span id="saved-time-display" class="font-mono text-xs text-white">--:--</span></div>
             <div class="w-full bg-black rounded-full h-1.5 overflow-hidden"><div id="saved-progress-bar" class="bg-yellow-500 h-full w-0 transition-all duration-500"></div></div>
-            <p id="video-status-msg" class="text-[10px] text-gray-500 text-center">يتم الحفظ تلقائياً</p>
+            <p id="video-status-msg" class="text-[10px] text-gray-500 text-center">Progress saves automatically</p>
         </div>
         <div class="flex-1 bg-gradient-to-b from-b-primary/10 to-transparent p-4 rounded-xl border border-b-primary/20 flex flex-col items-center justify-center text-center relative overflow-hidden group">
             <i class="fas fa-trophy text-4xl text-yellow-500 mb-2 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]"></i>
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">ترتيبك في الفريق</p>
-            <div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-black text-white" id="team-rank-display">--</span><span class="text-sm text-gray-500" id="team-total-members">/ --</span></div>
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Squad Rank</p>
+            <div class="mt-2 flex items-baseline gap-1"><span class="text-4xl font-black text-white font-mono" id="team-rank-display">--</span><span class="text-sm text-gray-500 font-mono" id="team-total-members">/ --</span></div>
         </div>
 
-        <!-- 🛠️ Recommended Tools Card -->
+        <!-- Recommended Tools Card -->
         <div id="course-recommended-tools-card" class="hidden flex flex-col bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 shrink-0">
             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-toolbox text-teal-400 text-xs"></i> <span>الأدوات الموصى بها</span>
+                <i class="fas fa-toolbox text-teal-400 text-xs"></i> <span>Recommended Tools</span>
             </h4>
-            <div id="course-recommended-tools-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1">
-                <!-- Populated dynamically in JS -->
-            </div>
+            <div id="course-recommended-tools-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1"></div>
         </div>
 
-        <!-- 📚 Suggested References Card -->
+        <!-- Suggested References Card -->
         <div id="course-suggested-references-card" class="hidden flex flex-col bg-black/20 p-4 rounded-xl border border-white/5 space-y-3 shrink-0">
             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <i class="fas fa-book text-teal-400 text-xs"></i> <span>المراجع العلمية المقترحة</span>
+                <i class="fas fa-book text-teal-400 text-xs"></i> <span>Suggested References</span>
             </h4>
-            <div id="course-suggested-references-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1">
-                <!-- Populated dynamically in JS -->
-            </div>
+            <div id="course-suggested-references-list" class="space-y-2 max-h-[220px] overflow-y-auto custom-scroll pr-1"></div>
         </div>
     </aside>
-
-
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
@@ -472,11 +457,11 @@
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
     </script>
-    <script type="module" src="../js/course-player.js"></script>
-    <script type="module" src="../js/tools-drawer.js"></script>
-    <script type="module" src="../js/references-drawer.js"></script>
-    <script type="module" src="../js/omni-search.js"></script>
-    <script type="module" src="../js/pwa-handler.js"></script>
+    <script type="module" src="../js/course-player.js?v=2.0"></script>
+    <script type="module" src="../js/tools-drawer.js?v=2.0"></script>
+    <script type="module" src="../js/references-drawer.js?v=2.0"></script>
+    <script type="module" src="../js/omni-search.js?v=2.0"></script>
+    <script type="module" src="../js/pwa-handler.js?v=2.0"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

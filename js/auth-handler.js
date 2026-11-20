@@ -1,36 +1,29 @@
-import { AuthService, supabase } from './supabase-config.js'; // ✅ أضفنا supabase هنا
-function translateAuthError(error) {
-    // استخراج نص الرسالة سواء كان كائناً أو نصاً
-    const msg = (error.message || error.error_description || error).toString();
-    
-    // 1. أخطاء تسجيل الدخول
-    if (msg.includes("Invalid login credentials")) return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
-    if (msg.includes("Email not confirmed")) return "email_not_confirmed"; // كود خاص
-    
-    // 2. أخطاء التسجيل
-    if (msg.includes("User already registered")) return "هذا البريد الإلكتروني مستخدم بالفعل.";
-    if (msg.includes("Password should be at least")) return "كلمة المرور يجب أن تكون 6 أحرف على الأقل.";
-    if (msg.includes("invalid email")) return "صيغة البريد الإلكتروني غير صحيحة.";
-    if (msg.includes("anonymous_provider_disabled")) return "تسجيل الدخول غير متاح حالياً.";
+import { AuthService, supabase } from './supabase-config.js';
 
-    // 3. أخطاء التكرار (Rate Limits) - الحل لمشكلتك هنا 🚀
+function translateAuthError(error) {
+    const msg = (error.message || error.error_description || error).toString();
+
+    if (msg.includes("Invalid login credentials")) return "Invalid email address or password.";
+    if (msg.includes("Email not confirmed")) return "email_not_confirmed";
+
+    if (msg.includes("User already registered")) return "This email address is already registered.";
+    if (msg.includes("Password should be at least")) return "Password must be at least 6 characters long.";
+    if (msg.includes("invalid email")) return "Please enter a valid email address.";
+    if (msg.includes("anonymous_provider_disabled")) return "Sign-in is currently unavailable.";
+
     if (msg.includes("security purposes") || msg.includes("rate limit")) {
-        // محاولة استخراج عدد الثواني من الرسالة الإنجليزية
         const secondsMatch = msg.match(/after\s+(\d+)\s+seconds/);
         if (secondsMatch) {
-            return `عذراً، يجب الانتظار ${secondsMatch[1]} ثانية قبل المحاولة مجدداً.`;
+            return `Please wait ${secondsMatch[1]} seconds before trying again.`;
         }
-        return "لقد تجاوزت الحد المسموح من المحاولات، يرجى الانتظار قليلاً.";
+        return "Too many attempts. Please wait a moment and try again.";
     }
-    
-    // 4. أخطاء أخرى
-    return "حدث خطأ: " + msg;
-}
 
+    return "Authentication error: " + msg;
+}
 
 export async function registerUser(email, password, personalInfo, academicInfo) {
     try {
-        // تجميع كل البيانات في كائن واحد (metaData) ليتوافق مع Supabase
         const metaData = {
             full_name: personalInfo.fullName || '',
             avatar_url: personalInfo.photoURL || '',
@@ -42,10 +35,9 @@ export async function registerUser(email, password, personalInfo, academicInfo) 
             track: academicInfo.track || 'Digital IC Design'
         };
 
-        // إرسال كائن واحد فقط للخدمة
         const result = await AuthService.signUp(email, password, metaData);
         if (!result.success) throw new Error(result.error);
-        
+
         return {
             user: result.data.user,
             verificationRequired: true
@@ -55,12 +47,8 @@ export async function registerUser(email, password, personalInfo, academicInfo) 
     }
 }
 
-// =========================================================
-// 2. تسجيل الدخول
-// =========================================================
 export async function loginUser(email, password) {
     try {
-        // 1. تسجيل الدخول العادي
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -69,8 +57,6 @@ export async function loginUser(email, password) {
         if (error) throw error;
         const user = data.user;
 
-        // 👑 2. الترقية السحرية وتحديث البيانات الإجباري (Force Update) 👑
-        // نبحث أولاً: هل هذا الإيميل موجود في طلبات الإدارة المقبولة؟
         const { data: acceptedApp } = await supabase.from('admin_applications')
             .select('*')
             .eq('email', email)
@@ -78,12 +64,11 @@ export async function loginUser(email, password) {
             .maybeSingle();
 
         if (acceptedApp) {
-            // ✅ إذا كان أدمن: نقوم بـ "فرمتة" الصف الافتراضي الذي أنشأته الداتابيز ونضع البيانات الكاملة
             await supabase.from('profiles').upsert({
                 id: user.id,
                 email: acceptedApp.email,
                 full_name: acceptedApp.full_name,
-                role: acceptedApp.role || 'admin', // 👑 الترقية الإجبارية بالدور المخصص
+                role: acceptedApp.role || 'admin',
                 university: acceptedApp.university,
                 faculty: acceptedApp.faculty,
                 department: acceptedApp.department,
@@ -92,7 +77,6 @@ export async function loginUser(email, password) {
                 track: acceptedApp.track
             });
 
-            // إدراج الصلاحيات المخصصة إن وجدت لربطها بالحساب الجديد
             if (acceptedApp.custom_permissions && acceptedApp.custom_permissions.length > 0) {
                 const insertRows = acceptedApp.custom_permissions.map(permId => ({
                     admin_id: user.id,
@@ -101,7 +85,6 @@ export async function loginUser(email, password) {
                 await supabase.from('admin_permissions').upsert(insertRows, { onConflict: 'admin_id,permission_id' });
             }
         } else {
-            // 🎓 3. إذا كان طالباً عادياً: نسحب بياناته المخفية ونحدثها لكي لا تكون Null
             const meta = user.user_metadata;
             if (meta && meta.full_name) {
                 await supabase.from('profiles').upsert({
@@ -119,22 +102,18 @@ export async function loginUser(email, password) {
             }
         }
 
-        // إرجاع المستخدم لكي تكمل صفحة الدخول عملها وتقوم بالتوجيه
         return user;
-        
     } catch (error) {
         throw new Error(translateAuthError(error));
     }
 }
-// =========================================================
-// 3. إعادة إرسال التفعيل (جديد ✨)
-// =========================================================
+
 export async function resendVerification(email) {
     try {
         const result = await AuthService.resendVerificationEmail(email);
-        
+
         if (!result.success) {
-            throw new Error(result.error?.message || result.error || "فشل الإرسال");
+            throw new Error(result.error?.message || result.error || "Failed to send verification email.");
         }
         return true;
     } catch (error) {
@@ -142,22 +121,15 @@ export async function resendVerification(email) {
     }
 }
 
-
-// =========================================================
-// 4. وظائف أخرى (Logout, Reset)
-// =========================================================
-
 export async function logoutUser() {
     await AuthService.signOut();
     window.location.href = "auth.html";
 }
 
-// 💡 دالة طلب إعادة تعيين كلمة المرور
 export async function requestPasswordReset(email) {
     try {
-        // ✅ نستخدم supabase مباشرة بدلاً من AuthService.supabase
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
+            redirectTo: `${window.location.origin}/reset-password.html`
         });
         if (error) throw error;
         return true;
@@ -166,15 +138,12 @@ export async function requestPasswordReset(email) {
     }
 }
 
-// =========================================================
-// 5. جلب المسارات (Tracks) المتاحة للتسجيل
-// =========================================================
 export async function getAvailableTracks() {
     try {
         const { data, error } = await supabase
             .from('tracks')
             .select('id, name')
-            .eq('is_active', true) // جلب المسارات المفعلة فقط
+            .eq('is_active', true)
             .order('created_at', { ascending: true });
 
         if (error) throw error;

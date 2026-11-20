@@ -1,36 +1,35 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>Student Dashboard | Busla</title>
-    <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <title>Student Dashboard | ZDC</title>
+    <link rel="icon" type="image/png" href="../assets/icons/zdc-icon-192.png">
     <link rel="manifest" href="../manifest.webmanifest">
     <meta name="theme-color" content="#006A67">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="بوصلة">
-    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
+    <meta name="apple-mobile-web-app-title" content="ZDC">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
     
     <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/roadmap.css?v=2.6">
+    <link rel="stylesheet" href="../css/roadmap.css?v=3.0">
     
     
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #000; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; }
+        h1, h2, h3, h4, .font-display { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-
-        
     </style>
 </head>
 
@@ -38,20 +37,20 @@
     
     <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <aside id="sidebar" class="w-80 bg-b-surface border-l border-white/10 fixed md:static inset-y-0 right-0 z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-screen shadow-2xl md:shadow-none shrink-0 overflow-hidden">
+    <aside id="sidebar" class="w-80 bg-b-surface border-r border-white/10 fixed md:static inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col h-screen shadow-2xl md:shadow-none shrink-0 overflow-hidden">
         
-                <!-- Sidebar Header (Responsive: Sleek Horizontal on Mobile, Centered Profile with Corner Toggle on Desktop) -->
+        <!-- Sidebar Header -->
         <div class="relative p-3.5 sm:p-4 md:p-6 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent shrink-0 flex items-center justify-between gap-3 md:flex-col md:items-center md:text-center">
             
-            <!-- Close / Collapse Button (Corner-positioned for clean layout) -->
-            <div class="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 md:top-4 md:left-4 z-10">
+            <!-- Close / Collapse Button -->
+            <div class="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 md:top-4 md:right-4 z-10">
                 <!-- Mobile Close Button -->
-                <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center border border-white/10 hover:border-red-500/30 transition-all cursor-pointer active:scale-95" title="إغلاق القائمة">
+                <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded-xl bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 flex items-center justify-center border border-white/10 hover:border-red-500/30 transition-all cursor-pointer active:scale-95" title="Close Menu" aria-label="Close menu">
                     <i class="fas fa-times text-xs"></i>
                 </button>
-                <!-- Desktop Collapse Button (Top-left corner, no longer floating awkwardly in the center!) -->
-                <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-teal-400 items-center justify-center border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer group active:scale-95" title="طي القائمة الجانبية (Ctrl + B)">
-                    <i class="fas fa-angles-right text-xs group-hover:scale-110 transition-transform"></i>
+                <!-- Desktop Collapse Button -->
+                <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-teal-400 items-center justify-center border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer group active:scale-95" title="Collapse Sidebar (Ctrl + B)" aria-label="Collapse sidebar">
+                    <i class="fas fa-angles-left text-xs group-hover:scale-110 transition-transform"></i>
                 </button>
             </div>
 
@@ -59,7 +58,7 @@
             <div class="flex items-center gap-3 min-w-0 flex-1 md:flex-col md:items-center md:w-full">
                 <!-- Team Logo & Crown Badge -->
                 <div class="relative group shrink-0 md:mb-3">
-                    <img id="sidebar-team-logo" src="../assets/icons/BUSLA-icon.png" class="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-white/15 md:border-2 border-white/10 shadow-md md:shadow-xl group-hover:border-teal-400/60 transition-all cursor-pointer">
+                    <img id="sidebar-team-logo" src="../assets/icons/zdc-icon-192.png" class="w-12 h-12 sm:w-14 sm:h-14 md:w-20 md:h-20 rounded-2xl object-cover border border-white/15 md:border-2 border-white/10 shadow-md md:shadow-xl group-hover:border-teal-400/60 transition-all cursor-pointer">
                     <div class="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 bg-b-surface p-0.5 md:p-1 rounded-full border border-white/10 md:border-none shadow-md">
                         <div class="bg-yellow-500/20 text-yellow-500 w-4 h-4 md:w-6 md:h-6 rounded-full flex items-center justify-center border border-yellow-500/40">
                             <i class="fas fa-crown text-[8px] md:text-[11px]"></i>
@@ -76,7 +75,7 @@
                     <!-- Leader Label -->
                     <div class="flex items-center gap-1.5 text-[11px] md:text-xs text-gray-300 mt-1 md:mt-2 bg-white/5 md:bg-black/30 px-2.5 py-1 md:px-3.5 md:py-1 rounded-full border border-white/5 truncate">
                         <i class="fas fa-user-tie text-teal-400 text-[10px] md:text-xs"></i>
-                        <span class="truncate">القائد: <span id="sidebar-leader-name" class="text-gray-200 font-medium"></span></span>
+                        <span class="truncate">Leader: <span id="sidebar-leader-name" class="text-gray-200 font-medium"></span></span>
                     </div>
                 </div>
             </div>
@@ -88,21 +87,21 @@
                 <div class="flex items-center justify-between">
                     <a href="../index.html" class="flex items-center gap-2 text-teal-400 font-bold hover:text-white transition-colors group">
                         <i class="fas fa-compass text-teal-400 text-xs group-hover:rotate-45 transition-transform duration-300"></i>
-                        <span class="text-xs">المنصة الرئيسية</span>
+                        <span class="text-xs">ZDC Portal</span>
                         <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
                     </a>
                     <button type="button" id="sidebar-main-site-toggle" data-prevent-sidebar-close="true" onclick="event.stopPropagation(); document.getElementById('sidebar-main-site-links').classList.toggle('hidden'); document.getElementById('sidebar-main-site-chevron').classList.toggle('rotate-180');" class="text-teal-400 hover:text-white text-[10px] bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-lg border border-teal-500/20 flex items-center gap-1 transition-all cursor-pointer">
-                        <span>الأقسام</span>
+                        <span>Sections</span>
                         <i id="sidebar-main-site-chevron" class="fas fa-chevron-down text-[8px] transition-transform duration-200"></i>
                     </button>
                 </div>
                 <div id="sidebar-main-site-links" class="hidden grid grid-cols-3 gap-1 pt-2 mt-1.5 border-t border-white/5 text-[10px] text-gray-400 font-medium">
-                    <a href="../index.html#roadmap" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المسار</a>
-                    <a href="../index.html#tools" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الأدوات</a>
-                    <a href="../index.html#references" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">المكتبة</a>
-                    <a href="../index.html#courses" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الدورات</a>
-                    <a href="../index.html#experts" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الخبراء</a>
-                    <a href="../index.html#hero" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">الرئيسية</a>
+                    <a href="../index.html#roadmap" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Roadmap</a>
+                    <a href="../index.html#tools" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Tools</a>
+                    <a href="../index.html#references" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Library</a>
+                    <a href="../index.html#courses" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Courses</a>
+                    <a href="../index.html#experts" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Experts</a>
+                    <a href="../index.html#hero" class="p-1 rounded-lg text-center hover:bg-white/10 hover:text-teal-300 transition-colors">Home</a>
                 </div>
             </div>
         </div>
@@ -110,156 +109,150 @@
         <!-- Navigation Menu -->
         <nav class="flex-1 px-3 py-1.5 md:p-4 space-y-1 md:space-y-2 overflow-y-auto custom-scroll min-h-0">
             <button onclick="switchTab('overview')" id="btn-overview" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl bg-b-primary/10 text-b-primary font-bold transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-chart-pie w-4 md:w-auto text-center"></i> <span>نظرة عامة</span>
+                <i class="fas fa-chart-pie w-4 md:w-auto text-center"></i> <span>Overview</span>
             </button>
             <button onclick="switchTab('roadmap')" id="btn-roadmap" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-sitemap w-4 md:w-auto text-center"></i> <span>خريطة التعلم</span>
+                <i class="fas fa-sitemap w-4 md:w-auto text-center"></i> <span>Learning Roadmap</span>
             </button>
             <button onclick="switchTab('squad')" id="btn-squad" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-users-cog w-4 md:w-auto text-center"></i> <span>الفريق</span>
+                <i class="fas fa-users-cog w-4 md:w-auto text-center"></i> <span>My Squad</span>
             </button>
             <button onclick="switchTab('announcements')" id="btn-announcements" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-bullhorn w-4 md:w-auto text-center"></i> <span>إشعارات الفريق</span>
+                <i class="fas fa-bullhorn w-4 md:w-auto text-center"></i> <span>Notifications</span>
             </button>
             <button onclick="switchTab('calendar')" id="btn-calendar" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-calendar-alt w-4 md:w-auto text-center"></i> <span>التقويم</span>
+                <i class="fas fa-calendar-alt w-4 md:w-auto text-center"></i> <span>Calendar</span>
             </button>
             <button onclick="switchTab('rank')" id="btn-rank" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-medal w-4 md:w-5 text-center"></i> <span class="font-bold">رحلة الصعود</span>
+                <i class="fas fa-medal w-4 md:w-5 text-center"></i> <span class="font-bold">Rank Journey</span>
             </button>
             <button onclick="switchTab('team-rank')" id="btn-team-rank" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 md:px-4 py-2 md:py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-chess-rook w-4 md:w-5 text-center"></i> <span class="font-bold">رحلة الفريق</span>
+                <i class="fas fa-chess-rook w-4 md:w-5 text-center"></i> <span class="font-bold">Team Journey</span>
             </button>
             <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-trophy w-4 md:w-auto text-center"></i> <span>ساحة المنافسة</span>
+                <i class="fas fa-trophy w-4 md:w-auto text-center"></i> <span>Leaderboard</span>
             </button>
             <button id="open-settings-btn" class="nav-btn w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 md:p-3 rounded-xl text-gray-400 hover:bg-white/5 transition-all text-xs sm:text-sm md:text-base">
-                <i class="fas fa-cog w-4 md:w-auto text-center"></i> <span>إعدادات الحساب</span>
+                <i class="fas fa-cog w-4 md:w-auto text-center"></i> <span>Account Settings</span>
             </button>
         </nav>
 
-        <!-- Pinned Logout Footer (Zero empty space below) -->
+        <!-- Pinned Logout Footer -->
         <div class="p-2.5 sm:p-3 md:p-4 border-t border-white/10 mt-auto shrink-0 bg-black/40">
             <button id="logout-btn" class="w-full flex items-center gap-2.5 md:gap-3 px-3 py-2 sm:py-2.5 md:p-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all text-xs sm:text-sm md:text-base font-bold">
                 <i class="fas fa-sign-out-alt w-4 md:w-auto text-center"></i>
-                <span>تسجيل خروج</span>
+                <span>Sign Out</span>
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 h-screen overflow-y-auto p-3 sm:p-5 md:p-8 relative custom-scroll min-w-0">
+    <main class="flex-1 h-screen overflow-y-auto p-1.5 sm:p-4 md:p-6 lg:p-8 relative custom-scroll min-w-0">
         
-                <!-- Header (Unified Mobile & Desktop Header - Sleek 52px on Mobile, Spacious on Desktop) -->
-        <header id="main-header" class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 sm:p-2.5 md:p-3.5 mb-3 md:mb-8 shadow-xl flex items-center justify-between gap-2 md:gap-6 shrink-0 transition-all duration-300">
+        <!-- Header -->
+        <header id="main-header" class="sticky top-0 z-30 bg-[#0c0e10]/95 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 md:p-3.5 mb-2 sm:mb-4 md:mb-6 shadow-xl flex items-center justify-between gap-1.5 sm:gap-2 md:gap-6 shrink-0 transition-all duration-300">
             
-            <!-- Right Section (in RTL): Navigation & User Profile -->
+            <!-- Left Section (LTR): Navigation & User Profile -->
             <div id="user-welcome-banner" class="flex items-center gap-2 sm:gap-3 md:gap-3.5 min-w-0 flex-1 md:flex-initial">
-                <!-- Hamburger Sidebar Toggle Button (At the far right in RTL, closest to sidebar) -->
-                <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center shrink-0 transition-all cursor-pointer group active:scale-95" title="القائمة الجانبية (Ctrl + B)">
+                <button id="sidebar-toggle-btn" onclick="toggleSidebar()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center shrink-0 transition-all cursor-pointer group active:scale-95" title="Toggle Sidebar (Ctrl + B)" aria-label="Toggle sidebar">
                     <i class="fas fa-bars text-sm text-gray-300 group-hover:text-teal-400 transition-colors"></i>
                 </button>
 
-                <!-- User Welcome Card (Cohesive glassmorphic card on desktop) -->
-                <div class="flex items-center gap-2 sm:gap-2.5 md:gap-3 min-w-0 md:bg-white/[0.03] md:hover:bg-white/[0.06] md:p-1.5 md:pr-2 md:pl-3 md:rounded-2xl md:border md:border-white/10 transition-all">
+                <!-- User Welcome Card -->
+                <div class="flex items-center gap-2 sm:gap-2.5 md:gap-3 min-w-0 md:bg-white/[0.03] md:hover:bg-white/[0.06] md:p-1.5 md:pl-2 md:pr-3 md:rounded-2xl md:border md:border-white/10 transition-all">
                     <!-- User Avatar -->
-                    <img id="header-user-avatar" src="../assets/icons/BUSLA-icon.png" class="w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full border-2 border-teal-400/50 p-0.5 bg-b-surface object-cover shrink-0 shadow-sm">
+                    <img id="header-user-avatar" src="../assets/icons/zdc-icon-192.png" class="w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 rounded-full border-2 border-teal-400/50 p-0.5 bg-b-surface object-cover shrink-0 shadow-sm">
                     
                     <!-- Text Info Stack -->
                     <div class="min-w-0 flex flex-col justify-center">
-                        <span class="text-[9px] sm:text-[10px] md:text-xs text-gray-400 leading-none md:mb-0.5">أهلاً بك،</span>
+                        <span class="text-[9px] sm:text-[10px] md:text-xs text-gray-400 leading-none md:mb-0.5">Welcome back,</span>
                         <h2 id="header-user-name" class="text-xs sm:text-sm md:text-base font-bold text-white leading-tight truncate max-w-[110px] sm:max-w-[150px] md:max-w-[180px]"></h2>
-                        <!-- Badge on Desktop (under name) -->
                         <span id="header-user-badge" class="hidden md:inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-300 border border-teal-500/30 uppercase mt-1 w-fit"></span>
                     </div>
 
-                    <!-- Rank Medal Image (Desktop: Proportional sleek achievement badge) -->
-                    <div class="relative shrink-0 hidden md:flex items-center mr-1">
-                        <img id="header-user-badge-img-clear" src="../assets/icons/BUSLA-icon.png" class="w-10 h-10 md:w-11 md:h-11 object-contain rounded-xl border border-teal-500/30 bg-black/40 p-1 drop-shadow-md transition-transform hover:scale-105">
+                    <!-- Rank Medal Image -->
+                    <div class="relative shrink-0 hidden md:flex items-center ml-1">
+                        <img id="header-user-badge-img-clear" src="../assets/icons/zdc-icon-192.png" class="w-10 h-10 md:w-11 md:h-11 object-contain rounded-xl border border-teal-500/30 bg-black/40 p-1 drop-shadow-md transition-transform hover:scale-105">
                     </div>
                 </div>
             </div>
 
-            <!-- Left Section (in RTL): Controls, Stats, Notifications, Search -->
+            <!-- Right Section (LTR): Controls, Stats, Notifications, Search -->
             <div class="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
                 
-                <!-- Stats Pill (Unified single container on Mobile | Separate cards on Desktop) -->
+                <!-- Stats Pill -->
                 <div class="flex items-center bg-black/40 border border-white/10 rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 gap-1.5 sm:gap-2 md:bg-transparent md:border-0 md:p-0 md:gap-3">
-                    <!-- Points: Team -->
-                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-black/30 md:px-3 md:py-2 md:rounded-xl md:border md:border-white/5" title="نقاط الفريق">
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-black/30 md:px-3 md:py-2 md:rounded-xl md:border md:border-white/5" title="Team Points">
                         <div class="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 rounded-full bg-yellow-500/15 flex items-center justify-center text-yellow-500 shrink-0">
                             <i class="fas fa-trophy text-[8px] sm:text-[10px] md:text-xs"></i>
                         </div>
                         <div>
-                            <p class="text-[9px] text-gray-500 uppercase tracking-widest hidden md:block">نقاط الفريق</p>
+                            <p class="text-[9px] text-gray-500 uppercase tracking-widest hidden md:block">Team XP</p>
                             <p id="stat-team-score" class="font-bold text-white font-mono text-[11px] sm:text-xs md:text-sm leading-none">0</p>
                         </div>
                     </div>
 
                     <span class="w-px h-3 bg-white/15 md:hidden"></span>
 
-                    <!-- Points: Mine -->
-                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-b-primary/10 md:px-3 md:py-2 md:rounded-xl md:border md:border-b-primary/20" title="نقاطي">
+                    <div class="flex items-center gap-1 sm:gap-1.5 md:gap-2.5 md:bg-b-primary/10 md:px-3 md:py-2 md:rounded-xl md:border md:border-b-primary/20" title="My Points">
                         <div class="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 rounded-full bg-b-primary/20 flex items-center justify-center text-b-primary shrink-0">
                             <i class="fas fa-star text-[8px] sm:text-[10px] md:text-xs"></i>
                         </div>
                         <div>
-                            <p class="text-[9px] text-teal-400 uppercase tracking-widest hidden md:block">نقاطي</p>
+                            <p class="text-[9px] text-teal-400 uppercase tracking-widest hidden md:block">My XP</p>
                             <p id="my-points" class="font-bold text-white font-mono text-[11px] sm:text-xs md:text-sm leading-none">0</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Notifications Button -->
-                <button onclick="switchTab('announcements')" class="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer shrink-0" title="الإشعارات">
+                <button onclick="switchTab('announcements')" class="relative w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 hover:border-teal-500/30 transition-all cursor-pointer shrink-0" title="Notifications" aria-label="Notifications">
                     <i class="fas fa-bell text-xs sm:text-sm md:text-base"></i>
                     <span id="global-notif-badge" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] text-white font-bold hidden animate-bounce shadow-[0_0_10px_rgba(239,68,68,0.8)]">0</span>
                 </button>
 
                 <!-- Omni-Search Trigger Button -->
-                <button onclick="window.openOmniSearch && window.openOmniSearch()" class="w-8 h-8 sm:w-9 sm:h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="البحث الشامل (Ctrl + K)">
+                <button onclick="window.openOmniSearch && window.openOmniSearch()" class="w-8 h-8 sm:w-9 sm:h-9 md:w-auto md:px-3 md:py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-teal-500/40 flex items-center justify-center md:gap-2 transition-all text-xs cursor-pointer group shrink-0" title="Global Search (Ctrl + K)" aria-label="Global search">
                     <i class="fas fa-search text-teal-400 text-xs sm:text-sm group-hover:scale-110 transition-transform"></i>
-                    <span class="hidden lg:inline font-medium">بحث...</span>
+                    <span class="hidden lg:inline font-medium">Search...</span>
                     <kbd class="hidden xl:inline-block text-[9px] bg-black/40 px-1 py-0.5 rounded font-mono text-gray-500 border border-white/10">Ctrl K</kbd>
                 </button>
 
-                <!-- Main Site Dropdown (Desktop Only - Mobile accesses site links via Sidebar) -->
+                <!-- Main Site Dropdown -->
                 <div class="relative hidden md:block" id="main-site-nav-dropdown">
                     <button id="main-site-dropdown-btn" onclick="toggleMainSiteDropdown(event)" class="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40 text-xs md:text-sm font-bold transition-all shadow-sm shrink-0">
                         <i class="fas fa-compass text-teal-400 text-sm"></i>
-                        <span>المنصة الرئيسية</span>
+                        <span>ZDC Portal</span>
                         <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" id="main-site-chevron"></i>
                     </button>
-                    <!-- Dropdown Menu -->
-                    <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 left-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-right text-xs">
-                        <div class="px-3 py-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">أقسام المنصة</div>
+                    <div id="main-site-dropdown-menu" class="hidden absolute top-full mt-2 right-0 w-48 sm:w-52 bg-[#0e1315]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-left text-xs">
+                        <div class="px-3 py-1 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-white/5">Platform Sections</div>
                         <a href="../index.html#hero" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-home text-teal-400 w-4 text-center"></i><span>الرئيسية</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-home text-teal-400 w-4 text-center"></i><span>Home</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                         <a href="../index.html#roadmap" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-map-signs text-teal-400 w-4 text-center"></i><span>المسار التعليمي</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-map-signs text-teal-400 w-4 text-center"></i><span>Learning Roadmap</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                         <a href="../index.html#courses" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i><span>الدورات التدريبية</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-graduation-cap text-teal-400 w-4 text-center"></i><span>Courses</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                         <a href="../index.html#references" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-book-reader text-teal-400 w-4 text-center"></i><span>المكتبة العلمية</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-book-reader text-teal-400 w-4 text-center"></i><span>Scientific Library</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                         <a href="../index.html#tools" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-tools text-teal-400 w-4 text-center"></i><span>الأدوات البرمجية</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-tools text-teal-400 w-4 text-center"></i><span>Software Tools</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                         <a href="../index.html#experts" class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/5 text-gray-300 hover:text-teal-300 transition-colors group">
-                            <span class="flex items-center gap-2"><i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i><span>الخبراء</span></span>
-                            <i class="fas fa-arrow-left text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            <span class="flex items-center gap-2"><i class="fas fa-user-astronaut text-teal-400 w-4 text-center"></i><span>Experts</span></span>
+                            <i class="fas fa-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
                         </a>
                     </div>
                 </div>
 
-                <!-- Hidden mobile badge element for JS safeText compatibility -->
                 <span id="header-user-badge-mobile" class="hidden"></span>
             </div>
         </header>
@@ -272,12 +265,12 @@
                     <div class="flex items-center justify-between mb-4 shrink-0 border-b border-white/5 pb-3">
                         <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                             <span class="w-2 h-7 bg-b-primary rounded-full"></span>
-                            المهام المطلوبة منك
+                            Assigned Tasks
                         </h3>
                         <div class="flex gap-1.5 flex-wrap">
-                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">فيديو <i class="fas fa-circle text-b-primary text-[8px] ml-1"></i></span>
-                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">كويز <i class="fas fa-circle text-yellow-500 text-[8px] ml-1"></i></span>
-                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">مشروع <i class="fas fa-circle text-purple-500 text-[8px] ml-1"></i></span>
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5"><i class="fas fa-circle text-b-primary text-[8px] mr-1"></i>Video</span>
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5"><i class="fas fa-circle text-yellow-500 text-[8px] mr-1"></i>Quiz</span>
+                            <span class="text-[10px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5"><i class="fas fa-circle text-purple-500 text-[8px] mr-1"></i>Project</span>
                         </div>
                     </div>
                     <div id="overview-container" class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-1">
@@ -288,42 +281,40 @@
                 <div class="bg-b-surface p-4 sm:p-6 rounded-2xl border border-white/10 flex flex-col h-auto min-h-[300px] lg:h-full shadow-lg">
                     <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 mb-4 shrink-0 border-b border-white/5 pb-3">
                         <span class="w-2 h-7 bg-purple-500 rounded-full"></span>
-                        الكورسات النشطة
+                        Active Courses
                     </h3>
                     <div id="active-courses-container" class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-1">
                         <div class="text-center py-10 text-gray-500 bg-black/20 rounded-xl border border-white/5">
                             <i class="fas fa-spinner fa-spin mb-2"></i>
-                            <p>جاري التحميل...</p>
+                            <p>Loading...</p>
                         </div>
                     </div>
                 </div>
+            </div>
         </section>
 
         <section id="roadmap" class="tab-content space-y-4 sm:space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 rounded-xl border border-white/10 gap-4">
                 <div>
-                    <h3 class="font-bold text-lg sm:text-xl text-purple-400">شجرة المنهج (Curriculum Tree)</h3>
-                    <p class="text-xs text-gray-400">استعرض مسار التعلم الخاص بك واضغط على الكورس لعرض التفاصيل والمشاهدة.</p>
+                    <h3 class="font-bold text-lg sm:text-xl text-purple-400">Curriculum Tree</h3>
+                    <p class="text-xs text-gray-400">Explore your engineering learning path and click any course to view details and start watching.</p>
                 </div>
                 
                 <div class="relative w-full md:w-64">
-                    <select id="roadmap-track-selector" onchange="window.renderRoadmapTree()" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
-                        <option value="all">جاري تحميل المسارات...</option>
+                    <select id="roadmap-track-selector" onchange="window.renderRoadmapTree()" class="w-full bg-black border border-white/10 rounded-xl px-4 pr-10 py-2.5 text-xs sm:text-sm text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                        <option value="all">Loading tracks...</option>
                     </select>
-                    <i class="fas fa-chevron-down absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-xs"></i>
                 </div>
             </div>
             <div class="roadmap-layout-wrapper grid grid-cols-1 lg:grid-cols-10 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-260px)] relative">
-                <!-- Roadmap tree viewer (70%) -->
                 <div class="lg:col-span-7 bg-b-surface rounded-2xl border border-white/10 overflow-hidden relative flex flex-col" id="roadmap-tree-container">
                     <div class="text-center py-20 text-gray-500">
-                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>جاري تحميل المنهج...
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Loading curriculum...
                     </div>
                 </div>
 
-                <!-- Unified Details Panel (30%) -->
                 <div id="node-details-container" class="lg:col-span-3 bg-b-surface rounded-2xl border border-white/10 p-4 sm:p-6 overflow-y-auto custom-scroll relative flex flex-col h-full">
-                    <!-- Populated dynamically by NodeDetailsPanel -->
                 </div>
             </div>
         </section>
@@ -332,11 +323,11 @@
     <div id="has-team-view" class="hidden space-y-4 sm:space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-b-surface p-4 sm:p-5 md:p-6 rounded-2xl border border-white/10 shadow-lg gap-3 sm:gap-4">
             <div>
-                <h2 class="text-xl sm:text-2xl font-black text-white">أعضاء الفريق</h2>
-                <p class="text-gray-400 text-xs sm:text-sm mt-0.5">ترتيب الأعضاء بناءً على النقاط المكتسبة (XP)</p>
+                <h2 class="text-xl sm:text-2xl font-black text-white">Squad Members</h2>
+                <p class="text-gray-400 text-xs sm:text-sm mt-0.5">Members ranked by earned experience points (XP)</p>
             </div>
             <button onclick="window.leaveCurrentTeam()" class="w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-2.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg active:scale-95">
-                <i class="fas fa-sign-out-alt"></i> مغادرة الفريق
+                <i class="fas fa-sign-out-alt"></i> Leave Team
             </button>
         </div>
         <div id="squad-list-container" class="space-y-3">
@@ -348,8 +339,8 @@
             <div class="w-20 h-20 bg-b-surface border-2 border-white/10 rounded-full flex items-center justify-center text-4xl mb-4 mx-auto shadow-xl">
                 <i class="fas fa-users-slash text-gray-500"></i>
             </div>
-            <h2 class="text-3xl font-black text-white mb-2">أنت لست ضمن أي فريق!</h2>
-            <p class="text-gray-400">انضم إلى فريق لتتمكن من الوصول للكورسات، المهام، وجمع النقاط.</p>
+            <h2 class="text-3xl font-black text-white mb-2">You Are Not in a Team Yet</h2>
+            <p class="text-gray-400">Join a squad to unlock active courses, team assignments, and collaborative XP tracking.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -357,8 +348,8 @@
                 <div class="w-16 h-16 bg-b-primary/20 text-b-primary rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <i class="fas fa-plus"></i>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-1">إنشاء فريق جديد</h3>
-                <p class="text-xs text-gray-500">كن أنت القائد وابدأ رحلتك</p>
+                <h3 class="text-lg font-bold text-white mb-1">Create New Team</h3>
+                <p class="text-xs text-gray-500">Become a squad leader and start your track</p>
             </div>
 
             <div onclick="window.openStudentInvites()" class="bg-b-surface border border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-yellow-500 hover:bg-white/5 transition-all group shadow-lg relative">
@@ -366,16 +357,16 @@
                 <div class="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <i class="fas fa-envelope-open-text"></i>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-1">الدعوات الواردة</h3>
-                <p class="text-xs text-gray-500">تحقق من الفرق التي دعتك</p>
+                <h3 class="text-lg font-bold text-white mb-1">Incoming Invitations</h3>
+                <p class="text-xs text-gray-500">Review invitations sent by team leaders</p>
             </div>
 
             <div onclick="window.openTeamBrowser()" class="bg-b-surface border border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-purple-500 hover:bg-white/5 transition-all group shadow-lg">
                 <div class="w-16 h-16 bg-purple-500/20 text-purple-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <i class="fas fa-search"></i>
                 </div>
-                <h3 class="text-lg font-bold text-white mb-1">تصفح الفرق</h3>
-                <p class="text-xs text-gray-500">ابحث وانضم للفريق المناسب لك</p>
+                <h3 class="text-lg font-bold text-white mb-1">Browse Teams</h3>
+                <p class="text-xs text-gray-500">Discover and request to join an active squad</p>
             </div>
         </div>
     </div>
@@ -384,11 +375,11 @@
 <div id="student-invites-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
         <div class="p-5 border-b border-white/10 flex justify-between items-center bg-white/5">
-            <h3 class="text-xl font-bold text-white"><i class="fas fa-envelope text-yellow-500 mr-2"></i> الدعوات الواردة إليك</h3>
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-envelope text-yellow-500 mr-2"></i> Incoming Invitations</h3>
             <button onclick="window.closeModal('student-invites-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
         </div>
         <div class="p-5 overflow-y-auto custom-scroll space-y-3" id="student-invites-list">
-            </div>
+        </div>
     </div>
 </div>
 
@@ -398,58 +389,58 @@
         <div class="p-4 md:p-5 border-b border-white/10 bg-white/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shrink-0 w-full">
             
             <div class="flex justify-between w-full lg:w-auto items-center">
-                <h3 class="text-xl font-bold text-white shrink-0"><i class="fas fa-globe text-purple-500 mr-2"></i> تصفح الفرق المتاحة</h3>
+                <h3 class="text-xl font-bold text-white shrink-0"><i class="fas fa-globe text-purple-500 mr-2"></i> Browse Available Teams</h3>
                 <button onclick="window.closeModal('team-browser-modal')" class="lg:hidden w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
             
             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1 lg:justify-end">
-                <input type="text" id="team-search-input" placeholder="بحث باسم الفريق..." class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-full sm:flex-1 lg:w-56 shrink-0" oninput="window.filterTeams()">
+                <input type="text" id="team-search-input" placeholder="Search by team name..." class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-purple-500 outline-none w-full sm:flex-1 lg:w-56 shrink-0" oninput="window.filterTeams()">
                 
-            <div class="relative">
-                <select id="team-track-filter" onchange="window.filterTeams()" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" >
-                    <option value="" disabled selected>جاري تحميل المسارات...</option>
-                </select>
-            </div>
+                <div class="relative">
+                    <select id="team-track-filter" onchange="window.filterTeams()" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0">
+                        <option value="" disabled selected>Loading tracks...</option>
+                    </select>
+                </div>
 
                 <select id="team-uni-filter" class="w-full sm:flex-1 lg:w-48 px-3 py-2.5 rounded-xl text-gray-300 text-sm outline-none bg-black border border-white/10 focus:border-purple-500 shrink-0" onchange="window.filterTeams()">
-                    <option value="all" selected>كل الجامعات </option>
-                    <optgroup label="الجامعات الحكومية">
-                        <option value="Zagazig">جامعة الزقازيق</option>
-                        <option value="Cairo">جامعة القاهرة</option>
-                        <option value="Alexandria">جامعة الإسكندرية</option>
-                        <option value="Ain Shams">جامعة عين شمس</option>
-                        <option value="Mansoura">جامعة المنصورة</option>
-                        <option value="Assiut">جامعة أسيوط</option>
-                        <option value="Tanta">جامعة طنطا</option>
-                        <option value="Helwan">جامعة حلوان</option>
-                        <option value="Minya">جامعة المنيا</option>
-                        <option value="Monufia">جامعة المنوفية</option>
-                        <option value="Suez Canal">جامعة قناة السويس</option>
-                        <option value="South Valley">جامعة جنوب الوادي</option>
-                        <option value="Beni Suef">جامعة بني سويف</option>
-                        <option value="Fayoum">جامعة الفيوم</option>
-                        <option value="Benha">جامعة بنها</option>
-                        <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
-                        <option value="Sohag">جامعة سوهاج</option>
-                        <option value="Port Said">جامعة بورسعيد</option>
-                        <option value="Damanhour">جامعة دمنهور</option>
-                        <option value="Aswan">جامعة أسوان</option>
-                        <option value="Damietta">جامعة دمياط</option>
-                        <option value="Suez">جامعة السويس</option>
-                        <option value="Sadat City">جامعة مدينة السادات</option>
-                        <option value="Arish">جامعة العريش</option>
-                        <option value="Luxor">جامعة الأقصر</option>
+                    <option value="all" selected>All Universities</option>
+                    <optgroup label="Public Universities">
+                        <option value="Zagazig">Zagazig University</option>
+                        <option value="Cairo">Cairo University</option>
+                        <option value="Alexandria">Alexandria University</option>
+                        <option value="Ain Shams">Ain Shams University</option>
+                        <option value="Mansoura">Mansoura University</option>
+                        <option value="Assiut">Assiut University</option>
+                        <option value="Tanta">Tanta University</option>
+                        <option value="Helwan">Helwan University</option>
+                        <option value="Minya">Minya University</option>
+                        <option value="Monufia">Monufia University</option>
+                        <option value="Suez Canal">Suez Canal University</option>
+                        <option value="South Valley">South Valley University</option>
+                        <option value="Beni Suef">Beni Suef University</option>
+                        <option value="Fayoum">Fayoum University</option>
+                        <option value="Benha">Benha University</option>
+                        <option value="Kafrelsheikh">Kafrelsheikh University</option>
+                        <option value="Sohag">Sohag University</option>
+                        <option value="Port Said">Port Said University</option>
+                        <option value="Damanhour">Damanhour University</option>
+                        <option value="Aswan">Aswan University</option>
+                        <option value="Damietta">Damietta University</option>
+                        <option value="Suez">Suez University</option>
+                        <option value="Sadat City">University of Sadat City</option>
+                        <option value="Arish">Arish University</option>
+                        <option value="Luxor">Luxor University</option>
                     </optgroup>
-                    <optgroup label="جامعات أخرى وخاصة">
-                        <option value="Al-Azhar">جامعة الأزهر</option>
-                        <option value="Zewail City">مدينة زويل للعلوم</option>
-                        <option value="E-JUST">الجامعة اليابانية E-JUST</option>
-                        <option value="AUC">الجامعة الأمريكية</option>
-                        <option value="GUC">الجامعة الألمانية</option>
-                        <option value="BUE">الجامعة البريطانية</option>
-                        <option value="MUST">جامعة مصر للعلوم</option>
-                        <option value="MIU">جامعة مصر الدولية</option>
-                        <option value="Other">جامعة أخرى / معهد</option>
+                    <optgroup label="Private & International Universities">
+                        <option value="Al-Azhar">Al-Azhar University</option>
+                        <option value="Zewail City">Zewail City of Science & Tech</option>
+                        <option value="E-JUST">Egypt-Japan University (E-JUST)</option>
+                        <option value="AUC">The American University in Cairo (AUC)</option>
+                        <option value="GUC">German University in Cairo (GUC)</option>
+                        <option value="BUE">The British University in Egypt (BUE)</option>
+                        <option value="MUST">Misr University for Science & Tech (MUST)</option>
+                        <option value="MIU">Misr International University (MIU)</option>
+                        <option value="Other">Other University / Institute</option>
                     </optgroup>
                 </select>
                 
@@ -458,14 +449,15 @@
         </div>
         
         <div class="p-0 overflow-y-auto overflow-x-auto custom-scroll flex-1 w-full">
-            <table class="w-full text-right text-sm min-w-[600px]">
+            <table class="w-full text-left text-sm min-w-[600px]">
               <thead>
                 <tr class="text-gray-400 text-xs uppercase tracking-wider border-b border-white/5">
-                    <th class="px-4 py-4 font-black text-right">الفريق</th>
-                    <th class="px-4 py-4 font-black text-right text-b-primary">المسار</th> <th class="px-4 py-4 font-black text-right">القائد</th>
-                    <th class="px-4 py-4 font-black text-right">الجامعة</th>
-                    <th class="px-4 py-4 font-black text-right">الأعضاء</th>
-                    <th class="px-4 py-4 font-black text-center">إجراء</th>
+                    <th class="px-4 py-4 font-black text-left">Team</th>
+                    <th class="px-4 py-4 font-black text-left text-b-primary">Track</th>
+                    <th class="px-4 py-4 font-black text-left">Leader</th>
+                    <th class="px-4 py-4 font-black text-left">University</th>
+                    <th class="px-4 py-4 font-black text-left">Members</th>
+                    <th class="px-4 py-4 font-black text-center">Action</th>
                 </tr>
             </thead>
                 <tbody id="teams-browser-list" class="divide-y divide-white/5">
@@ -477,27 +469,27 @@
 <div id="team-details-modal" class="fixed inset-0 z-[250] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
     <div class="bg-b-surface border border-white/10 rounded-2xl w-full max-w-6xl shadow-[0_0_50px_rgba(0,106,103,0.15)] flex flex-col max-h-[95vh] overflow-hidden transform scale-100 transition-all">
         
-        <div class="p-6 md:p-8 border-b border-white/5 bg-gradient-to-l from-b-primary/10 via-transparent to-transparent relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0">
+        <div class="p-6 md:p-8 border-b border-white/5 bg-gradient-to-r from-b-primary/10 via-transparent to-transparent relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0">
             
-            <button onclick="window.closeModal('team-details-modal')" class="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-all flex items-center justify-center group">
+            <button onclick="window.closeModal('team-details-modal')" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-white/5 transition-all flex items-center justify-center group">
                 <i class="fas fa-times text-lg group-hover:scale-110 transition-transform"></i>
             </button>
 
             <div class="flex items-center gap-5 pr-8 md:pr-0">
                 <div class="relative shrink-0">
-                    <img id="tdm-logo" src="../assets/icons/BUSLA-icon.png" class="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-2 border-b-primary/50 object-cover shadow-[0_0_20px_rgba(0,106,103,0.3)] bg-black">
+                    <img id="tdm-logo" src="../assets/icons/zdc-icon-192.png" class="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-2 border-b-primary/50 object-cover shadow-[0_0_20px_rgba(0,106,103,0.3)] bg-black">
                 </div>
-<div>
-                    <h2 id="tdm-name" class="text-2xl md:text-3xl font-black text-white drop-shadow-md">اسم الفريق</h2>
+                <div>
+                    <h2 id="tdm-name" class="text-2xl md:text-3xl font-black text-white drop-shadow-md">Team Name</h2>
                     <div class="flex items-center gap-2 mt-2">
                         <img id="tdm-rank-img" src="" class="w-16 h-16 rounded-2xl object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" alt="Team Rank">
-                        <span id="tdm-rank" class="text-xs font-bold px-3 py-1 rounded-lg bg-b-primary/10 border border-b-primary/30 inline-block text-b-primary font-mono tracking-wide">رتبة الفريق</span>
+                        <span id="tdm-rank" class="text-xs font-bold px-3 py-1 rounded-lg bg-b-primary/10 border border-b-primary/30 inline-block text-b-primary font-mono tracking-wide">Team Rank</span>
                     </div>
                 </div>
             </div>
 
-            <div id="tdm-action-container" class="w-full md:w-auto md:ml-16">
-                </div>
+            <div id="tdm-action-container" class="w-full md:w-auto md:mr-16">
+            </div>
         </div>
         
         <div class="p-6 sm:p-8 relative flex-1 overflow-y-auto custom-scroll">
@@ -508,67 +500,67 @@
                     <div class="grid grid-cols-3 gap-3 md:gap-4">
                         <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-b-primary/30 transition-all">
                             <div class="w-10 h-10 mx-auto bg-b-primary/20 text-b-primary rounded-full flex items-center justify-center mb-2"><i class="fas fa-star text-lg"></i></div>
-                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">إجمالي النقاط</p>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">Total XP</p>
                             <p id="tdm-points" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0</p>
                         </div>
                         <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-yellow-500/30 transition-all">
                             <div class="w-10 h-10 mx-auto bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-2"><i class="fas fa-users text-lg"></i></div>
-                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">الأعضاء</p>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">Members</p>
                             <p id="tdm-members-count" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0/5</p>
                         </div>
                         <div class="bg-black/40 border border-white/5 rounded-2xl p-4 text-center hover:bg-white/5 hover:border-purple-500/30 transition-all">
                             <div class="w-10 h-10 mx-auto bg-purple-500/20 text-purple-500 rounded-full flex items-center justify-center mb-2"><i class="fas fa-book-open text-lg"></i></div>
-                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">كورسات مفعلة</p>
+                            <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest">Active Courses</p>
                             <p id="tdm-courses-count" class="font-black text-xl md:text-2xl text-white font-mono mt-1">0</p>
                         </div>
                     </div>
 
-<div class="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-6">
-    <div class="flex-1">
-        <p class="text-xs text-gray-500 mb-1">الجامعة أو المؤسسة</p>
-        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
-            <i class="fas fa-university text-gray-400"></i>
-            <span id="tdm-leader-uni">الجامعة</span>
-        </div>
-    </div>
+                    <div class="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-6">
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 mb-1">University / Institution</p>
+                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                                <i class="fas fa-university text-gray-400"></i>
+                                <span id="tdm-leader-uni">University</span>
+                            </div>
+                        </div>
 
-    <div class="w-px bg-white/5 hidden sm:block"></div>
+                        <div class="w-px bg-white/5 hidden sm:block"></div>
 
-    <div class="flex-1">
-        <p class="text-xs text-gray-500 mb-1">التخصص (Track)</p>
-        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
-            <i class="fas fa-microchip text-b-primary"></i>
-            <span id="tdm-track-name" class="text-b-primary">التخصص</span>
-        </div>
-    </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 mb-1">Track</p>
+                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                                <i class="fas fa-microchip text-b-primary"></i>
+                                <span id="tdm-track-name" class="text-b-primary">Track</span>
+                            </div>
+                        </div>
 
-    <div class="w-px bg-white/5 hidden sm:block"></div>
-    
-    <div class="flex-1">
-        <p class="text-xs text-gray-500 mb-1">قائد الفريق (الليدر)</p>
-        <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
-            <i class="fas fa-crown text-yellow-500"></i>
-            <span id="tdm-leader-name">الاسم</span>
-        </div>
-    </div>
-</div>
+                        <div class="w-px bg-white/5 hidden sm:block"></div>
+                        
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500 mb-1">Team Leader</p>
+                            <div class="flex items-center gap-2 text-white font-bold text-sm md:text-base">
+                                <i class="fas fa-crown text-yellow-500"></i>
+                                <span id="tdm-leader-name">Leader</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="bg-black/20 border border-white/5 rounded-2xl p-5">
                         <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
-                            <i class="fas fa-layer-group text-b-primary"></i> مسار التعلم (الكورسات المفعّلة)
+                            <i class="fas fa-layer-group text-b-primary"></i> Learning Path (Active Courses)
                         </h4>
                         <div id="tdm-courses-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto custom-scroll pr-2">
-                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="bg-black/30 border border-white/5 rounded-2xl p-5 flex flex-col h-[500px] lg:h-full max-h-[600px] shadow-inner">
                     <h4 class="text-base font-bold text-white mb-4 flex items-center justify-between border-b border-white/5 pb-3">
-                        <span class="flex items-center gap-2"><i class="fas fa-users text-gray-400"></i> أعضاء الفريق</span>
+                        <span class="flex items-center gap-2"><i class="fas fa-users text-gray-400"></i> Squad Members</span>
                         <span id="tdm-members-badge" class="bg-white/10 text-xs px-2 py-0.5 rounded font-mono">0</span>
                     </h4>
                     <div id="tdm-members-list" class="space-y-3 overflow-y-auto custom-scroll pr-2 flex-1">
-                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -580,38 +572,38 @@
     <div class="flex flex-col md:flex-row justify-between items-center bg-b-surface p-6 rounded-2xl border border-white/10 shadow-lg mb-8 gap-4">
         <div>
             <h2 class="text-3xl font-black text-white mb-1 flex items-center gap-3">
-                <i class="fas fa-bell text-b-primary"></i> مركز الإشعارات
+                <i class="fas fa-bell text-b-primary"></i> Notification Center
             </h2>
-            <p class="text-sm text-gray-400">تابع أحدث توجيهات قائدك ورسائل إدارة المنصة.</p>
+            <p class="text-sm text-gray-400">Stay up to date with your team leader's updates and ZDC platform announcements.</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <select id="student-notif-filter" onchange="window.filterStudentNotifications()" class="bg-black/50 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:border-b-primary outline-none">
-                <option value="all">عرض الكل</option>
-                <option value="team">إشعارات الفريق العامة</option>
-                <option value="personal">مخصصة لي فقط</option>
-                <option value="admin">رسائل الإدارة</option>
+                <option value="all">Show All</option>
+                <option value="team">Team Announcements</option>
+                <option value="personal">Personal Only</option>
+                <option value="admin">Admin Messages</option>
             </select>
             <button onclick="window.toggleStudentArchive(true)" class="px-5 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:bg-white/5 hover:text-white transition-all text-sm font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-archive"></i> الأرشيف
+                <i class="fas fa-archive"></i> Archive
             </button>
         </div>
     </div>
 
     <div id="student-active-section" class="bg-b-surface rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center">
-            <h3 class="font-bold text-white text-sm"><i class="fas fa-bolt text-green-400 ml-2"></i> الإشعارات الواردة والنشطة</h3>
+        <div class="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center gap-3">
+            <h3 class="font-bold text-white text-sm"><i class="fas fa-bolt text-green-400 mr-2"></i> Active Notifications</h3>
             <div class="relative w-48 sm:w-64">
-                <input type="text" id="search-active-notifs" oninput="window.filterStudentNotifications()" placeholder="بحث في النشط..." class="w-full bg-black/50 border border-white/10 rounded-lg py-1.5 px-3 pr-8 text-xs text-white focus:border-b-primary outline-none">
                 <i class="fas fa-search absolute left-3 top-2 text-gray-500 text-xs"></i>
+                <input type="text" id="search-active-notifs" oninput="window.filterStudentNotifications()" placeholder="Search active..." class="w-full bg-black/50 border border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs text-white focus:border-b-primary outline-none">
             </div>
         </div>
-        <table class="w-full text-right">
+        <table class="w-full text-left">
             <thead class="bg-black/40 border-b border-white/10 text-xs text-gray-500 uppercase font-bold tracking-wider">
                 <tr>
-                    <th class="p-4 pr-6">العنوان والتصنيف</th>
-                    <th class="p-4 text-center">التاريخ</th>
-                    <th class="p-4 text-center">المرسل</th>
-                    <th class="p-4 text-center">حالة القراءة</th>
+                    <th class="p-4 pl-6">Title & Category</th>
+                    <th class="p-4 text-center">Date</th>
+                    <th class="p-4 text-center">Sender</th>
+                    <th class="p-4 text-center">Read Status</th>
                 </tr>
             </thead>
             <tbody id="student-active-tbody" class="divide-y divide-white/5"></tbody>
@@ -619,26 +611,26 @@
     </div>
 
     <div id="student-archive-section" class="hidden animate-fade-in space-y-4 mt-8">
-        <div class="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/10">
+        <div class="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/10 gap-3">
             <div class="flex items-center gap-4">
                 <button onclick="window.toggleStudentArchive(false)" class="text-gray-400 hover:text-white flex items-center gap-2 text-sm font-bold">
-                    <i class="fas fa-arrow-right"></i> العودة للنشطة
+                    <i class="fas fa-arrow-left"></i> Back to Active
                 </button>
-                <h3 class="text-xl font-bold text-gray-200">🗄️ سجل الأرشيف</h3>
+                <h3 class="text-xl font-bold text-gray-200"><i class="fas fa-box-archive text-gray-400 mr-2"></i>Archive</h3>
             </div>
             <div class="relative w-48 sm:w-64">
-                <input type="text" id="search-archive-notifs" oninput="window.filterStudentNotifications()" placeholder="بحث في الأرشيف..." class="w-full bg-b-surface border border-white/10 rounded-lg py-2 px-4 pr-8 text-sm text-white focus:border-b-primary outline-none">
                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-500"></i>
+                <input type="text" id="search-archive-notifs" oninput="window.filterStudentNotifications()" placeholder="Search archive..." class="w-full bg-b-surface border border-white/10 rounded-lg py-2 pl-9 pr-4 text-sm text-white focus:border-b-primary outline-none">
             </div>
         </div>
         <div class="bg-b-surface rounded-2xl border border-white/10 overflow-hidden shadow-2xl opacity-80">
-            <table class="w-full text-right">
+            <table class="w-full text-left">
                 <thead class="bg-black/40 border-b border-white/10 text-xs text-gray-500 uppercase font-bold tracking-wider">
                     <tr>
-                        <th class="p-4 pr-6">العنوان والتصنيف</th>
-                        <th class="p-4 text-center">التاريخ</th>
-                        <th class="p-4 text-center">المرسل</th>
-                        <th class="p-4 text-center">وقت القراءة</th>
+                        <th class="p-4 pl-6">Title & Category</th>
+                        <th class="p-4 text-center">Date</th>
+                        <th class="p-4 text-center">Sender</th>
+                        <th class="p-4 text-center">Read At</th>
                     </tr>
                 </thead>
                 <tbody id="student-archive-tbody" class="divide-y divide-white/5"></tbody>
@@ -649,50 +641,47 @@
 
 <div id="student-post-detail-modal" class="fixed inset-0 bg-black/90 hidden z-[300] flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-b-surface w-full max-w-2xl rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,106,103,0.15)] relative flex flex-col max-h-[85vh] transform transition-all">
-        <div class="absolute top-4 left-4 z-10">
+        <div class="absolute top-4 right-4 z-10">
             <button onclick="window.closeStudentPostDetail()" class="w-10 h-10 rounded-full bg-black/50 border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 flex items-center justify-center transition-all">
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
         <div id="student-modal-content" class="p-8 overflow-y-auto custom-scroll">
-            </div>
+        </div>
     </div>
 </div>
 
         <section id="calendar" class="tab-content hidden space-y-3 sm:space-y-4 animate-fade-in">
-            <!-- Header Card with Integrated Month Controls -->
             <div class="bg-b-surface/90 border border-white/10 p-3 sm:p-4 rounded-2xl shadow-lg backdrop-blur-md flex items-center justify-between gap-2.5">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-b-primary/15 border border-b-primary/30 flex items-center justify-center text-b-primary text-sm sm:text-base shrink-0 shadow-[0_0_12px_rgba(0,245,255,0.15)]">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-bold text-sm sm:text-base md:text-lg text-white truncate">التقويم الأسبوعي</h3>
-                        <p class="text-[11px] sm:text-xs text-gray-400 truncate">مهام الفريق والخطط موزعة بالأسابيع</p>
+                        <h3 class="font-bold text-sm sm:text-base md:text-lg text-white truncate">Weekly Calendar</h3>
+                        <p class="text-[11px] sm:text-xs text-gray-400 truncate">Team assignments and plans organized by week</p>
                     </div>
                 </div>
 
-                <!-- Month Selector Pill -->
                 <div class="flex items-center gap-1 sm:gap-1.5 bg-black/50 p-1 sm:p-1.5 rounded-xl border border-white/10 shrink-0">
-                    <button onclick="changeMonth(-1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="الشهر السابق">
-                        <i class="fas fa-chevron-right text-[10px] sm:text-xs"></i>
+                    <button onclick="changeMonth(-1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="Previous Month">
+                        <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
                     </button>
                     <span id="calendar-month-title" class="font-bold text-b-primary min-w-[85px] sm:min-w-[110px] text-center text-xs sm:text-sm select-none px-1">...</span>
-                    <button onclick="changeMonth(1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="الشهر التالي">
-                        <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
+                    <button onclick="changeMonth(1)" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg hover:bg-white/10 active:scale-95 flex items-center justify-center text-gray-400 hover:text-white transition-all" title="Next Month">
+                        <i class="fas fa-chevron-right text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Weeks List Container -->
             <div id="calendar-weeks-container" class="space-y-2 sm:space-y-3"></div>
         </section>
 
         <section id="rank" class="tab-content hidden animate-fade-in">
             <header class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 class="text-3xl font-black text-white mb-2">رحلة البطل</h2>
-                    <p class="text-gray-400">تتبع تقدمك، ارتقِ في الرتب، واصنع مجدك الخاص.</p>
+                    <h2 class="text-3xl font-black text-white mb-2">Rank Journey</h2>
+                    <p class="text-gray-400">Track your progression, unlock engineering tiers, and build your legacy.</p>
                 </div>
             </header>
 
@@ -704,18 +693,15 @@
         </section>
 
         <section id="leaderboard" class="tab-content hidden animate-fade-in relative min-h-screen pb-24">
-            <!-- Hero Stats Command Deck -->
             <div class="relative w-full rounded-3xl overflow-hidden mb-8 shadow-2xl bg-gradient-to-br from-[#0c1618] via-[#080d0f] to-[#040607] border border-teal-500/20 flex flex-col md:flex-row group">
-                <!-- Ambient Glowing Orbs -->
                 <div class="absolute -top-20 -right-20 w-80 h-80 bg-teal-500/15 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="absolute inset-0 bg-[radial-gradient(#006A67_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none"></div>
 
                 <!-- Global User Rank -->
-                <div class="flex-1 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-l border-white/10 relative z-10 transition-all">
+                <div class="flex-1 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 relative z-10 transition-all">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                        <span class="text-xs font-black text-amber-400/90 tracking-widest uppercase">ترتيبك العالمي</span>
+                        <span class="text-xs font-black text-amber-400/90 tracking-widest uppercase">Your Global Rank</span>
                     </div>
                     
                     <div class="flex items-baseline gap-2 mb-4">
@@ -733,8 +719,7 @@
                 <!-- Team Rank -->
                 <div class="flex-1 p-8 flex flex-col items-center justify-center relative z-10 bg-white/[0.01] transition-all">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
-                        <span class="text-xs font-black text-teal-400/90 tracking-widest uppercase">ترتيب فريقك</span>
+                        <span class="text-xs font-black text-teal-400/90 tracking-widest uppercase">Your Team Rank</span>
                     </div>
                     
                     <div class="flex items-baseline gap-2 mb-4">
@@ -752,64 +737,58 @@
 
             <!-- Filter Controls Bar -->
             <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10 bg-[#0c1417]/90 backdrop-blur-xl p-3 rounded-2xl border border-white/10 shadow-2xl">
-                <!-- Type Toggle: Students vs Teams -->
                 <div class="flex w-full sm:w-auto bg-black/60 p-1.5 rounded-xl border border-white/10 shadow-inner">
                     <button onclick="window.switchLeaderboardType('students')" id="tab-students" class="flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-black shadow-lg flex items-center justify-center gap-2">
                         <i class="fas fa-user-graduate"></i>
-                        <span>الطلاب</span>
+                        <span>Students</span>
                     </button>
                     <button onclick="window.switchLeaderboardType('teams')" id="tab-teams" class="flex-1 sm:flex-none px-7 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center gap-2">
                         <i class="fas fa-users"></i>
-                        <span>الفرق</span>
+                        <span>Teams</span>
                     </button>
                 </div>
 
-                <!-- Scope Switcher: Global / University / Governorate -->
                 <div class="flex w-full sm:w-auto gap-1.5 bg-black/60 p-1.5 rounded-xl border border-white/10 overflow-x-auto custom-scroll">
                     <button onclick="window.switchLeaderboardScope('global')" id="scope-global" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold bg-white/15 text-white border border-white/20 shadow-sm transition-all flex items-center gap-1.5">
-                        <span>عالمي</span> <span>🌍</span>
+                        <i class="fas fa-globe text-teal-400"></i> <span>Global</span>
                     </button>
                     <button onclick="window.switchLeaderboardScope('university')" id="scope-university" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center gap-1.5">
-                        <span>جامعتي</span> <span>🎓</span>
+                        <i class="fas fa-university text-amber-400"></i> <span>My University</span>
                     </button>
                     <button onclick="window.switchLeaderboardScope('governorate')" id="scope-governorate" class="scope-btn whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 border border-transparent transition-all flex items-center gap-1.5">
-                        <span>محافظتي</span> <span>📍</span>
+                        <i class="fas fa-map-marker-alt text-purple-400"></i> <span>My Governorate</span>
                     </button>
                 </div>
             </div>
 
-            <!-- 3D Champion Podium Container -->
             <div id="podium-container" class="flex justify-center items-end gap-3 sm:gap-6 mb-12 min-h-[300px] pt-12 px-2"></div>
 
-            <!-- Search Bar -->
             <div class="mb-6 relative w-full max-w-2xl mx-auto">
-                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-400 text-sm"></i>
                 </div>
                 <input type="text" id="leaderboard-search" onkeyup="window.filterLeaderboardSearch()" 
-                       placeholder="ابحث بالاسم، الفريق، أو الجامعة..." 
-                       class="w-full bg-[#0a0f12]/90 border border-white/10 rounded-2xl py-3.5 pr-11 pl-4 text-white placeholder-gray-500 focus:outline-none focus:border-b-primary focus:ring-2 focus:ring-b-primary/40 transition-all shadow-inner backdrop-blur-md text-sm">
+                       placeholder="Search by name, team, or university..." 
+                       class="w-full bg-[#0a0f12]/90 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-b-primary focus:ring-2 focus:ring-b-primary/40 transition-all shadow-inner backdrop-blur-md text-sm">
             </div>
 
-            <!-- Leaderboard Table / Cards -->
             <div class="bg-[#090e11]/80 rounded-3xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-xl">
                 <div class="flex items-center px-4 sm:px-6 py-4 bg-white/[0.03] border-b border-white/10 text-xs font-black text-gray-400 uppercase tracking-widest">
-                    <div class="w-14 sm:w-16 text-center">الترتيب</div>
-                    <div class="flex-1 text-right pr-4">المنافس</div>
-                    <div class="hidden sm:block w-48 text-right" id="col-header-context">الجامعة / الفريق</div>
-                    <div class="hidden md:block w-44 text-right">الرتبة والشارة</div>
-                    <div class="w-28 text-left pl-4">النقاط</div>
+                    <div class="w-14 sm:w-16 text-center">Rank</div>
+                    <div class="flex-1 text-left pl-4">Competitor</div>
+                    <div class="hidden sm:block w-48 text-left" id="col-header-context">University / Team</div>
+                    <div class="hidden md:block w-44 text-left">Tier & Badge</div>
+                    <div class="w-28 text-right pr-4">Points</div>
                 </div>
 
                 <div id="leaderboard-list" class="divide-y divide-white/5">
                     <div class="text-center py-24 text-gray-500 flex flex-col items-center">
                         <div class="w-12 h-12 rounded-full border-2 border-b-primary border-t-transparent animate-spin mb-4"></div>
-                        <p class="text-sm font-bold text-gray-400">جاري تحميل ساحة المنافسة...</p>
+                        <p class="text-sm font-bold text-gray-400">Loading leaderboard...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Sticky Current User Bar -->
             <div id="sticky-user-rank" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-2xl bg-[#091012]/95 border border-teal-500/30 rounded-2xl shadow-[0_15px_50px_rgba(0,106,103,0.35)] p-4 flex items-center justify-between z-50 transform translate-y-[200%] transition-transform duration-500 backdrop-blur-2xl">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-teal-900/40 flex items-center justify-center border border-teal-500/40 shadow-inner">
@@ -817,13 +796,13 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-white font-bold text-sm">موقعك الحالي</span>
-                            <span class="bg-teal-500/20 text-teal-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-500/30">أنت</span>
+                            <span class="text-white font-bold text-sm">Your Current Rank</span>
+                            <span class="bg-teal-500/20 text-teal-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-500/30">You</span>
                         </div>
-                        <p class="text-xs text-gray-400 mt-0.5" id="sticky-diff-text">استمر في التقدم!</p>
+                        <p class="text-xs text-gray-400 mt-0.5" id="sticky-diff-text">Keep pushing forward!</p>
                     </div>
                 </div>
-                <div class="text-left flex items-center gap-2">
+                <div class="text-right flex items-center gap-2">
                     <div class="bg-amber-400/10 border border-amber-400/30 px-3.5 py-1.5 rounded-xl shadow-inner flex items-center gap-1.5">
                         <i class="fas fa-bolt text-amber-400 text-xs"></i>
                         <span class="text-xl font-black text-amber-400 font-mono" id="sticky-points">0 XP</span>
@@ -837,7 +816,7 @@
     <div id="post-side-panel" class="fixed top-0 right-0 h-full w-full md:w-[450px] bg-b-surface border-l border-white/10 z-[250] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
         <div class="p-6 border-b border-white/10 bg-gradient-to-r from-black via-b-surface to-b-surface flex justify-between items-center">
             <h3 id="panel-title" class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-pen-nib text-b-primary"></i> إنشاء إشعار
+                <i class="fas fa-pen-nib text-b-primary"></i> Create Notification
             </h3>
             <button onclick="closeCreatePostPanel()" class="text-gray-400 hover:text-white transition-colors">
                 <i class="fas fa-times text-xl"></i>
@@ -847,30 +826,30 @@
         <div class="flex-1 overflow-y-auto custom-scroll p-6">
             <form id="post-form" class="space-y-6">
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">نوع الإشعار</label>
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Notification Type</label>
                     <select id="post-type" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
-                        <option value="announcement">📢 إعلان عام</option>
-                        <option value="deadline">⏳ ميعاد تسليم (Deadline)</option>
-                        <option value="meeting">📹 اجتماع أونلاين</option>
-                        <option value="warning">⚠️ تنبيه هام</option>
-                        <option value="achievement">🏆 إنجاز</option>
+                        <option value="announcement">General Announcement</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="meeting">Online Meeting</option>
+                        <option value="warning">Important Warning</option>
+                        <option value="achievement">Achievement</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">العنوان <span class="text-red-500">*</span></label>
-                    <input type="text" id="post-title" required maxlength="80" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none" placeholder="مثال: تسليم مشروع اللوجيك">
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Title <span class="text-red-500">*</span></label>
+                    <input type="text" id="post-title" required maxlength="80" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none" placeholder="e.g., Digital Logic Project Submission">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">المحتوى <span class="text-red-500">*</span></label>
-                    <textarea id="post-content" required rows="6" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none leading-relaxed" placeholder="اكتب تفاصيل الإشعار هنا..."></textarea>
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Content <span class="text-red-500">*</span></label>
+                    <textarea id="post-content" required rows="6" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none leading-relaxed" placeholder="Write the notification details here..."></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">تاريخ الانتهاء (اختياري)</label>
+                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Expiry Date (Optional)</label>
                         <input type="date" id="post-expiry" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">رابط مرفق (اختياري)</label>
+                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Attachment Link (Optional)</label>
                         <input type="url" id="post-link" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none" placeholder="https://...">
                     </div>
                 </div>
@@ -878,16 +857,16 @@
                     <label class="flex items-center gap-3 cursor-pointer group">
                         <input type="checkbox" id="post-pin" class="w-5 h-5 rounded border-gray-600 bg-black checked:bg-b-primary">
                         <div>
-                            <span class="block text-sm font-bold text-white group-hover:text-b-primary transition-colors">تثبيت في الأعلى (Pin)</span>
-                            <span class="text-xs text-gray-500">سيظهر هذا البوست في مقدمة القائمة دائماً.</span>
+                            <span class="block text-sm font-bold text-white group-hover:text-b-primary transition-colors">Pin to Top</span>
+                            <span class="text-xs text-gray-500">Keep this announcement pinned at the top of the list.</span>
                         </div>
                     </label>
                     <div class="w-full h-[1px] bg-white/5"></div>
                     <label class="flex items-center gap-3 cursor-pointer group">
                         <input type="checkbox" id="post-ack" checked class="w-5 h-5 rounded border-gray-600 bg-black checked:bg-b-primary">
                         <div>
-                            <span class="block text-sm font-bold text-white group-hover:text-b-primary transition-colors">مطلوب التأكيد (Require Seen)</span>
-                            <span class="text-xs text-gray-500">سيظهر زر "علم" للأعضاء لتأكيد القراءة.</span>
+                            <span class="block text-sm font-bold text-white group-hover:text-b-primary transition-colors">Require Acknowledgment</span>
+                            <span class="text-xs text-gray-500">Show an "Acknowledge" button for members to confirm reading.</span>
                         </div>
                     </label>
                 </div>
@@ -896,17 +875,17 @@
 
         <div class="p-6 border-t border-white/10 bg-black/20 flex gap-3">
             <button id="btn-save-post" type="submit" form="post-form" class="flex-1 bg-b-primary hover:bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-[1.02]">
-                نشر الإشعار
+                Publish Notification
             </button>
             <button type="button" onclick="closeCreatePostPanel()" class="px-6 bg-white/5 hover:bg-white/10 text-gray-300 py-3 rounded-xl font-bold transition-all border border-white/5">
-                إلغاء
+                Cancel
             </button>
         </div>
     </div>
 
     <div id="post-detail-modal" class="fixed inset-0 bg-black/90 hidden z-[300] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-b-surface w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <div class="absolute top-4 left-4 z-10">
+            <div class="absolute top-4 right-4 z-10">
                 <button onclick="closePostDetailModal()" class="w-8 h-8 rounded-full bg-black/50 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                     <i class="fas fa-times"></i>
                 </button>
@@ -917,21 +896,21 @@
 
     <div id="invite-member-modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-b-surface w-full max-w-md p-8 rounded-3xl border border-white/10 shadow-2xl relative">
-            <button onclick="closeModal('invite-member-modal')" class="absolute top-4 left-4 text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeModal('invite-member-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-b-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-b-primary/30">
                     <i class="fas fa-user-plus text-2xl text-b-primary"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white">دعوة عضو جديد</h3>
-                <p class="text-sm text-gray-400 mt-2">أدخل البريد الإلكتروني للطالب لإرسال دعوة رسمية.</p>
+                <h3 class="text-xl font-bold text-white">Invite New Member</h3>
+                <p class="text-sm text-gray-400 mt-2">Enter the student's email address to send an official squad invitation.</p>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">البريد الإلكتروني</label>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">Email Address</label>
                     <input type="email" id="invite-email-input" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none" placeholder="example@email.com">
                 </div>
                 <button onclick="sendTeamInvitation()" id="btn-send-invite" class="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-200 transition-all shadow-lg">
-                    إرسال الدعوة
+                    Send Invitation
                 </button>
             </div>
         </div>
@@ -940,17 +919,17 @@
     <div id="sent-invites-modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-b-surface w-full max-w-3xl rounded-3xl border border-white/10 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
-                <h3 class="text-xl font-bold text-white"><i class="fas fa-paper-plane text-blue-400 ml-2"></i> سجل الدعوات المرسلة</h3>
+                <h3 class="text-xl font-bold text-white"><i class="fas fa-paper-plane text-blue-400 mr-2"></i> Sent Invitations Log</h3>
                 <button onclick="closeModal('sent-invites-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-0 overflow-y-auto custom-scroll flex-1">
-                <table class="w-full text-right">
+                <table class="w-full text-left">
                     <thead class="bg-black/40 text-gray-500 text-xs uppercase sticky top-0 backdrop-blur-md">
                         <tr>
-                            <th class="p-4">المستلم</th>
-                            <th class="p-4">الحالة</th>
-                            <th class="p-4">التاريخ</th>
-                            <th class="p-4">تحكم</th>
+                            <th class="p-4">Recipient</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Action</th>
                         </tr>
                     </thead>
                     <tbody id="sent-invites-list" class="divide-y divide-white/5 text-sm text-gray-300"></tbody>
@@ -962,7 +941,7 @@
     <div id="requests-modal" class="fixed inset-0 bg-black/90 hidden z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-b-surface w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
-                <h3 class="text-xl font-bold text-white"><i class="fas fa-hand-paper text-yellow-500 ml-2"></i> طلبات الانضمام</h3>
+                <h3 class="text-xl font-bold text-white"><i class="fas fa-hand-paper text-yellow-500 mr-2"></i> Join Requests</h3>
                 <button onclick="closeModal('requests-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div id="requests-list-container" class="p-6 overflow-y-auto custom-scroll flex-1 space-y-3"></div>
@@ -994,7 +973,7 @@
             
             <div class="bg-b-surface p-5 rounded-xl border border-white/5 shadow-inner">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">
-                    <i class="fas fa-align-right ml-2"></i> Details & Description
+                    <i class="fas fa-align-left mr-2"></i> Details & Description
                 </h4>
                 <div id="modal-desc" class="text-gray-300 text-sm leading-relaxed whitespace-pre-line"></div>
             </div>
@@ -1016,7 +995,7 @@
             <div class="p-3.5 sm:p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-black to-b-surface rounded-t-2xl shrink-0">
                 <div class="min-w-0">
                     <h3 id="td-modal-title" class="text-base sm:text-xl font-bold text-white flex items-center gap-2 truncate">
-                        <i class="fas fa-tasks text-b-primary shrink-0"></i> <span class="truncate">تفاصيل المهمة</span>
+                        <i class="fas fa-tasks text-b-primary shrink-0"></i> <span class="truncate">Task Details</span>
                     </h3>
                     <p id="td-modal-subtitle" class="text-[10px] sm:text-xs font-mono text-gray-400 mt-0.5 sm:mt-1 uppercase tracking-widest bg-white/5 inline-block px-2 py-0.5 rounded border border-white/5 truncate max-w-xs">...</p>
                 </div>
@@ -1028,12 +1007,12 @@
             <div class="p-3.5 sm:p-6 overflow-y-auto custom-scroll flex-1 space-y-4 sm:space-y-6">
                 <div class="flex justify-between items-center bg-white/5 p-3.5 sm:p-5 rounded-xl border border-white/10 shadow-inner">
                     <div class="text-center">
-                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">نسبة الإنجاز للفريق</span>
+                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">Team Completion</span>
                         <span id="td-modal-progress-txt" class="text-2xl sm:text-3xl font-black text-b-primary font-mono">0%</span>
                     </div>
                     <div class="w-[1px] h-10 sm:h-12 bg-white/10"></div>
                     <div class="text-center">
-                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">الطلاب المنجزون</span>
+                        <span class="block text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 sm:mb-1 font-bold">Completed By</span>
                         <div class="flex items-baseline justify-center gap-1">
                             <span id="td-modal-completed-count" class="text-xl sm:text-2xl font-bold text-white font-mono">0</span> 
                             <span class="text-gray-500 text-xs sm:text-sm font-mono" id="td-modal-total-count">/ 0</span>
@@ -1043,14 +1022,14 @@
                 
                 <div>
                     <h4 class="text-xs sm:text-sm font-bold text-gray-300 mb-2 sm:mb-3 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-users text-gray-500"></i> حالة أعضاء الفريق
+                        <i class="fas fa-users text-gray-500"></i> Squad Member Status
                     </h4>
                     <div id="td-members-list" class="space-y-2"></div>
                 </div>
             </div>
 
             <div class="p-3 sm:p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
-                <button onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">إغلاق النافذة</button>
+                <button onclick="closeTaskDetailsModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">Close Window</button>
             </div>
         </div>
     </div>
@@ -1059,8 +1038,8 @@
         <div class="bg-b-surface w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden my-auto">
             <div class="p-3.5 sm:p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-b-primary/10 to-transparent shrink-0">
                 <div class="min-w-0">
-                    <h3 id="week-modal-title" class="text-base sm:text-xl font-bold text-white truncate">تفاصيل الأسبوع</h3>
-                    <p class="text-[11px] sm:text-sm text-gray-400 mt-0.5 sm:mt-1 truncate">إجمالي نقاط الأسبوع: <span id="week-modal-points" class="text-yellow-400 font-bold">0</span> نقطة</p>
+                    <h3 id="week-modal-title" class="text-base sm:text-xl font-bold text-white truncate">Week Details</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-400 mt-0.5 sm:mt-1 truncate">Weekly Total XP: <span id="week-modal-points" class="text-yellow-400 font-bold">0</span> XP</p>
                 </div>
                 <button onclick="closeWeekModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0">
                     <i class="fas fa-times text-sm"></i>
@@ -1068,18 +1047,18 @@
             </div>
             <div id="week-modal-tasks" class="p-3.5 sm:p-6 space-y-2.5 sm:space-y-3 overflow-y-auto custom-scroll flex-1"></div>
             <div class="p-3 sm:p-4 border-t border-white/10 bg-black/20 text-center shrink-0">
-                <button onclick="closeWeekModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">إغلاق النافذة</button>
+                <button onclick="closeWeekModal()" class="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors">Close Window</button>
             </div>
         </div>
     </div>
 
     <div id="broadcast-modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-b-surface w-full max-w-md p-6 rounded-2xl border border-white/10">
-            <h3 class="font-bold mb-4">إرسال إشعار للفريق</h3>
-            <textarea id="broadcast-text" class="w-full bg-black/50 border border-white/20 rounded p-3 text-white mb-4" rows="3" placeholder="اكتب رسالتك هنا..."></textarea>
+            <h3 class="font-bold mb-4">Send Team Notification</h3>
+            <textarea id="broadcast-text" class="w-full bg-black/50 border border-white/20 rounded p-3 text-white mb-4" rows="3" placeholder="Write your message here..."></textarea>
             <div class="flex gap-2">
-                <button onclick="sendBroadcast()" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">إرسال</button>
-                <button onclick="closeModal('broadcast-modal')" class="bg-white/10 text-white px-4 py-2 rounded hover:bg-white/20">إلغاء</button>
+                <button onclick="sendBroadcast()" class="bg-blue-600 text-white px-4 py-2 rounded flex-1 hover:bg-blue-700">Send</button>
+                <button onclick="closeModal('broadcast-modal')" class="bg-white/10 text-white px-4 py-2 rounded hover:bg-white/20">Cancel</button>
             </div>
         </div>
     </div>
@@ -1088,7 +1067,7 @@
     <div id="day-details-modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-b-surface w-full max-w-sm p-6 rounded-2xl border border-white/10 shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                <h3 id="day-modal-title" class="font-bold text-white">تفاصيل اليوم</h3>
+                <h3 id="day-modal-title" class="font-bold text-white">Day Details</h3>
                 <button onclick="closeDayModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div id="day-modal-content" class="max-h-[300px] overflow-y-auto custom-scroll"></div>
@@ -1100,7 +1079,7 @@
             <div class="bg-black/40 p-6 flex justify-between items-center border-b border-white/5">
                 <div>
                     <h3 class="text-2xl font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-id-card-clip text-b-primary"></i> الملف الشخصي
+                        <i class="fas fa-id-card-clip text-b-primary"></i> Profile Settings
                     </h3>
                 </div>
                 <button id="close-settings-btn" class="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-all">
@@ -1110,9 +1089,9 @@
 
             <div class="p-8 overflow-y-auto custom-scroll flex-1">
                 <form id="settings-form" class="grid lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 flex flex-col items-center gap-4 text-center border-l border-white/5 pl-4">
+                    <div class="lg:col-span-1 flex flex-col items-center gap-4 text-center lg:border-r border-white/5 lg:pr-4">
                         <div class="relative group">
-                            <img src="" id="preview-avatar" class="w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-2 ring-b-primary/50" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="" id="preview-avatar" class="w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-2 ring-b-primary/50" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'">
                         </div>
                         <div>
                             <h4 id="display-name-preview" class="text-white font-bold text-lg">---</h4>
@@ -1122,13 +1101,13 @@
 
                     <div class="lg:col-span-2 space-y-6">
                         <div>
-                            <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">رابط الصورة</label>
+                            <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Avatar URL</label>
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
-                                    <input type="url" id="settings-photo" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none pl-10" placeholder="https://drive.google.com/...">
+                                    <input type="url" id="settings-photo" class="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:border-b-primary outline-none" placeholder="https://drive.google.com/...">
                                     <i class="fab fa-google-drive absolute left-4 top-3.5 text-gray-500"></i>
                                 </div>
-                                <button type="button" id="btn-preview-photo" class="bg-white/5 hover:bg-white/10 text-white px-4 rounded-xl border border-white/10 transition-all" title="تحديث المعاينة">
+                                <button type="button" id="btn-preview-photo" class="bg-white/5 hover:bg-white/10 text-white px-4 rounded-xl border border-white/10 transition-all" title="Refresh Preview">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
                             </div>
@@ -1136,92 +1115,92 @@
 
                         <div class="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الاسم الكامل</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Full Name</label>
                                 <input type="text" id="settings-name" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">البريد الإلكتروني</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Email Address</label>
                                 <input type="email" id="settings-email" readonly class="w-full bg-white/5 border border-transparent rounded-xl px-4 py-3 text-gray-400 cursor-not-allowed">
                             </div>
                         </div>
 
                         <div class="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">المحافظة</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Governorate</label>
                                 <select id="settings-gov" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
-                                    <option value="" class="text-black/50" disabled selected>اختر المحافظة</option>
-                                    <option value="Sharqia">الشرقية</option>
-                                    <option value="Cairo">القاهرة</option>
-                                    <option value="Giza">الجيزة</option>
-                                    <option value="Alexandria">الإسكندرية</option>
-                                    <option value="Dakahlia">الدقهلية</option>
-                                    <option value="Red Sea">البحر الأحمر</option>
-                                    <option value="Beheira">البحيرة</option>
-                                    <option value="Fayoum">الفيوم</option>
-                                    <option value="Gharbia">الغربية</option>
-                                    <option value="Ismailia">الإسماعيلية</option>
-                                    <option value="Monufia">المنوفية</option>
-                                    <option value="Minya">المنيا</option>
-                                    <option value="Qalyubia">القليوبية</option>
-                                    <option value="New Valley">الوادي الجديد</option>
-                                    <option value="Suez">السويس</option>
-                                    <option value="Aswan">أسوان</option>
-                                    <option value="Assiut">أسيوط</option>
-                                    <option value="Beni Suef">بني سويف</option>
-                                    <option value="Port Said">بورسعيد</option>
-                                    <option value="Damietta">دمياط</option>
-                                    <option value="South Sinai">جنوب سيناء</option>
-                                    <option value="Kafr El Sheikh">كفر الشيخ</option>
-                                    <option value="Matrouh">مطروح</option>
-                                    <option value="Luxor">الأقصر</option>
-                                    <option value="Qena">قنا</option>
-                                    <option value="North Sinai">شمال سيناء</option>
-                                    <option value="Sohag">سوهاج</option>
-                                    <option value="Other">أخرى</option>
+                                    <option value="" class="text-black/50" disabled selected>Select Governorate</option>
+                                    <option value="Sharqia">Sharqia</option>
+                                    <option value="Cairo">Cairo</option>
+                                    <option value="Giza">Giza</option>
+                                    <option value="Alexandria">Alexandria</option>
+                                    <option value="Dakahlia">Dakahlia</option>
+                                    <option value="Red Sea">Red Sea</option>
+                                    <option value="Beheira">Beheira</option>
+                                    <option value="Fayoum">Fayoum</option>
+                                    <option value="Gharbia">Gharbia</option>
+                                    <option value="Ismailia">Ismailia</option>
+                                    <option value="Monufia">Monufia</option>
+                                    <option value="Minya">Minya</option>
+                                    <option value="Qalyubia">Qalyubia</option>
+                                    <option value="New Valley">New Valley</option>
+                                    <option value="Suez">Suez</option>
+                                    <option value="Aswan">Aswan</option>
+                                    <option value="Assiut">Assiut</option>
+                                    <option value="Beni Suef">Beni Suef</option>
+                                    <option value="Port Said">Port Said</option>
+                                    <option value="Damietta">Damietta</option>
+                                    <option value="South Sinai">South Sinai</option>
+                                    <option value="Kafr El Sheikh">Kafr El Sheikh</option>
+                                    <option value="Matrouh">Matrouh</option>
+                                    <option value="Luxor">Luxor</option>
+                                    <option value="Qena">Qena</option>
+                                    <option value="North Sinai">North Sinai</option>
+                                    <option value="Sohag">Sohag</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الجامعة</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">University</label>
                                 <select id="settings-uni" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none custom-select">
-                                    <option value="" class="text-black/50" disabled>اختر الجامعة</option>
-                                    <optgroup class="text-black/50" label="الجامعات الحكومية">
-                                        <option value="Zagazig">جامعة الزقازيق</option>
-                                        <option value="Cairo">جامعة القاهرة</option>
-                                        <option value="Alexandria">جامعة الإسكندرية</option>
-                                        <option value="Ain Shams">جامعة عين شمس</option>
-                                        <option value="Mansoura">جامعة المنصورة</option>
-                                        <option value="Assiut">جامعة أسيوط</option>
-                                        <option value="Tanta">جامعة طنطا</option>
-                                        <option value="Helwan">جامعة حلوان</option>
-                                        <option value="Minya">جامعة المنيا</option>
-                                        <option value="Monufia">جامعة المنوفية</option>
-                                        <option value="Suez Canal">جامعة قناة السويس</option>
-                                        <option value="South Valley">جامعة جنوب الوادي</option>
-                                        <option value="Beni Suef">جامعة بني سويف</option>
-                                        <option value="Fayoum">جامعة الفيوم</option>
-                                        <option value="Benha">جامعة بنها</option>
-                                        <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
-                                        <option value="Sohag">جامعة سوهاج</option>
-                                        <option value="Port Said">جامعة بورسعيد</option>
-                                        <option value="Damanhour">جامعة دمنهور</option>
-                                        <option value="Aswan">جامعة أسوان</option>
-                                        <option value="Damietta">جامعة دمياط</option>
-                                        <option value="Suez">جامعة السويس</option>
-                                        <option value="Sadat City">جامعة مدينة السادات</option>
-                                        <option value="Arish">جامعة العريش</option>
-                                        <option value="Luxor">جامعة الأقصر</option>
+                                    <option value="" class="text-black/50" disabled>Select University</option>
+                                    <optgroup class="text-black/50" label="Public Universities">
+                                        <option value="Zagazig">Zagazig University</option>
+                                        <option value="Cairo">Cairo University</option>
+                                        <option value="Alexandria">Alexandria University</option>
+                                        <option value="Ain Shams">Ain Shams University</option>
+                                        <option value="Mansoura">Mansoura University</option>
+                                        <option value="Assiut">Assiut University</option>
+                                        <option value="Tanta">Tanta University</option>
+                                        <option value="Helwan">Helwan University</option>
+                                        <option value="Minya">Minya University</option>
+                                        <option value="Monufia">Monufia University</option>
+                                        <option value="Suez Canal">Suez Canal University</option>
+                                        <option value="South Valley">South Valley University</option>
+                                        <option value="Beni Suef">Beni Suef University</option>
+                                        <option value="Fayoum">Fayoum University</option>
+                                        <option value="Benha">Benha University</option>
+                                        <option value="Kafrelsheikh">Kafrelsheikh University</option>
+                                        <option value="Sohag">Sohag University</option>
+                                        <option value="Port Said">Port Said University</option>
+                                        <option value="Damanhour">Damanhour University</option>
+                                        <option value="Aswan">Aswan University</option>
+                                        <option value="Damietta">Damietta University</option>
+                                        <option value="Suez">Suez University</option>
+                                        <option value="Sadat City">University of Sadat City</option>
+                                        <option value="Arish">Arish University</option>
+                                        <option value="Luxor">Luxor University</option>
                                     </optgroup>
-                                    <optgroup class="text-black/50" label="جامعات أخرى وخاصة">
-                                        <option value="Al-Azhar">جامعة الأزهر</option>
-                                        <option value="Zewail City">مدينة زويل للعلوم والتكنولوجيا</option>
-                                        <option value="E-JUST">الجامعة المصرية اليابانية (E-JUST)</option>
-                                        <option value="AUC">الجامعة الأمريكية بالقاهرة</option>
-                                        <option value="GUC">الجامعة الألمانية بالقاهرة</option>
-                                        <option value="BUE">الجامعة البريطانية في مصر</option>
-                                        <option value="MUST">جامعة مصر للعلوم والتكنولوجيا</option>
-                                        <option value="MSA">جامعة أكتوبر للعلوم الحديثة والآداب</option>
-                                        <option value="MIU">جامعة مصر الدولية</option>
-                                        <option value="Other">جامعة أخرى / معهد</option>
+                                    <optgroup class="text-black/50" label="Private & International Universities">
+                                        <option value="Al-Azhar">Al-Azhar University</option>
+                                        <option value="Zewail City">Zewail City of Science & Tech</option>
+                                        <option value="E-JUST">Egypt-Japan University (E-JUST)</option>
+                                        <option value="AUC">The American University in Cairo (AUC)</option>
+                                        <option value="GUC">German University in Cairo (GUC)</option>
+                                        <option value="BUE">The British University in Egypt (BUE)</option>
+                                        <option value="MUST">Misr University for Science & Tech (MUST)</option>
+                                        <option value="MSA">MSA University</option>
+                                        <option value="MIU">Misr International University (MIU)</option>
+                                        <option value="Other">Other University / Institute</option>
                                     </optgroup>
                                 </select>
                             </div>
@@ -1229,39 +1208,39 @@
 
                         <div class="grid md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">الكلية</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Faculty</label>
                                 <select id="settings-faculty" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
-                                    <option value="Engineering">هندسة</option>
-                                    <option value="Computers">حاسبات ومعلومات</option>
-                                    <option value="Science">علوم</option>
-                                    <option value="Other">أخرى</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Computers">Computer Science & IT</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">القسم</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Department</label>
                                 <select id="settings-dept" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
-                                    <option value="Electronics">إتصالات وإلكترونيات</option>
-                                    <option value="CSE">حاسبات ونظم</option>
-                                    <option value="Mechatronics">ميكاترونكس</option>
-                                    <option value="Other">أخرى</option>
+                                    <option value="Electronics">Electronics & Communications</option>
+                                    <option value="CSE">Computer & Systems Engineering</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">السنة الدراسية</label>
+                                <label class="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Academic Year</label>
                                 <select id="settings-year" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none">
-                                    <option value="Prep">إعدادي</option>
-                                    <option value="1st Year">الفرقة الأولى</option>
-                                    <option value="2nd Year">الفرقة الثانية</option>
-                                    <option value="3rd Year">الفرقة الثالثة</option>
-                                    <option value="4th Year">الفرقة الرابعة</option>
-                                    <option value="Graduated">خريج</option>
+                                    <option value="Prep">Preparatory Year</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                    <option value="Graduated">Graduated</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="flex justify-center items-center">
-                            <button type="button" id="btn-reset-pass" class="text-red-400 cursor-pointer p-4 w-1/2 bg-black/50 border border-white/10 rounded-xl flex justify-center items-center text-center hover:text-white text-sm font-bold flex items-center gap-2 transition-colors">
-                                <i class="fas fa-lock"></i> تغيير كلمة المرور
+                            <button type="button" id="btn-reset-pass" class="text-red-400 cursor-pointer p-4 w-1/2 bg-black/50 border border-white/10 rounded-xl flex justify-center items-center text-center hover:text-white text-sm font-bold gap-2 transition-colors">
+                                <i class="fas fa-lock"></i> Change Password
                             </button>
                         </div>
                     </div>
@@ -1270,10 +1249,10 @@
 
             <div class="p-6 bg-black/40 border-t border-white/5 flex justify-end gap-3">
                 <button type="button" onclick="document.getElementById('settings-modal').classList.add('hidden')" class="px-6 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold">
-                    إلغاء
+                    Cancel
                 </button>
                 <button type="submit" form="settings-form" id="btn-save-settings" class="px-8 py-3 bg-gradient-to-r from-b-primary to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white font-bold rounded-xl shadow-lg shadow-b-primary/20 transition-all flex items-center gap-2">
-                    <i class="fas fa-save"></i> حفظ التغييرات
+                    <i class="fas fa-save"></i> Save Changes
                 </button>
             </div>
         </div>
@@ -1284,9 +1263,9 @@
             <div class="bg-gradient-to-r from-b-primary/20 to-black p-6 flex justify-between items-center border-b border-white/5">
                 <div>
                     <h3 class="text-2xl font-black text-white flex items-center gap-3">
-                        <i class="fas fa-users-cog text-b-primary"></i> إعدادات الفريق
+                        <i class="fas fa-users-cog text-b-primary"></i> Team Settings
                     </h3>
-                    <p class="text-xs text-gray-400 mt-1 mr-8">تعديل هوية وبيانات الفريق (للقادة فقط)</p>
+                    <p class="text-xs text-gray-400 mt-1 ml-8">Manage team identity and profile (Leaders Only)</p>
                 </div>
                 <button id="close-team-settings" class="w-10 h-10 rounded-full bg-white/5 hover:bg-red-500/20 hover:text-red-400 flex items-center justify-center transition-all">
                     <i class="fas fa-times text-xl"></i>
@@ -1295,111 +1274,111 @@
 
             <div class="p-8 overflow-y-auto custom-scroll flex-1">
                 <form id="team-settings-form" class="grid md:grid-cols-12 gap-8">
-                    <div class="md:col-span-4 flex flex-col items-center gap-4 text-center md:border-l border-white/5 md:pl-4">
+                    <div class="md:col-span-4 flex flex-col items-center gap-4 text-center md:border-r border-white/5 md:pr-4">
                         <div class="relative group">
                             <div class="absolute inset-0 bg-b-primary/30 rounded-full blur-xl animate-pulse"></div>
-                            <img src="" id="team-preview-logo" class="relative w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-1 ring-white/10" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="" id="team-preview-logo" class="relative w-40 h-40 rounded-full object-cover border-4 border-b-surface shadow-2xl ring-1 ring-white/10" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'">
                         </div>
                         <div>
-                            <h4 id="team-name-preview" class="text-white font-bold text-xl tracking-tight">اسم الفريق</h4>
+                            <h4 id="team-name-preview" class="text-white font-bold text-xl tracking-tight">Team Name</h4>
                             <span class="text-[10px] text-b-primary bg-b-primary/10 px-2 py-1 rounded border border-b-primary/20 uppercase font-bold mt-2 inline-block">Team Profile</span>
                         </div>
                     </div>
 
                     <div class="md:col-span-8 space-y-5">
                         <div>
-                            <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">شعار الفريق (Link)</label>
+                            <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">Team Logo URL</label>
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
-                                    <input type="url" id="team-set-logo" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none pl-10 text-sm font-mono" placeholder="https://...">
+                                    <input type="url" id="team-set-logo" class="w-full bg-black/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:border-b-primary outline-none text-sm font-mono" placeholder="https://...">
                                     <i class="fas fa-link absolute left-4 top-3.5 text-gray-500"></i>
                                 </div>
-                                <button type="button" id="btn-preview-team-logo" class="bg-white/5 hover:bg-white/10 text-white px-4 rounded-xl border border-white/10 transition-all" title="تحديث">
+                                <button type="button" id="btn-preview-team-logo" class="bg-white/5 hover:bg-white/10 text-white px-4 rounded-xl border border-white/10 transition-all" title="Refresh">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">اسم الفريق</label>
-                            <input type="text" id="team-set-name" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-lg font-bold" placeholder="مثال: Spark Team">
+                            <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">Team Name</label>
+                            <input type="text" id="team-set-name" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none text-lg font-bold" placeholder="e.g., Spark Team">
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">الجامعة</label>
+                                <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">University</label>
                                 <select id="team-set-uni" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none text-sm">
-                                    <option value="" disabled selected>اختر الجامعة</option>
-                                    <option value="Zagazig">جامعة الزقازيق</option>
-                                    <option value="Cairo">جامعة القاهرة</option>
-                                    <option value="Ain Shams">جامعة عين شمس</option>
-                                    <option value="Alexandria">جامعة الإسكندرية</option>
-                                    <option value="Mansoura">جامعة المنصورة</option>
-                                    <option value="Assiut">جامعة أسيوط</option>
-                                    <option value="Helwan">جامعة حلوان</option>
-                                    <option value="Minya">جامعة المنيا</option>
-                                    <option value="Menoufia">جامعة المنوفية</option>
-                                    <option value="Suez Canal">جامعة قناة السويس</option>
-                                    <option value="Benha">جامعة بنها</option>
-                                    <option value="Tanta">جامعة طنطا</option>
-                                    <option value="Fayoum">جامعة الفيوم</option>
-                                    <option value="Beni Suef">جامعة بني سويف</option>
-                                    <option value="Kafr El Sheikh">جامعة كفر الشيخ</option>
-                                    <option value="Sohag">جامعة سوهاج</option>
-                                    <option value="Port Said">جامعة بورسعيد</option>
-                                    <option value="South Valley">جامعة جنوب الوادي</option>
-                                    <option value="Aswan">جامعة أسوان</option>
-                                    <option value="Damanhour">جامعة دمنهور</option>
-                                    <option value="Damietta">جامعة دمياط</option>
-                                    <option value="Suez">جامعة السويس</option>
-                                    <option value="Sadat City">جامعة مدينة السادات</option>
-                                    <option value="Arish">جامعة العريش</option>
-                                    <option value="New Valley">جامعة الوادي الجديد</option>
-                                    <option value="Matrouh">جامعة مطروح</option>
-                                    <option value="Luxor">جامعة الأقصر</option>
-                                    <option value="Al-Azhar">جامعة الأزهر</option>
-                                    <option value="E-JUST">الجامعة المصرية اليابانية (E-JUST)</option>
-                                    <option value="Zewail City">مدينة زويل للعلوم والتكنولوجيا</option>
-                                    <option value="AUC">الجامعة الأمريكية بالقاهرة</option>
-                                    <option value="GUC">الجامعة الألمانية بالقاهرة</option>
-                                    <option value="BUE">الجامعة البريطانية في مصر</option>
-                                    <option value="MUST">جامعة مصر للعلوم والتكنولوجيا</option>
-                                    <option value="MSA">جامعة أكتوبر للعلوم الحديثة والآداب</option>
-                                    <option value="MIU">جامعة مصر الدولية</option>
-                                    <option value="Other">جامعة أخرى / معهد</option>
+                                    <option value="" disabled selected>Select University</option>
+                                    <option value="Zagazig">Zagazig University</option>
+                                    <option value="Cairo">Cairo University</option>
+                                    <option value="Ain Shams">Ain Shams University</option>
+                                    <option value="Alexandria">Alexandria University</option>
+                                    <option value="Mansoura">Mansoura University</option>
+                                    <option value="Assiut">Assiut University</option>
+                                    <option value="Helwan">Helwan University</option>
+                                    <option value="Minya">Minya University</option>
+                                    <option value="Menoufia">Menoufia University</option>
+                                    <option value="Suez Canal">Suez Canal University</option>
+                                    <option value="Benha">Benha University</option>
+                                    <option value="Tanta">Tanta University</option>
+                                    <option value="Fayoum">Fayoum University</option>
+                                    <option value="Beni Suef">Beni Suef University</option>
+                                    <option value="Kafr El Sheikh">Kafr El Sheikh University</option>
+                                    <option value="Sohag">Sohag University</option>
+                                    <option value="Port Said">Port Said University</option>
+                                    <option value="South Valley">South Valley University</option>
+                                    <option value="Aswan">Aswan University</option>
+                                    <option value="Damanhour">Damanhour University</option>
+                                    <option value="Damietta">Damietta University</option>
+                                    <option value="Suez">Suez University</option>
+                                    <option value="Sadat City">University of Sadat City</option>
+                                    <option value="Arish">Arish University</option>
+                                    <option value="New Valley">New Valley University</option>
+                                    <option value="Matrouh">Matrouh University</option>
+                                    <option value="Luxor">Luxor University</option>
+                                    <option value="Al-Azhar">Al-Azhar University</option>
+                                    <option value="E-JUST">Egypt-Japan University (E-JUST)</option>
+                                    <option value="Zewail City">Zewail City of Science & Tech</option>
+                                    <option value="AUC">The American University in Cairo (AUC)</option>
+                                    <option value="GUC">German University in Cairo (GUC)</option>
+                                    <option value="BUE">The British University in Egypt (BUE)</option>
+                                    <option value="MUST">Misr University for Science & Tech (MUST)</option>
+                                    <option value="MSA">MSA University</option>
+                                    <option value="MIU">Misr International University (MIU)</option>
+                                    <option value="Other">Other University / Institute</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">المحافظة</label>
+                                <label class="block text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">Governorate</label>
                                 <select id="team-set-gov" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none appearance-none text-sm">
-                                    <option value="" disabled selected>اختر المحافظة</option>
-                                    <option value="Cairo">القاهرة</option>
-                                    <option value="Giza">الجيزة</option>
-                                    <option value="Alexandria">الإسكندرية</option>
-                                    <option value="Dakahlia">الدقهلية</option>
-                                    <option value="Sharqia">الشرقية</option>
-                                    <option value="Monufia">المنوفية</option>
-                                    <option value="Qalyubia">القليوبية</option>
-                                    <option value="Beheira">البحيرة</option>
-                                    <option value="Gharbia">الغربية</option>
-                                    <option value="Damietta">دمياط</option>
-                                    <option value="Kafr El Sheikh">كفر الشيخ</option>
-                                    <option value="Port Said">بورسعيد</option>
-                                    <option value="Ismailia">الإسماعيلية</option>
-                                    <option value="Suez">السويس</option>
-                                    <option value="Minya">المنيا</option>
-                                    <option value="Beni Suef">بني سويف</option>
-                                    <option value="Fayoum">الفيوم</option>
-                                    <option value="Assiut">أسيوط</option>
-                                    <option value="Sohag">سوهاج</option>
-                                    <option value="Qena">قنا</option>
-                                    <option value="Luxor">الأقصر</option>
-                                    <option value="Aswan">أسوان</option>
-                                    <option value="Red Sea">البحر الأحمر</option>
-                                    <option value="New Valley">الوادي الجديد</option>
-                                    <option value="Matrouh">مطروح</option>
-                                    <option value="North Sinai">شمال سيناء</option>
-                                    <option value="South Sinai">جنوب سيناء</option>
+                                    <option value="" disabled selected>Select Governorate</option>
+                                    <option value="Cairo">Cairo</option>
+                                    <option value="Giza">Giza</option>
+                                    <option value="Alexandria">Alexandria</option>
+                                    <option value="Dakahlia">Dakahlia</option>
+                                    <option value="Sharqia">Sharqia</option>
+                                    <option value="Monufia">Monufia</option>
+                                    <option value="Qalyubia">Qalyubia</option>
+                                    <option value="Beheira">Beheira</option>
+                                    <option value="Gharbia">Gharbia</option>
+                                    <option value="Damietta">Damietta</option>
+                                    <option value="Kafr El Sheikh">Kafr El Sheikh</option>
+                                    <option value="Port Said">Port Said</option>
+                                    <option value="Ismailia">Ismailia</option>
+                                    <option value="Suez">Suez</option>
+                                    <option value="Minya">Minya</option>
+                                    <option value="Beni Suef">Beni Suef</option>
+                                    <option value="Fayoum">Fayoum</option>
+                                    <option value="Assiut">Assiut</option>
+                                    <option value="Sohag">Sohag</option>
+                                    <option value="Qena">Qena</option>
+                                    <option value="Luxor">Luxor</option>
+                                    <option value="Aswan">Aswan</option>
+                                    <option value="Red Sea">Red Sea</option>
+                                    <option value="New Valley">New Valley</option>
+                                    <option value="Matrouh">Matrouh</option>
+                                    <option value="North Sinai">North Sinai</option>
+                                    <option value="South Sinai">South Sinai</option>
                                 </select>
                             </div>
                         </div>
@@ -1409,10 +1388,10 @@
 
             <div class="p-6 bg-black/40 border-t border-white/5 flex justify-end gap-3">
                 <button type="button" onclick="document.getElementById('team-settings-modal').classList.add('hidden')" class="px-6 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold text-sm">
-                    إلغاء
+                    Cancel
                 </button>
                 <button type="submit" form="team-settings-form" id="btn-save-team" class="px-8 py-3 bg-white text-black hover:bg-gray-200 font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all flex items-center gap-2 text-sm transform hover:scale-105">
-                    <i class="fas fa-save"></i> حفظ التعديلات
+                    <i class="fas fa-save"></i> Save Changes
                 </button>
             </div>
         </div>
@@ -1420,13 +1399,13 @@
 
     <div id="leave-team-modal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-b-surface w-full max-w-md p-6 rounded-2xl border border-red-500/50">
-            <h3 class="font-bold text-red-500 mb-2">تأكيد مغادرة الفريق</h3>
-            <p class="text-sm text-gray-400 mb-4">يجب تعيين قائد جديد قبل المغادرة.</p>
-            <label class="text-xs text-gray-500 mb-1 block">اختر القائد الجديد:</label>
+            <h3 class="font-bold text-red-500 mb-2">Confirm Leaving Team</h3>
+            <p class="text-sm text-gray-400 mb-4">You must assign a new team leader before leaving.</p>
+            <label class="text-xs text-gray-500 mb-1 block">Select New Leader:</label>
             <select id="new-leader-select" class="w-full bg-black/50 border border-white/20 rounded p-3 text-white mb-6"></select>
             <div class="flex gap-2">
-                <button onclick="confirmLeaveTeam()" class="bg-red-600 text-white px-4 py-2 rounded flex-1 hover:bg-red-700">تأكيد ومغادرة</button>
-                <button onclick="closeModal('leave-team-modal')" class="bg-white/10 text-white px-4 py-2 rounded hover:bg-white/20">إلغاء</button>
+                <button onclick="confirmLeaveTeam()" class="bg-red-600 text-white px-4 py-2 rounded flex-1 hover:bg-red-700">Confirm & Leave</button>
+                <button onclick="closeModal('leave-team-modal')" class="bg-white/10 text-white px-4 py-2 rounded hover:bg-white/20">Cancel</button>
             </div>
         </div>
     </div>
@@ -1437,14 +1416,14 @@
                 <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-trash-alt text-2xl text-red-500"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white mb-2">تأكيد الحذف</h3>
-                <p id="confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.</p>
+                <h3 class="text-xl font-bold text-white mb-2">Confirm Deletion</h3>
+                <p id="confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Are you sure you want to delete this item? This action cannot be undone.</p>
                 <div class="flex gap-3">
                     <button id="btn-confirm-yes" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-bold transition-colors shadow-lg shadow-red-900/20">
-                        نعم، احذف
+                        Yes, Delete
                     </button>
                     <button onclick="closeConfirmModal()" class="flex-1 bg-white/5 hover:bg-white/10 text-white py-2.5 rounded-xl font-bold border border-white/10 transition-colors">
-                        إلغاء
+                        Cancel
                     </button>
                 </div>
             </div>
@@ -1457,14 +1436,14 @@
                 <div class="w-16 h-16 bg-b-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-b-primary/20">
                     <i class="fas fa-question text-2xl text-b-primary"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white mb-2">تأكيد الإجراء</h3>
-                <p id="general-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">هل أنت متأكد من تنفيذ هذا الإجراء؟</p>
+                <h3 class="text-xl font-bold text-white mb-2">Confirm Action</h3>
+                <p id="general-confirm-msg" class="text-gray-400 text-sm mb-6 leading-relaxed">Are you sure you want to proceed with this action?</p>
                 <div class="flex gap-3">
                     <button id="btn-general-yes" class="flex-1 bg-gradient-to-r from-b-primary to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-b-primary/20">
-                        نعم، متأكد
+                        Yes, Confirm
                     </button>
                     <button onclick="closeGeneralModal()" class="flex-1 bg-white/5 hover:bg-white/10 text-white py-2.5 rounded-xl font-bold border border-white/10 transition-colors">
-                        إلغاء
+                        Cancel
                     </button>
                 </div>
             </div>
@@ -1495,19 +1474,19 @@
 
     <div id="badge-details-modal" class="fixed inset-0 z-[200] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-b-surface border border-white/10 rounded-3xl w-full max-w-md p-8 relative shadow-2xl text-center transform transition-all scale-100">
-            <button onclick="window.closeBadgeDetailsModal()" class="absolute top-4 left-4 w-8 h-8 bg-white/5 hover:bg-white/10 rounded-full flex items-center justify-center text-gray-400 transition-colors">
+            <button onclick="window.closeBadgeDetailsModal()" class="absolute top-4 right-4 w-8 h-8 bg-white/5 hover:bg-white/10 rounded-full flex items-center justify-center text-gray-400 transition-colors">
                 <i class="fas fa-times"></i>
             </button>
             <div id="bd-status-badge"></div>
             <div class="mb-6 mt-4"><i id="bd-icon" class="fas fa-star text-6xl"></i></div>
-            <h3 id="bd-title" class="text-3xl font-black mb-1">اسم الرتبة</h3>
-            <p id="bd-stage" class="text-sm font-bold uppercase tracking-widest mb-4">المرحلة</p>
+            <h3 id="bd-title" class="text-3xl font-black mb-1">Rank Title</h3>
+            <p id="bd-stage" class="text-sm font-bold uppercase tracking-widest mb-4">Stage</p>
             <div class="flex justify-center gap-3 mb-6">
                 <span id="bd-xp" class="bg-black border border-white/10 px-3 py-1 rounded-lg text-xs font-mono text-gray-300">0 XP</span>
-                <span id="bd-rarity" class="bg-black border border-white/10 px-3 py-1 rounded-lg text-xs font-bold text-yellow-500">مستوى الندرة</span>
+                <span id="bd-rarity" class="bg-black border border-white/10 px-3 py-1 rounded-lg text-xs font-bold text-yellow-500">Rarity</span>
             </div>
-            <p id="bd-desc" class="text-gray-300 mb-6 text-sm leading-relaxed">وصف الرتبة يظهر هنا.</p>
-            <p id="bd-lore" class="text-sm text-gray-400 italic bg-black/30 p-4 rounded-xl border border-white/5 border-r-2">قصة الرتبة تظهر هنا.</p>
+            <p id="bd-desc" class="text-gray-300 mb-6 text-sm leading-relaxed">Rank description appears here.</p>
+            <p id="bd-lore" class="text-sm text-gray-400 italic bg-black/30 p-4 rounded-xl border border-white/5 border-l-2">Rank lore appears here.</p>
         </div>
     </div>
 
@@ -1515,30 +1494,30 @@
         <div class="relative max-w-lg w-full text-center">
             <div id="ru-glow" class="absolute inset-0 rounded-full blur-[100px] opacity-50"></div>
             <div class="relative z-10 bg-b-surface/80 border border-white/20 rounded-3xl p-10 shadow-2xl backdrop-blur-xl">
-                <h2 class="text-2xl font-bold text-gray-400 tracking-widest uppercase mb-6">ترقية جديدة!</h2>
+                <h2 class="text-2xl font-bold text-gray-400 tracking-widest uppercase mb-6">New Promotion!</h2>
                 <div class="mb-6"><i id="ru-icon" class="fas fa-star text-7xl"></i></div>
-                <h1 id="ru-title" class="text-5xl font-black text-white mb-2">رتبة جديدة</h1>
-                <p id="ru-stage" class="text-sm font-bold tracking-widest uppercase mb-8">المرحلة</p>
-                <p id="ru-desc" class="text-gray-300 italic mb-8 border-t border-white/10 pt-6">نص القصة يظهر هنا.</p>
+                <h1 id="ru-title" class="text-5xl font-black text-white mb-2">New Rank</h1>
+                <p id="ru-stage" class="text-sm font-bold tracking-widest uppercase mb-8">Stage</p>
+                <p id="ru-desc" class="text-gray-300 italic mb-8 border-t border-white/10 pt-6">Rank lore appears here.</p>
                 <button onclick="window.closeRankUpModal()" class="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-bold transition-all uppercase tracking-wider">
-                    متابعة الرحلة
+                    Continue Journey
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="toast-container" class="fixed bottom-6 left-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
-    <footer class="fixed bottom-2.5 end-10 z-20 pointer-events-none select-none flex items-center gap-2 text-xs md:text-sm text-gray-500/80">
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+    <footer class="fixed bottom-2.5 right-10 z-20 pointer-events-none select-none flex items-center gap-2 text-xs md:text-sm text-gray-500/80">
         <div class="flex items-center gap-2">
-            <img src="../assets/icons/BUSLA-icon.png" class="w-5 h-5 rounded-full opacity-50 grayscale hover:grayscale-0 transition-all">
-            <span class="font-bold text-gray-400">BUSLA LMS &copy; 2026</span>
+            <img src="../assets/icons/zdc-icon-192.png" class="w-5 h-5 rounded-full opacity-60 grayscale hover:grayscale-0 transition-all">
+            <span class="font-bold text-gray-400">ZDC LMS &copy; 2026</span>
             <span class="hidden md:inline opacity-60">|</span>
-            <span class="hidden md:inline">منصة إدارة الفرق التعليمية</span>
+            <span class="hidden md:inline">Zagazig Digital Community</span>
         </div>
     </footer>
-    <script type="module" src="../js/student-dash.js?v=2.6"></script>
-    <script type="module" src="../js/omni-search.js"></script>
-    <script type="module" src="../js/pwa-handler.js"></script>
+    <script type="module" src="../js/student-dash.js?v=3.0"></script>
+    <script type="module" src="../js/omni-search.js?v=3.0"></script>
+    <script type="module" src="../js/pwa-handler.js?v=3.0"></script>
     <script>
     function toggleMainSiteDropdown(e) {
         if (e) e.stopPropagation();
@@ -1566,13 +1545,14 @@
     function closeSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('mobile-overlay');
-        if (sidebar) sidebar.classList.add('translate-x-full');
+        if (sidebar) sidebar.classList.add('-translate-x-full');
         if (overlay) overlay.classList.add('hidden');
     }
     window.closeSidebar = closeSidebar;
 
     function initSidebarState() {
-        const isCollapsed = localStorage.getItem('busla_sidebar_collapsed') === 'true';
+        const stored = localStorage.getItem('zdc_sidebar_collapsed') ?? localStorage.getItem('busla_sidebar_collapsed');
+        const isCollapsed = stored === 'true';
         const sidebar = document.getElementById('sidebar');
         if (sidebar && window.innerWidth >= 768 && isCollapsed) {
             sidebar.classList.add('sidebar-collapsed');
@@ -1585,11 +1565,11 @@
         if (!sidebar) return;
         
         if (window.innerWidth < 768) {
-            sidebar.classList.toggle('translate-x-full');
+            sidebar.classList.toggle('-translate-x-full');
             if (overlay) overlay.classList.toggle('hidden');
         } else {
             const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
-            localStorage.setItem('busla_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            localStorage.setItem('zdc_sidebar_collapsed', isCollapsed ? 'true' : 'false');
             window.dispatchEvent(new Event('resize'));
             if (typeof window.fitRoadmapToScreen === 'function') {
                 setTimeout(() => window.fitRoadmapToScreen(), 320);
@@ -1598,7 +1578,6 @@
     }
     window.toggleSidebar = toggleSidebar;
 
-    // Keyboard shortcut (Ctrl + B / Cmd + B)
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
             const tag = document.activeElement?.tagName;
@@ -1611,10 +1590,8 @@
 
     initSidebarState();
 
-    // Auto-close sidebar when any menu item or link is tapped on mobile
     document.getElementById('sidebar')?.addEventListener('click', (e) => {
         if (window.innerWidth < 768) {
-            // Do not close sidebar when toggling nested accordions or dropdowns
             if (e.target.closest('[data-prevent-sidebar-close="true"]') || e.target.closest('#sidebar-main-site-toggle')) {
                 return;
             }
@@ -1626,18 +1603,15 @@
     });
 
     function switchTab(id) {
-        // Auto-close sidebar on mobile if open
         if (window.innerWidth < 768) {
             closeSidebar();
         }
 
-        // Save active tab state
-        localStorage.setItem('busla_student_active_tab', id);
+        localStorage.setItem('zdc_student_active_tab', id);
         if (window.location.hash !== '#' + id) {
             try { history.replaceState(null, '', '#' + id); } catch(e) {}
         }
 
-        // 1. Visual Tab Switching
         document.querySelectorAll('.tab-content').forEach(el => {
             el.classList.add('hidden');
             el.classList.remove('active');
@@ -1649,7 +1623,6 @@
             target.classList.add('active');
         }
 
-        // 2. Update Sidebar Navigation Buttons State
         document.querySelectorAll('.nav-btn').forEach(b => {
             b.classList.remove('bg-b-primary/10', 'text-b-primary', 'font-bold');
             b.classList.add('text-gray-400');
@@ -1661,7 +1634,6 @@
             activeBtn.classList.remove('text-gray-400');
         }
 
-        // 3. Module Trigger Functions
         if (id === 'overview' && typeof window.renderOverview === 'function') {
             window.renderOverview();
         }
@@ -1693,18 +1665,17 @@
     }
     window.switchTab = switchTab;
 
-        // Global Modal Control Functions
-        window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
-        window.closeTaskDetailsModal = () => document.getElementById('task-details-modal')?.classList.add('hidden');
+    window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
+    window.closeTaskDetailsModal = () => document.getElementById('task-details-modal')?.classList.add('hidden');
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                window.closeTaskDetailsModal();
-                if (window.closeWeekModal) window.closeWeekModal();
-                window.closeModal('unified-task-modal');
-                window.closeModal('broadcast-modal');
-            }
-        });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            window.closeTaskDetailsModal();
+            if (window.closeWeekModal) window.closeWeekModal();
+            window.closeModal('unified-task-modal');
+            window.closeModal('broadcast-modal');
+        }
+    });
     </script>
 </body>
 </html>

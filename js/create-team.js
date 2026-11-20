@@ -32,7 +32,7 @@ async function checkAuthAndLoadState() {
     if (!request) {
         showFormView();
     } else {
-        // 💡 جلب اسم المسار من جدول التراكات باستخدام الـ ID المخزن
+        // Fetch track name from tracks table using stored ID
         let displayTrackName = request.specialization;
         if (request.specialization) {
             const { data: trackData } = await supabase
@@ -45,7 +45,7 @@ async function checkAuthAndLoadState() {
                 displayTrackName = trackData.name;
             }
         }
-        // حفظ الاسم في الكائن لاستخدامه في العرض
+        // Store display name on request object
         request.display_specialization = displayTrackName;
 
         const submittedDate = new Date(request.submitted_at);
@@ -67,17 +67,16 @@ async function checkAuthAndLoadState() {
     }
 }
 
-async function showFormView(requestData = null) { // 💡 جعل الدالة async
+async function showFormView(requestData = null) {
     document.getElementById('status-view').classList.add('hidden');
     document.getElementById('form-view').classList.remove('hidden');
     
-    await loadAvailableTracks(); // 💡 ننتظر تحميل التراكات أولاً
+    await loadAvailableTracks();
 
     if (requestData) {
         isEditMode = true;
         document.getElementById('req-name').value = requestData.team_name || '';
         
-        // 💡 استخدام team-track بدلاً من req-specialization القديم
         const trackSelect = document.getElementById('team-track');
         if (trackSelect) {
             trackSelect.value = requestData.track_id || requestData.specialization || '';
@@ -92,7 +91,7 @@ async function showFormView(requestData = null) { // 💡 جعل الدالة as
         document.getElementById('req-gpa').value = gpaRaw.replace('%', '').trim();
         
         document.getElementById('req-reason').value = requestData.reason || '';
-        document.getElementById('btn-submit-req').innerText = "تحديث بيانات الطلب";
+        document.getElementById('btn-submit-req').innerText = "Update Application";
     } else {
         isEditMode = false;
     }
@@ -107,13 +106,12 @@ function showStatusView(request, daysLeft) {
     document.getElementById('sv-uni').innerText = request.university;
     document.getElementById('sv-gov').innerText = request.governorate;
     
-    // 💡 عرض الاسم الفعلي للتراك بدلاً من الـ ID
     document.getElementById('sv-spec').innerText = request.display_specialization || request.specialization;
     
-    document.getElementById('sv-size').innerText = `${request.expected_size} أفراد`;
+    document.getElementById('sv-size').innerText = `${request.expected_size} members`;
     document.getElementById('sv-gpa').innerText = request.leader_gpa; 
 
-    document.getElementById('status-countdown').innerText = `${daysLeft} يوم`;
+    document.getElementById('status-countdown').innerText = `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}`;
 
     const badgeContainer = document.getElementById('status-badge-container');
     const headerBg = document.getElementById('status-header-bg');
@@ -121,21 +119,21 @@ function showStatusView(request, daysLeft) {
     const actionBtns = document.getElementById('action-buttons-container');
 
     if (request.status === 'pending') {
-        badgeContainer.innerHTML = '<span class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-hourglass-half mr-1"></i> قيد المراجعة من الإدارة</span>';
+        badgeContainer.innerHTML = '<span class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-hourglass-half mr-1"></i> Under Admin Review</span>';
         headerBg.style.background = 'linear-gradient(to right, #eab308, transparent)';
         rejectionAlert.classList.add('hidden');
         actionBtns.classList.remove('hidden');
     } 
     else if (request.status === 'rejected') {
-        badgeContainer.innerHTML = '<span class="bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-times-circle mr-1"></i> تم رفض الطلب</span>';
+        badgeContainer.innerHTML = '<span class="bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-times-circle mr-1"></i> Application Rejected</span>';
         headerBg.style.background = 'linear-gradient(to right, #ef4444, transparent)';
         
         rejectionAlert.classList.remove('hidden');
-        document.getElementById('rejection-reason-text').innerText = request.rejection_reason || 'لم يتم كتابة سبب محدد.';
+        document.getElementById('rejection-reason-text').innerText = request.rejection_reason || 'No specific reason provided.';
         actionBtns.classList.add('hidden');
     }
     else if (request.status === 'cancelled') {
-        badgeContainer.innerHTML = '<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-ban mr-1"></i> قمت بإلغاء الطلب</span>';
+        badgeContainer.innerHTML = '<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-3 py-1 rounded-lg text-xs font-bold"><i class="fas fa-ban mr-1"></i> Application Cancelled</span>';
         headerBg.style.background = 'linear-gradient(to right, #6b7280, transparent)';
         rejectionAlert.classList.add('hidden');
         actionBtns.classList.add('hidden'); 
@@ -163,13 +161,13 @@ async function handleFormSubmit(e) {
 
     const btn = document.getElementById('btn-submit-req');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
     btn.disabled = true;
 
     const gpaVal = document.getElementById('req-gpa').value.trim();
     const formattedGpa = gpaVal + '%';
 
-    // 💡 جلب القيمة من السلكتور الجديد
+    // Get value from track selector
     const selectedTrack = document.getElementById('team-track')?.value || '';
 
 const requestData = {
@@ -191,18 +189,18 @@ const requestData = {
         if (isEditMode && currentRequestId) {
             const { error } = await supabase.from('team_requests').update(requestData).eq('id', currentRequestId);
             if (error) throw error;
-            showToast("تم تحديث الطلب بنجاح", "success");
+            showToast("Application updated successfully", "success");
         } else {
             const { error } = await supabase.from('team_requests').insert([requestData]);
             if (error) throw error;
-            showToast("تم إرسال الطلب للإدارة بنجاح", "success");
+            showToast("Application submitted to Admin successfully", "success");
         }
 
         setTimeout(() => location.reload(), 1500);
 
     } catch (error) {
         console.error(error);
-        showToast("حدث خطأ أثناء الإرسال", "error");
+        showToast("Error submitting application", "error");
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
@@ -236,20 +234,19 @@ window.editRequest = async () => {
 };
 
 window.cancelRequest = () => {
-    // 💡 استخدام النافذة المخصصة بدلاً من confirm() الخاصة بالمتصفح
     window.showCustomConfirm(
-        "إلغاء الطلب الحالي",
-        "هل أنت متأكد من إلغاء الطلب؟ لن تتمكن من التقديم لفريق جديد حتى مرور 30 يوم من تاريخ هذا الطلب.",
+        "Cancel Current Application",
+        "Are you sure you want to cancel your application? You won't be able to submit a new squad request for 30 days from this submission date.",
         async () => {
             try {
                 const { error } = await supabase.from('team_requests').update({ status: 'cancelled' }).eq('id', currentRequestId);
                 if (error) throw error;
                 
-                window.showToast("تم إلغاء الطلب بنجاح", "info");
+                window.showToast("Application cancelled successfully", "info");
                 setTimeout(() => location.reload(), 1500);
             } catch (error) {
                 console.error(error);
-                window.showToast("حدث خطأ أثناء الإلغاء", "error");
+                window.showToast("Error cancelling application", "error");
             }
         }
     );
@@ -259,7 +256,7 @@ window.showToast = (msg, type = 'info') => {
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.className = 'fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none';
+        container.className = 'fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none';
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
@@ -275,13 +272,13 @@ window.showToast = (msg, type = 'info') => {
 };
 
 // =========================================================
-// 💡 جلب المسارات المتاحة لتأسيس الفريق
+// Fetch available tracks for squad creation
 // =========================================================
 async function loadAvailableTracks() {
     const trackSelect = document.getElementById('team-track');
     if (!trackSelect) return;
 
-    trackSelect.innerHTML = '<option value="" disabled selected>جاري تحميل المسارات...</option>';
+    trackSelect.innerHTML = '<option value="" disabled selected>Loading tracks...</option>';
 
     try {
         const { data: tracks, error } = await supabase
@@ -293,31 +290,30 @@ async function loadAvailableTracks() {
         if (error) throw error;
 
         if (tracks && tracks.length > 0) {
-            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار التخصصي للفريق --</option>';
+            trackSelect.innerHTML = '<option value="" disabled selected>-- Select Squad Engineering Track --</option>';
             tracks.forEach(track => {
                 const option = document.createElement('option');
-                option.value = track.id; // سيتم حفظ ID المسار في بيانات الفريق
+                option.value = track.id;
                 option.textContent = track.name;
                 trackSelect.appendChild(option);
             });
         } else {
-            trackSelect.innerHTML = '<option value="" disabled selected>لا توجد مسارات متاحة حالياً</option>';
+            trackSelect.innerHTML = '<option value="" disabled selected>No tracks currently available</option>';
         }
     } catch (err) {
         console.error("Error loading tracks:", err);
-        trackSelect.innerHTML = '<option value="" disabled selected>خطأ في تحميل المسارات</option>';
+        trackSelect.innerHTML = '<option value="" disabled selected>Error loading tracks</option>';
     }
 }
 
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
             if (idMatch && idMatch[1]) {
-                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
                 return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
         }

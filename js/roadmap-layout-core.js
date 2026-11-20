@@ -1,7 +1,7 @@
 /**
  * Pure, deterministic, vertically symmetrical hierarchical tree layout &
- * smooth Cubic Bezier SVG edge-routing engine for Busla's Interactive
- * Curriculum Roadmap ("شجرة المنهج").
+ * smooth Cubic Bezier SVG edge-routing engine for ZDC's Interactive
+ * Curriculum Roadmap.
  *
  * Zero DOM dependencies — runs identically in browser ESM and node:test.
  *

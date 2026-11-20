@@ -23,12 +23,24 @@ import {
     openQuickAttachmentsModal,
     renderMigrationBanner,
 } from './content-links-ui.js';
+import {
+    normalizeQuestionCount,
+    normalizeBoundedInt,
+    resolveVideoUrl,
+    resolveDocumentUrl,
+    buildQuizPrompt,
+    buildProjectPrompt,
+    buildInitialQuizTargets,
+    parseProjectLinks,
+    serializeProjectLinks,
+} from '../../js/quiz-prompt-core.js';
 
 // ==========================================
 // 🧠 STATE MANAGEMENT & CONFIGURATION
 // ==========================================
 let cmCurrentLevel = 'tracks'; 
 let cmCurrentEditId = null; 
+let cmIsEditMode = false;
 let rawData = [];
 let filteredData = [];
 let curriculumTree = [];
@@ -131,10 +143,10 @@ async function fetchHierarchyData() {
         supabase.from('tracks').select('id, name').order('created_at'),
         supabase.from('phases').select('phase_id, title, track_id'),
         supabase.from('courses').select('course_id, title, phase_id'),
-        supabase.from('course_materials').select('content_id, title, course_id, type, ref_quiz_id, ref_project_id'),
+        supabase.from('course_materials').select('content_id, title, course_id, type, video_id, order_index, ref_quiz_id, ref_project_id'),
         supabase.from('quizzes').select('quiz_id, title, max_xp'),
         supabase.from('projects').select('id, title, max_points'),
-        supabase.from('curriculum_documents').select('id, title, document_type, track_id, phase_id, course_id, lesson_id, order_index'),
+        supabase.from('curriculum_documents').select('id, title, document_type, source_type, source_url, track_id, phase_id, course_id, lesson_id, order_index'),
         fetchAllCurriculumLinks(supabase)
     ]);
     const mergedLinks = mergeCurriculumLinks({
@@ -157,60 +169,138 @@ async function fetchHierarchyData() {
     };
     return hierarchyCache;
 }
+window.cmToggleAdvancedFilters = (forceState = null) => {
+    const wrapper = document.getElementById('advanced-filters-wrapper');
+    const chevron = document.getElementById('cm-adv-filter-chevron');
+    const btn = document.getElementById('btn-toggle-advanced-filters');
+    if (!wrapper) return;
+    const shouldShow = typeof forceState === 'boolean' ? forceState : wrapper.classList.contains('hidden');
+    wrapper.classList.toggle('hidden', !shouldShow);
+    if (chevron) chevron.style.transform = shouldShow ? 'rotate(180deg)' : 'rotate(0deg)';
+    if (btn) {
+        btn.classList.toggle('bg-b-primary/15', shouldShow);
+        btn.classList.toggle('border-b-primary/40', shouldShow);
+        btn.classList.toggle('text-white', shouldShow);
+    }
+};
+
 async function buildDynamicFilters() {
     const container = document.getElementById('cm-dynamic-filters-container');
     if (!container) return;
 
     const hData = await fetchHierarchyData();
     
-    // بناء واجهة الفلاتر (الحقول + القوائم المنسدلة)
-    let selectsHtml = '';
-    const inputClasses = "w-full bg-black/60 border border-white/10 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner placeholder-gray-600";
-    
-    // إظهار قوائم الفلترة حسب المستوى الحالي
-    if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
-        selectsHtml += `<select id="filter-track" class="${inputClasses}"><option value="all">🌍 كل المسارات (Tracks)</option>${hData.tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>`;
-    }
-    if (['courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
-        selectsHtml += `<select id="filter-phase" class="${inputClasses}"><option value="all">📚 كل المراحل (Phases)</option>${hData.phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('')}</select>`;
-    }
-    if (['course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
-        selectsHtml += `<select id="filter-course" class="${inputClasses}"><option value="all">🎥 كل الكورسات (Courses)</option>${hData.courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('')}</select>`;
-    }
-    if (['quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
-        selectsHtml += `<select id="filter-content" class="${inputClasses}"><option value="all">🎬 كل المحتويات (Contents)</option>${hData.contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('')}</select>`;
-    }
-    if (['quiz_questions'].includes(cmCurrentLevel)) {
-        selectsHtml += `<select id="filter-quiz" class="${inputClasses}"><option value="all">📝 كل الاختبارات (Quizzes)</option>${hData.quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('')}</select>`;
-    }
-
-    // فلتر مخصص لأنواع الكورسات والمحتوى
-    let typeFilter = '';
-    if (cmCurrentLevel === 'courses') typeFilter = `<select id="filter-type" class="${inputClasses}"><option value="all">كل الأنواع</option><option value="youtube">يوتيوب</option><option value="custom">مخصص</option></select>`;
-    if (cmCurrentLevel === 'course_materials') typeFilter = `<select id="filter-type" class="${inputClasses}"><option value="all">كل الأنواع</option><option value="video">فيديو</option><option value="section">سكشن</option><option value="quiz">اختبار</option><option value="project">مشروع</option><option value="resource">مورد</option></select>`;
-
-    container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-            <div class="relative"><i class="fas fa-heading absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i><input type="text" id="filter-search-name" placeholder="بحث بالاسم أو العنوان..." class="${inputClasses} pr-8"></div>
-            <div class="relative"><i class="fas fa-align-left absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i><input type="text" id="filter-search-desc" placeholder="بحث بالوصف..." class="${inputClasses} pr-8"></div>
-            <div class="relative"><i class="fas fa-hashtag absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i><input type="text" id="filter-search-id" placeholder="بحث بالـ ID..." class="${inputClasses} pr-8 font-mono"></div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            ${selectsHtml}
-            ${typeFilter}
+    const selectClasses = "w-full bg-black/70 border border-white/10 hover:border-white/20 rounded-xl px-2.5 py-2 text-xs sm:text-sm text-white focus:border-b-primary outline-none transition-colors shadow-inner cursor-pointer truncate";
+    const fieldWrap = (id, label, iconClass, iconColor, optionsHtml) => `
+        <div class="flex flex-col gap-1 min-w-0">
+            <label for="${id}" class="text-[10px] sm:text-[11px] font-bold text-gray-300 flex items-center gap-1.5 px-0.5 truncate">
+                <i class="${iconClass} ${iconColor} text-[10px] shrink-0"></i>
+                <span class="truncate">${label}</span>
+            </label>
+            <select id="${id}" data-no-custom-select="true" class="${selectClasses}">
+                ${optionsHtml}
+            </select>
         </div>
     `;
 
-    // تفعيل التحديث التلقائي الهرمي (Cascading)
-    document.getElementById('filter-track')?.addEventListener('change', (e) => updateCascadingFilters('track', e.target.value, hData));
-    document.getElementById('filter-phase')?.addEventListener('change', (e) => updateCascadingFilters('phase', e.target.value, hData));
-    document.getElementById('filter-course')?.addEventListener('change', (e) => updateCascadingFilters('course', e.target.value, hData));
-    document.getElementById('filter-content')?.addEventListener('change', (e) => updateCascadingFilters('content', e.target.value, hData));
+    let fields = [];
+    
+    // إظهار قوائم الفلترة الهرمية مع عناوين واضحة حسب المستوى الحالي
+    if (['phases', 'courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
+        fields.push(fieldWrap(
+            'filter-track',
+            'المسار (Track)',
+            'fas fa-globe',
+            'text-teal-400',
+            `<option value="all">كل المسارات (${hData.tracks.length})</option>` + hData.tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
+        ));
+    }
+    if (['courses', 'course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
+        fields.push(fieldWrap(
+            'filter-phase',
+            'المرحلة (Phase)',
+            'fas fa-layer-group',
+            'text-blue-400',
+            `<option value="all">كل المراحل (${hData.phases.length})</option>` + hData.phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('')
+        ));
+    }
+    if (['course_materials', 'quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
+        fields.push(fieldWrap(
+            'filter-course',
+            'الكورس (Course)',
+            'fas fa-graduation-cap',
+            'text-emerald-400',
+            `<option value="all">كل الكورسات (${hData.courses.length})</option>` + hData.courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('')
+        ));
+    }
+    if (['quizzes', 'quiz_questions', 'projects', 'curriculum_documents'].includes(cmCurrentLevel)) {
+        fields.push(fieldWrap(
+            'filter-content',
+            'الدرس / المحتوى (Content)',
+            'fas fa-play-circle',
+            'text-purple-400',
+            `<option value="all">كل المحتويات (${hData.contents.length})</option>` + hData.contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('')
+        ));
+    }
+    if (['quiz_questions'].includes(cmCurrentLevel)) {
+        fields.push(fieldWrap(
+            'filter-quiz',
+            'الاختبار (Quiz)',
+            'fas fa-question-circle',
+            'text-yellow-400',
+            `<option value="all">كل الاختبارات (${hData.quizzes.length})</option>` + hData.quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('')
+        ));
+    }
 
-    // ربط الأحداث لتطبيق الفلاتر
-    ['filter-search-name', 'filter-search-desc', 'filter-search-id', 'filter-status', 'filter-track', 'filter-phase', 'filter-course', 'filter-content', 'filter-quiz', 'filter-type', 'filter-date-from', 'filter-date-to'].forEach(id => {
+    // فلتر مخصص لأنواع الكورسات والمحتوى والمستندات
+    if (cmCurrentLevel === 'courses') {
+        fields.push(fieldWrap(
+            'filter-type',
+            'نوع الكورس (Type)',
+            'fas fa-tag',
+            'text-red-400',
+            `<option value="all">كل الأنواع</option><option value="youtube">يوتيوب (YouTube)</option><option value="custom">مخصص (Custom)</option>`
+        ));
+    } else if (cmCurrentLevel === 'course_materials') {
+        fields.push(fieldWrap(
+            'filter-type',
+            'نوع المحتوى (Type)',
+            'fas fa-tag',
+            'text-amber-400',
+            `<option value="all">كل الأنواع</option><option value="video">درس فيديو (Video)</option><option value="section">فاصل سكشن (Section)</option><option value="quiz">اختبار (Quiz)</option><option value="project">مشروع (Project)</option><option value="resource">مورد (Resource)</option>`
+        ));
+    }
+
+    if (fields.length > 0) {
+        container.innerHTML = `
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                ${fields.join('')}
+            </div>
+        `;
+        container.classList.remove('hidden');
+    } else {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+    }
+
+    // تفعيل التحديث التلقائي الهرمي (Cascading)
+    const trackEl = document.getElementById('filter-track');
+    const phaseEl = document.getElementById('filter-phase');
+    const courseEl = document.getElementById('filter-course');
+    const contentEl = document.getElementById('filter-content');
+
+    if (trackEl) trackEl.onchange = (e) => updateCascadingFilters('track', e.target.value, hData);
+    if (phaseEl) phaseEl.onchange = (e) => updateCascadingFilters('phase', e.target.value, hData);
+    if (courseEl) courseEl.onchange = (e) => updateCascadingFilters('course', e.target.value, hData);
+    if (contentEl) contentEl.onchange = (e) => updateCascadingFilters('content', e.target.value, hData);
+
+    // ربط الأحداث لتطبيق الفلاتر بدون تكرار المستمعات
+    ['filter-search-name', 'filter-search-desc', 'filter-search-id', 'filter-status', 'filter-quiz', 'filter-type', 'filter-date-from', 'filter-date-to'].forEach(id => {
         const el = document.getElementById(id);
-        if(el) { el.addEventListener('input', applyFilters); el.addEventListener('change', applyFilters); }
+        if (el) {
+            el.oninput = applyFilters;
+            el.onchange = applyFilters;
+        }
     });
 }
 
@@ -218,54 +308,186 @@ async function buildDynamicFilters() {
 function updateCascadingFilters(level, value, hData) {
     if (level === 'track') {
         const phaseSelect = document.getElementById('filter-phase');
-        if(phaseSelect) {
+        if (phaseSelect) {
             const phases = value === 'all' ? hData.phases : hData.phases.filter(p => String(p.track_id) === String(value));
-            phaseSelect.innerHTML = `<option value="all">📚 كل المراحل (Phases)</option>` + phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
-            phaseSelect.value = 'all'; // Reset child
-            updateCascadingFilters('phase', 'all', hData); // Cascade down
+            phaseSelect.innerHTML = `<option value="all">كل المراحل (${phases.length})</option>` + phases.map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
+            phaseSelect.value = 'all';
+            updateCascadingFilters('phase', 'all', hData);
+            return;
         }
     } else if (level === 'phase') {
         const courseSelect = document.getElementById('filter-course');
-        if(courseSelect) {
-            const courses = value === 'all' ? hData.courses : hData.courses.filter(c => String(c.phase_id) === String(value));
-            courseSelect.innerHTML = `<option value="all">🎥 كل الكورسات (Courses)</option>` + courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
-            courseSelect.value = 'all'; 
+        if (courseSelect) {
+            const trackVal = document.getElementById('filter-track')?.value || 'all';
+            let courses = hData.courses;
+            if (value !== 'all') {
+                courses = hData.courses.filter(c => String(c.phase_id) === String(value));
+            } else if (trackVal !== 'all') {
+                const validPhaseIds = new Set(hData.phases.filter(p => String(p.track_id) === String(trackVal)).map(p => String(p.phase_id)));
+                courses = hData.courses.filter(c => validPhaseIds.has(String(c.phase_id)));
+            }
+            courseSelect.innerHTML = `<option value="all">كل الكورسات (${courses.length})</option>` + courses.map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
+            courseSelect.value = 'all';
             updateCascadingFilters('course', 'all', hData);
+            return;
         }
     } else if (level === 'course') {
         const contentSelect = document.getElementById('filter-content');
-        if(contentSelect) {
+        if (contentSelect) {
             const contents = value === 'all' ? hData.contents : hData.contents.filter(c => String(c.course_id) === String(value));
-            contentSelect.innerHTML = `<option value="all">🎬 كل المحتويات (Contents)</option>` + contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('');
+            contentSelect.innerHTML = `<option value="all">كل المحتويات (${contents.length})</option>` + contents.map(c => `<option value="${c.content_id}">${c.title}</option>`).join('');
             contentSelect.value = 'all';
             updateCascadingFilters('content', 'all', hData);
+            return;
         }
     } else if (level === 'content') {
         const quizSelect = document.getElementById('filter-quiz');
-        if(quizSelect) {
-            // إذا اخترنا محتوى محدد، نظهر كل الاختبارات المرتبطة به
+        if (quizSelect) {
             let quizzes = hData.quizzes;
             if (value !== 'all') {
                 const att = getAttachmentsForTarget(hData.links || [], 'content', value);
                 quizzes = hData.quizzes.filter(q => att.quizzes.includes(String(q.quiz_id)));
             }
-            quizSelect.innerHTML = `<option value="all">📝 كل الاختبارات (Quizzes)</option>` + quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('');
+            quizSelect.innerHTML = `<option value="all">كل الاختبارات (${quizzes.length})</option>` + quizzes.map(q => `<option value="${q.quiz_id}">${q.title}</option>`).join('');
             quizSelect.value = 'all';
         }
     }
     applyFilters();
 }
 
-window.cmResetFilters = (reload = true) => {
-    ['filter-search-name', 'filter-search-desc', 'filter-search-id', 'filter-date-from', 'filter-date-to'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
-    ['filter-status', 'filter-track', 'filter-phase', 'filter-course', 'filter-content', 'filter-quiz', 'filter-type'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = 'all'; });
-    
-    // إعادة بناء القوائم المنسدلة للوضع الأصلي
-    if(hierarchyCache) updateCascadingFilters('track', 'all', hierarchyCache);
-    if(reload) {
+window.cmRemoveSingleFilter = (filterId) => {
+    const el = document.getElementById(filterId);
+    if (!el) return;
+    if (['filter-search-name', 'filter-search-desc', 'filter-search-id', 'filter-date-from', 'filter-date-to'].includes(filterId)) {
+        el.value = '';
+        applyFilters();
+    } else if (filterId === 'filter-track' && hierarchyCache) {
+        el.value = 'all';
+        updateCascadingFilters('track', 'all', hierarchyCache);
+    } else if (filterId === 'filter-phase' && hierarchyCache) {
+        el.value = 'all';
+        updateCascadingFilters('phase', 'all', hierarchyCache);
+    } else if (filterId === 'filter-course' && hierarchyCache) {
+        el.value = 'all';
+        updateCascadingFilters('course', 'all', hierarchyCache);
+    } else if (filterId === 'filter-content' && hierarchyCache) {
+        el.value = 'all';
+        updateCascadingFilters('content', 'all', hierarchyCache);
+    } else {
+        el.value = 'all';
         applyFilters();
     }
 };
+
+window.cmResetFilters = (reload = true) => {
+    ['filter-search-name', 'filter-search-desc', 'filter-search-id', 'filter-date-from', 'filter-date-to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    ['filter-status', 'filter-track', 'filter-phase', 'filter-course', 'filter-content', 'filter-quiz', 'filter-type'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 'all';
+    });
+    
+    // إعادة بناء القوائم المنسدلة للوضع الأصلي
+    if (hierarchyCache) updateCascadingFilters('track', 'all', hierarchyCache);
+    if (reload) {
+        applyFilters();
+    }
+};
+
+function updateActiveFiltersUI() {
+    const chipsBar = document.getElementById('cm-active-filters-bar');
+    const countBadge = document.getElementById('cm-active-filters-count');
+    const quickResetBtn = document.getElementById('btn-quick-reset-filters');
+    const clearSearchBtn = document.getElementById('btn-clear-search-name');
+    const resultsCountEl = document.getElementById('cm-results-count');
+
+    const searchNameVal = document.getElementById('filter-search-name')?.value.trim() || '';
+    if (clearSearchBtn) {
+        clearSearchBtn.classList.toggle('hidden', !searchNameVal);
+        clearSearchBtn.classList.toggle('flex', Boolean(searchNameVal));
+    }
+
+    const activeChips = [];
+
+    const addSelectChip = (id, label, colorClasses) => {
+        const select = document.getElementById(id);
+        if (!select || !select.value || select.value === 'all') return;
+        const selectedText = select.options[select.selectedIndex]?.text || select.value;
+        activeChips.push({ id, label, valueText: selectedText, colorClasses });
+    };
+
+    const addTextChip = (id, label, colorClasses) => {
+        const input = document.getElementById(id);
+        const val = input?.value.trim();
+        if (!val) return;
+        activeChips.push({ id, label, valueText: val, colorClasses });
+    };
+
+    addTextChip('filter-search-name', 'البحث', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
+    addSelectChip('filter-track', 'المسار', 'bg-teal-500/15 border-teal-500/30 text-teal-300');
+    addSelectChip('filter-phase', 'المرحلة', 'bg-blue-500/15 border-blue-500/30 text-blue-300');
+    addSelectChip('filter-course', 'الكورس', 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300');
+    addSelectChip('filter-content', 'المحتوى', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
+    addSelectChip('filter-quiz', 'الاختبار', 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300');
+    addSelectChip('filter-type', 'النوع', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+    addSelectChip('filter-status', 'الحالة', 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300');
+    addTextChip('filter-search-id', 'ID', 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300');
+    addTextChip('filter-search-desc', 'الوصف', 'bg-purple-500/15 border-purple-500/30 text-purple-300');
+    addTextChip('filter-date-from', 'من', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+    addTextChip('filter-date-to', 'إلى', 'bg-amber-500/15 border-amber-500/30 text-amber-300');
+
+    // عدد الفلاتر المتقدمة المفعلة (بدون حقل البحث السريع الظاهر دائماً)
+    const advCount = activeChips.filter(c => c.id !== 'filter-search-name').length;
+
+    if (countBadge) {
+        countBadge.innerText = String(advCount);
+        countBadge.classList.toggle('hidden', advCount === 0);
+        countBadge.classList.toggle('inline-flex', advCount > 0);
+    }
+
+    if (quickResetBtn) {
+        quickResetBtn.classList.toggle('hidden', activeChips.length === 0);
+        quickResetBtn.classList.toggle('flex', activeChips.length > 0);
+    }
+
+    if (chipsBar) {
+        if (activeChips.length === 0) {
+            chipsBar.innerHTML = '';
+            chipsBar.classList.add('hidden');
+            chipsBar.classList.remove('flex');
+        } else {
+            chipsBar.classList.remove('hidden');
+            chipsBar.classList.add('flex');
+            chipsBar.innerHTML = `
+                <span class="text-[10px] font-bold text-gray-400 ml-1 flex items-center gap-1 shrink-0">
+                    <i class="fas fa-filter text-b-primary text-[9px]"></i> فلاتر مفعلة:
+                </span>
+                ${activeChips.map(chip => {
+                    const safeVal = String(chip.valueText).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `
+                        <button type="button" onclick="window.cmRemoveSingleFilter('${chip.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 max-w-[240px] cursor-pointer group ${chip.colorClasses}" title="إزالة فلتر ${chip.label}">
+                            <span class="opacity-75 shrink-0">${chip.label}:</span>
+                            <span class="truncate" dir="auto">${safeVal}</span>
+                            <i class="fas fa-times text-[9px] opacity-70 group-hover:opacity-100 shrink-0"></i>
+                        </button>
+                    `;
+                }).join('')}
+            `;
+        }
+    }
+
+    if (resultsCountEl) {
+        const total = Array.isArray(rawData) ? rawData.length : 0;
+        const shown = Array.isArray(filteredData) ? filteredData.length : 0;
+        if (activeChips.length > 0) {
+            resultsCountEl.innerHTML = `<i class="fas fa-filter text-b-primary text-[10px]"></i><span>عرض <strong class="text-white font-mono">${shown}</strong> من <span class="font-mono text-gray-400">${total}</span></span>`;
+        } else {
+            resultsCountEl.innerHTML = `<i class="fas fa-layer-group text-b-primary text-[10px]"></i><span>الإجمالي: <strong class="text-white font-mono">${total}</strong></span>`;
+        }
+    }
+}
 
 function applyFilters() {
     const searchName = document.getElementById('filter-search-name')?.value.toLowerCase() || '';
@@ -292,7 +514,7 @@ function applyFilters() {
         const itemDesc = String(item.description || '').toLowerCase();
         const itemId = String(item[pk] || '').toLowerCase();
 
-        if (searchName && !itemName.includes(searchName)) return false;
+        if (searchName && !itemName.includes(searchName) && !itemId.includes(searchName)) return false;
         if (searchDesc && !itemDesc.includes(searchDesc)) return false;
         if (searchId && !itemId.includes(searchId)) return false;
 
@@ -365,6 +587,7 @@ function applyFilters() {
 
         return true;
     });
+    updateActiveFiltersUI();
     renderTable(); 
 }
 
@@ -810,47 +1033,48 @@ function renderTable() {
             </tr>
         `;
 
-        // Mobile Card (Sleek, Responsive, Touch-Friendly)
+        // Mobile Card (Compact, High-Density, Touch-Friendly)
         const mobileCardHtml = `
-            <div class="bg-b-surface border border-white/10 rounded-2xl p-3.5 shadow-lg flex flex-col gap-3 transition-all hover:border-b-primary/40 relative group">
-                <!-- Top Row: Icon + Title + Index & Status Badge -->
-                <div class="flex items-start justify-between gap-2.5">
-                    <div class="flex items-start gap-2.5 min-w-0 flex-1">
-                        <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-b-primary text-sm mt-0.5">
+            <div class="bg-b-surface border border-white/10 rounded-xl p-2.5 sm:p-3.5 shadow-md flex flex-col gap-2 transition-all hover:border-b-primary/40 relative group">
+                <!-- Top Row: Icon + Title + Index & Status -->
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-start gap-2 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-b-primary text-xs mt-0.5">
                             <i class="fas ${icon}"></i>
                         </div>
                         <div class="flex flex-col min-w-0 flex-1">
-                            <span class="font-bold text-white text-xs sm:text-sm leading-snug break-words" dir="auto">${title}</span>
-                            <span class="text-[10px] font-mono text-gray-500 mt-1 flex items-center gap-1">
-                                <span class="text-gray-600 font-bold">ID:</span>
-                                <span class="text-gray-400 select-all bg-black/40 px-1.5 py-0.5 rounded border border-white/5 truncate max-w-[140px]">${id}</span>
-                            </span>
+                            <span class="font-bold text-white text-[13px] leading-snug break-words" dir="auto">${title}</span>
+                            <div class="text-[10px] font-mono text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span class="text-gray-500 font-bold">#${index + 1}</span>
+                                <span class="text-white/15">•</span>
+                                <span class="text-gray-400 select-all truncate max-w-[165px]" title="${id}">${id || 'بدون معرف'}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex flex-col items-end gap-1 shrink-0">
-                        <span class="text-[10px] font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">#${index + 1}</span>
+                    <div class="shrink-0 flex flex-col items-end gap-1">
                         ${statusHtml}
                     </div>
                 </div>
 
-                <!-- Metadata Badges Strip -->
+                <!-- Metadata Strip -->
                 ${mobileMetaHtml}
 
-                <!-- Quick Action Bar -->
-                <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1 flex-wrap">
-                    <div class="text-[10px] text-gray-500 font-bold">الإجراءات:</div>
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <button onclick="window.cmShowInfo('${id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1" title="عرض التفاصيل">
-                            <i class="fas fa-info-circle text-[11px]"></i> <span>تفاصيل</span>
+                <!-- Compact Single-Row Action Bar -->
+                <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1 flex-wrap min-w-0">
+                        <button onclick="window.cmShowInfo('${id}')" class="px-2 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer" title="عرض التفاصيل">
+                            <i class="fas fa-info-circle text-[10px]"></i> <span>تفاصيل</span>
                         </button>
                         ${mobileAttachBtn}
                         ${mobileDrillDownBtn}
                         ${mobileReorderBtn}
                         ${mobilePreviewBtn}
-                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs" title="تعديل">
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        ${canEditItem ? `<button onclick="window.cmEditItem('${id}')" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="تعديل">
                             <i class="fas fa-pen text-[11px]"></i>
                         </button>` : ''}
-                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs" title="حذف">
+                        ${canDeleteItem ? `<button onclick="window.cmDeleteItem('${id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center text-xs cursor-pointer" title="حذف">
                             <i class="fas fa-trash text-[11px]"></i>
                         </button>` : ''}
                     </div>
@@ -1158,12 +1382,27 @@ window.cmShowInfo = (id) => {
 
     let html = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 dir-ltr text-left">';
     for (const [key, value] of Object.entries(item)) {
-        if(typeof value === 'object' && value !== null && !Array.isArray(value)) continue; 
-        
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) continue;
+
         let displayValue = value;
-        if(value === null || value === '') displayValue = '<span class="text-gray-600">Null/Empty</span>';
-        else if (typeof value === 'boolean') displayValue = value ? '<span class="text-green-400">True</span>' : '<span class="text-red-400">False</span>';
-        else if (Array.isArray(value)) displayValue = value.join(', ');
+        if (key === 'requirements_url' && value) {
+            const parsedLinks = parseProjectLinks(value);
+            if (parsedLinks.length > 0) {
+                displayValue = `<div class="flex flex-col gap-1.5 mt-1">${parsedLinks.map((lnk, idx) => `
+                    <a href="${escapeHtml(lnk.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs text-emerald-300 hover:text-emerald-200 underline underline-offset-2 break-all">
+                        <i class="fas fa-external-link-alt text-[10px] shrink-0"></i>
+                        <span>${escapeHtml(lnk.title || `رابط ${idx + 1}`)} — ${escapeHtml(lnk.url)}</span>
+                    </a>`).join('')}</div>`;
+            } else {
+                displayValue = '<span class="text-gray-600">Null/Empty</span>';
+            }
+        } else if (value === null || value === '') {
+            displayValue = '<span class="text-gray-600">Null/Empty</span>';
+        } else if (typeof value === 'boolean') {
+            displayValue = value ? '<span class="text-green-400">True</span>' : '<span class="text-red-400">False</span>';
+        } else if (Array.isArray(value)) {
+            displayValue = value.join(', ');
+        }
 
         html += `
             <div class="bg-black/50 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
@@ -1213,13 +1452,18 @@ window.cmOpenModal = async () => {
         return;
     }
     cmCurrentEditId = null;
+    cmIsEditMode = false;
     document.getElementById('cm-modal-title').innerText = `إضافة سجل جديد`;
     await generateFormFields(null);
     document.getElementById('cm-crud-modal').classList.remove('hidden');
     if (window.initSearchableSelects) window.initSearchableSelects();
 };
 
-window.cmCloseModal = () => document.getElementById('cm-crud-modal').classList.add('hidden');
+window.cmCloseModal = () => {
+    cmCurrentEditId = null;
+    cmIsEditMode = false;
+    document.getElementById('cm-crud-modal').classList.add('hidden');
+};
 
 async function generateFormFields(data = null) {
     const container = document.getElementById('cm-form-fields');
@@ -1592,26 +1836,93 @@ async function generateFormFields(data = null) {
                 </div>
             `;
         } else {
+            const existingLinks = parseProjectLinks(data?.requirements_url);
+            const initialLinks = existingLinks.length > 0 ? existingLinks : [{ title: '', url: '' }];
+            let existingRubric = [];
+            try {
+                if (data?.rubric_json) {
+                    const parsedR = typeof data.rubric_json === 'string' ? JSON.parse(data.rubric_json) : data.rubric_json;
+                    existingRubric = Array.isArray(parsedR) ? parsedR : (Array.isArray(parsedR?.criteria) ? parsedR.criteria : []);
+                }
+            } catch (_) {}
+
+            const linkRowHtml = (lnk = { title: '', url: '' }) => `
+                <div class="cm-proj-link-row flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-black/40 border border-white/10 rounded-xl p-2">
+                    <input type="text" value="${escapeHtml(lnk.title || '')}" placeholder="اسم الرابط (مثال: مستودع GitHub أو ملف المواصفات)" class="cm-proj-link-title sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+                    <input type="url" value="${escapeHtml(lnk.url || '')}" placeholder="https://github.com/... أو رابط Google Drive" class="cm-proj-link-url flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-cyan-300 font-mono placeholder-gray-500 outline-none dir-ltr text-left">
+                    <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="حذف الرابط"><i class="fas fa-trash text-[11px]"></i></button>
+                </div>
+            `;
+
+            const rubricRowHtml = (crit = { aspect: '', description: '', points: 25 }) => `
+                <div class="cm-proj-rubric-row bg-black/40 border border-white/10 rounded-xl p-2.5 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                    <input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" placeholder="المعيار (مثال: صحة التصميم)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+                    <input type="text" value="${escapeHtml(crit.description || '')}" placeholder="وصف المعيار (اختياري)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <input type="number" min="0" value="${crit.points ?? 0}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="نقاط المعيار">
+                        <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-[11px]"></i></button>
+                    </div>
+                </div>
+            `;
+
+            const rubricSum = existingRubric.reduce((s, r) => s + (parseInt(r.points) || 0), 0);
+            const curMaxPts = data?.max_points || 100;
+
             coreFields = `
                 <div class="md:col-span-3">
                     <label class="${labelStyle}">عنوان المشروع *</label>
-                    <input type="text" id="f-title" required value="${data?.title || ''}" placeholder="مثال: مشروع تصميم معالج RISC-V مبسط" class="${inputStyle}">
+                    <input type="text" id="f-title" required value="${escapeHtml(data?.title || '')}" placeholder="مثال: مشروع تصميم معالج RISC-V مبسط" class="${inputStyle}">
                 </div>
                 <div class="md:col-span-3">
                     <label class="${labelStyle}">الوصف والمتطلبات الفنية *</label>
-                    <textarea id="f-desc" rows="4" required placeholder="المتطلبات التقنية ومعايير التقييم وطريقة العمل..." class="${inputStyle}">${data?.description || ''}</textarea>
+                    <textarea id="f-desc" rows="4" required placeholder="المتطلبات التقنية ومعايير التقييم وطريقة العمل..." class="${inputStyle}">${escapeHtml(data?.description || '')}</textarea>
                 </div>
-                <div class="md:col-span-2">
-                    <label class="${labelStyle}">رابط المستندات أو ملفات البدء (اختياري)</label>
-                    <input type="text" id="f-req-url" value="${data?.requirements_url || ''}" placeholder="https://github.com/... أو Google Drive" class="${inputStyle} dir-ltr">
+
+                <!-- Multi-Links Editor -->
+                <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> روابط المستندات وملفات البدء (يمكن إضافة أكثر من رابط)</label>
+                            <p class="text-[11px] text-gray-500 mt-0.5">أضف رابط GitHub أو Google Drive أو دليل المواصفات أو أي مراجع مساعدة للطالب</p>
+                        </div>
+                        <button type="button" onclick="window.cmAddProjectLinkRow()" class="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة رابط</span>
+                        </button>
+                    </div>
+                    <div id="cm-project-links-list" class="space-y-2">
+                        ${initialLinks.map(l => linkRowHtml(l)).join('')}
+                    </div>
                 </div>
+
+                <!-- XP & Submission Method -->
                 <div>
                     <label class="${labelStyle} text-yellow-400 font-bold"><i class="fas fa-star text-xs ml-1"></i> النقاط المكتسبة (XP)</label>
-                    <input type="number" id="f-max-pts" value="${data?.max_points || 100}" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
+                    <input type="number" id="f-max-pts" value="${curMaxPts}" oninput="window.cmUpdateManualRubricSum()" class="${inputStyle} border-yellow-500/30 text-yellow-400 font-bold">
                 </div>
-                <div class="md:col-span-3">
+                <div class="md:col-span-2 space-y-1.5">
                     <label class="${labelStyle}">طريقة التسليم المقبولة</label>
-                    <input type="text" id="f-method" value="${data?.submission_method || 'github_link'}" placeholder="مثال: github_link أو zip_file أو pull_request" class="${inputStyle} dir-ltr">
+                    <input type="text" id="f-method" value="${escapeHtml(data?.submission_method || 'github_link')}" placeholder="مثال: github_link أو drive_link أو zip_file" class="${inputStyle} dir-ltr text-left">
+                    <div class="flex flex-wrap gap-1.5 pt-0.5">
+                        ${['github_link', 'drive_link', 'zip_file', 'pull_request', 'live_url', 'video_demo'].map(m => `
+                            <button type="button" onclick="document.getElementById('f-method').value='${m}'" class="px-2 py-0.5 rounded-md bg-white/5 hover:bg-emerald-500/20 text-[10px] font-mono text-gray-400 hover:text-emerald-300 border border-white/10 transition-colors cursor-pointer">${m}</button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Optional Rubric Criteria Editor -->
+                <div class="md:col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <label class="text-xs font-bold text-emerald-400 flex items-center gap-1.5"><i class="fas fa-list-check"></i> معايير التقييم (Rubric - اختياري)</label>
+                            <span id="cm-manual-rubric-sum" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${rubricSum === curMaxPts && existingRubric.length > 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 border border-white/10'}">مجموع المعايير: ${rubricSum} / ${curMaxPts}</span>
+                        </div>
+                        <button type="button" onclick="window.cmAddManualRubricRow()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة معيار</span>
+                        </button>
+                    </div>
+                    <div id="cm-project-rubric-list" class="space-y-2">
+                        ${existingRubric.length > 0 ? existingRubric.map(r => rubricRowHtml(r)).join('') : '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم مضافة بعد — اضغط "إضافة معيار" لتوزيع درجات المشروع.</div>'}
+                    </div>
                 </div>
             `;
         }
@@ -1843,55 +2154,72 @@ async function generateFormFields(data = null) {
     }
 }
 
-// 💡 دالة الفلترة المتسلسلة الديناميكية داخل المودال
+// 💡 دالة الفلترة المتسلسلة الديناميكية داخل المودال (مقصورة حصراً على عناصر <select> لمنع مسح حقول المعرفات مثل f-course-id و f-phase-id)
 function bindModalCascading(hData) {
-    const tSel = document.getElementById('modal-filter-track') || document.getElementById('f-track-id');
-    const pSel = document.getElementById('modal-filter-phase') || document.getElementById('f-phase-id');
-    const cSel = document.getElementById('modal-filter-course') || document.getElementById('f-course-id') || document.getElementById('f-related');
-    const cntSel = document.getElementById('modal-filter-content') || document.getElementById('f-link-content') || document.getElementById('f-lesson-id');
-    const qSel = document.getElementById('f-quiz-id');
+    const getSelectEl = (...ids) => {
+        for (const id of ids) {
+            const el = document.getElementById(id);
+            if (el && el.tagName === 'SELECT') return el;
+        }
+        return null;
+    };
 
-    if(tSel) tSel.addEventListener('change', (e) => {
+    const tSel = getSelectEl('modal-filter-track', 'f-track-id');
+    const pSel = getSelectEl('modal-filter-phase', 'f-phase-id');
+    const cSel = getSelectEl('modal-filter-course', 'f-course-id', 'f-related');
+    const cntSel = getSelectEl('modal-filter-content', 'f-link-content', 'f-lesson-id');
+    const qSel = getSelectEl('f-quiz-id');
+
+    if (tSel) tSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-track';
-        const optDefault = pSel && pSel.id === 'f-phase-id' 
-            ? '<option value="">-- اختر المرحلة --</option>' 
-            : (isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>');
-        if(pSel) {
-            pSel.innerHTML = optDefault + hData.phases.filter(x => x.phase_id && (!v || String(x.track_id) === String(v))).map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
-            pSel.value = "";
+        if (pSel) {
+            const prevPhase = pSel.value;
+            const optDefault = pSel.id === 'f-phase-id' 
+                ? '<option value="">-- اختر المرحلة --</option>' 
+                : (isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>');
+            const filteredPhases = hData.phases.filter(x => x.phase_id && (!v || String(x.track_id) === String(v)));
+            pSel.innerHTML = optDefault + filteredPhases.map(x => `<option value="${x.phase_id}">${x.title}</option>`).join('');
+            const keepPrev = prevPhase && filteredPhases.some(x => String(x.phase_id) === String(prevPhase));
+            pSel.value = keepPrev ? prevPhase : "";
             pSel.dispatchEvent(new Event('change'));
         }
     });
 
-    if(pSel) pSel.addEventListener('change', (e) => {
+    if (pSel) pSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-phase';
-        const optDefault = cSel && cSel.id === 'f-course-id'
-            ? '<option value="">-- اختر الكورس --</option>'
-            : (isFilter ? '<option value="">-- الكل --</option>' : (cSel && cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>'));
-        if(cSel) {
-            cSel.innerHTML = optDefault + hData.courses.filter(x => x.course_id && (!v || String(x.phase_id) === String(v))).map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
-            cSel.value = "";
+        if (cSel) {
+            const prevCourse = cSel.value;
+            const optDefault = cSel.id === 'f-course-id'
+                ? '<option value="">-- اختر الكورس --</option>'
+                : (isFilter ? '<option value="">-- الكل --</option>' : (cSel.id === 'f-related' ? '<option value="">بدون ارتباط</option>' : '<option value="">-- بدون ارتباط --</option>'));
+            const filteredCourses = hData.courses.filter(x => x.course_id && (!v || String(x.phase_id) === String(v)));
+            cSel.innerHTML = optDefault + filteredCourses.map(x => `<option value="${x.course_id}">${x.title}</option>`).join('');
+            const keepPrev = prevCourse && filteredCourses.some(x => String(x.course_id) === String(prevCourse));
+            cSel.value = keepPrev ? prevCourse : "";
             cSel.dispatchEvent(new Event('change'));
         }
     });
 
-    if(cSel) cSel.addEventListener('change', (e) => {
+    if (cSel) cSel.addEventListener('change', (e) => {
         const v = e.target.value;
         const isFilter = e.target.id === 'modal-filter-course' || cSel.id === 'f-related';
         const optDefault = isFilter ? '<option value="">-- الكل --</option>' : '<option value="">-- بدون ارتباط --</option>';
-        if(cntSel) {
-            cntSel.innerHTML = optDefault + hData.contents.filter(x => !v || String(x.course_id) === String(v)).map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
-            cntSel.value = "";
+        if (cntSel) {
+            const prevCnt = cntSel.value;
+            const filteredContents = hData.contents.filter(x => !v || String(x.course_id) === String(v));
+            cntSel.innerHTML = optDefault + filteredContents.map(x => `<option value="${x.content_id}">${x.title}</option>`).join('');
+            const keepPrev = prevCnt && filteredContents.some(x => String(x.content_id) === String(prevCnt));
+            cntSel.value = keepPrev ? prevCnt : "";
             cntSel.dispatchEvent(new Event('change'));
         }
     });
 
-    if(cntSel) cntSel.addEventListener('change', (e) => {
+    if (cntSel) cntSel.addEventListener('change', (e) => {
         const v = e.target.value;
-        if(qSel) qSel.innerHTML = '<option value="">-- اختر الاختبار --</option>' + hData.quizzes.filter(x => {
-            if(!v) return true;
+        if (qSel) qSel.innerHTML = '<option value="">-- اختر الاختبار --</option>' + hData.quizzes.filter(x => {
+            if (!v) return true;
             const att = getAttachmentsForTarget(hData.links || [], 'content', v);
             return att.quizzes.includes(String(x.quiz_id));
         }).map(x => `<option value="${x.quiz_id}">${x.title}</option>`).join('');
@@ -1952,7 +2280,26 @@ async function handleFormSubmit(e) {
         }
         else if (cmCurrentLevel === 'quiz_questions') { payload = { quiz_id: document.getElementById('f-quiz-id').value, question_text: document.getElementById('f-q-text').value, option_a: document.getElementById('f-opt-a').value, option_b: document.getElementById('f-opt-b').value, option_c: document.getElementById('f-opt-c').value, option_d: document.getElementById('f-opt-d').value, correct_answer: document.getElementById('f-correct').value, hint: document.getElementById('f-hint').value }; }
         else if (cmCurrentLevel === 'projects') {
-            payload = { title: document.getElementById('f-title').value, description: document.getElementById('f-desc').value, requirements_url: document.getElementById('f-req-url').value, max_points: parseInt(document.getElementById('f-max-pts').value) || 100, submission_method: document.getElementById('f-method').value };
+            const linkRows = Array.from(document.querySelectorAll('#cm-project-links-list .cm-proj-link-row')).map(row => ({
+                title: row.querySelector('.cm-proj-link-title')?.value?.trim() || '',
+                url: row.querySelector('.cm-proj-link-url')?.value?.trim() || ''
+            }));
+            const serializedLinks = serializeProjectLinks(linkRows);
+            const manualRubric = Array.from(document.querySelectorAll('#cm-project-rubric-list .cm-proj-rubric-row'))
+                .map(row => ({
+                    aspect: row.querySelector('.cm-proj-r-aspect')?.value?.trim() || '',
+                    description: row.querySelector('.cm-proj-r-desc')?.value?.trim() || '',
+                    points: parseInt(row.querySelector('.cm-proj-r-points')?.value, 10) || 0
+                }))
+                .filter(r => r.aspect || r.description || r.points > 0);
+            payload = {
+                title: document.getElementById('f-title').value,
+                description: document.getElementById('f-desc').value,
+                requirements_url: serializedLinks,
+                max_points: parseInt(document.getElementById('f-max-pts').value) || 100,
+                submission_method: document.getElementById('f-method').value || 'github_link',
+                rubric_json: manualRubric.length > 0 ? { criteria: manualRubric } : null
+            };
             pendingItemTargets = getItemTargetsValue(document.getElementById('cm-item-targets-slot'));
         }
         else if (cmCurrentLevel === 'curriculum_documents') {
@@ -1987,12 +2334,74 @@ async function handleFormSubmit(e) {
 
         let insertedId = cmCurrentEditId;
 
-        const isEditing = cmCurrentEditId !== null && cmCurrentEditId !== undefined && cmCurrentEditId !== '';
+        const isEditing = cmIsEditMode === true;
+
+        // ضمان عدم إدخال أو تحديث مفتاح أساسي فارغ أبداً للمراحل والكورسات والمحتويات
+        const pkPrefixes = { phases: 'ph', courses: 'cr', course_materials: 'cnt' };
+        const hasManualPk = Boolean(pkPrefixes[cmCurrentLevel]);
 
         if (isEditing) {
-            const { error } = await supabase.from(cmCurrentLevel).update(payload).eq(pk, cmCurrentEditId);
-            if (error) throw error;
+            const isLegacyEmptyPk = String(cmCurrentEditId ?? '').trim() === '';
+            if (isLegacyEmptyPk && hasManualPk) {
+                // إصلاح آمن متوافق مع قيود المفاتيح الأجنبية (Clone -> Repoint -> Delete) لسجل قديم بمعرف فارغ
+                const repairedId = (payload[pk] && String(payload[pk]).trim()) || generateSystemID(pkPrefixes[cmCurrentLevel]);
+                payload[pk] = repairedId;
+
+                // 1. محاولة إنشاء النسخة السليمة بالمعرف الجديد أولاً
+                const { data: clonedRows, error: cloneErr } = await supabase
+                    .from(cmCurrentLevel)
+                    .insert([payload])
+                    .select();
+                if (cloneErr) throw cloneErr;
+                if (!clonedRows || clonedRows.length === 0) {
+                    throw new Error('تعذر إنشاء السجل المصحح — تأكد من صلاحيات الإضافة (RLS).');
+                }
+
+                // 2. نقل كافة الجداول التابعة من المعرف الفارغ القديم إلى المعرف الجديد
+                try {
+                    if (cmCurrentLevel === 'courses') {
+                        await supabase.from('course_materials').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId);
+                        await supabase.from('enrollments').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId);
+                        await supabase.from('completed_materials').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId);
+                        await supabase.from('team_tasks').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId);
+                        await supabase.from('courses').update({ related_with: repairedId }).eq('related_with', cmCurrentEditId);
+                        try { await supabase.from('curriculum_documents').update({ course_id: repairedId }).eq('course_id', cmCurrentEditId); } catch (_) {}
+                    } else if (cmCurrentLevel === 'phases') {
+                        await supabase.from('courses').update({ phase_id: repairedId }).eq('phase_id', cmCurrentEditId);
+                        try { await supabase.from('curriculum_documents').update({ phase_id: repairedId }).eq('phase_id', cmCurrentEditId); } catch (_) {}
+                    } else if (cmCurrentLevel === 'course_materials') {
+                        await supabase.from('completed_materials').update({ material_id: repairedId }).eq('material_id', cmCurrentEditId);
+                        await supabase.from('team_tasks').update({ content_id: repairedId }).eq('content_id', cmCurrentEditId);
+                        try { await supabase.from('curriculum_documents').update({ lesson_id: repairedId }).eq('lesson_id', cmCurrentEditId); } catch (_) {}
+                    }
+                    // 3. حذف السجل القديم الفارغ بعد نقل كل الارتباطات
+                    await supabase.from(cmCurrentLevel).delete().eq(pk, cmCurrentEditId);
+                } catch (repointErr) {
+                    // التراجع عن النسخة الجديدة إن فشل النقل
+                    await supabase.from(cmCurrentLevel).delete().eq(pk, repairedId);
+                    throw repointErr;
+                }
+                insertedId = repairedId;
+            } else {
+                // في التعديل العادي: لا نسمح أبداً بتغيير أو مسح المفتاح الأساسي (Primary Key)
+                if (hasManualPk && Object.prototype.hasOwnProperty.call(payload, pk)) {
+                    delete payload[pk];
+                }
+                const { data: updatedRows, error } = await supabase
+                    .from(cmCurrentLevel)
+                    .update(payload)
+                    .eq(pk, cmCurrentEditId)
+                    .select();
+                if (error) throw error;
+                if (!updatedRows || updatedRows.length === 0) {
+                    throw new Error('لم يتم تعديل أي سجل في قاعدة البيانات (تأكد من صلاحيات التعديل RLS أو صحة معرف السجل).');
+                }
+                insertedId = updatedRows[0]?.[pk] ?? cmCurrentEditId;
+            }
         } else {
+            if (hasManualPk && (!payload[pk] || !String(payload[pk]).trim())) {
+                payload[pk] = generateSystemID(pkPrefixes[cmCurrentLevel]);
+            }
             const { data: inserted, error } = await supabase.from(cmCurrentLevel).insert([payload]).select();
             if (error) throw error;
             if (inserted && inserted.length > 0) insertedId = inserted[0][pk];
@@ -2013,7 +2422,7 @@ async function handleFormSubmit(e) {
         if (migrationWarn) {
             window.showToast("تم حفظ السجل، لكن لحفظ الروابط المتعددة يرجى تشغيل ملف docs/create_curriculum_links.sql في Supabase أولاً.", "warning");
         } else {
-            window.showToast(cmCurrentEditId ? "تم التحديث وحفظ جميع الروابط بنجاح!" : "تمت الإضافة وحفظ جميع الروابط بنجاح!", "success");
+            window.showToast(isEditing ? "تم التحديث وحفظ جميع الروابط بنجاح!" : "تمت الإضافة وحفظ جميع الروابط بنجاح!", "success");
         }
         window.cmCloseModal();
         hierarchyCache = null; // تفريغ الذاكرة لضمان تحديث القوائم في الإضافات القادمة
@@ -2028,13 +2437,17 @@ async function handleFormSubmit(e) {
 }
 
 window.cmEditItem = async (id) => {
-    const item = rawData.find(r => String(r[getPrimaryKey()]) === String(id));
-    if (!item) return;
+    const item = rawData.find(r => String(r[getPrimaryKey()] ?? '') === String(id ?? ''));
+    if (!item) {
+        window.showToast?.('لم يتم العثور على السجل المطلوب تعديله.', 'error');
+        return;
+    }
     if (!getCmPermission('edit', cmCurrentLevel, item)) {
         window.showToast?.('ليس لديك صلاحية لتعديل هذا السجل.', 'error');
         return;
     }
-    cmCurrentEditId = id;
+    cmIsEditMode = true;
+    cmCurrentEditId = item[getPrimaryKey()];
     document.getElementById('cm-modal-title').innerText = `تعديل السجل`;
     document.getElementById('cm-crud-modal').classList.remove('hidden');
     await generateFormFields(item);
@@ -2232,12 +2645,22 @@ function showCustomDeleteModal(level, itemName) {
     });
 }
 
-// Helpers for cascading deletes
-
-// Helpers for cascading deletes
+// Helpers for cascading deletes (مع التحقق الفعلي من حذف الصف من قاعدة البيانات ومنع الكذب عند فشل RLS أو المعرف الفارغ)
+async function assertDeletedRow(tableName, pkColumn, idValue, entityLabel) {
+    const { data: deletedRows, error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq(pkColumn, idValue)
+        .select(pkColumn);
+    if (error) throw error;
+    if (!deletedRows || deletedRows.length === 0) {
+        throw new Error(`لم يتم حذف ${entityLabel} من قاعدة البيانات — يرجى التحقق من سياسات الصلاحيات (RLS Policy) في Supabase للجدول "${tableName}" أو من وجود السجل.`);
+    }
+    return deletedRows;
+}
 
 async function deleteQuizCascade(quizId) {
-    if (!quizId) return;
+    if (quizId === undefined || quizId === null) return;
     // 1. attempts
     const { error: errAttempts } = await supabase.from('quiz_attempts').delete().eq('quiz_id', quizId);
     if (errAttempts) console.warn("Could not delete quiz_attempts:", errAttempts);
@@ -2251,82 +2674,78 @@ async function deleteQuizCascade(quizId) {
     if (errQuestions) throw errQuestions;
 
     // 4. remove references in course_materials & curriculum_links
-    await deleteLinksForItem(supabase, 'quiz', quizId);
+    if (String(quizId).trim() !== '') await deleteLinksForItem(supabase, 'quiz', quizId);
     const { error: errMat } = await supabase.from('course_materials').update({ ref_quiz_id: null }).eq('ref_quiz_id', quizId);
     if (errMat) console.warn("Could not unlink ref_quiz_id from course_materials:", errMat);
 
-    // 5. delete quiz
-    const { error: errQuiz } = await supabase.from('quizzes').delete().eq('quiz_id', quizId);
-    if (errQuiz) throw errQuiz;
+    // 5. delete quiz (verify deletion)
+    await assertDeletedRow('quizzes', 'quiz_id', quizId, 'الاختبار');
 }
 
 async function deleteProjectCascade(projectId) {
-    if (!projectId) return;
+    if (projectId === undefined || projectId === null) return;
     // 1. submissions
     const { error: errSub } = await supabase.from('project_submissions').delete().eq('project_id', projectId);
     if (errSub) console.warn("Could not delete project_submissions:", errSub);
 
     // 2. remove references in course_materials & curriculum_links
-    await deleteLinksForItem(supabase, 'project', projectId);
+    if (String(projectId).trim() !== '') await deleteLinksForItem(supabase, 'project', projectId);
     const { error: errMat } = await supabase.from('course_materials').update({ ref_project_id: null }).eq('ref_project_id', projectId);
     if (errMat) console.warn("Could not unlink ref_project_id from course_materials:", errMat);
 
-    // 3. delete project
-    const { error: errProj } = await supabase.from('projects').delete().eq('id', projectId);
-    if (errProj) throw errProj;
+    // 3. delete project (verify deletion)
+    await assertDeletedRow('projects', 'id', projectId, 'المشروع');
 }
 
 async function deleteMaterialCascade(contentId, selections = { deleteQuiz: true, deleteProject: true }) {
-    if (!contentId) return;
+    if (contentId === undefined || contentId === null) return;
     
-    // Fetch material info first to get quiz and project ids
     const { data: material } = await supabase.from('course_materials')
         .select('ref_quiz_id, ref_project_id')
         .eq('content_id', contentId)
         .maybeSingle();
 
     const hData = await fetchHierarchyData();
-    const att = getAttachmentsForTarget(hData.links || [], 'content', contentId);
+    const att = String(contentId).trim() !== ''
+        ? getAttachmentsForTarget(hData.links || [], 'content', contentId)
+        : { quizzes: [], projects: [], documents: [] };
     const linkedQuizIds = Array.from(new Set([...(att.quizzes || []), ...(material?.ref_quiz_id ? [String(material.ref_quiz_id)] : [])]));
     const linkedProjIds = Array.from(new Set([...(att.projects || []), ...(material?.ref_project_id ? [String(material.ref_project_id)] : [])]));
         
-    if (material) {
-        // 1. completed_materials
-        const { error: errComp } = await supabase.from('completed_materials').delete().eq('material_id', contentId);
-        if (errComp) console.warn("Could not delete completed_materials:", errComp);
+    // 1. completed_materials
+    const { error: errComp } = await supabase.from('completed_materials').delete().eq('material_id', contentId);
+    if (errComp) console.warn("Could not delete completed_materials:", errComp);
 
-        // 2. team_tasks
-        const { error: errTasks } = await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
-        if (errTasks) console.warn("Could not unlink team_tasks content_id:", errTasks);
+    // 2. team_tasks
+    const { error: errTasks } = await supabase.from('team_tasks').update({ content_id: null }).eq('content_id', contentId);
+    if (errTasks) console.warn("Could not unlink team_tasks content_id:", errTasks);
 
-        // 3. curriculum_documents & curriculum_links
-        try {
-            await supabase.from('curriculum_documents').delete().eq('lesson_id', contentId);
-        } catch (_) {}
-        await deleteLinksForTarget(supabase, 'content', contentId);
-        
-        // 4. Delete linked quizzes if requested
-        if (selections.deleteQuiz) {
-            for (const qId of linkedQuizIds) {
-                await deleteQuizCascade(qId);
-            }
-        }
-        
-        // 5. Delete linked projects if requested
-        if (selections.deleteProject) {
-            for (const pId of linkedProjIds) {
-                await deleteProjectCascade(pId);
-            }
+    // 3. curriculum_documents & curriculum_links
+    try {
+        await supabase.from('curriculum_documents').delete().eq('lesson_id', contentId);
+    } catch (_) {}
+    if (String(contentId).trim() !== '') await deleteLinksForTarget(supabase, 'content', contentId);
+    
+    // 4. Delete linked quizzes if requested
+    if (selections.deleteQuiz) {
+        for (const qId of linkedQuizIds) {
+            await deleteQuizCascade(qId);
         }
     }
     
-    // 6. Delete the material itself
-    const { error: delMatErr } = await supabase.from('course_materials').delete().eq('content_id', contentId);
-    if (delMatErr) throw delMatErr;
+    // 5. Delete linked projects if requested
+    if (selections.deleteProject) {
+        for (const pId of linkedProjIds) {
+            await deleteProjectCascade(pId);
+        }
+    }
+    
+    // 6. Delete the material itself (verify deletion)
+    await assertDeletedRow('course_materials', 'content_id', contentId, 'المحتوى التعليمي');
 }
 
 async function deleteCourseCascade(courseId, selections = { deleteMaterials: true, deleteQuizzes: true, deleteProjects: true }) {
-    if (!courseId) return;
+    if (courseId === undefined || courseId === null) return;
     
     // 1. Unlink other courses that reference this course (e.g. related_with)
     await supabase.from('courses').update({ related_with: null }).eq('related_with', courseId);
@@ -2345,10 +2764,9 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
     try {
         await supabase.from('curriculum_documents').delete().eq('course_id', courseId);
     } catch (_) {}
-    await deleteLinksForTarget(supabase, 'course', courseId);
+    if (String(courseId).trim() !== '') await deleteLinksForTarget(supabase, 'course', courseId);
     
     if (selections.deleteMaterials) {
-        // Find materials
         const { data: materials } = await supabase.from('course_materials')
             .select('content_id, ref_quiz_id, ref_project_id')
             .eq('course_id', courseId);
@@ -2356,7 +2774,6 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
         if (materials && materials.length > 0) {
             const matIds = materials.map(m => m.content_id);
             const hData = await fetchHierarchyData();
-            // Delete completed_materials for these
             await supabase.from('completed_materials').delete().in('material_id', matIds);
             await supabase.from('team_tasks').update({ content_id: null }).in('content_id', matIds);
             try {
@@ -2366,49 +2783,52 @@ async function deleteCourseCascade(courseId, selections = { deleteMaterials: tru
             const allQuizIds = new Set(materials.map(m => m.ref_quiz_id).filter(Boolean).map(String));
             const allProjIds = new Set(materials.map(m => m.ref_project_id).filter(Boolean).map(String));
             for (const mid of matIds) {
-                const att = getAttachmentsForTarget(hData.links || [], 'content', mid);
-                att.quizzes.forEach(q => allQuizIds.add(String(q)));
-                att.projects.forEach(p => allProjIds.add(String(p)));
-                await deleteLinksForTarget(supabase, 'content', mid);
+                if (String(mid).trim() !== '') {
+                    const att = getAttachmentsForTarget(hData.links || [], 'content', mid);
+                    att.quizzes.forEach(q => allQuizIds.add(String(q)));
+                    att.projects.forEach(p => allProjIds.add(String(p)));
+                    await deleteLinksForTarget(supabase, 'content', mid);
+                }
             }
 
-            // Delete quizzes if checked
             if (selections.deleteQuizzes) {
                 for (const qId of allQuizIds) {
                     await deleteQuizCascade(qId);
                 }
             }
             
-            // Delete projects if checked
             if (selections.deleteProjects) {
                 for (const pId of allProjIds) {
                     await deleteProjectCascade(pId);
                 }
             }
             
-            // Delete materials
-            const { error: delMatErr } = await supabase.from('course_materials').delete().eq('course_id', courseId);
+            const { data: deletedMats, error: delMatErr } = await supabase
+                .from('course_materials')
+                .delete()
+                .eq('course_id', courseId)
+                .select('content_id');
             if (delMatErr) throw delMatErr;
+            if (!deletedMats || deletedMats.length === 0) {
+                throw new Error('تعذر حذف مواد الكورس (course_materials) — يرجى التحقق من صلاحيات الحذف (RLS) في Supabase.');
+            }
         }
     } else {
-        // Just unlink them
         const { error: unlinkMatErr } = await supabase.from('course_materials').update({ course_id: null }).eq('course_id', courseId);
         if (unlinkMatErr) throw unlinkMatErr;
     }
     
-    // 5. Delete the course itself
-    const { error: delCourseErr } = await supabase.from('courses').delete().eq('course_id', courseId);
-    if (delCourseErr) throw delCourseErr;
+    // 5. Delete the course itself (verify deletion)
+    await assertDeletedRow('courses', 'course_id', courseId, 'الكورس');
 }
 
 async function deletePhaseCascade(phaseId, selections = { deleteCourses: true }) {
-    if (!phaseId) return;
+    if (phaseId === undefined || phaseId === null) return;
 
-    // 1. Delete curriculum_documents & links linked to this phase
     try {
         await supabase.from('curriculum_documents').delete().eq('phase_id', phaseId);
     } catch (_) {}
-    await deleteLinksForTarget(supabase, 'phase', phaseId);
+    if (String(phaseId).trim() !== '') await deleteLinksForTarget(supabase, 'phase', phaseId);
     
     if (selections.deleteCourses) {
         const { data: courses } = await supabase.from('courses')
@@ -2421,24 +2841,20 @@ async function deletePhaseCascade(phaseId, selections = { deleteCourses: true })
             }
         }
     } else {
-        // Unlink courses
         const { error: unlinkErr } = await supabase.from('courses').update({ phase_id: null }).eq('phase_id', phaseId);
         if (unlinkErr) throw unlinkErr;
     }
     
-    // Delete phase
-    const { error: delPhaseErr } = await supabase.from('phases').delete().eq('phase_id', phaseId);
-    if (delPhaseErr) throw delPhaseErr;
+    await assertDeletedRow('phases', 'phase_id', phaseId, 'المرحلة');
 }
 
 async function deleteTrackCascade(trackId, selections = { deletePhases: true }) {
-    if (!trackId) return;
+    if (trackId === undefined || trackId === null) return;
 
-    // 1. Delete curriculum_documents & links linked to this track
     try {
         await supabase.from('curriculum_documents').delete().eq('track_id', trackId);
     } catch (_) {}
-    await deleteLinksForTarget(supabase, 'track', trackId);
+    if (String(trackId).trim() !== '') await deleteLinksForTarget(supabase, 'track', trackId);
     
     if (selections.deletePhases) {
         const { data: phases } = await supabase.from('phases')
@@ -2451,18 +2867,16 @@ async function deleteTrackCascade(trackId, selections = { deletePhases: true }) 
             }
         }
     } else {
-        // Unlink phases
         const { error: unlinkErr } = await supabase.from('phases').update({ track_id: null }).eq('track_id', trackId);
         if (unlinkErr) throw unlinkErr;
     }
     
-    // Delete track
-    const { error: delTrackErr } = await supabase.from('tracks').delete().eq('id', trackId);
-    if (delTrackErr) throw delTrackErr;
+    await assertDeletedRow('tracks', 'id', trackId, 'المسار');
 }
 
 window.cmDeleteItem = async (id) => {
-    const item = rawData.find(r => String(r[getPrimaryKey()]) === String(id));
+    const pk = getPrimaryKey();
+    const item = rawData.find(r => String(r[pk] ?? '') === String(id ?? ''));
     if (!item) {
         window.showToast("لم يتم العثور على العنصر المراد حذفه.", "error");
         return;
@@ -2472,8 +2886,9 @@ window.cmDeleteItem = async (id) => {
         return;
     }
     
+    const actualId = item[pk];
     const titleKey = LEVELS[cmCurrentLevel]?.title || 'title';
-    const itemName = item[titleKey] || item.name || id;
+    const itemName = item[titleKey] || item.name || actualId || '(بدون معرف)';
     
     const { confirmed, selections } = await showCustomDeleteModal(cmCurrentLevel, itemName);
     if (!confirmed) return;
@@ -2482,25 +2897,22 @@ window.cmDeleteItem = async (id) => {
     
     try {
         if (cmCurrentLevel === 'tracks') {
-            await deleteTrackCascade(id, selections);
+            await deleteTrackCascade(actualId, selections);
         } else if (cmCurrentLevel === 'phases') {
-            await deletePhaseCascade(id, selections);
+            await deletePhaseCascade(actualId, selections);
         } else if (cmCurrentLevel === 'courses') {
-            await deleteCourseCascade(id, selections);
+            await deleteCourseCascade(actualId, selections);
         } else if (cmCurrentLevel === 'course_materials') {
-            await deleteMaterialCascade(id, selections);
+            await deleteMaterialCascade(actualId, selections);
         } else if (cmCurrentLevel === 'quizzes') {
-            await deleteQuizCascade(id);
+            await deleteQuizCascade(actualId);
         } else if (cmCurrentLevel === 'projects') {
-            await deleteProjectCascade(id);
+            await deleteProjectCascade(actualId);
         } else if (cmCurrentLevel === 'curriculum_documents') {
-            await deleteLinksForItem(supabase, 'document', id);
-            const { error } = await supabase.from('curriculum_documents').delete().eq('id', id);
-            if (error) throw error;
+            if (String(actualId).trim() !== '') await deleteLinksForItem(supabase, 'document', actualId);
+            await assertDeletedRow('curriculum_documents', 'id', actualId, 'المستند');
         } else {
-            // For other levels (quiz_questions, etc.), delete directly
-            const { error } = await supabase.from(cmCurrentLevel).delete().eq(getPrimaryKey(), id);
-            if (error) throw error;
+            await assertDeletedRow(cmCurrentLevel, pk, actualId, 'السجل');
         }
         
         // Reset the cache so that filters are reloaded with fresh database values
@@ -2539,17 +2951,27 @@ window.ytImportEngine = {
         courseTitle: '',
         courseDesc: '',
         thumbnail: '',
-        courseAuthor: '' // 💡 لتخزين اسم المحاضر
+        courseAuthor: '',
+        mobileTab: 'videos',
+        searchQuery: '',
+        titlesCleaned: false
     },
     sortableInst: null,
-    eventsBound: false, // 💡 لمنع تكرار الأحداث
+    eventsBound: false,
 
     openWizard: async () => {
         document.getElementById('yt-input-url').value = '';
-        document.getElementById('yt-step-1').classList.remove('-translate-x-full', 'translate-x-full');
-        document.getElementById('yt-step-2').classList.add('translate-x-full');
+        const step1 = document.getElementById('yt-step-1');
+        const step2 = document.getElementById('yt-step-2');
+        if (step1) { step1.classList.remove('hidden', '-translate-x-full', 'translate-x-full'); step1.classList.add('flex'); }
+        if (step2) { step2.classList.add('hidden'); step2.classList.remove('flex', 'translate-x-full', '-translate-x-full'); }
         document.getElementById('yt-import-wizard').classList.remove('hidden');
-        document.getElementById('yt-wizard-step-text').innerText = 'خطوة 1: أدخل الرابط';
+        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 1: إدخال رابط قائمة التشغيل';
+        const backBtn = document.getElementById('btn-yt-back-step1');
+        if (backBtn) {
+            backBtn.classList.add('hidden');
+            backBtn.classList.remove('flex');
+        }
         
         // جلب المسارات 
         const { data: tracks } = await supabase.from('tracks').select('id, name');
@@ -2560,7 +2982,7 @@ window.ytImportEngine = {
         // جلب الكورسات للارتباط
         const { data: courses } = await supabase.from('courses').select('course_id, title');
         const relatedSelect = document.getElementById('yt-course-related');
-        if(relatedSelect) {
+        if (relatedSelect) {
             relatedSelect.innerHTML = '<option value="">بدون ارتباط (مستقل)</option>' + 
                 (courses || []).map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
         }
@@ -2571,22 +2993,68 @@ window.ytImportEngine = {
         phaseSelect.disabled = true;
         phaseSelect.classList.replace('bg-black', 'bg-black/50');
 
-        // 💡 تفعيل محرك البحث للقوائم داخل نافذة اليوتيوب
-        if (window.initSearchableSelects) window.initSearchableSelects();
-
-        // 💡 ربط حدث تحديث الكورسات المرتبطة مرة واحدة فقط
+        // ربط حدث تحديث الكورسات المرتبطة مرة واحدة فقط
         if (!ytImportEngine.eventsBound) {
             phaseSelect.addEventListener('change', async (e) => {
                 const phaseId = e.target.value;
+                ytImportEngine.runHealthCheck();
                 if (!phaseId) return;
                 const { data: relatedCourses } = await supabase.from('courses').select('course_id, title').eq('phase_id', phaseId);
-                if(relatedSelect) {
+                if (relatedSelect) {
                     relatedSelect.innerHTML = '<option value="">بدون ارتباط (مستقل)</option>' + 
                         (relatedCourses || []).map(c => `<option value="${c.course_id}">${c.title}</option>`).join('');
-                    relatedSelect.dispatchEvent(new Event('change')); // لتحديث واجهة البحث المخصصة
+                    relatedSelect.dispatchEvent(new Event('change'));
                 }
             });
+            document.getElementById('yt-course-title')?.addEventListener('input', () => ytImportEngine.runHealthCheck());
             ytImportEngine.eventsBound = true;
+        }
+    },
+
+    backToStep1: () => {
+        const step1 = document.getElementById('yt-step-1');
+        const step2 = document.getElementById('yt-step-2');
+        if (step1) { step1.classList.remove('hidden', '-translate-x-full', 'translate-x-full'); step1.classList.add('flex'); }
+        if (step2) { step2.classList.add('hidden'); step2.classList.remove('flex', 'translate-x-full', '-translate-x-full'); }
+        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 1: إدخال رابط قائمة التشغيل';
+        const backBtn = document.getElementById('btn-yt-back-step1');
+        if (backBtn) {
+            backBtn.classList.add('hidden');
+            backBtn.classList.remove('flex');
+        }
+    },
+
+    switchMobileTab: (tab) => {
+        ytImportEngine.state.mobileTab = tab;
+        const panelVideos = document.getElementById('yt-panel-videos');
+        const panelSettings = document.getElementById('yt-panel-settings');
+        const btnVideos = document.getElementById('yt-tab-btn-videos');
+        const btnSettings = document.getElementById('yt-tab-btn-settings');
+        const footerSwitchText = document.getElementById('yt-mobile-switch-footer-text');
+
+        if (!panelVideos || !panelSettings) return;
+
+        if (tab === 'settings') {
+            panelSettings.classList.remove('hidden');
+            panelSettings.classList.add('flex');
+            panelVideos.classList.add('hidden');
+            panelVideos.classList.remove('flex');
+            // استعادة العرض على الشاشات الكبيرة lg+
+            panelVideos.classList.add('lg:flex');
+
+            if (btnSettings) btnSettings.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-b-primary text-black shadow-md cursor-pointer";
+            if (btnVideos) btnVideos.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 border border-white/10 cursor-pointer";
+            if (footerSwitchText) footerSwitchText.innerText = 'عرض الفيديوهات';
+        } else {
+            panelVideos.classList.remove('hidden');
+            panelVideos.classList.add('flex');
+            panelSettings.classList.add('hidden');
+            panelSettings.classList.remove('flex');
+            panelSettings.classList.add('lg:flex');
+
+            if (btnVideos) btnVideos.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-b-primary text-black shadow-md cursor-pointer";
+            if (btnSettings) btnSettings.className = "flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-white/5 text-gray-300 border border-white/10 cursor-pointer";
+            if (footerSwitchText) footerSwitchText.innerText = 'إعدادات الكورس';
         }
     },
 
@@ -2598,7 +3066,8 @@ window.ytImportEngine = {
         phaseSelect.innerHTML = '<option value="" disabled selected>-- اختر المرحلة (Phase) --</option>' + 
             (phases || []).map(p => `<option value="${p.phase_id}">${p.title}</option>`).join('');
         
-        phaseSelect.dispatchEvent(new Event('change')); // لتحديث واجهة البحث المخصصة
+        phaseSelect.dispatchEvent(new Event('change'));
+        ytImportEngine.runHealthCheck();
     },
 
     closeWizard: () => { document.getElementById('yt-import-wizard').classList.add('hidden'); },
@@ -2606,52 +3075,68 @@ window.ytImportEngine = {
     fetchPlaylist: async () => {
         const input = document.getElementById('yt-input-url').value.trim();
         const btn = document.getElementById('btn-yt-fetch');
-        if(!input) return window.showToast("يرجى إدخال الرابط أولاً", "error");
+        if (!input) return window.showToast("يرجى إدخال الرابط أولاً", "error");
 
-        // 💡 تحقق صارم من صحة الرابط قبل إرسال الطلب
-        const match = input.match(/[?&]list=([^#\&\?]*)/) || input.match(/^([a-zA-Z0-9_-]{12,34})$/);
+        const match = input.match(/[?&]list=([^#\&\?]*)/) || input.match(/^([a-zA-Z0-9_-]{12,42})$/);
         if (!match) return window.showToast("عفواً، الرابط غير صالح. يرجى التأكد من أنه رابط أو ID لقائمة تشغيل يوتيوب.", "warning");
         const playlistId = match[1];
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحليل...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التحليل...</span>';
         btn.disabled = true;
 
         try {
             const plRes = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${YOUTUBE_API_KEY}`);
             const plData = await plRes.json();
-            if(plData.error) throw new Error(plData.error.message);
-            if(!plData.items || plData.items.length === 0) throw new Error("قائمة التشغيل غير موجودة أو خاصة (Private)");
+            if (plData.error) throw new Error(plData.error.message);
+            if (!plData.items || plData.items.length === 0) throw new Error("قائمة التشغيل غير موجودة أو خاصة (Private)");
             
             ytImportEngine.state.playlistId = playlistId;
             ytImportEngine.state.courseTitle = plData.items[0].snippet.title;
             ytImportEngine.state.courseDesc = plData.items[0].snippet.description;
-            ytImportEngine.state.courseAuthor = plData.items[0].snippet.channelTitle || ''; // 💡 جلب اسم القناة
+            ytImportEngine.state.courseAuthor = plData.items[0].snippet.channelTitle || '';
+            ytImportEngine.state.searchQuery = '';
+            ytImportEngine.state.titlesCleaned = false;
+
+            const searchInput = document.getElementById('yt-video-search');
+            if (searchInput) searchInput.value = '';
 
             let allItems = [];
             let nextPageToken = '';
             do {
- const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${nextPageToken ? '&pageToken=' + nextPageToken : ''}`;
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}${nextPageToken ? '&pageToken=' + nextPageToken : ''}`;
                 const res = await fetch(url);
                 const data = await res.json();
-                if(data.items) allItems.push(...data.items);
+                if (data.items) allItems.push(...data.items);
                 nextPageToken = data.nextPageToken;
-            } while(nextPageToken);
+            } while (nextPageToken);
 
-            const videoIds = allItems.map(item => item.contentDetails.videoId);
+            const videoIds = allItems.map(item => item.contentDetails?.videoId).filter(Boolean);
             let durationsMap = {};
             for (let i = 0; i < videoIds.length; i += 50) {
                 const chunk = videoIds.slice(i, i + 50).join(',');
                 const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${chunk}&key=${YOUTUBE_API_KEY}`);
                 const vData = await vRes.json();
-                if(vData.items) vData.items.forEach(v => { durationsMap[v.id] = ytImportEngine.parseDuration(v.contentDetails.duration); });
+                if (vData.items) vData.items.forEach(v => { durationsMap[v.id] = ytImportEngine.parseDuration(v.contentDetails.duration); });
             }
 
             ytImportEngine.state.videos = allItems.map((item, i) => {
-                const vId = item.contentDetails.videoId;
-                const snippet = item.snippet;
+                const vId = item.contentDetails?.videoId || '';
+                const snippet = item.snippet || {};
                 const thumb = snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '../../assets/icons/BUSLA-icon.png';
                 const isDeleted = snippet.title === 'Private video' || snippet.title === 'Deleted video';
-                return { id: `vid_${Date.now()}_${i}`, videoId: vId, title: snippet.title, duration: durationsMap[vId] || 0, thumbnail: thumb, order_index: i + 1, type: 'video', is_excluded: isDeleted, base_xp: 10 };
+                return {
+                    id: `vid_${Date.now()}_${i}`,
+                    videoId: vId,
+                    title: snippet.title || `درس ${i + 1}`,
+                    originalTitle: snippet.title || `درس ${i + 1}`,
+                    duration: durationsMap[vId] || 0,
+                    thumbnail: thumb,
+                    order_index: i + 1,
+                    type: 'video',
+                    is_excluded: isDeleted,
+                    is_custom_section: false,
+                    base_xp: 10
+                };
             });
 
             ytImportEngine.renderBuilder();
@@ -2659,129 +3144,407 @@ window.ytImportEngine = {
         } catch (err) {
             window.showToast("خطأ: " + err.message, "error");
         } finally {
-            btn.innerHTML = 'تحليل <i class="fas fa-magic ml-2"></i>';
+            btn.innerHTML = '<i class="fas fa-magic"></i> <span>تحليل القائمة</span>';
             btn.disabled = false;
         }
     },
 
     parseDuration: (isoDuration) => {
+        if (!isoDuration) return 0;
         const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
         if (!match) return 0;
         const h = parseInt(match[1]) || 0; const m = parseInt(match[2]) || 0; const s = parseInt(match[3]) || 0;
         return (h * 3600) + (m * 60) + s;
     },
 
-renderBuilder: () => {
-        document.getElementById('yt-step-1').classList.add('-translate-x-full');
-        document.getElementById('yt-step-2').classList.remove('translate-x-full');
-        document.getElementById('yt-wizard-step-text').innerText = 'خطوة 2: المراجعة والهيكلة';
+    formatDuration: (secs) => {
+        const total = Math.max(0, Number(secs) || 0);
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = Math.floor(total % 60);
+        if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    },
+
+    renderBuilder: () => {
+        const step1 = document.getElementById('yt-step-1');
+        const step2 = document.getElementById('yt-step-2');
+        if (step1) { step1.classList.add('hidden'); step1.classList.remove('flex', '-translate-x-full', 'translate-x-full'); }
+        if (step2) { step2.classList.remove('hidden', 'translate-x-full', '-translate-x-full'); step2.classList.add('flex'); }
+        document.getElementById('yt-wizard-step-text').innerText = 'الخطوة 2: تنظيم المحتوى، السكاشن، وإعدادات الكورس';
+        const backBtn = document.getElementById('btn-yt-back-step1');
+        if (backBtn) {
+            backBtn.classList.remove('hidden');
+            backBtn.classList.add('flex');
+        }
         
-        // 💡 تعبئة جميع الحقول التلقائية
-        document.getElementById('yt-course-id').value = 'cr_' + Date.now().toString(36) + Math.random().toString(36).substr(2,4);
+        const generatedId = 'cr_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
+        document.getElementById('yt-course-id').value = generatedId;
+        const idBadge = document.getElementById('yt-course-id-badge');
+        if (idBadge) idBadge.innerText = generatedId;
+
         document.getElementById('yt-course-title').value = ytImportEngine.state.courseTitle;
         document.getElementById('yt-course-desc').value = ytImportEngine.state.courseDesc;
         document.getElementById('yt-course-author').value = ytImportEngine.state.courseAuthor;
         document.getElementById('yt-course-playlist-id').value = ytImportEngine.state.playlistId;
         document.getElementById('yt-course-image-url').value = ytImportEngine.state.videos[0]?.thumbnail || '';
 
+        ytImportEngine.switchMobileTab('videos');
         ytImportEngine.updateVideosUI();
 
         const listContainer = document.getElementById('yt-builder-list');
-        if(ytImportEngine.sortableInst) ytImportEngine.sortableInst.destroy();
-        ytImportEngine.sortableInst = new Sortable(listContainer, {
-            animation: 150, handle: '.fa-grip-lines', ghostClass: 'opacity-50',
-            onEnd: function (evt) {
-                const movedItem = ytImportEngine.state.videos.splice(evt.oldIndex, 1)[0];
-                ytImportEngine.state.videos.splice(evt.newIndex, 0, movedItem);
-                ytImportEngine.updateVideosUI(); 
-            }
-        });
+        if (ytImportEngine.sortableInst) ytImportEngine.sortableInst.destroy();
+        if (window.Sortable && listContainer) {
+            ytImportEngine.sortableInst = new Sortable(listContainer, {
+                animation: 150,
+                handle: '.yt-drag-handle',
+                ghostClass: 'opacity-40',
+                onEnd: function (evt) {
+                    if (ytImportEngine.state.searchQuery) return; // منع إعادة الترتيب أثناء تصفية البحث
+                    const movedItem = ytImportEngine.state.videos.splice(evt.oldIndex, 1)[0];
+                    ytImportEngine.state.videos.splice(evt.newIndex, 0, movedItem);
+                    ytImportEngine.updateVideosUI();
+                }
+            });
+        }
         ytImportEngine.runHealthCheck();
     },
 
+    filterBuilderList: (query) => {
+        ytImportEngine.state.searchQuery = (query || '').trim().toLowerCase();
+        ytImportEngine.updateVideosUI();
+    },
 
     updateVideosUI: () => {
         const container = document.getElementById('yt-builder-list');
-        const activeVideos = ytImportEngine.state.videos.filter(v => !v.is_excluded);
-        document.getElementById('yt-videos-count').innerText = activeVideos.length;
-        const totalSecs = activeVideos.reduce((acc, curr) => acc + curr.duration, 0);
-        document.getElementById('yt-total-time').innerText = new Date(totalSecs * 1000).toISOString().substr(11, 8);
-        const totalXP = activeVideos.filter(v => v.type !== 'section').reduce((acc, curr) => acc + (curr.base_xp || 0), 0);
+        if (!container) return;
+
+        const allItems = ytImportEngine.state.videos;
+        const activeItems = allItems.filter(v => !v.is_excluded);
+        const activeVideos = activeItems.filter(v => v.type !== 'section');
+        const activeSections = activeItems.filter(v => v.type === 'section');
+        const excludedItems = allItems.filter(v => v.is_excluded);
+
+        const countEl = document.getElementById('yt-videos-count');
+        if (countEl) countEl.innerText = activeVideos.length;
+
+        const secCountEl = document.getElementById('yt-sections-count');
+        if (secCountEl) secCountEl.innerText = activeSections.length;
+
+        const mobileCountEl = document.getElementById('yt-mobile-tab-count');
+        if (mobileCountEl) mobileCountEl.innerText = activeVideos.length;
+
+        const excludedPill = document.getElementById('yt-excluded-pill');
+        const excludedCountEl = document.getElementById('yt-excluded-count');
+        if (excludedCountEl) excludedCountEl.innerText = excludedItems.length;
+        if (excludedPill) {
+            excludedPill.classList.toggle('hidden', excludedItems.length === 0);
+            excludedPill.classList.toggle('flex', excludedItems.length > 0);
+        }
+
+        const totalSecs = activeVideos.reduce((acc, curr) => acc + (Number(curr.duration) || 0), 0);
+        const timeEl = document.getElementById('yt-total-time');
+        if (timeEl) timeEl.innerText = new Date(totalSecs * 1000).toISOString().substr(11, 8);
+
+        const totalXP = activeVideos.reduce((acc, curr) => acc + (Number(curr.base_xp) || 0), 0);
         const xpEl = document.getElementById('yt-total-xp');
         if (xpEl) xpEl.innerText = totalXP;
 
+        const q = ytImportEngine.state.searchQuery;
+        let lessonCounter = 0;
+        let sectionCounter = 0;
 
-        container.innerHTML = ytImportEngine.state.videos.map((vid, index) => {
-            vid.order_index = index + 1; 
+        const cardsHtml = allItems.map((vid, index) => {
+            vid.order_index = index + 1;
+            const isSection = vid.type === 'section';
+            if (!vid.is_excluded) {
+                if (isSection) sectionCounter++;
+                else lessonCounter++;
+            }
+
+            if (q && !String(vid.title || '').toLowerCase().includes(q)) {
+                return '';
+            }
+
+            const safeTitle = String(vid.title || '').replace(/"/g, '&quot;');
+
+            // 1. تصميم خاص ومميز لبطاقة فاصل السكشن (Section Divider Card)
+            if (isSection) {
+                return `
+                <div class="group rounded-2xl border transition-all p-3 sm:p-3.5 ${vid.is_excluded ? 'bg-red-950/20 border-red-500/20 opacity-50' : 'bg-gradient-to-l from-purple-950/40 via-purple-900/20 to-black/80 border-purple-500/40 shadow-lg'}">
+                    <div class="flex items-center gap-2.5 sm:gap-3">
+                        <div class="yt-drag-handle flex items-center justify-center w-7 h-8 rounded-lg bg-purple-500/10 text-purple-300 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="اسحب لتغيير مكان السكشن">
+                            <i class="fas fa-grip-vertical text-xs"></i>
+                        </div>
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0">
+                            <i class="fas fa-folder-open text-xs sm:text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[10px] font-black">فاصل سكشن #${sectionCounter || index + 1}</span>
+                                ${vid.is_custom_section ? '<span class="text-[10px] text-gray-400">مضاف يدوياً</span>' : '<span class="text-[10px] text-gray-400">محول من عنصر</span>'}
+                            </div>
+                            <input type="text" dir="auto" value="${safeTitle}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" placeholder="أدخل عنوان السكشن أو الفصل..." class="w-full bg-black/50 border border-purple-500/30 focus:border-purple-400 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-black text-white outline-none transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${!vid.is_custom_section ? `
+                                <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'video'); ytImportEngine.updateVideosUI();" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="إرجاع كدرس فيديو">
+                                    <i class="fas fa-video ml-1"></i> كفيديو
+                                </button>
+                            ` : ''}
+                            <button type="button" onclick="ytImportEngine.removeOrExcludeSection(${index})" class="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all cursor-pointer" title="${vid.is_custom_section ? 'حذف السكشن' : (vid.is_excluded ? 'استعادة' : 'استبعاد')}">
+                                <i class="fas ${vid.is_custom_section ? 'fa-trash-alt' : (vid.is_excluded ? 'fa-undo' : 'fa-ban')} text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // 2. بطاقة درس الفيديو المتجاوبة بالكامل (Responsive Video Lesson Card)
             return `
-            <div class="flex items-center gap-3 p-3 rounded-xl border transition-all ${vid.is_excluded ? 'bg-red-900/10 border-red-500/20 opacity-50' : vid.type === 'section' ? 'bg-purple-900/20 border-purple-500/30 mt-6' : 'bg-white/5 border-white/10 hover:border-white/20'}">
-                <div class="flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white px-2 handle fa-grip-lines-container">
-                    <i class="fas fa-grip-lines text-lg"></i><span class="text-[10px] font-mono">${index + 1}</span>
-                </div>
-                <div class="w-24 h-14 bg-black rounded-lg bg-cover bg-center border border-white/10 shrink-0 relative overflow-hidden" style="background-image: url('${vid.thumbnail}')">
-                    ${vid.type === 'section' ? '<div class="absolute inset-0 bg-purple-500/50 flex items-center justify-center"><i class="fas fa-folder-open text-white"></i></div>' : ''}
-                </div>
-                <div class="flex-1 space-y-2">
-                    <input type="text" value="${vid.title}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" class="w-full bg-transparent border-b border-transparent hover:border-white/20 focus:border-b-primary outline-none text-sm font-bold text-white transition-colors px-1" ${vid.is_excluded ? 'disabled' : ''}>
-                    <div class="flex items-center gap-2">
-                        <select onchange="ytImportEngine.updateVidData(${index}, 'type', this.value)" class="bg-black/50 border border-white/10 rounded px-2 py-0.5 text-[10px] text-gray-300 outline-none" ${vid.is_excluded ? 'disabled' : ''}>
-                            <option value="video" ${vid.type === 'video' ? 'selected' : ''}>Video Lesson</option>
-                            <option value="section" ${vid.type === 'section' ? 'selected' : ''}>-- SECTION DIVIDER --</option>
-                        </select>
-                        <span class="text-[10px] text-gray-500 font-mono"><i class="far fa-clock mr-1"></i>${Math.floor(vid.duration/60)}m</span>
+            <div class="group rounded-2xl border transition-all p-2.5 sm:p-3.5 ${vid.is_excluded ? 'bg-red-950/15 border-red-500/20 opacity-55' : 'bg-b-surface/80 hover:bg-b-surface border-white/10 hover:border-white/20 shadow-md'}">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
+                    <!-- Top Row on Mobile: Drag Handle + Thumbnail + Editable Title -->
+                    <div class="flex items-start sm:items-center gap-2.5 flex-1 min-w-0">
+                        <div class="yt-drag-handle flex flex-col items-center justify-center w-6 sm:w-7 py-1 rounded-lg bg-white/5 text-gray-400 hover:text-white cursor-grab active:cursor-grabbing shrink-0" title="اسحب لإعادة الترتيب">
+                            <i class="fas fa-grip-vertical text-xs"></i>
+                            <span class="text-[9px] font-mono text-gray-400 mt-0.5">${index + 1}</span>
+                        </div>
+
+                        <div class="w-20 h-12 sm:w-28 sm:h-16 bg-black rounded-xl bg-cover bg-center border border-white/10 shrink-0 relative overflow-hidden shadow-inner" style="background-image: url('${vid.thumbnail}')">
+                            <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/85 text-white font-mono text-[9px] sm:text-[10px] font-bold border border-white/10">
+                                ${ytImportEngine.formatDuration(vid.duration)}
+                            </span>
+                        </div>
+
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <input type="text" dir="auto" value="${safeTitle}" onchange="ytImportEngine.updateVidData(${index}, 'title', this.value)" class="w-full bg-black/50 border border-white/10 hover:border-white/20 focus:border-b-primary rounded-xl px-2.5 py-1.5 text-xs sm:text-sm font-bold text-white outline-none transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
+                            <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-gray-400">
+                                <span class="px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-bold border border-teal-500/20">درس #${lessonCounter || index + 1}</span>
+                                ${vid.videoId ? `<span class="font-mono text-gray-500">ID: ${vid.videoId}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom/Side Action Controls Strip -->
+                    <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-r border-white/5 sm:pr-3 shrink-0">
+                        <!-- Insert Section Divider Before This Video -->
+                        <button type="button" onclick="ytImportEngine.addSectionDivider(${index})" class="px-2 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer" title="إدراج فاصل سكشن قبل هذا الفيديو" ${vid.is_excluded ? 'disabled' : ''}>
+                            <i class="fas fa-folder-plus text-[10px]"></i>
+                            <span>+ سكشن قبل</span>
+                        </button>
+
+                        <!-- Convert Video to Section -->
+                        <button type="button" onclick="ytImportEngine.updateVidData(${index}, 'type', 'section'); ytImportEngine.updateVideosUI();" class="px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[10px] font-bold transition-all cursor-pointer" title="تحويل هذا العنصر نفسه إلى عنوان سكشن" ${vid.is_excluded ? 'disabled' : ''}>
+                            <span>كسكشن</span>
+                        </button>
+
+                        <!-- XP Input Pill -->
+                        <div class="flex items-center gap-1 bg-black/70 border border-yellow-500/30 rounded-xl px-2 py-1">
+                            <i class="fas fa-star text-yellow-400 text-[9px]"></i>
+                            <input type="number" min="0" value="${vid.base_xp ?? 10}" onchange="ytImportEngine.updateVidData(${index}, 'base_xp', parseInt(this.value)||0); ytImportEngine.updateVideosUI();" class="w-10 bg-transparent text-xs text-yellow-400 font-bold text-center outline-none" ${vid.is_excluded ? 'disabled' : ''}>
+                            <span class="text-[9px] text-yellow-500/80 font-mono">XP</span>
+                        </div>
+
+                        <!-- Exclude / Restore Button -->
+                        <button type="button" onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer ${vid.is_excluded ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30' : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20'}" title="${vid.is_excluded ? 'استعادة الدرس' : 'استبعاد الدرس من الكورس'}">
+                            <i class="fas ${vid.is_excluded ? 'fa-undo' : 'fa-ban'} text-xs"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 border-l border-white/10 pl-3">
-                    ${vid.type !== 'section' ? `
-                    <div class="flex flex-col items-center gap-0.5">
-                        <label class="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider"><i class="fas fa-star text-[8px]"></i> XP</label>
-                        <input type="number" min="0" value="${vid.base_xp ?? 10}" onchange="ytImportEngine.updateVidData(${index}, 'base_xp', parseInt(this.value)||0)" class="w-16 bg-black/60 border border-yellow-500/30 rounded-lg px-2 py-1 text-xs text-yellow-400 font-bold text-center outline-none focus:border-yellow-500 transition-colors" ${vid.is_excluded ? 'disabled' : ''}>
-                    </div>` : '<div class="w-16"></div>'}
-                    <button onclick="ytImportEngine.toggleExclude(${index})" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all ${vid.is_excluded ? 'bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-white/5 text-gray-400 hover:text-red-400'}" title="${vid.is_excluded ? 'Restore' : 'Exclude'}">
-                        <i class="fas ${vid.is_excluded ? 'fa-undo' : 'fa-ban'}"></i>
-                    </button>
-                </div>
             </div>`;
-        }).join('');
+        }).filter(Boolean);
+
+        if (cardsHtml.length === 0) {
+            container.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs bg-white/5 rounded-2xl border border-white/10">لا توجد فيديوهات مطابقة لبحثك "${ytImportEngine.state.searchQuery}".</div>`;
+        } else {
+            container.innerHTML = cardsHtml.join('');
+        }
     },
 
-    updateVidData: (index, key, val) => { ytImportEngine.state.videos[index][key] = val; ytImportEngine.runHealthCheck(); },
-    toggleExclude: (index) => { ytImportEngine.state.videos[index].is_excluded = !ytImportEngine.state.videos[index].is_excluded; ytImportEngine.updateVideosUI(); ytImportEngine.runHealthCheck(); },
+    updateVidData: (index, key, val) => {
+        if (!ytImportEngine.state.videos[index]) return;
+        ytImportEngine.state.videos[index][key] = val;
+        ytImportEngine.runHealthCheck();
+    },
+
+    toggleExclude: (index) => {
+        if (!ytImportEngine.state.videos[index]) return;
+        ytImportEngine.state.videos[index].is_excluded = !ytImportEngine.state.videos[index].is_excluded;
+        ytImportEngine.updateVideosUI();
+        ytImportEngine.runHealthCheck();
+    },
+
+    addSectionDivider: (insertBeforeIndex = null) => {
+        const existingSectionsCount = ytImportEngine.state.videos.filter(v => v.type === 'section').length;
+        const newSection = {
+            id: `sec_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            videoId: '',
+            title: `السكشن ${existingSectionsCount + 1}: عنوان الفصل`,
+            originalTitle: `السكشن ${existingSectionsCount + 1}: عنوان الفصل`,
+            duration: 0,
+            thumbnail: ytImportEngine.state.videos[0]?.thumbnail || '../../assets/icons/BUSLA-icon.png',
+            order_index: 1,
+            type: 'section',
+            is_excluded: false,
+            is_custom_section: true,
+            base_xp: 0
+        };
+
+        if (typeof insertBeforeIndex === 'number' && insertBeforeIndex >= 0 && insertBeforeIndex <= ytImportEngine.state.videos.length) {
+            ytImportEngine.state.videos.splice(insertBeforeIndex, 0, newSection);
+        } else {
+            ytImportEngine.state.videos.unshift(newSection);
+        }
+
+        ytImportEngine.updateVideosUI();
+        ytImportEngine.runHealthCheck();
+        window.showToast("تم إدراج فاصل سكشن جديد — يمكنك تعديل عنوانه أو سحبه لأي مكان", "success");
+    },
+
+    removeOrExcludeSection: (index) => {
+        const item = ytImportEngine.state.videos[index];
+        if (!item) return;
+        if (item.is_custom_section) {
+            ytImportEngine.state.videos.splice(index, 1);
+            ytImportEngine.updateVideosUI();
+            ytImportEngine.runHealthCheck();
+        } else {
+            ytImportEngine.toggleExclude(index);
+        }
+    },
+
+    cleanVideoTitles: () => {
+        if (!ytImportEngine.state.videos.length) return;
+        if (ytImportEngine.state.titlesCleaned) {
+            // استعادة العناوين الأصلية
+            ytImportEngine.state.videos.forEach(v => {
+                if (v.originalTitle && !v.is_custom_section) v.title = v.originalTitle;
+            });
+            ytImportEngine.state.titlesCleaned = false;
+            ytImportEngine.updateVideosUI();
+            window.showToast("تمت استعادة العناوين الأصلية للفيديوهات", "info");
+            return;
+        }
+
+        let cleanedCount = 0;
+        ytImportEngine.state.videos.forEach(v => {
+            if (v.is_custom_section) return;
+            const orig = v.title || '';
+            let cleaned = orig
+                .replace(/\[[^\]]*\]/g, '') // إزالة الأكواد بين أقواس مربعة مثل [CSE111s]
+                .replace(/^\s*(?:lecture|lec|ep|episode|part|video|درس|محاضرة)\s*#?\d+\s*[-:|–—]?\s*/i, '')
+                .replace(/^\s*\d+\s*[-.|)\]:–—]\s*/, '')
+                .replace(/\s*[-|–—]\s*(?:dr\.?|prof\.?|eng\.?|د\.|م\.)[^-|–—]+$/i, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+
+            if (cleaned && cleaned.length >= 3 && cleaned !== orig) {
+                v.title = cleaned;
+                cleanedCount++;
+            }
+        });
+
+        ytImportEngine.state.titlesCleaned = true;
+        ytImportEngine.updateVideosUI();
+        window.showToast(cleanedCount > 0 ? `تم تنظيف وتنسيق ${cleanedCount} عنوان بنجاح (اضغط مرة أخرى للتراجع)` : "العناوين منظمة بالفعل", "success");
+    },
+
+    toggleAllVideos: () => {
+        const nonCustom = ytImportEngine.state.videos;
+        if (!nonCustom.length) return;
+        const anyIncluded = nonCustom.some(v => !v.is_excluded);
+        const targetExcluded = anyIncluded && nonCustom.every(v => !v.is_excluded);
+        nonCustom.forEach(v => { v.is_excluded = targetExcluded; });
+        ytImportEngine.updateVideosUI();
+        ytImportEngine.runHealthCheck();
+        window.showToast(targetExcluded ? "تم استبعاد جميع العناصر مؤقتاً" : "تم تفعيل وتضمين جميع الدروس", "info");
+    },
+
     applyBulkXP: () => {
         const val = parseInt(document.getElementById('yt-bulk-xp').value) || 10;
         ytImportEngine.state.videos.forEach(vid => { if (vid.type !== 'section') vid.base_xp = val; });
         ytImportEngine.updateVideosUI();
         window.showToast(`تم تطبيق ${val} XP على جميع الفيديوهات`, 'success');
     },
+
     autoSplitSections: () => {
+        let converted = 0;
         ytImportEngine.state.videos.forEach(vid => {
-            const t = vid.title.toLowerCase();
-            if (t.includes('part') || t.includes('chapter') || t.includes('module') || t.includes('مقدمة') || t.includes('فصل')) vid.type = 'section';
+            const t = (vid.title || '').toLowerCase();
+            if (t.includes('part') || t.includes('chapter') || t.includes('module') || t.includes('section') || t.includes('مقدمة') || t.includes('فصل') || t.includes('وحدة')) {
+                vid.type = 'section';
+                converted++;
+            }
         });
+        // إذا لم يوجد أي فيديو يحمل كلمة فصل/مقدمة، نضيف سكشن تمهيدي في البداية لتسهيل التنظيم
+        if (converted === 0 && !ytImportEngine.state.videos.some(v => v.type === 'section')) {
+            ytImportEngine.addSectionDivider(0);
+            return;
+        }
         ytImportEngine.updateVideosUI();
-        window.showToast("تم تطبيق التقسيم الذكي بنجاح", "success");
+        window.showToast(`تم تطبيق التقسيم الذكي (${converted} سكشن)`, "success");
     },
+
     runHealthCheck: () => {
         const banner = document.getElementById('yt-health-check-banner');
+        const footerStatus = document.getElementById('yt-footer-status');
         const activeVids = ytImportEngine.state.videos.filter(v => !v.is_excluded);
+        const phaseVal = document.getElementById('yt-course-phase')?.value || '';
+        const titleVal = document.getElementById('yt-course-title')?.value.trim() || '';
+
         let errors = [];
-        if(activeVids.length === 0) errors.push("الكورس لا يحتوي على أي فيديوهات مفعلة!");
-        if(activeVids.some(v => v.title.trim() === '')) errors.push("هناك فيديوهات بدون عنوان.");
+        let warnings = [];
+        if (activeVids.length === 0) errors.push("الكورس لا يحتوي على أي دروس مفعلة!");
+        if (activeVids.some(v => v.title.trim() === '')) errors.push("هناك عناصر بدون عنوان.");
+        if (!titleVal) warnings.push("يرجى إدخال عنوان الكورس في الإعدادات.");
+        if (!phaseVal) warnings.push("يتبقى اختيار المسار والمرحلة (Phase) قبل الحفظ.");
+
+        const saveBtn = document.getElementById('btn-yt-save');
 
         if (errors.length > 0) {
-            banner.className = "p-3 rounded-xl text-xs font-bold border border-red-500/30 bg-red-500/10 text-red-400 block";
-            banner.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> ` + errors.join('<br>');
-            document.getElementById('btn-yt-save').disabled = true;
-            document.getElementById('btn-yt-save').classList.add('opacity-50', 'cursor-not-allowed');
+            if (banner) {
+                banner.className = "p-3 rounded-xl text-xs font-bold border border-red-500/30 bg-red-500/10 text-red-400 block";
+                banner.innerHTML = `<i class="fas fa-exclamation-triangle ml-1"></i> ` + errors.join('<br>');
+            }
+            if (footerStatus) {
+                footerStatus.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate flex items-center gap-1.5";
+                footerStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span>${errors[0]}</span>`;
+            }
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        } else if (warnings.length > 0) {
+            if (banner) {
+                banner.className = "p-3 rounded-xl text-xs font-bold border border-amber-500/30 bg-amber-500/10 text-amber-300 block";
+                banner.innerHTML = `<i class="fas fa-info-circle ml-1"></i> ` + warnings.join('<br>');
+            }
+            if (footerStatus) {
+                footerStatus.className = "text-[11px] sm:text-xs font-bold text-amber-400 truncate flex items-center gap-1.5";
+                footerStatus.innerHTML = `<i class="fas fa-info-circle"></i> <span>${warnings[0]}</span>`;
+            }
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         } else {
-            banner.className = "p-3 rounded-xl text-xs font-bold border border-green-500/30 bg-green-500/10 text-green-400 block";
-            banner.innerHTML = `<i class="fas fa-check-circle mr-1"></i> الكورس جاهز للحفظ الهيكلي تماماً.`;
-            document.getElementById('btn-yt-save').disabled = false;
-            document.getElementById('btn-yt-save').classList.remove('opacity-50', 'cursor-not-allowed');
+            if (banner) {
+                banner.className = "p-3 rounded-xl text-xs font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 block";
+                banner.innerHTML = `<i class="fas fa-check-circle ml-1"></i> الكورس مكتمل وجاهز للحفظ الهيكلي.`;
+            }
+            if (footerStatus) {
+                footerStatus.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate flex items-center gap-1.5";
+                footerStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>الكورس جاهز للحفظ (${activeVids.length} عنصر)</span>`;
+            }
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
     },
 
-saveCourse: async () => {
+    saveCourse: async () => {
         const title = document.getElementById('yt-course-title').value.trim();
         const phaseId = document.getElementById('yt-course-phase').value;
         const desc = document.getElementById('yt-course-desc').value;
@@ -2791,22 +3554,23 @@ saveCourse: async () => {
         const courseType = document.getElementById('yt-course-type')?.value || 'youtube';
         const relatedWith = document.getElementById('yt-course-related')?.value || null;
         
-        // 💡 التقاط الحقول الجديدة القابلة للتعديل
-        const courseId = document.getElementById('yt-course-id').value.trim() || ('cr_' + Date.now().toString(36));
+        const rawCourseId = document.getElementById('yt-course-id')?.value?.trim() || '';
+        const courseId = rawCourseId || generateSystemID('cr');
         const customPlaylistId = document.getElementById('yt-course-playlist-id').value.trim();
         const customImageUrl = document.getElementById('yt-course-image-url').value.trim();
 
         const btn = document.getElementById('btn-yt-save');
 
-        if (!title || !phaseId) return window.showToast("يجب إدخال عنوان الكورس واختيار المرحلة (Phase)", "error");
+        if (!title || !phaseId) {
+            ytImportEngine.switchMobileTab('settings');
+            return window.showToast("يرجى اختيار المسار والمرحلة (Phase) والتأكد من عنوان الكورس", "warning");
+        }
 
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ والمعالجة...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الحفظ...</span>';
         btn.disabled = true;
 
         try {
-            const totalDur = ytImportEngine.state.videos.filter(v=>!v.is_excluded).reduce((a,b)=>a+b.duration, 0);
-
-const coursePayload = {
+            const coursePayload = {
                 course_id: courseId,
                 phase_id: phaseId,
                 title: title,
@@ -2820,19 +3584,20 @@ const coursePayload = {
                 auto_sync: autoSync
             };
 
-            const { error: crErr } = await supabase.from('courses').insert([coursePayload]);
+            const { data: insertedCourse, error: crErr } = await supabase.from('courses').insert([coursePayload]).select('course_id');
             if (crErr) throw crErr;
+            const savedCourseId = insertedCourse?.[0]?.course_id || courseId;
 
             let actualOrderIndex = 1;
             const materialsPayload = ytImportEngine.state.videos
                 .filter(v => !v.is_excluded)
                 .map(vid => ({
-                    content_id: 'cnt_' + Date.now().toString(36) + Math.random().toString(36).substr(2,4),
-                    course_id: courseId,
+                    content_id: 'cnt_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+                    course_id: savedCourseId,
                     title: vid.title,
                     type: vid.type === 'section' ? 'section' : 'video',
-                    video_id: vid.videoId,
-                    duration: vid.duration,
+                    video_id: vid.type === 'section' ? null : vid.videoId,
+                    duration: vid.type === 'section' ? 0 : vid.duration,
                     order_index: actualOrderIndex++,
                     base_xp: vid.type === 'section' ? 0 : (vid.base_xp ?? 10),
                     status: isActive,
@@ -2842,17 +3607,18 @@ const coursePayload = {
             const { error: matErr } = await supabase.from('course_materials').insert(materialsPayload);
             if (matErr) throw matErr;
 
+            hierarchyCache = null;
             window.showToast("🎉 تم إنشاء الكورس واستيراد جميع الفيديوهات بنجاح!", "success");
             ytImportEngine.closeWizard();
             
-            if(typeof loadTableData === 'function') loadTableData();
-            if(typeof loadAndBuildTree === 'function') loadAndBuildTree();
+            if (typeof loadTableData === 'function') loadTableData();
+            if (typeof loadAndBuildTree === 'function') loadAndBuildTree();
 
         } catch (err) {
             console.error(err);
             window.showToast("فشل الحفظ: " + err.message, "error");
         } finally {
-            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> اعتماد وحفظ الكورس';
+            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> <span>اعتماد وحفظ الكورس</span>';
             btn.disabled = false;
         }
     }
@@ -3044,62 +3810,500 @@ window.initSearchableSelects = () => {
 
 
 // ==========================================
+// 🔗 SHARED HELPERS FOR MANUAL PROJECT MULTI-LINKS & RUBRIC + AI PROMPT PICKERS
+// ==========================================
+window.cmAddProjectLinkRow = (containerId = 'cm-project-links-list', initial = { title: '', url: '' }) => {
+    const list = document.getElementById(containerId);
+    if (!list) return;
+    const isAi = containerId !== 'cm-project-links-list';
+    const row = document.createElement('div');
+    row.className = `${isAi ? 'ai-proj-link-row' : 'cm-proj-link-row'} flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-black/40 border border-white/10 rounded-xl p-2`;
+    row.innerHTML = `
+        <input type="text" value="${escapeHtml(initial.title || '')}" placeholder="اسم الرابط (مثال: GitHub Starter أو ملف PDF)" class="${isAi ? 'ai-proj-link-title' : 'cm-proj-link-title'} sm:w-2/5 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+        <input type="url" value="${escapeHtml(initial.url || '')}" placeholder="https://..." class="${isAi ? 'ai-proj-link-url' : 'cm-proj-link-url'} flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-cyan-300 font-mono placeholder-gray-500 outline-none dir-ltr text-left">
+        <button type="button" onclick="window.cmRemoveProjectLinkRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0 self-end sm:self-center transition-colors cursor-pointer" title="حذف الرابط"><i class="fas fa-trash text-[11px]"></i></button>
+    `;
+    list.appendChild(row);
+    if (containerId === 'project-ai-step1-links') {
+        row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => window.projectAiEngine?.onPromptConfigChange?.()));
+    }
+};
+
+window.cmRemoveProjectLinkRow = (btn) => {
+    const row = btn.closest('.cm-proj-link-row, .ai-proj-link-row');
+    const parent = row?.parentElement;
+    if (row) row.remove();
+    if (parent && parent.id === 'project-ai-step1-links') {
+        window.projectAiEngine?.onPromptConfigChange?.();
+    }
+};
+
+window.cmAddManualRubricRow = (initial = { aspect: '', description: '', points: 25 }) => {
+    const list = document.getElementById('cm-project-rubric-list');
+    if (!list) return;
+    list.querySelector('.cm-proj-rubric-empty')?.remove();
+    const row = document.createElement('div');
+    row.className = 'cm-proj-rubric-row bg-black/40 border border-white/10 rounded-xl p-2.5 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center';
+    row.innerHTML = `
+        <input type="text" value="${escapeHtml(initial.aspect || '')}" placeholder="المعيار (مثال: صحة التصميم)" class="cm-proj-r-aspect sm:w-1/4 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+        <input type="text" value="${escapeHtml(initial.description || '')}" placeholder="وصف المعيار (اختياري)" class="cm-proj-r-desc flex-1 bg-black/60 border border-white/10 focus:border-emerald-500 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-500 outline-none">
+        <div class="flex items-center gap-1.5 shrink-0">
+            <input type="number" min="0" value="${initial.points ?? 25}" oninput="window.cmUpdateManualRubricSum()" class="cm-proj-r-points w-20 bg-black/60 border border-emerald-500/30 rounded-lg px-2 py-2 text-xs text-center text-emerald-400 font-mono font-bold outline-none" title="نقاط المعيار">
+            <button type="button" onclick="window.cmRemoveManualRubricRow(this)" class="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-[11px]"></i></button>
+        </div>
+    `;
+    list.appendChild(row);
+    window.cmUpdateManualRubricSum();
+};
+
+window.cmRemoveManualRubricRow = (btn) => {
+    const row = btn.closest('.cm-proj-rubric-row');
+    const list = document.getElementById('cm-project-rubric-list');
+    if (row) row.remove();
+    if (list && list.querySelectorAll('.cm-proj-rubric-row').length === 0) {
+        list.innerHTML = '<div class="cm-proj-rubric-empty text-center py-3 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم مضافة بعد — اضغط "إضافة معيار" لتوزيع درجات المشروع.</div>';
+    }
+    window.cmUpdateManualRubricSum();
+};
+
+window.cmUpdateManualRubricSum = () => {
+    const badge = document.getElementById('cm-manual-rubric-sum');
+    if (!badge) return;
+    const maxPts = parseInt(document.getElementById('f-max-pts')?.value, 10) || 100;
+    const rows = Array.from(document.querySelectorAll('#cm-project-rubric-list .cm-proj-r-points'));
+    const sum = rows.reduce((acc, el) => acc + (parseInt(el.value, 10) || 0), 0);
+    badge.innerText = `مجموع المعايير: ${sum} / ${maxPts}`;
+    if (rows.length > 0 && sum === maxPts) {
+        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+    } else if (rows.length > 0 && sum > maxPts) {
+        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-red-500/15 text-red-300 border border-red-500/30';
+    } else {
+        badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/5 text-gray-400 border border-white/10';
+    }
+};
+
+async function copyTextWithFallback(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+}
+
+/**
+ * Builds a unified searchable & filterable list of videos (course_materials)
+ * and documents (curriculum_documents) from hData for both Quiz & Project AI wizards.
+ */
+function buildPromptContentCatalog(hData) {
+    const trackMap = new Map((hData.tracks || []).map(t => [String(t.id), t]));
+    const phaseMap = new Map((hData.phases || []).map(p => [String(p.phase_id), p]));
+    const courseMap = new Map((hData.courses || []).map(c => [String(c.course_id), c]));
+    const lessonMap = new Map((hData.contents || []).map(m => [String(m.content_id), m]));
+
+    const videos = (hData.contents || [])
+        .filter(m => String(m.type || '').toLowerCase() !== 'section')
+        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+        .map(m => {
+            const course = courseMap.get(String(m.course_id || ''));
+            const phase = course ? phaseMap.get(String(course.phase_id || '')) : null;
+            const track = phase ? trackMap.get(String(phase.track_id || '')) : null;
+            return {
+                kind: 'video',
+                key: `video:${m.content_id}`,
+                id: String(m.content_id),
+                content_id: String(m.content_id),
+                title: m.title || 'درس بدون عنوان',
+                video_id: m.video_id || '',
+                directUrl: resolveVideoUrl(m.video_id),
+                course_id: course ? String(course.course_id) : String(m.course_id || ''),
+                phase_id: phase ? String(phase.phase_id) : '',
+                track_id: track ? String(track.id) : '',
+                courseTitle: course?.title || '',
+                contextLabel: [course?.title, phase?.title].filter(Boolean).join(' • '),
+            };
+        });
+
+    const documents = (hData.documents || [])
+        .map(d => {
+            // Resolve hierarchy directly or via curriculum_links
+            let courseId = d.course_id ? String(d.course_id) : '';
+            let phaseId = d.phase_id ? String(d.phase_id) : '';
+            let trackId = d.track_id ? String(d.track_id) : '';
+            const lesson = d.lesson_id ? lessonMap.get(String(d.lesson_id)) : null;
+            if (!courseId && lesson?.course_id) courseId = String(lesson.course_id);
+
+            const targets = getTargetsForItem(hData.links || [], 'document', d.id);
+            for (const t of targets) {
+                if (t.target_type === 'content' && !courseId) {
+                    const lm = lessonMap.get(String(t.target_id));
+                    if (lm?.course_id) courseId = String(lm.course_id);
+                } else if (t.target_type === 'course' && !courseId) {
+                    courseId = String(t.target_id);
+                } else if (t.target_type === 'phase' && !phaseId) {
+                    phaseId = String(t.target_id);
+                } else if (t.target_type === 'track' && !trackId) {
+                    trackId = String(t.target_id);
+                }
+            }
+
+            const course = courseId ? courseMap.get(courseId) : null;
+            if (!phaseId && course?.phase_id) phaseId = String(course.phase_id);
+            const phase = phaseId ? phaseMap.get(phaseId) : null;
+            if (!trackId && phase?.track_id) trackId = String(phase.track_id);
+            const track = trackId ? trackMap.get(trackId) : null;
+
+            return {
+                kind: 'document',
+                key: `document:${d.id}`,
+                id: String(d.id),
+                title: d.title || 'مستند بدون عنوان',
+                document_type: d.document_type || 'PDF',
+                source_type: d.source_type || '',
+                source_url: d.source_url || '',
+                directUrl: resolveDocumentUrl(d.source_url, d.source_type),
+                lesson_id: d.lesson_id ? String(d.lesson_id) : '',
+                course_id: courseId,
+                phase_id: phaseId,
+                track_id: trackId,
+                contextLabel: [course?.title, phase?.title, track?.name].filter(Boolean).slice(0, 2).join(' • '),
+            };
+        });
+
+    return { videos, documents, all: [...videos, ...documents] };
+}
+
+function populatePromptFilterSelects(prefix, hData, changedLevel = 'init') {
+    const tSel = document.getElementById(`${prefix}-filter-track`);
+    const pSel = document.getElementById(`${prefix}-filter-phase`);
+    const cSel = document.getElementById(`${prefix}-filter-course`);
+    if (!tSel || !pSel || !cSel) return;
+
+    if (changedLevel === 'init') {
+        tSel.innerHTML = '<option value="">كل المسارات (Tracks)</option>' +
+            (hData.tracks || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+    }
+    const tVal = tSel.value;
+    if (changedLevel === 'init' || changedLevel === 'track') {
+        const prevP = pSel.value;
+        const phases = (hData.phases || []).filter(p => p.phase_id && (!tVal || String(p.track_id) === String(tVal)));
+        pSel.innerHTML = '<option value="">كل المراحل (Phases)</option>' +
+            phases.map(p => `<option value="${escapeHtml(p.phase_id)}">${escapeHtml(p.title)}</option>`).join('');
+        pSel.value = phases.some(p => String(p.phase_id) === String(prevP)) ? prevP : '';
+    }
+    const pVal = pSel.value;
+    if (changedLevel === 'init' || changedLevel === 'track' || changedLevel === 'phase') {
+        const prevC = cSel.value;
+        const allowedPhaseIds = new Set(
+            (hData.phases || []).filter(p => !tVal || String(p.track_id) === String(tVal)).map(p => String(p.phase_id))
+        );
+        const courses = (hData.courses || []).filter(c => {
+            if (!c.course_id) return false;
+            if (pVal) return String(c.phase_id) === String(pVal);
+            if (tVal) return allowedPhaseIds.has(String(c.phase_id));
+            return true;
+        });
+        cSel.innerHTML = '<option value="">كل الكورسات (Courses)</option>' +
+            courses.map(c => `<option value="${escapeHtml(c.course_id)}">${escapeHtml(c.title)}</option>`).join('');
+        cSel.value = courses.some(c => String(c.course_id) === String(prevC)) ? prevC : '';
+    }
+}
+
+function getFilteredCatalogItems(prefix, catalog, typeFilter) {
+    const tVal = document.getElementById(`${prefix}-filter-track`)?.value || '';
+    const pVal = document.getElementById(`${prefix}-filter-phase`)?.value || '';
+    const cVal = document.getElementById(`${prefix}-filter-course`)?.value || '';
+    const q = (document.getElementById(`${prefix}-content-search`)?.value || '').trim().toLowerCase();
+
+    return catalog.all.filter(item => {
+        if (typeFilter === 'video' && item.kind !== 'video') return false;
+        if (typeFilter === 'document' && item.kind !== 'document') return false;
+        if (cVal && String(item.course_id) !== String(cVal)) return false;
+        if (pVal && String(item.phase_id) !== String(pVal)) return false;
+        if (tVal && String(item.track_id) !== String(tVal)) return false;
+        if (q) {
+            const hay = `${item.title} ${item.contextLabel} ${item.document_type || ''} ${item.id}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+        }
+        return true;
+    });
+}
+
+function renderSharedContentPickerUI({ prefix, engineName, accent, catalog, typeFilter, selectedKeys }) {
+    const listEl = document.getElementById(`${prefix}-content-list`);
+    const stripEl = document.getElementById(`${prefix}-selected-strip`);
+    const chipsEl = document.getElementById(`${prefix}-selected-chips`);
+    const labelEl = document.getElementById(`${prefix}-selected-label`);
+    if (!listEl) return;
+
+    const visibleItems = getFilteredCatalogItems(prefix, catalog, typeFilter);
+
+    if (visibleItems.length === 0) {
+        listEl.innerHTML = '<div class="text-center py-6 text-xs text-gray-500 border border-dashed border-white/10 rounded-xl">لا توجد فيديوهات أو مستندات مطابقة للفلتر الحالي.</div>';
+    } else {
+        const activeBorder = accent === 'emerald' ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-purple-500/50 bg-purple-500/10';
+        const activeCheck = accent === 'emerald' ? 'bg-emerald-500 border-emerald-400 text-black' : 'bg-purple-500 border-purple-400 text-white';
+
+        listEl.innerHTML = visibleItems.map(item => {
+            const isSel = selectedKeys.has(item.key);
+            const isVid = item.kind === 'video';
+            const badgeHtml = isVid
+                ? '<span class="px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25 text-[10px] font-bold shrink-0"><i class="fab fa-youtube ml-0.5"></i>فيديو</span>'
+                : `<span class="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/25 text-[10px] font-bold shrink-0"><i class="fas fa-file-pdf ml-0.5"></i>${escapeHtml(item.document_type || 'مستند')}</span>`;
+            const linkBadge = item.directUrl
+                ? '<span class="text-[10px] text-emerald-400/90 font-mono shrink-0" title="سيُدرج الرابط المباشر تلقائياً"><i class="fas fa-link ml-0.5"></i>رابط جاهز</span>'
+                : '<span class="text-[10px] text-amber-400/80 shrink-0"><i class="fas fa-exclamation-circle ml-0.5"></i>بدون رابط</span>';
+            const safeKey = escapeHtml(item.key).replace(/'/g, '&#39;');
+
+            return `
+                <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="w-full text-right flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${isSel ? activeBorder : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/15'}">
+                    <span class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 text-[10px] transition-colors ${isSel ? activeCheck : 'border-white/20 bg-black/50 text-transparent'}">
+                        <i class="fas fa-check"></i>
+                    </span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            ${badgeHtml}
+                            <span class="text-xs font-bold text-white truncate" dir="auto">${escapeHtml(item.title)}</span>
+                        </div>
+                        ${item.contextLabel ? `<div class="text-[10px] text-gray-400 truncate mt-0.5">${escapeHtml(item.contextLabel)}</div>` : ''}
+                    </div>
+                    ${linkBadge}
+                </button>
+            `;
+        }).join('');
+    }
+
+    if (stripEl && chipsEl && labelEl) {
+        const selectedItems = catalog.all.filter(i => selectedKeys.has(i.key));
+        if (selectedItems.length === 0) {
+            stripEl.classList.add('hidden');
+            chipsEl.innerHTML = '';
+        } else {
+            const vidCount = selectedItems.filter(i => i.kind === 'video').length;
+            const docCount = selectedItems.filter(i => i.kind === 'document').length;
+            const parts = [];
+            if (vidCount > 0) parts.push(`${vidCount} فيديو`);
+            if (docCount > 0) parts.push(`${docCount} مستند`);
+            labelEl.innerText = `المختار لإدراج روابطه (${parts.join(' + ')}):`;
+            stripEl.classList.remove('hidden');
+            chipsEl.innerHTML = selectedItems.map(item => {
+                const safeKey = escapeHtml(item.key).replace(/'/g, '&#39;');
+                const chipColor = item.kind === 'video'
+                    ? 'bg-red-500/15 text-red-200 border-red-500/30'
+                    : 'bg-cyan-500/15 text-cyan-200 border-cyan-500/30';
+                const iconCls = item.kind === 'video' ? 'fab fa-youtube text-red-400' : 'fas fa-file-pdf text-cyan-400';
+                return `
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-bold max-w-[230px] ${chipColor}">
+                        <i class="${iconCls} text-[10px] shrink-0"></i>
+                        <span class="truncate" dir="auto">${escapeHtml(item.title)}</span>
+                        <button type="button" onclick="${engineName}.toggleContentItem('${safeKey}')" class="hover:text-white opacity-75 hover:opacity-100 cursor-pointer shrink-0" title="إزالة"><i class="fas fa-times text-[10px]"></i></button>
+                    </span>
+                `;
+            }).join('');
+        }
+    }
+}
+
+// ==========================================
 // 🧠 AI QUIZ IMPORTER ENGINE
 // ==========================================
 window.quizAiEngine = {
-    state: { quiz: null, questions: [] },
+    state: {
+        quiz: null,
+        questions: [],
+        questionCount: 10,
+        contentTypeFilter: 'all',
+        selectedKeys: new Set(),
+        catalog: { videos: [], documents: [], all: [] },
+        hData: null,
+    },
 
-    openWizard: () => {
+    openWizard: async () => {
         document.getElementById('quiz-ai-json-input').value = '';
+        const topicInput = document.getElementById('quiz-ai-topic');
+        if (topicInput) topicInput.value = '';
+        const searchInput = document.getElementById('quiz-ai-content-search');
+        if (searchInput) searchInput.value = '';
+        const previewWrap = document.getElementById('quiz-ai-prompt-preview-wrap');
+        if (previewWrap) previewWrap.classList.add('hidden');
+
+        quizAiEngine.state.selectedKeys = new Set();
+        quizAiEngine.state.contentTypeFilter = 'all';
+        quizAiEngine.setQuestionCount(10);
+
         document.getElementById('quiz-ai-step-1').classList.remove('-translate-x-full', 'translate-x-full');
         document.getElementById('quiz-ai-step-2').classList.add('translate-x-full');
         document.getElementById('quiz-ai-wizard').classList.remove('hidden');
-        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: إدخال JSON';
+        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: تجهيز البرومت وإدخال JSON';
+
+        const hData = await fetchHierarchyData();
+        quizAiEngine.state.hData = hData;
+        quizAiEngine.state.catalog = buildPromptContentCatalog(hData);
+        populatePromptFilterSelects('quiz-ai', hData, 'init');
+        quizAiEngine.setContentTypeFilter('all');
+        quizAiEngine.onPromptConfigChange();
     },
 
     closeWizard: () => document.getElementById('quiz-ai-wizard').classList.add('hidden'),
-    
+
     backToStep1: () => {
         document.getElementById('quiz-ai-step-2').classList.add('translate-x-full');
         document.getElementById('quiz-ai-step-1').classList.remove('-translate-x-full');
-        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: إدخال JSON';
+        document.getElementById('quiz-ai-step-text').innerText = 'الخطوة 1: تجهيز البرومت وإدخال JSON';
     },
 
-    copyPrompt: () => {
-        const prompt = `أريد إنشاء اختبار (Quiz) لمنصة تعليمية.
-يرجى توفير البيانات بصيغة JSON حصراً، بناءً على الهيكلة التالية بالضبط دون أي نصوص إضافية:
-
-{
-  "quiz": {
-    "title": "عنوان الاختبار (مثال: اختبار في الأساسيات)",
-    "description": "وصف قصير للاختبار",
-    "passing_score": 50,
-    "max_xp": 100,
-    "attempts_allowed": 3,
-    "questions_to_show": 10
-  },
-  "questions": [
-    {
-      "question_text": "نص السؤال؟",
-      "option_a": "الخيار الأول",
-      "option_b": "الخيار الثاني",
-      "option_c": "الخيار الثالث",
-      "option_d": "الخيار الرابع",
-      "correct_answer": "A",
-      "hint": "تلميح يظهر إذا أخطأ الطالب (اختياري)"
-    }
-  ]
-}
-
-موضوع الاختبار هو: [أدخل الموضوع هنا]
-استخرج المعلومات والأسئلة من هذا المصدر: [أدخل المصدر/المحتوى هنا]
-عدد الأسئلة المطلوبة: [أدخل العدد]`;
-
-        navigator.clipboard.writeText(prompt);
-        window.showToast("تم نسخ أمر الذكاء الاصطناعي! يمكنك لصقه في ChatGPT/Gemini الآن.", "success");
+    setQuestionCount: (val) => {
+        const clean = normalizeQuestionCount(val, 10);
+        quizAiEngine.state.questionCount = clean;
+        const inp = document.getElementById('quiz-ai-q-count');
+        if (inp) inp.value = clean;
+        document.querySelectorAll('.quiz-q-preset').forEach(btn => {
+            const isMatch = parseInt(btn.dataset.count, 10) === clean;
+            btn.className = isMatch
+                ? 'quiz-q-preset px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-purple-500/25 text-purple-200 border border-purple-500/40 transition-all cursor-pointer'
+                : 'quiz-q-preset px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-white/5 hover:bg-purple-500/20 text-gray-300 border border-white/10 transition-all cursor-pointer';
+        });
+        quizAiEngine.onPromptConfigChange();
     },
 
-processJSON: async () => {
+    stepQuestionCount: (delta) => {
+        const cur = normalizeQuestionCount(document.getElementById('quiz-ai-q-count')?.value, 10);
+        quizAiEngine.setQuestionCount(Math.min(100, Math.max(1, cur + delta)));
+    },
+
+    setContentTypeFilter: (type) => {
+        quizAiEngine.state.contentTypeFilter = type;
+        document.querySelectorAll('.quiz-type-tab').forEach(btn => {
+            const active = btn.dataset.type === type;
+            btn.className = active
+                ? 'quiz-type-tab px-2.5 py-1 rounded-md bg-purple-600 text-white transition-all cursor-pointer'
+                : 'quiz-type-tab px-2.5 py-1 rounded-md text-gray-400 hover:text-white transition-all cursor-pointer';
+        });
+        quizAiEngine.renderContentPicker();
+    },
+
+    onFilterChange: (level) => {
+        if (quizAiEngine.state.hData) {
+            populatePromptFilterSelects('quiz-ai', quizAiEngine.state.hData, level);
+        }
+        quizAiEngine.renderContentPicker();
+    },
+
+    toggleContentItem: (key) => {
+        if (quizAiEngine.state.selectedKeys.has(key)) {
+            quizAiEngine.state.selectedKeys.delete(key);
+        } else {
+            quizAiEngine.state.selectedKeys.add(key);
+        }
+        quizAiEngine.renderContentPicker();
+        quizAiEngine.onPromptConfigChange();
+    },
+
+    selectAllVisible: () => {
+        const visible = getFilteredCatalogItems('quiz-ai', quizAiEngine.state.catalog, quizAiEngine.state.contentTypeFilter);
+        visible.forEach(i => quizAiEngine.state.selectedKeys.add(i.key));
+        quizAiEngine.renderContentPicker();
+        quizAiEngine.onPromptConfigChange();
+    },
+
+    clearSelectedContent: () => {
+        quizAiEngine.state.selectedKeys.clear();
+        quizAiEngine.renderContentPicker();
+        quizAiEngine.onPromptConfigChange();
+    },
+
+    renderContentPicker: () => {
+        renderSharedContentPickerUI({
+            prefix: 'quiz-ai',
+            engineName: 'quizAiEngine',
+            accent: 'purple',
+            catalog: quizAiEngine.state.catalog,
+            typeFilter: quizAiEngine.state.contentTypeFilter,
+            selectedKeys: quizAiEngine.state.selectedKeys,
+        });
+    },
+
+    getSelectedContentItems: () => {
+        const keys = quizAiEngine.state.selectedKeys;
+        return {
+            selectedVideos: quizAiEngine.state.catalog.videos.filter(v => keys.has(v.key)),
+            selectedDocuments: quizAiEngine.state.catalog.documents.filter(d => keys.has(d.key)),
+        };
+    },
+
+    buildCurrentPrompt: () => {
+        const count = normalizeQuestionCount(document.getElementById('quiz-ai-q-count')?.value, 10);
+        const topic = document.getElementById('quiz-ai-topic')?.value || '';
+        const { selectedVideos, selectedDocuments } = quizAiEngine.getSelectedContentItems();
+        return {
+            count,
+            selectedVideos,
+            selectedDocuments,
+            prompt: buildQuizPrompt({ questionCount: count, topic, selectedVideos, selectedDocuments }),
+        };
+    },
+
+    onPromptConfigChange: () => {
+        const { count, selectedVideos, selectedDocuments, prompt } = quizAiEngine.buildCurrentPrompt();
+        quizAiEngine.state.questionCount = count;
+
+        // Sync preset highlight if typed manually
+        document.querySelectorAll('.quiz-q-preset').forEach(btn => {
+            const isMatch = parseInt(btn.dataset.count, 10) === count;
+            btn.className = isMatch
+                ? 'quiz-q-preset px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-purple-500/25 text-purple-200 border border-purple-500/40 transition-all cursor-pointer'
+                : 'quiz-q-preset px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-white/5 hover:bg-purple-500/20 text-gray-300 border border-white/10 transition-all cursor-pointer';
+        });
+
+        const total = selectedVideos.length + selectedDocuments.length;
+        const summary = document.getElementById('quiz-ai-builder-summary');
+        if (summary) {
+            const parts = [`${count} سؤال`];
+            if (selectedVideos.length > 0) parts.push(`${selectedVideos.length} فيديو`);
+            if (selectedDocuments.length > 0) parts.push(`${selectedDocuments.length} مستند`);
+            if (total === 0) parts.push('بدون مصادر محددة');
+            summary.innerText = parts.join(' • ');
+        }
+
+        const copyBtn = document.getElementById('btn-quiz-ai-copy-prompt');
+        if (copyBtn) {
+            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. نسخ أمر التوليد الذكي (${count} سؤال${total > 0 ? ` • ${total} رابط` : ''})</span>`;
+        }
+
+        const preview = document.getElementById('quiz-ai-prompt-preview');
+        if (preview) preview.value = prompt;
+    },
+
+    togglePromptPreview: () => {
+        const wrap = document.getElementById('quiz-ai-prompt-preview-wrap');
+        if (!wrap) return;
+        wrap.classList.toggle('hidden');
+        if (!wrap.classList.contains('hidden')) {
+            quizAiEngine.onPromptConfigChange();
+        }
+    },
+
+    copyPrompt: async () => {
+        const { count, selectedVideos, selectedDocuments, prompt } = quizAiEngine.buildCurrentPrompt();
+        try {
+            await copyTextWithFallback(prompt);
+            const total = selectedVideos.length + selectedDocuments.length;
+            const detail = total > 0
+                ? `تم نسخ البرومت (${count} سؤالاً + ${total} رابط مباشر)!`
+                : `تم نسخ البرومت (${count} سؤالاً)! يمكنك لصقه في Gemini الآن.`;
+            window.showToast(detail, "success");
+        } catch (err) {
+            window.showToast("تعذر النسخ التلقائي — افتح معاينة البرومت وانسخه يدوياً.", "warning");
+        }
+    },
+
+    processJSON: async () => {
         const jsonString = document.getElementById('quiz-ai-json-input').value.trim();
         if (!jsonString) return window.showToast("يرجى إدخال كود الـ JSON أولاً", "error");
 
@@ -3113,7 +4317,7 @@ processJSON: async () => {
 
             quizAiEngine.state.quiz = parsed.quiz;
             quizAiEngine.state.questions = parsed.questions;
-            await quizAiEngine.renderReview(); // 💡 استدعاء دالة المراجعة الجديدة
+            await quizAiEngine.renderReview();
 
         } catch (e) {
             window.showToast("خطأ في قراءة JSON: " + e.message, "error");
@@ -3125,42 +4329,42 @@ processJSON: async () => {
         const q = quizAiEngine.state.quiz;
         const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-purple-500 outline-none";
         
-        // 💡 جلب البيانات الهرمية للفلاتر
         const hData = await fetchHierarchyData();
-        const buildOpts = (items, valKey, textKey) => items.map(i => `<option value="${i[valKey]}">${i[textKey]}</option>`).join('');
+        const { selectedVideos, selectedDocuments } = quizAiEngine.getSelectedContentItems();
+        const initialTargets = buildInitialQuizTargets({ selectedVideos, selectedDocuments });
 
         let html = `
             <div id="ai-quiz-targets-slot" class="mb-6"></div>
 
-            <div class="bg-black/40 border border-white/10 rounded-2xl p-6">
-                <h3 class="text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs mr-2"></i> إعدادات الاختبار</h3>
+            <div class="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-purple-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs ml-2"></i> إعدادات الاختبار</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان الاختبار *</label><input type="text" id="ai-q-title" value="${q.title || ''}" class="${inputStyle}"></div>
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف</label><input type="text" id="ai-q-desc" value="${q.description || ''}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان الاختبار *</label><input type="text" id="ai-q-title" value="${escapeHtml(q.title || '')}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف</label><input type="text" id="ai-q-desc" value="${escapeHtml(q.description || '')}" class="${inputStyle}"></div>
                     <div><label class="text-xs text-gray-400 mb-1 block font-bold">نسبة النجاح المطلوبة (%)</label><input type="number" id="ai-q-pass" value="${q.passing_score || 50}" class="${inputStyle}"></div>
                     <div><label class="text-xs text-gray-400 mb-1 block font-bold">النقاط (XP)</label><input type="number" id="ai-q-xp" value="${q.max_xp || 50}" class="${inputStyle}"></div>
                     <div><label class="text-xs text-gray-400 mb-1 block font-bold">عدد المحاولات</label><input type="number" id="ai-q-attempts" value="${q.attempts_allowed || 3}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">عدد الأسئلة المعروضة</label><input type="number" id="ai-q-show" value="${q.questions_to_show || q.questions?.length || ''}" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">عدد الأسئلة المعروضة</label><input type="number" id="ai-q-show" value="${q.questions_to_show || quizAiEngine.state.questions.length || ''}" class="${inputStyle}"></div>
                 </div>
             </div>
             
-            <h3 class="text-xl font-bold text-white mt-8 mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-purple-500"></i> مراجعة الأسئلة (${quizAiEngine.state.questions.length})</h3>
+            <h3 class="text-lg sm:text-xl font-bold text-white mt-6 mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-purple-500"></i> مراجعة الأسئلة (${quizAiEngine.state.questions.length})</h3>
             <div class="space-y-4">
         `;
 
         quizAiEngine.state.questions.forEach((question, idx) => {
             html += `
-                <div class="bg-black/30 border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-colors" id="ai-question-${idx}">
+                <div class="bg-black/30 border border-white/5 hover:border-white/10 rounded-2xl p-4 sm:p-5 transition-colors" id="ai-question-${idx}">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-purple-400 font-bold font-mono">Question #${idx + 1}</span>
                     </div>
                     <div class="space-y-3">
-                        <div class="dir-ltr text-left"><label class="text-xs text-gray-500 mb-1 block text-right">نص السؤال</label><textarea class="ai-q-text ${inputStyle}" rows="2">${question.question_text || ''}</textarea></div>
+                        <div class="dir-ltr text-left"><label class="text-xs text-gray-500 mb-1 block text-right">نص السؤال</label><textarea class="ai-q-text ${inputStyle}" rows="2">${escapeHtml(question.question_text || '')}</textarea></div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 dir-ltr text-left">
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (A)</label><input type="text" class="ai-q-opt-a ${inputStyle}" value="${question.option_a || ''}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (B)</label><input type="text" class="ai-q-opt-b ${inputStyle}" value="${question.option_b || ''}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (C)</label><input type="text" class="ai-q-opt-c ${inputStyle}" value="${question.option_c || ''}"></div>
-                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (D)</label><input type="text" class="ai-q-opt-d ${inputStyle}" value="${question.option_d || ''}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (A)</label><input type="text" class="ai-q-opt-a ${inputStyle}" value="${escapeHtml(question.option_a || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (B)</label><input type="text" class="ai-q-opt-b ${inputStyle}" value="${escapeHtml(question.option_b || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (C)</label><input type="text" class="ai-q-opt-c ${inputStyle}" value="${escapeHtml(question.option_c || '')}"></div>
+                            <div><label class="text-xs text-gray-500 mb-1 block text-right">الخيار (D)</label><input type="text" class="ai-q-opt-d ${inputStyle}" value="${escapeHtml(question.option_d || '')}"></div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
@@ -3172,7 +4376,7 @@ processJSON: async () => {
                                     <option value="D" ${question.correct_answer === 'D' ? 'selected' : ''}>D</option>
                                 </select>
                             </div>
-                            <div class="dir-ltr text-left"><label class="text-xs text-blue-400 mb-1 block font-bold text-right">تلميح (Hint)</label><input type="text" class="ai-q-hint ${inputStyle}" value="${question.hint || ''}"></div>
+                            <div class="dir-ltr text-left"><label class="text-xs text-blue-400 mb-1 block font-bold text-right">تلميح (Hint)</label><input type="text" class="ai-q-hint ${inputStyle}" value="${escapeHtml(question.hint || '')}"></div>
                         </div>
                     </div>
                 </div>
@@ -3182,15 +4386,14 @@ processJSON: async () => {
         html += `</div>`;
         container.innerHTML = html;
 
-        // 💡 تفعيل محرر الربط المتعدد (بكورس أو درس/فيديو أو أكثر)
+        // 💡 تفعيل محرر الربط المتعدد مع تجهيزه مسبقاً بالمحتوى الذي تم اختياره في الخطوة 1
         mountItemTargetsEditor(document.getElementById('ai-quiz-targets-slot'), {
             itemType: 'quiz',
-            initialTargets: [],
+            initialTargets,
             hData,
             allowTrackPhase: false,
         });
 
-        // 💡 تفعيل محرك البحث للقوائم التي تم إنشاؤها
         if (window.initSearchableSelects) window.initSearchableSelects();
 
         document.getElementById('quiz-ai-step-1').classList.add('-translate-x-full');
@@ -3209,7 +4412,6 @@ processJSON: async () => {
         btn.disabled = true;
 
         try {
-            // 1. حفظ معلومات الكويز
             const quizPayload = {
                 title: title,
                 description: document.getElementById('ai-q-desc').value,
@@ -3223,7 +4425,6 @@ processJSON: async () => {
             if (quizErr) throw quizErr;
             const newQuizId = newQuiz[0].quiz_id;
 
-            // 2. تجميع وحفظ الأسئلة
             const questionsElements = document.querySelectorAll('#quiz-ai-review-container > div.space-y-4 > div');
             const questionsPayload = Array.from(questionsElements).map(el => ({
                 quiz_id: newQuizId,
@@ -3239,7 +4440,6 @@ processJSON: async () => {
             const { error: qErr } = await supabase.from('quiz_questions').insert(questionsPayload);
             if (qErr) throw qErr;
 
-            // 3. 💡 إضافة روابط الكويز بدون مسح الكويزات السابقة
             if (selectedTargets.length > 0) {
                 const hData = await fetchHierarchyData();
                 await appendItemTargets(supabase, 'quiz', newQuizId, selectedTargets, hData);
@@ -3249,7 +4449,7 @@ processJSON: async () => {
             quizAiEngine.closeWizard();
             hierarchyCache = null;
             
-            if(typeof loadTableData === 'function') loadTableData();
+            if (typeof loadTableData === 'function') loadTableData();
 
         } catch (e) {
             window.showToast("خطأ أثناء الحفظ: " + e.message, "error");
@@ -3260,49 +4460,232 @@ processJSON: async () => {
     }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ==========================================
 // 🛠️ AI PROJECT IMPORTER ENGINE
 // ==========================================
 window.projectAiEngine = {
-    state: { project: null, rubric: [] },
+    state: {
+        project: null,
+        rubric: [],
+        criteriaCount: 4,
+        contentTypeFilter: 'all',
+        selectedKeys: new Set(),
+        catalog: { videos: [], documents: [], all: [] },
+        hData: null,
+    },
 
-    openWizard: () => {
+    openWizard: async () => {
         document.getElementById('project-ai-json-input').value = '';
+        const topicInp = document.getElementById('project-ai-topic');
+        if (topicInp) topicInp.value = '';
+        const searchInp = document.getElementById('project-ai-content-search');
+        if (searchInp) searchInp.value = '';
+        const maxPtsInp = document.getElementById('project-ai-max-points');
+        if (maxPtsInp) maxPtsInp.value = 100;
+        const methodSel = document.getElementById('project-ai-submission-method');
+        if (methodSel) methodSel.value = 'github_link';
+        const previewWrap = document.getElementById('project-ai-prompt-preview-wrap');
+        if (previewWrap) previewWrap.classList.add('hidden');
+        const step1Links = document.getElementById('project-ai-step1-links');
+        if (step1Links) {
+            step1Links.innerHTML = '';
+            window.cmAddProjectLinkRow('project-ai-step1-links', { title: '', url: '' });
+        }
+
+        projectAiEngine.state.selectedKeys = new Set();
+        projectAiEngine.state.contentTypeFilter = 'all';
+        projectAiEngine.setCriteriaCount(4);
+
         document.getElementById('project-ai-step-1').classList.remove('-translate-x-full', 'translate-x-full');
         document.getElementById('project-ai-step-2').classList.add('translate-x-full');
         document.getElementById('project-ai-wizard').classList.remove('hidden');
-        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: إدخال JSON';
+        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: تجهيز برومت المشروع وإدخال JSON';
+
+        const hData = await fetchHierarchyData();
+        projectAiEngine.state.hData = hData;
+        projectAiEngine.state.catalog = buildPromptContentCatalog(hData);
+        populatePromptFilterSelects('project-ai', hData, 'init');
+        projectAiEngine.setContentTypeFilter('all');
+        projectAiEngine.onPromptConfigChange();
     },
 
     closeWizard: () => document.getElementById('project-ai-wizard').classList.add('hidden'),
+
     backToStep1: () => {
         document.getElementById('project-ai-step-2').classList.add('translate-x-full');
         document.getElementById('project-ai-step-1').classList.remove('-translate-x-full');
-        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: إدخال JSON';
+        document.getElementById('project-ai-step-text').innerText = 'الخطوة 1: تجهيز برومت المشروع وإدخال JSON';
     },
 
-    copyPrompt: () => {
-        // سيتم تحديث الـ Prompt في الرسالة القادمة
-        navigator.clipboard.writeText("سيتم توفير الـ Prompt لاحقاً.");
-        window.showToast("تم النسخ", "success");
+    setCriteriaCount: (val) => {
+        const clean = normalizeBoundedInt(val, { min: 1, max: 20, fallback: 4 });
+        projectAiEngine.state.criteriaCount = clean;
+        const inp = document.getElementById('project-ai-rubric-count');
+        if (inp) inp.value = clean;
+        document.querySelectorAll('.proj-c-preset').forEach(btn => {
+            const active = parseInt(btn.dataset.pcount, 10) === clean;
+            btn.className = active
+                ? 'proj-c-preset px-2 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-500/25 text-emerald-200 border border-emerald-500/40 cursor-pointer'
+                : 'proj-c-preset px-2 py-1.5 rounded-lg text-[11px] font-bold bg-white/5 hover:bg-emerald-500/20 text-gray-300 border border-white/10 cursor-pointer';
+        });
+        projectAiEngine.onPromptConfigChange();
+    },
+
+    stepCriteriaCount: (delta) => {
+        const cur = normalizeBoundedInt(document.getElementById('project-ai-rubric-count')?.value, { min: 1, max: 20, fallback: 4 });
+        projectAiEngine.setCriteriaCount(Math.min(20, Math.max(1, cur + delta)));
+    },
+
+    setContentTypeFilter: (type) => {
+        projectAiEngine.state.contentTypeFilter = type;
+        document.querySelectorAll('.proj-type-tab').forEach(btn => {
+            const active = btn.dataset.ptype === type;
+            btn.className = active
+                ? 'proj-type-tab px-2.5 py-1 rounded-md bg-emerald-600 text-white transition-all cursor-pointer'
+                : 'proj-type-tab px-2.5 py-1 rounded-md text-gray-400 hover:text-white transition-all cursor-pointer';
+        });
+        projectAiEngine.renderContentPicker();
+    },
+
+    onFilterChange: (level) => {
+        if (projectAiEngine.state.hData) {
+            populatePromptFilterSelects('project-ai', projectAiEngine.state.hData, level);
+        }
+        projectAiEngine.renderContentPicker();
+    },
+
+    toggleContentItem: (key) => {
+        if (projectAiEngine.state.selectedKeys.has(key)) {
+            projectAiEngine.state.selectedKeys.delete(key);
+        } else {
+            projectAiEngine.state.selectedKeys.add(key);
+        }
+        projectAiEngine.renderContentPicker();
+        projectAiEngine.onPromptConfigChange();
+    },
+
+    selectAllVisible: () => {
+        const visible = getFilteredCatalogItems('project-ai', projectAiEngine.state.catalog, projectAiEngine.state.contentTypeFilter);
+        visible.forEach(i => projectAiEngine.state.selectedKeys.add(i.key));
+        projectAiEngine.renderContentPicker();
+        projectAiEngine.onPromptConfigChange();
+    },
+
+    clearSelectedContent: () => {
+        projectAiEngine.state.selectedKeys.clear();
+        projectAiEngine.renderContentPicker();
+        projectAiEngine.onPromptConfigChange();
+    },
+
+    renderContentPicker: () => {
+        renderSharedContentPickerUI({
+            prefix: 'project-ai',
+            engineName: 'projectAiEngine',
+            accent: 'emerald',
+            catalog: projectAiEngine.state.catalog,
+            typeFilter: projectAiEngine.state.contentTypeFilter,
+            selectedKeys: projectAiEngine.state.selectedKeys,
+        });
+    },
+
+    addStep1LinkRow: () => {
+        window.cmAddProjectLinkRow('project-ai-step1-links', { title: '', url: '' });
+    },
+
+    getStep1ExtraLinks: () => {
+        return Array.from(document.querySelectorAll('#project-ai-step1-links .ai-proj-link-row'))
+            .map(row => ({
+                title: row.querySelector('.ai-proj-link-title')?.value?.trim() || '',
+                url: row.querySelector('.ai-proj-link-url')?.value?.trim() || ''
+            }))
+            .filter(l => l.url);
+    },
+
+    getSelectedContentItems: () => {
+        const keys = projectAiEngine.state.selectedKeys;
+        return {
+            selectedVideos: projectAiEngine.state.catalog.videos.filter(v => keys.has(v.key)),
+            selectedDocuments: projectAiEngine.state.catalog.documents.filter(d => keys.has(d.key)),
+        };
+    },
+
+    buildCurrentPrompt: () => {
+        const criteriaCount = normalizeBoundedInt(document.getElementById('project-ai-rubric-count')?.value, { min: 1, max: 20, fallback: 4 });
+        const maxPoints = normalizeBoundedInt(document.getElementById('project-ai-max-points')?.value, { min: 10, max: 5000, fallback: 100 });
+        const submissionMethod = document.getElementById('project-ai-submission-method')?.value || 'github_link';
+        const topic = document.getElementById('project-ai-topic')?.value || '';
+        const { selectedVideos, selectedDocuments } = projectAiEngine.getSelectedContentItems();
+        const extraLinks = projectAiEngine.getStep1ExtraLinks();
+        return {
+            criteriaCount,
+            maxPoints,
+            submissionMethod,
+            selectedVideos,
+            selectedDocuments,
+            extraLinks,
+            prompt: buildProjectPrompt({
+                criteriaCount,
+                maxPoints,
+                submissionMethod,
+                topic,
+                selectedVideos,
+                selectedDocuments,
+                extraLinks,
+            }),
+        };
+    },
+
+    onPromptConfigChange: () => {
+        const { criteriaCount, maxPoints, selectedVideos, selectedDocuments, extraLinks, prompt } = projectAiEngine.buildCurrentPrompt();
+        projectAiEngine.state.criteriaCount = criteriaCount;
+
+        document.querySelectorAll('.proj-c-preset').forEach(btn => {
+            const active = parseInt(btn.dataset.pcount, 10) === criteriaCount;
+            btn.className = active
+                ? 'proj-c-preset px-2 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-500/25 text-emerald-200 border border-emerald-500/40 cursor-pointer'
+                : 'proj-c-preset px-2 py-1.5 rounded-lg text-[11px] font-bold bg-white/5 hover:bg-emerald-500/20 text-gray-300 border border-white/10 cursor-pointer';
+        });
+
+        const totalLinks = selectedVideos.length + selectedDocuments.length + extraLinks.length;
+        const summary = document.getElementById('project-ai-builder-summary');
+        if (summary) {
+            const parts = [`${criteriaCount} معايير`, `${maxPoints} XP`];
+            if (totalLinks > 0) parts.push(`${totalLinks} رابط`);
+            summary.innerText = parts.join(' • ');
+        }
+
+        const copyBtn = document.getElementById('btn-project-ai-copy-prompt');
+        if (copyBtn) {
+            copyBtn.innerHTML = `<i class="fas fa-copy"></i> <span>1. نسخ أمر التوليد الذكي (${criteriaCount} معايير${totalLinks > 0 ? ` • ${totalLinks} رابط` : ''})</span>`;
+        }
+
+        const preview = document.getElementById('project-ai-prompt-preview');
+        if (preview) preview.value = prompt;
+    },
+
+    togglePromptPreview: () => {
+        const wrap = document.getElementById('project-ai-prompt-preview-wrap');
+        if (!wrap) return;
+        wrap.classList.toggle('hidden');
+        if (!wrap.classList.contains('hidden')) {
+            projectAiEngine.onPromptConfigChange();
+        }
+    },
+
+    copyPrompt: async () => {
+        const { criteriaCount, selectedVideos, selectedDocuments, extraLinks, prompt } = projectAiEngine.buildCurrentPrompt();
+        try {
+            await copyTextWithFallback(prompt);
+            const totalLinks = selectedVideos.length + selectedDocuments.length + extraLinks.length;
+            window.showToast(
+                totalLinks > 0
+                    ? `تم نسخ برومت المشروع (${criteriaCount} معايير + ${totalLinks} رابط مباشر)!`
+                    : `تم نسخ برومت المشروع (${criteriaCount} معايير)! يمكنك لصقه في Gemini الآن.`,
+                "success"
+            );
+        } catch (_) {
+            window.showToast("تعذر النسخ التلقائي — افتح معاينة البرومت وانسخه يدوياً.", "warning");
+        }
     },
 
     processJSON: async () => {
@@ -3316,12 +4699,54 @@ window.projectAiEngine = {
             if (!parsed.project) throw new Error("الهيكلة غير صحيحة. يجب أن تحتوي على مفتاح 'project'.");
 
             projectAiEngine.state.project = parsed.project;
-            projectAiEngine.state.rubric = parsed.rubric || [];
+            projectAiEngine.state.rubric = Array.isArray(parsed.rubric)
+                ? parsed.rubric
+                : (Array.isArray(parsed.rubric?.criteria) ? parsed.rubric.criteria : []);
             await projectAiEngine.renderReview();
 
         } catch (e) {
             window.showToast("خطأ في قراءة JSON: " + e.message, "error");
         }
+    },
+
+    addReviewRubricRow: (crit = { aspect: '', description: '', points: 25 }) => {
+        const list = document.getElementById('ai-p-rubric-list');
+        if (!list) return;
+        list.querySelector('.ai-p-rubric-empty')?.remove();
+        const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:border-emerald-500 outline-none";
+        const row = document.createElement('div');
+        row.className = 'bg-black/30 border border-white/10 p-3 sm:p-4 rounded-xl flex flex-col md:flex-row gap-2.5 items-stretch md:items-end rubric-item';
+        row.innerHTML = `
+            <div class="w-full md:w-1/4"><label class="text-[11px] text-gray-500 block mb-1">المعيار (Aspect)</label><input type="text" value="${escapeHtml(crit.aspect || crit.criterion || '')}" class="r-aspect ${inputStyle}"></div>
+            <div class="flex-1 w-full"><label class="text-[11px] text-gray-500 block mb-1">الوصف (Description)</label><input type="text" value="${escapeHtml(crit.description || '')}" class="r-desc ${inputStyle}"></div>
+            <div class="flex items-end gap-2 shrink-0">
+                <div class="w-24"><label class="text-[11px] text-emerald-400 block font-bold mb-1">النقاط</label><input type="number" min="0" value="${crit.points ?? 0}" oninput="projectAiEngine.updateReviewRubricSum()" class="r-points ${inputStyle} border-emerald-500/30 text-center text-emerald-400 font-bold"></div>
+                <button type="button" onclick="projectAiEngine.removeReviewRubricRow(this)" class="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 flex items-center justify-center cursor-pointer" title="حذف المعيار"><i class="fas fa-trash text-xs"></i></button>
+            </div>
+        `;
+        list.appendChild(row);
+        projectAiEngine.updateReviewRubricSum();
+    },
+
+    removeReviewRubricRow: (btn) => {
+        const row = btn.closest('.rubric-item');
+        const list = document.getElementById('ai-p-rubric-list');
+        if (row) row.remove();
+        if (list && list.querySelectorAll('.rubric-item').length === 0) {
+            list.innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم. يمكنك إضافة معيار جديد بالزر أعلاه.</div>';
+        }
+        projectAiEngine.updateReviewRubricSum();
+    },
+
+    updateReviewRubricSum: () => {
+        const badge = document.getElementById('ai-p-rubric-sum');
+        if (!badge) return;
+        const maxPts = parseInt(document.getElementById('ai-p-xp')?.value, 10) || 100;
+        const sum = Array.from(document.querySelectorAll('#ai-p-rubric-list .r-points')).reduce((a, el) => a + (parseInt(el.value, 10) || 0), 0);
+        badge.innerText = `مجموع النقاط: ${sum} / ${maxPts}`;
+        badge.className = sum === maxPts
+            ? 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+            : 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30';
     },
 
     renderReview: async () => {
@@ -3330,47 +4755,75 @@ window.projectAiEngine = {
         const inputStyle = "w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-emerald-500 outline-none";
         
         const hData = await fetchHierarchyData();
-        const buildOpts = (items, valKey, textKey) => items.map(i => `<option value="${i[valKey]}">${i[textKey]}</option>`).join('');
+        const { selectedVideos, selectedDocuments } = projectAiEngine.getSelectedContentItems();
+        const initialTargets = buildInitialQuizTargets({ selectedVideos, selectedDocuments });
 
-        let html = `
-            <div id="ai-project-targets-slot" class="mb-6"></div>
+        // Merge links from JSON (requirements_links / requirements_url) + Step 1 extra links (deduplicated)
+        const jsonLinks = [
+            ...parseProjectLinks(p.requirements_links),
+            ...parseProjectLinks(p.requirements_url),
+            ...projectAiEngine.getStep1ExtraLinks(),
+        ];
+        const dedupedLinks = [];
+        const seenLinkUrls = new Set();
+        for (const l of jsonLinks) {
+            if (l.url && !seenLinkUrls.has(l.url)) {
+                seenLinkUrls.add(l.url);
+                dedupedLinks.push(l);
+            }
+        }
+        if (dedupedLinks.length === 0) dedupedLinks.push({ title: '', url: '' });
 
-            <div class="bg-black/40 border border-white/10 rounded-2xl p-6">
-                <h3 class="text-xl font-bold text-emerald-400 border-b border-white/5 pb-3 mb-4"><i class="fas fa-cogs mr-2"></i> تفاصيل المشروع الأساسية</h3>
+        const html = `
+            <div id="ai-project-targets-slot" class="mb-5"></div>
+
+            <div class="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 space-y-4">
+                <h3 class="text-lg sm:text-xl font-bold text-emerald-400 border-b border-white/5 pb-3"><i class="fas fa-cogs ml-2"></i> تفاصيل المشروع الأساسية</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان المشروع *</label><input type="text" id="ai-p-title" value="${p.title || ''}" class="${inputStyle}"></div>
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف والمتطلبات (يدعم HTML) *</label><textarea id="ai-p-desc" rows="4" class="${inputStyle}">${p.description || ''}</textarea></div>
-                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">رابط دليل/مرفقات المشروع (اختياري)</label><input type="text" id="ai-p-req-url" value="${p.requirements_url || ''}" class="${inputStyle} dir-ltr text-left"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">إجمالي النقاط (XP)</label><input type="number" id="ai-p-xp" value="${p.max_points || 100}" class="${inputStyle}"></div>
-                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">طريقة التسليم (مثال: github_link)</label><input type="text" id="ai-p-method" value="${p.submission_method || 'github_link'}" class="${inputStyle} dir-ltr text-left"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">عنوان المشروع *</label><input type="text" id="ai-p-title" value="${escapeHtml(p.title || '')}" class="${inputStyle}"></div>
+                    <div class="md:col-span-2"><label class="text-xs text-gray-400 mb-1 block font-bold">الوصف والمتطلبات (يدعم HTML) *</label><textarea id="ai-p-desc" rows="4" class="${inputStyle}">${escapeHtml(p.description || '')}</textarea></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">إجمالي النقاط (XP)</label><input type="number" id="ai-p-xp" value="${p.max_points || 100}" oninput="projectAiEngine.updateReviewRubricSum()" class="${inputStyle}"></div>
+                    <div><label class="text-xs text-gray-400 mb-1 block font-bold">طريقة التسليم (مثال: github_link)</label><input type="text" id="ai-p-method" value="${escapeHtml(p.submission_method || 'github_link')}" class="${inputStyle} dir-ltr text-left"></div>
+                </div>
+
+                <!-- Multi-Links Editor in Review Step -->
+                <div class="pt-3 border-t border-white/10 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <label class="text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fas fa-link"></i> روابط دليل ومرفقات المشروع (متعددة)</label>
+                        <button type="button" onclick="window.cmAddProjectLinkRow('ai-p-links-list')" class="px-3 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1 cursor-pointer">
+                            <i class="fas fa-plus text-[10px]"></i> <span>إضافة رابط</span>
+                        </button>
+                    </div>
+                    <div id="ai-p-links-list" class="space-y-2"></div>
                 </div>
             </div>
             
-            <h3 class="text-xl font-bold text-white mt-8 mb-4 flex items-center gap-2"><i class="fas fa-list-check text-emerald-500"></i> معايير التقييم - Rubrics (${projectAiEngine.state.rubric.length})</h3>
-            <div class="space-y-3" id="ai-p-rubric-list">
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-6 mb-3">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-list-check text-emerald-500"></i> معايير التقييم (Rubrics)</h3>
+                    <span id="ai-p-rubric-sum" class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"></span>
+                </div>
+                <button type="button" onclick="projectAiEngine.addReviewRubricRow()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-plus text-[10px]"></i> <span>إضافة معيار</span>
+                </button>
+            </div>
+            <div class="space-y-3" id="ai-p-rubric-list"></div>
         `;
 
-        // 💡 توليد حقول معايير التقييم للتعديل اليدوي إن لزم الأمر
-        projectAiEngine.state.rubric.forEach((crit, idx) => {
-            html += `
-                <div class="bg-black/30 border border-white/5 p-4 rounded-xl flex flex-col md:flex-row gap-3 items-start rubric-item">
-                    <div class="w-full md:w-1/4"><label class="text-xs text-gray-500 block mb-1">المعيار (Aspect)</label><input type="text" value="${crit.aspect || ''}" class="r-aspect ${inputStyle}"></div>
-                    <div class="flex-1 w-full"><label class="text-xs text-gray-500 block mb-1">الوصف (Description)</label><input type="text" value="${crit.description || ''}" class="r-desc ${inputStyle}"></div>
-                    <div class="w-full md:w-24"><label class="text-xs text-emerald-400 block font-bold mb-1">النقاط</label><input type="number" value="${crit.points || 0}" class="r-points ${inputStyle} border-emerald-500/30 text-center text-emerald-400 font-bold"></div>
-                </div>
-            `;
-        });
-
-        if (projectAiEngine.state.rubric.length === 0) {
-            html += `<div class="text-gray-500 text-center p-4 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم. سيتم التقييم بناءً على النقاط الإجمالية فقط.</div>`;
-        }
-
-        html += `</div>`;
         container.innerHTML = html;
+
+        dedupedLinks.forEach(lnk => window.cmAddProjectLinkRow('ai-p-links-list', lnk));
+
+        if (projectAiEngine.state.rubric.length > 0) {
+            projectAiEngine.state.rubric.forEach(crit => projectAiEngine.addReviewRubricRow(crit));
+        } else {
+            document.getElementById('ai-p-rubric-list').innerHTML = '<div class="ai-p-rubric-empty text-gray-500 text-xs text-center p-4 border border-dashed border-white/10 rounded-xl">لا توجد معايير تقييم. يمكنك إضافة معيار جديد بالزر أعلاه.</div>';
+            projectAiEngine.updateReviewRubricSum();
+        }
 
         mountItemTargetsEditor(document.getElementById('ai-project-targets-slot'), {
             itemType: 'project',
-            initialTargets: [],
+            initialTargets,
             hData,
             allowTrackPhase: false,
         });
@@ -3393,41 +4846,45 @@ window.projectAiEngine = {
         btn.disabled = true;
 
         try {
-            // تجميع الـ Rubrics
             const rubricItems = [];
-            document.querySelectorAll('.rubric-item').forEach(el => {
-                rubricItems.push({
-                    aspect: el.querySelector('.r-aspect').value.trim(),
-                    description: el.querySelector('.r-desc').value.trim(),
-                    points: parseInt(el.querySelector('.r-points').value) || 0
-                });
+            document.querySelectorAll('#ai-p-rubric-list .rubric-item').forEach(el => {
+                const aspect = el.querySelector('.r-aspect').value.trim();
+                const description = el.querySelector('.r-desc').value.trim();
+                const points = parseInt(el.querySelector('.r-points').value, 10) || 0;
+                if (aspect || description || points > 0) {
+                    rubricItems.push({ aspect, description, points });
+                }
             });
 
-            // 1. حفظ المشروع في الداتابيز (شاملاً الـ Rubrics كـ JSON)
+            const reviewLinks = Array.from(document.querySelectorAll('#ai-p-links-list .ai-proj-link-row')).map(row => ({
+                title: row.querySelector('.ai-proj-link-title')?.value?.trim() || '',
+                url: row.querySelector('.ai-proj-link-url')?.value?.trim() || ''
+            }));
+            const serializedLinks = serializeProjectLinks(reviewLinks);
+
             const projectPayload = {
                 title: title,
                 description: document.getElementById('ai-p-desc').value,
-                requirements_url: document.getElementById('ai-p-req-url').value,
+                requirements_url: serializedLinks,
                 max_points: parseInt(document.getElementById('ai-p-xp').value) || 100,
                 submission_method: document.getElementById('ai-p-method').value || 'github_link',
-                rubric_json: rubricItems.length > 0 ? { criteria: rubricItems } : null 
+                rubric_json: rubricItems.length > 0 ? { criteria: rubricItems } : null
             };
 
             const { data: newProject, error: projErr } = await supabase.from('projects').insert([projectPayload]).select('id');
             if (projErr) throw projErr;
             const newProjectId = newProject[0].id;
 
-            // 2. إضافة روابط المشروع بدون مسح المشاريع السابقة
             if (selectedTargets.length > 0) {
                 const hData = await fetchHierarchyData();
                 await appendItemTargets(supabase, 'project', newProjectId, selectedTargets, hData);
             }
 
-            window.showToast("🎉 تم استيراد المشروع بنجاح!", "success");
+            window.showToast("🎉 تم استيراد المشروع وجميع الروابط والمعايير بنجاح!", "success");
             projectAiEngine.closeWizard();
             hierarchyCache = null;
             
-            if(typeof loadTableData === 'function') loadTableData();
+            if (typeof loadTableData === 'function') loadTableData();
 
         } catch (e) {
             window.showToast("خطأ أثناء الحفظ: " + e.message, "error");

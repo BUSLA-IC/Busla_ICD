@@ -1,28 +1,29 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوصلة | بوابتك لاحتراف Digital IC Design</title>
-    <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <title>Sign In | ZDC — Zagazig Digital Community</title>
+    <link rel="icon" type="image/png" href="../assets/icons/zdc-icon-192.png">
     <link rel="manifest" href="../manifest.webmanifest">
     <meta name="theme-color" content="#006A67">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="بوصلة">
-    <link rel="apple-touch-icon" href="../assets/icons/BUSLA-icon.png">
-    
+    <meta name="apple-mobile-web-app-title" content="ZDC">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+
     <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-        
-    <style>
-        body { font-family: 'Cairo', sans-serif; overflow-x: hidden; background-color: #000; }
 
-        /* الخلفية والمؤثرات البصرية */
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; background-color: #000; }
+        h1, h2, h3, .font-display { font-family: 'Outfit', sans-serif; }
+
         .circuit-bg {
             position: fixed; inset: 0;
             background-color: #050505;
@@ -35,7 +36,7 @@
             animation: pulse-bg 8s ease-in-out infinite alternate; z-index: -2;
         }
         .glass-panel {
-            background: rgba(20, 20, 20, 0.7);
+            background: rgba(20, 20, 20, 0.72);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 106, 103, 0.3);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
@@ -60,274 +61,276 @@
         @keyframes pulse-bg { 0% { opacity: 0.5; transform: scale(1); } 100% { opacity: 1; transform: scale(1.1); } }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative">
- <div class="circuit-bg"></div>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 relative">
+    <div class="circuit-bg"></div>
     <div class="circuit-overlay"></div>
-    
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="grid-pattern"></div>
-    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
-    
+
     <div class="container mx-auto max-w-7xl relative z-10">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
-            
+
             <div class="hidden lg:block space-y-8 animate-fade-in-up">
-                <div class=" bg-black/[0.66] border-r-4 border-r-b-primary p-10 rounded-2xl  text-right">
-                    <div class="inline-flex items-center gap-4 mb-4">
+                <div class="bg-black/[0.66] border-l-4 border-l-b-primary p-10 rounded-2xl text-left">
+                    <div class="inline-flex items-center gap-4 mb-5">
                         <div class="w-16 h-16 rounded-2xl shadow-lg animate-float overflow-hidden border-2 border-b-primary/50">
-                            <img src="../assets/icons/BUSLA-icon.png" alt="Logo" class="w-full h-full object-cover">
+                            <img src="../assets/icons/zdc-icon-192.png" alt="ZDC Logo" class="w-full h-full object-cover">
                         </div>
-                        <h1 class="text-6xl font-black p-10 gradient-text">بوصلة</h1>
+                        <div>
+                            <h1 class="text-6xl font-black gradient-text leading-none">ZDC</h1>
+                            <p class="text-xs font-mono uppercase tracking-[0.22em] text-teal-400 mt-1">Zagazig Digital Community</p>
+                        </div>
                     </div>
-                    <p class="text-2xl text-gray-300 font-bold mb-2">منصتك الأولى لاحتراف Digital IC Design</p>
+                    <p class="text-2xl text-gray-200 font-bold mb-2">Your Gateway to Mastering Digital IC Design</p>
                     <p class="text-gray-400 max-w-lg leading-relaxed">
-                        انضم لمجتمع من المهندسين، تعلم عبر مسارات تفاعلية، وشارك في تحديات الفرق الجامعية.
+                        Join a focused community of hardware engineers, follow interactive curriculum tracks, and compete in university team challenges.
                     </p>
                 </div>
 
                 <div class="grid gap-4">
-                    <div class="glass-panel p-5 rounded-2xl flex items-center gap-4 border-r-4 border-r-b-hl-light hover:translate-x-2 transition-transform">
-                        <div class="w-12 h-12 bg-b-hl-light/10 rounded-full flex items-center justify-center text-b-hl-light">
+                    <div class="glass-panel p-5 rounded-2xl flex items-center gap-4 border-l-4 border-l-b-hl-light hover:translate-x-2 transition-transform">
+                        <div class="w-12 h-12 bg-b-hl-light/10 rounded-full flex items-center justify-center text-b-hl-light shrink-0">
                             <i class="fas fa-map-signs text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-white font-bold text-lg">خريطة طريق شاملة</h3>
-                            <p class="text-sm text-gray-400">من الأساسيات وحتى الـ Tape-out</p>
+                            <h3 class="text-white font-bold text-lg">Comprehensive Roadmap</h3>
+                            <p class="text-sm text-gray-400">Structured learning from fundamentals to Tape-out</p>
                         </div>
                     </div>
-                    
-                    <div class="glass-panel p-5 rounded-2xl flex items-center gap-4 border-r-4 border-r-b-primary hover:translate-x-2 transition-transform">
-                        <div class="w-12 h-12 bg-b-primary/10 rounded-full flex items-center justify-center text-b-primary">
+
+                    <div class="glass-panel p-5 rounded-2xl flex items-center gap-4 border-l-4 border-l-b-primary hover:translate-x-2 transition-transform">
+                        <div class="w-12 h-12 bg-b-primary/10 rounded-full flex items-center justify-center text-b-primary shrink-0">
                             <i class="fas fa-users text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-white font-bold text-lg">نظام الفرق والتنافس</h3>
-                            <p class="text-sm text-gray-400">كوّن فريق جامعتك ونافس الجامعات الأخرى</p>
+                            <h3 class="text-white font-bold text-lg">Teams &amp; Leaderboards</h3>
+                            <p class="text-sm text-gray-400">Build your university team and compete nationwide</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="animate-fade-in-up" style="animation-delay: 0.2s;">
-                
-                <div class="lg:hidden text-center mb-8">
-                    <h1 class="text-5xl font-black p-10 gradient-text mb-2">بوصلة</h1>
-                    <p class="text-gray-400">بوابتك لمستقبل الإلكترونيات</p>
+
+                <div class="lg:hidden text-center mb-6">
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <img src="../assets/icons/zdc-icon-192.png" alt="ZDC" class="w-12 h-12 rounded-xl border border-b-primary/40">
+                        <h1 class="text-4xl font-black gradient-text">ZDC</h1>
+                    </div>
+                    <p class="text-gray-400 text-xs font-mono uppercase tracking-widest">Zagazig Digital Community</p>
                 </div>
 
                 <div class="glass-panel p-6 md:p-8 rounded-3xl shadow-2xl relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-b-hl-light to-transparent opacity-50"></div>
 
-<div class="flex bg-black/40 p-1 rounded-xl mb-6">
-    <button id="login-tab" class="flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg">
-        تسجيل الدخول
-    </button>
-    <button id="signup-tab" class="flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">
-        حساب جديد
-    </button>
-</div>
+                    <div class="flex bg-black/40 p-1 rounded-xl mb-6">
+                        <button id="login-tab" class="flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg">
+                            Sign In
+                        </button>
+                        <button id="signup-tab" class="flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white">
+                            Create Account
+                        </button>
+                    </div>
 
+                    <!-- Login Form -->
                     <form id="login-form" class="space-y-6">
                         <div class="text-center mb-4">
-                            <h2 class="text-2xl font-bold text-white">أهلاً بعودتك! 👋</h2>
-                            <p class="text-sm text-gray-400">تابع تقدمك في المسارات التعليمية</p>
+                            <h2 class="text-2xl font-bold text-white">Welcome Back</h2>
+                            <p class="text-sm text-gray-400">Continue your progress across ZDC learning tracks</p>
                         </div>
 
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">البريد الإلكتروني</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Email Address</label>
                                 <div class="relative">
-                                    <i class="fas fa-envelope absolute right-4 top-3.5 text-gray-500"></i>
-                                    <input type="email" id="login-email" autocomplete="email" required placeholder="name@example.com" class="w-full pl-4 pr-10 py-3 rounded-xl text-white outline-none input-glow placeholder-gray-600">
+                                    <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-500"></i>
+                                    <input type="email" id="login-email" autocomplete="email" required placeholder="name@example.com" class="w-full pr-4 pl-10 py-3 rounded-xl text-white outline-none input-glow placeholder-gray-600">
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">كلمة المرور</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Password</label>
                                 <div class="relative">
-                                    <i class="fas fa-lock absolute right-4 top-3.5 text-gray-500"></i>
-                                    <input type="password" id="login-password" autocomplete="current-password" required placeholder="••••••••" class="w-full pl-4 pr-10 py-3 rounded-xl text-white outline-none input-glow placeholder-gray-600">
+                                    <i class="fas fa-lock absolute left-4 top-3.5 text-gray-500"></i>
+                                    <input type="password" id="login-password" autocomplete="current-password" required placeholder="••••••••" class="w-full pr-4 pl-10 py-3 rounded-xl text-white outline-none input-glow placeholder-gray-600">
                                 </div>
                             </div>
                         </div>
 
                         <button type="submit" id="btn-login" class="w-full py-3.5 bg-gradient-to-r from-b-primary to-b-hl-light text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                            <span>دخول</span>
-                            <i class="fas fa-arrow-left"></i>
+                            <span>Sign In</span>
+                            <i class="fas fa-arrow-right"></i>
                         </button>
                         <div class="flex justify-center mt-2">
-                         <a href="#" onclick="openForgotPasswordModal(event)" class="text-xs text-b-primary hover:text-b-neon transition-colors">نسيت كلمة المرور؟</a>
+                            <a href="#" onclick="openForgotPasswordModal(event)" class="text-xs text-b-primary hover:text-b-neon transition-colors">Forgot your password?</a>
                         </div>
                         <p id="login-error" class="text-red-400 text-center text-sm hidden bg-red-900/20 py-2 rounded border border-red-500/20"></p>
                     </form>
 
+                    <!-- Sign Up Form -->
                     <form id="signup-form" class="space-y-4 hidden">
                         <div class="text-center mb-2">
-                            <h2 class="text-xl font-bold text-white">بياناتك</h2>
-                            <p class="text-xs text-gray-400">أكمل بياناتك بدقة لتحديد فريقك ومسارك</p>
+                            <h2 class="text-xl font-bold text-white">Your Profile Details</h2>
+                            <p class="text-xs text-gray-400">Complete your information accurately to match your team and track</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">الاسم ثلاثي</label>
-                                <input type="text" id="signup-name" autocomplete="name" required placeholder="" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Full Name</label>
+                                <input type="text" id="signup-name" autocomplete="name" required placeholder="e.g. Ahmed Mohamed Ali" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">البريد الإلكتروني</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Email Address</label>
                                 <input type="email" id="signup-email" autocomplete="off" required placeholder="email@example.com" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">المحافظة</label>
-                                    <select id="signup-gov" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
-                                        <option value="" disabled selected>اختر المحافظة</option>
-                                        <option value="Sharqia">الشرقية</option>
-                                        <option value="Cairo">القاهرة</option>
-                                        <option value="Giza">الجيزة</option>
-                                        <option value="Alexandria">الإسكندرية</option>
-                                        <option value="Dakahlia">الدقهلية</option>
-                                        <option value="Red Sea">البحر الأحمر</option>
-                                        <option value="Beheira">البحيرة</option>
-                                        <option value="Fayoum">الفيوم</option>
-                                        <option value="Gharbia">الغربية</option>
-                                        <option value="Ismailia">الإسماعيلية</option>
-                                        <option value="Monufia">المنوفية</option>
-                                        <option value="Minya">المنيا</option>
-                                        <option value="Qalyubia">القليوبية</option>
-                                        <option value="New Valley">الوادي الجديد</option>
-                                        <option value="Suez">السويس</option>
-                                        <option value="Aswan">أسوان</option>
-                                        <option value="Assiut">أسيوط</option>
-                                        <option value="Beni Suef">بني سويف</option>
-                                        <option value="Port Said">بورسعيد</option>
-                                        <option value="Damietta">دمياط</option>
-                                        <option value="South Sinai">جنوب سيناء</option>
-                                        <option value="Kafr El Sheikh">كفر الشيخ</option>
-                                        <option value="Matrouh">مطروح</option>
-                                        <option value="Luxor">الأقصر</option>
-                                        <option value="Qena">قنا</option>
-                                        <option value="North Sinai">شمال سيناء</option>
-                                        <option value="Sohag">سوهاج</option>
-                                        <option value="Other">أخرى</option>
-                                    </select>
-
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Governorate</label>
+                                <select id="signup-gov" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
+                                    <option value="" disabled selected>Select Governorate</option>
+                                    <option value="Sharqia">Sharqia</option>
+                                    <option value="Cairo">Cairo</option>
+                                    <option value="Giza">Giza</option>
+                                    <option value="Alexandria">Alexandria</option>
+                                    <option value="Dakahlia">Dakahlia</option>
+                                    <option value="Red Sea">Red Sea</option>
+                                    <option value="Beheira">Beheira</option>
+                                    <option value="Fayoum">Fayoum</option>
+                                    <option value="Gharbia">Gharbia</option>
+                                    <option value="Ismailia">Ismailia</option>
+                                    <option value="Monufia">Monufia</option>
+                                    <option value="Minya">Minya</option>
+                                    <option value="Qalyubia">Qalyubia</option>
+                                    <option value="New Valley">New Valley</option>
+                                    <option value="Suez">Suez</option>
+                                    <option value="Aswan">Aswan</option>
+                                    <option value="Assiut">Assiut</option>
+                                    <option value="Beni Suef">Beni Suef</option>
+                                    <option value="Port Said">Port Said</option>
+                                    <option value="Damietta">Damietta</option>
+                                    <option value="South Sinai">South Sinai</option>
+                                    <option value="Kafr El Sheikh">Kafr El Sheikh</option>
+                                    <option value="Matrouh">Matrouh</option>
+                                    <option value="Luxor">Luxor</option>
+                                    <option value="Qena">Qena</option>
+                                    <option value="North Sinai">North Sinai</option>
+                                    <option value="Sohag">Sohag</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">الجامعة</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">University</label>
                                 <select id="signup-uni" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
-                                    <option value="" disabled selected>اختر الجامعة</option>
-                                    <optgroup label="الجامعات الحكومية">
-                                        <option value="Zagazig">جامعة الزقازيق</option>
-                                        <option value="Cairo">جامعة القاهرة</option>
-                                        <option value="Alexandria">جامعة الإسكندرية</option>
-                                        <option value="Ain Shams">جامعة عين شمس</option>
-                                        <option value="Mansoura">جامعة المنصورة</option>
-                                        <option value="Assiut">جامعة أسيوط</option>
-                                        <option value="Tanta">جامعة طنطا</option>
-                                        <option value="Helwan">جامعة حلوان</option>
-                                        <option value="Minya">جامعة المنيا</option>
-                                        <option value="Monufia">جامعة المنوفية</option>
-                                        <option value="Suez Canal">جامعة قناة السويس</option>
-                                        <option value="South Valley">جامعة جنوب الوادي</option>
-                                        <option value="Beni Suef">جامعة بني سويف</option>
-                                        <option value="Fayoum">جامعة الفيوم</option>
-                                        <option value="Benha">جامعة بنها</option>
-                                        <option value="Kafrelsheikh">جامعة كفر الشيخ</option>
-                                        <option value="Sohag">جامعة سوهاج</option>
-                                        <option value="Port Said">جامعة بورسعيد</option>
-                                        <option value="Damanhour">جامعة دمنهور</option>
-                                        <option value="Aswan">جامعة أسوان</option>
-                                        <option value="Damietta">جامعة دمياط</option>
-                                        <option value="Suez">جامعة السويس</option>
-                                        <option value="Sadat City">جامعة مدينة السادات</option>
-                                        <option value="Arish">جامعة العريش</option>
-                                        <option value="Luxor">جامعة الأقصر</option>
+                                    <option value="" disabled selected>Select University</option>
+                                    <optgroup label="Public Universities">
+                                        <option value="Zagazig">Zagazig University</option>
+                                        <option value="Cairo">Cairo University</option>
+                                        <option value="Alexandria">Alexandria University</option>
+                                        <option value="Ain Shams">Ain Shams University</option>
+                                        <option value="Mansoura">Mansoura University</option>
+                                        <option value="Assiut">Assiut University</option>
+                                        <option value="Tanta">Tanta University</option>
+                                        <option value="Helwan">Helwan University</option>
+                                        <option value="Minya">Minya University</option>
+                                        <option value="Monufia">Monufia University</option>
+                                        <option value="Suez Canal">Suez Canal University</option>
+                                        <option value="South Valley">South Valley University</option>
+                                        <option value="Beni Suef">Beni Suef University</option>
+                                        <option value="Fayoum">Fayoum University</option>
+                                        <option value="Benha">Benha University</option>
+                                        <option value="Kafrelsheikh">Kafrelsheikh University</option>
+                                        <option value="Sohag">Sohag University</option>
+                                        <option value="Port Said">Port Said University</option>
+                                        <option value="Damanhour">Damanhour University</option>
+                                        <option value="Aswan">Aswan University</option>
+                                        <option value="Damietta">Damietta University</option>
+                                        <option value="Suez">Suez University</option>
+                                        <option value="Sadat City">University of Sadat City</option>
+                                        <option value="Arish">Arish University</option>
+                                        <option value="Luxor">Luxor University</option>
                                     </optgroup>
-                                    <optgroup label="جامعات أخرى وخاصة">
-                                        <option value="Al-Azhar">جامعة الأزهر</option>
-                                        <option value="Zewail City">مدينة زويل للعلوم والتكنولوجيا</option>
-                                        <option value="E-JUST">الجامعة المصرية اليابانية (E-JUST)</option>
-                                        <option value="AUC">الجامعة الأمريكية بالقاهرة</option>
-                                        <option value="GUC">الجامعة الألمانية بالقاهرة</option>
-                                        <option value="BUE">الجامعة البريطانية في مصر</option>
-                                        <option value="MUST">جامعة مصر للعلوم والتكنولوجيا</option>
-                                        <option value="MIU">جامعة مصر الدولية</option>
-                                        <option value="Other">جامعة أخرى / معهد</option>
+                                    <optgroup label="Private &amp; National Universities">
+                                        <option value="Al-Azhar">Al-Azhar University</option>
+                                        <option value="Zewail City">Zewail City of Science &amp; Technology</option>
+                                        <option value="E-JUST">Egypt-Japan University (E-JUST)</option>
+                                        <option value="AUC">American University in Cairo (AUC)</option>
+                                        <option value="GUC">German University in Cairo (GUC)</option>
+                                        <option value="BUE">British University in Egypt (BUE)</option>
+                                        <option value="MUST">Misr University for Science &amp; Technology</option>
+                                        <option value="MIU">Misr International University (MIU)</option>
+                                        <option value="Other">Other University / Institute</option>
                                     </optgroup>
                                 </select>
                             </div>
                         </div>
+
                         <div class="mb-4">
-                            <label class="block text-xs text-gray-400 mb-1 mr-1">رابط الصورة</label>
+                            <label class="block text-xs text-gray-400 mb-1 ml-1">Profile Photo URL (Optional)</label>
                             <div class="relative">
-                                <input type="url" id="signup-photo" placeholder="رابط Google Drive للصورة" 
-                                class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow pl-8">
-                                <i class="fab fa-google-drive absolute left-3 top-2.5 text-gray-500"></i>
+                                <input type="url" id="signup-photo" placeholder="Google Drive image link" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow pr-9">
+                                <i class="fab fa-google-drive absolute right-3 top-2.5 text-gray-500"></i>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-1 mr-1">
-                                <i class="fas fa-info-circle"></i> ارفع صورتك على Drive، تأكد أن المشاركة "Anyone with link"، وانسخ الرابط هنا.
+                            <p class="text-[10px] text-gray-500 mt-1 ml-1">
+                                <i class="fas fa-info-circle mr-1"></i> Upload your photo to Google Drive, set sharing to "Anyone with the link", and paste the URL here.
                             </p>
                         </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">الكلية</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Faculty</label>
                                 <select id="signup-faculty" autocomplete="off" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
-                                    <option value="Engineering">هندسة</option>
-                                    <option value="Computers">حاسبات ومعلومات</option>
-                                    <option value="Science">علوم</option>
-                                    <option value="Other">أخرى</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Computers">Computers &amp; Information</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">القسم</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Department</label>
                                 <select id="signup-dept" autocomplete="off" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
-                                    <option value="Electronics">إتصالات وإلكترونيات</option>
-                                    <option value="CSE">حاسبات ونظم</option>
-                                    <option value="Mechatronics">ميكاترونكس</option>
-                                    <option value="Other">أخرى</option>
+                                    <option value="Electronics">Electronics &amp; Communications</option>
+                                    <option value="CSE">Computer &amp; Systems Engineering</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">الفرقة الدراسية</label>
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Academic Year</label>
                                 <select id="signup-year" autocomplete="off" class="w-full px-3 py-2 rounded-xl text-gray-300 text-sm outline-none input-glow bg-b-bg">
-                                    <option value="Prep">إعدادي</option>
-                                    <option value="1st Year">الأولى</option>
-                                    <option value="2nd Year">الثانية</option>
-                                    <option value="3rd Year">الثالثة</option>
-                                    <option value="4th Year">الرابعة</option>
-                                    <option value="Graduated">خريج</option>
+                                    <option value="Prep">Preparatory Year</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                    <option value="Graduated">Graduated</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1 mr-1">كلمة المرور</label>
-                                <input type="password" id="signup-password" autocomplete="off" required placeholder="******" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
+                                <label class="block text-xs text-gray-400 mb-1 ml-1">Password</label>
+                                <input type="password" id="signup-password" autocomplete="off" required placeholder="Min. 6 characters" class="w-full px-3 py-2 rounded-xl text-white text-sm outline-none input-glow">
                             </div>
                         </div>
-                        <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-1">المسار التقني (Track)</label>
-                                <select id="signup-track" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-b-primary outline-none transition-all appearance-none cursor-pointer">
-                                        <option value="" disabled selected>جاري التحميل...</option>
-                                </select>
-                            </div>
 
-                            <div class="bg-black/40 border border-white/5 p-4 rounded-xl mt-4">
-                                <label class="flex items-start gap-3 cursor-pointer group">
-                                    <input type="checkbox" id="terms-checkbox" class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0" onchange="toggleSubmitBtn()">
-                                    <span class="text-[11px] text-gray-400 leading-tight">
-                                        بإنشائك حساباً، أنت توافق على <a href="legal/terms.html" target="_blank" class="text-b-primary hover:underline">شروط الاستخدام</a> و <a href="legal/privacy.html" target="_blank" class="text-b-primary hover:underline">سياسة الخصوصية</a>، وتتعهد بالالتزام بـ <a href="legal/guidelines.html" target="_blank" class="text-b-primary hover:underline">ميثاق المجتمع</a>.
-                                    </span>
-                                </label>
-                            </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 ml-1">Technical Track</label>
+                            <select id="signup-track" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-b-primary outline-none transition-all appearance-none cursor-pointer">
+                                <option value="" disabled selected>Loading tracks...</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-black/40 border border-white/5 p-4 rounded-xl mt-4">
+                            <label class="flex items-start gap-3 cursor-pointer group">
+                                <input type="checkbox" id="terms-checkbox" class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-black accent-b-primary shrink-0" onchange="toggleSubmitBtn()">
+                                <span class="text-[11px] text-gray-400 leading-tight">
+                                    By creating an account, you agree to the <a href="legal/terms.html" target="_blank" class="text-b-primary hover:underline">Terms of Service</a> and <a href="legal/privacy.html" target="_blank" class="text-b-primary hover:underline">Privacy Policy</a>, and pledge to uphold our <a href="legal/guidelines.html" target="_blank" class="text-b-primary hover:underline">Community Guidelines</a>.
+                                </span>
+                            </label>
+                        </div>
+
                         <button type="submit" id="btn-signup" class="w-full py-3 bg-gradient-to-r from-b-hl-light to-b-primary text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-[1.02] mt-2">
-                            إنشاء الحساب وبدء الرحلة
+                            Create Account &amp; Start Journey
                         </button>
                         <p id="signup-error" class="text-red-400 text-center text-sm hidden bg-red-900/20 py-2 rounded border border-red-500/20"></p>
                     </form>
@@ -336,386 +339,326 @@
             </div>
         </div>
     </div>
+
+    <!-- Forgot Password Modal -->
     <div id="forgot-password-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-b-surface border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-full h-1 bg-b-primary"></div>
-        <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
-            <i class="fas fa-times text-xl"></i>
-        </button>
-        
-        <h3 class="text-2xl font-black text-white mb-2">نسيت كلمة المرور؟</h3>
-        <p class="text-gray-400 text-sm mb-6">أدخل بريدك الإلكتروني المسجل لدينا، وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.</p>
-        
-        <form id="forgot-password-form" class="space-y-4">
-            <div>
-                <input type="email" id="reset-email-input" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none transition-all" placeholder="البريد الإلكتروني">
-            </div>
-            <div id="reset-error" class="hidden text-red-500 text-xs font-bold bg-red-500/10 p-2 rounded text-center"></div>
-            <div id="reset-success" class="hidden text-green-400 text-xs font-bold bg-green-500/10 p-3 rounded-xl text-center border border-green-500/20">
-                <i class="fas fa-check-circle text-lg block mb-1"></i> تم إرسال رابط الاستعادة إلى بريدك! تحقق من صندوق الوارد.
-            </div>
-            <button type="submit" id="btn-send-reset" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all">
-                إرسال رابط الاستعادة
+        <div class="bg-b-surface border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-b-primary"></div>
+            <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
             </button>
-        </form>
+
+            <h3 class="text-2xl font-black text-white mb-2">Forgot Password?</h3>
+            <p class="text-gray-400 text-sm mb-6">Enter your registered email address and we will send you a password reset link.</p>
+
+            <form id="forgot-password-form" class="space-y-4">
+                <div>
+                    <input type="email" id="reset-email-input" required class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-b-primary outline-none transition-all" placeholder="Email address">
+                </div>
+                <div id="reset-error" class="hidden text-red-500 text-xs font-bold bg-red-500/10 p-2 rounded text-center"></div>
+                <div id="reset-success" class="hidden text-green-400 text-xs font-bold bg-green-500/10 p-3 rounded-xl text-center border border-green-500/20">
+                    <i class="fas fa-check-circle text-lg block mb-1"></i> Recovery link sent! Please check your inbox.
+                </div>
+                <button type="submit" id="btn-send-reset" class="w-full bg-b-primary hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all">
+                    Send Reset Link
+                </button>
+            </form>
+        </div>
     </div>
-</div>
-<div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-3 pointer-events-none">
-    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Verification Success Modal -->
     <div id="success-modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
-    <div class="bg-[#111] border border-[#22C45D] w-full max-w-md p-8 rounded-3xl shadow-[0_0_50px_rgba(34,196,93,0.2)] text-center relative transform scale-100 transition-transform">
-        
-        <div class="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30 animate-pulse">
-            <i class="fas fa-envelope-open-text text-5xl text-green-400"></i>
+        <div class="bg-[#111] border border-[#22C45D] w-full max-w-md p-8 rounded-3xl shadow-[0_0_50px_rgba(34,196,93,0.2)] text-center relative transform scale-100 transition-transform">
+
+            <div class="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30">
+                <i class="fas fa-envelope-open-text text-5xl text-green-400"></i>
+            </div>
+
+            <h3 class="text-3xl font-bold text-white mb-2">Account Created!</h3>
+            <p class="text-gray-400 text-sm mb-6">
+                We sent a verification link to:<br>
+                <span id="success-email-display" class="text-[#22C45D] font-bold font-mono mt-2 block text-lg"></span>
+            </p>
+
+            <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-left text-sm text-gray-300 space-y-2 mb-8">
+                <p>1. Open your email inbox (check Spam if needed).</p>
+                <p>2. Click the "Confirm your email" button.</p>
+                <p>3. Return here and sign in to ZDC.</p>
+            </div>
+
+            <button onclick="location.reload()" class="w-full py-3.5 bg-gradient-to-r from-[#006A67] to-[#22C45D] text-white font-bold rounded-xl shadow-lg hover:shadow-green-500/20 transition-all hover:scale-[1.02]">
+                <i class="fas fa-check-circle mr-2"></i> Got it, Back to Sign In
+            </button>
         </div>
-
-        <h3 class="text-3xl font-bold text-white mb-2">تم إنشاء الحساب! 🚀</h3>
-        <p class="text-gray-400 text-sm mb-6">
-            أرسلنا رابط التفعيل إلى:<br>
-            <span id="success-email-display" class="text-[#22C45D] font-bold font-mono mt-2 block text-lg"></span>
-        </p>
-
-        <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-right text-sm text-gray-300 space-y-2 mb-8">
-            <p>1. افتح بريدك الإلكتروني (Check Spam).</p>
-            <p>2. اضغط على زر "تفعيل الحساب".</p>
-            <p>3. ارجع هنا وسجل الدخول.</p>
-        </div>
-
-        <button onclick="location.reload()" class="w-full py-3.5 bg-gradient-to-r from-[#006A67] to-[#22C45D] text-white font-bold rounded-xl shadow-lg hover:shadow-green-500/20 transition-all hover:scale-[1.02]">
-            <i class="fas fa-check-circle ml-2"></i> فهمت، العودة للدخول
-        </button>
     </div>
-</div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-<script type="module">
-    // 💡 تأكد من استيراد requestPasswordReset
-    import { registerUser, loginUser, resendVerification, requestPasswordReset ,getAvailableTracks} from '../js/auth-handler.js';
-    import { supabase } from '../js/supabase-config.js';
-document.addEventListener('DOMContentLoaded', async () => {
-    const trackSelect = document.getElementById('signup-track'); // تأكد أن هذا هو ID قائمة التراكات لديك
-    
-    if (trackSelect) {
-        // رسالة تحميل مؤقتة
-        trackSelect.innerHTML = '<option value="" disabled selected>جاري تحميل المسارات...</option>';
-        
-        // جلب البيانات من الداتابيز
-        const tracks = await getAvailableTracks();
-        
-        if (tracks.length > 0) {
-            trackSelect.innerHTML = '<option value="" disabled selected>-- اختر المسار التخصصي --</option>';
-            tracks.forEach(track => {
-                const option = document.createElement('option');
-                option.value = track.id; // سيتم حفظ الـ ID الخاص بالتراك في حساب الطالب
-                option.textContent = track.name;
-                trackSelect.appendChild(option);
-            });
-        } else {
-            trackSelect.innerHTML = '<option value="" disabled selected>لا توجد مسارات متاحة حالياً</option>';
-        }
-    }
 
-    // 💡 التحقق من وجود إيميل في رابط التفعيل وتعبئته تلقائياً وتحويل التبويب لـ "حساب جديد"
-    const urlParams = new URLSearchParams(window.location.search);
-    const emailParam = urlParams.get('email');
-    if (emailParam) {
-        switchAuthMode('signup');
-        const signupEmailInput = document.getElementById('signup-email');
-        if (signupEmailInput) {
-            signupEmailInput.value = emailParam;
-        }
-    } else if (urlParams.get('logout') !== 'true') {
-        // 🛡️ توجيه ذكي: إذا كان المستخدم مسجل دخول بالفعل، نوجهه تلقائياً للوحته المناسبة
-        (async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('role')
-                        .eq('id', session.user.id)
-                        .maybeSingle();
+    <script type="module">
+        import { registerUser, loginUser, resendVerification, requestPasswordReset, getAvailableTracks } from '../js/auth-handler.js';
+        import { supabase } from '../js/supabase-config.js';
 
-                    if (profile) {
-                        const role = (profile.role || 'student').toLowerCase().trim();
-                        const staticAdminRoles = [
-                            'owner', 'admin', 'master admin', 'leader supervisor', 
-                            'content manager', 'team reviewer', 'project reviewer', 'support'
-                        ];
+        document.addEventListener('DOMContentLoaded', async () => {
+            const trackSelect = document.getElementById('signup-track');
 
-                        let isAdmin = staticAdminRoles.includes(role) || role.includes('admin');
-                        if (!isAdmin) {
-                            const { data: dbRoles } = await supabase.from('admin_roles').select('name');
-                            const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
-                            isAdmin = dbAdminRoles.includes(role);
-                        }
+            if (trackSelect) {
+                trackSelect.innerHTML = '<option value="" disabled selected>Loading tracks...</option>';
+                const tracks = await getAvailableTracks();
 
-                        if (isAdmin) {
-                            window.location.replace("../admin/html/admin-dash.html");
-                        } else if (role === 'leader') {
-                            window.location.replace("leader-dash.html");
-                        } else {
-                            window.location.replace("student-dash.html");
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn("Auto-redirect check failed:", e);
-            }
-        })();
-    }
-});
-
-// دالة الترقية التلقائية للأعضاء المقبولين
-    async function autoPromoteAdminOnFirstLogin(user) {
-        try {
-            // 1. التأكد هل هذا الشخص مسجل مسبقاً في جدول (profiles)؟
-            const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
-            
-            // 2. إذا لم يكن مسجلاً (يعني حسابه جديد تماماً)
-            if (!existingProfile) {
-                // نبحث عن إيميله في الطلبات المقبولة
-                const { data: acceptedApp } = await supabase.from('admin_applications')
-                    .select('*')
-                    .eq('email', user.email)
-                    .eq('application_status', 'accepted')
-                    .maybeSingle();
-                    
-                // 3. إذا وجدناه مقبولاً، ننشئ له بروفايل بصلاحيات أدمن!
-                if (acceptedApp) {
-                    await supabase.from('profiles').insert([{
-                        id: user.id,
-                        email: acceptedApp.email,
-                        full_name: acceptedApp.full_name,
-                        role: 'admin', // 👑 الترقية التلقائية
-                        phone: acceptedApp.phone,
-                        university: acceptedApp.university,
-                        governorate: acceptedApp.governorate,
-                        faculty: acceptedApp.faculty,
-                        department: acceptedApp.department,
-                        track: acceptedApp.track
-                    }]);
-                    
-                    return true; // تمت الترقية بنجاح
+                if (tracks.length > 0) {
+                    trackSelect.innerHTML = '<option value="" disabled selected>-- Select Specialized Track --</option>';
+                    tracks.forEach(track => {
+                        const option = document.createElement('option');
+                        option.value = track.id;
+                        option.textContent = track.name;
+                        trackSelect.appendChild(option);
+                    });
+                } else {
+                    trackSelect.innerHTML = '<option value="" disabled selected>No tracks available right now</option>';
                 }
             }
-            return false; // لم تتم الترقية
-        } catch (err) {
-            console.error("Auto Promote Error:", err);
-            return false;
-        }
-    }
-    // ==========================================
-    // 1. تبديل التبويبات والخطوات (UI)
-    // ==========================================
-    const loginTab = document.getElementById('login-tab');
-    const signupTab = document.getElementById('signup-tab');
-    const loginForm = document.getElementById('login-form');
-    const signupForm = document.getElementById('signup-form');
 
-    function switchAuthMode(mode) {
-        const isLogin = mode === 'login';
-        loginTab.className = isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
-        signupTab.className = !isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
-        
-        if (isLogin) { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); }
-        else { signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); }
-    }
-    loginTab.addEventListener('click', () => switchAuthMode('login'));
-    signupTab.addEventListener('click', () => switchAuthMode('signup'));
-
-    // التنقل بين خطوات إنشاء الحساب
-    window.showStep = (step) => {
-        document.getElementById('personal-step').classList.add('hidden');
-        document.getElementById('academic-step').classList.add('hidden');
-        document.getElementById(step + '-step').classList.remove('hidden');
-    };
-
-    // ==========================================
-    // 2. نوافذ الموافقة واستعادة الباسورد
-    // ==========================================
-    
-    // تفعيل زر الإنشاء فقط عند الموافقة على الشروط
-    window.toggleSubmitBtn = () => {
-        const isChecked = document.getElementById('terms-checkbox').checked;
-        document.getElementById('btn-signup').disabled = !isChecked;
-    };
-
-    // نوافذ استعادة الباسورد
-    window.openForgotPasswordModal = (e) => {
-        e.preventDefault();
-        document.getElementById('forgot-password-modal').classList.remove('hidden');
-    };
-    window.closeForgotPasswordModal = () => {
-        document.getElementById('forgot-password-modal').classList.add('hidden');
-        document.getElementById('reset-error').classList.add('hidden');
-        document.getElementById('reset-success').classList.add('hidden');
-        document.getElementById('reset-email-input').value = '';
-    };
-
-    // معالجة طلب استعادة الباسورد
-    document.getElementById('forgot-password-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btn-send-reset');
-        const email = document.getElementById('reset-email-input').value;
-        const errDiv = document.getElementById('reset-error');
-        const successDiv = document.getElementById('reset-success');
-
-        errDiv.classList.add('hidden');
-        successDiv.classList.add('hidden');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-        btn.disabled = true;
-
-        try {
-            await requestPasswordReset(email);
-            successDiv.classList.remove('hidden');
-        } catch (error) {
-            errDiv.textContent = error.message;
-            errDiv.classList.remove('hidden');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    });
-
-    // ==========================================
-    // 3. منطق تسجيل الدخول
-    // ==========================================
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btn-login');
-        const err = document.getElementById('login-error');
-        const emailVal = document.getElementById('login-email').value;
-        const originalText = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
-        btn.disabled = true;
-        err.classList.add('hidden');
-
-try {
-            const user = await loginUser(emailVal, document.getElementById('login-password').value);
-            
-            // 👑 فرض الترقية الإجبارية فوراً بعد تسجيل الدخول 👑
-            await supabase.rpc('claim_admin_role');
-
-            // بعد الترقية، نقرأ الرتبة لنوجهه للوحة الصحيحة
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-            const role = profile ? (profile.role).toLowerCase().trim() : 'student';
-            
-            // جلب الأدوار الإضافية من الداتابيز للتحقق ديناميكياً
-            const { data: dbRoles } = await supabase.from('admin_roles').select('name');
-            const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
-            
-            const staticAdminRoles = [
-                'owner', 'admin', 'master admin', 'leader supervisor', 
-                'content manager', 'team reviewer', 'project reviewer', 'support'
-            ];
-            
-            if (staticAdminRoles.includes(role) || dbAdminRoles.includes(role)) {
-                window.location.href = "../admin/html/admin-dash.html"; 
-            } else if (role === 'leader') {
-                window.location.href = "leader-dash.html";
-            } else {
-                window.location.href = "student-dash.html";
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            const modeParam = urlParams.get('mode');
+            if (modeParam === 'signup') {
+                switchAuthMode('signup');
             }
-
-        } catch (error) {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            
-            if (error.message === 'email_not_confirmed') {
-                err.innerHTML = `
-                    <div class="flex flex-col items-center gap-2">
-                        <span>⚠️ البريد الإلكتروني غير مفعل!</span>
-                        <button type="button" id="btn-resend" class="text-xs text-b-hl-light underline hover:text-white transition-colors">
-                            لم يصلك الرمز؟ أعد إرسال رسالة التفعيل
-                        </button>
-                    </div>
-                `;
-                err.classList.remove('hidden');
-
-                document.getElementById('btn-resend').addEventListener('click', async function() {
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-                    this.disabled = true;
+            if (emailParam) {
+                switchAuthMode('signup');
+                const signupEmailInput = document.getElementById('signup-email');
+                if (signupEmailInput) {
+                    signupEmailInput.value = emailParam;
+                }
+            } else if (urlParams.get('logout') !== 'true') {
+                (async () => {
                     try {
-                        await resendVerification(emailVal);
-                        this.innerHTML = '✅ تم الإرسال! راجع بريدك';
-                        this.classList.remove('text-b-hl-light', 'underline');
-                        this.classList.add('text-green-400', 'font-bold', 'no-underline');
-                    } catch (resendErr) {
-                        this.innerHTML = '❌ فشل الإرسال، حاول لاحقاً';
-                        console.error(resendErr);
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session?.user) {
+                            const { data: profile } = await supabase
+                                .from('profiles')
+                                .select('role')
+                                .eq('id', session.user.id)
+                                .maybeSingle();
+
+                            if (profile) {
+                                const role = (profile.role || 'student').toLowerCase().trim();
+                                const staticAdminRoles = [
+                                    'owner', 'admin', 'master admin', 'leader supervisor',
+                                    'content manager', 'team reviewer', 'project reviewer', 'support'
+                                ];
+
+                                let isAdmin = staticAdminRoles.includes(role) || role.includes('admin');
+                                if (!isAdmin) {
+                                    const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+                                    const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+                                    isAdmin = dbAdminRoles.includes(role);
+                                }
+
+                                if (isAdmin) {
+                                    window.location.replace("../admin/html/admin-dash.html");
+                                } else if (role === 'leader') {
+                                    window.location.replace("leader-dash.html");
+                                } else {
+                                    window.location.replace("student-dash.html");
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Auto-redirect check failed:", e);
                     }
-                });
-            } else {
+                })();
+            }
+        });
+
+        const loginTab = document.getElementById('login-tab');
+        const signupTab = document.getElementById('signup-tab');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+
+        function switchAuthMode(mode) {
+            const isLogin = mode === 'login';
+            loginTab.className = isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
+            signupTab.className = !isLogin ? "flex-1 py-3 rounded-lg font-bold text-sm transition-all bg-gradient-to-r from-b-primary to-b-hl-light text-white shadow-lg" : "flex-1 py-3 rounded-lg font-bold text-sm transition-all text-gray-400 hover:text-white";
+
+            if (isLogin) { loginForm.classList.remove('hidden'); signupForm.classList.add('hidden'); }
+            else { signupForm.classList.remove('hidden'); loginForm.classList.add('hidden'); }
+        }
+        loginTab.addEventListener('click', () => switchAuthMode('login'));
+        signupTab.addEventListener('click', () => switchAuthMode('signup'));
+
+        window.toggleSubmitBtn = () => {
+            const isChecked = document.getElementById('terms-checkbox').checked;
+            document.getElementById('btn-signup').disabled = !isChecked;
+        };
+
+        window.openForgotPasswordModal = (e) => {
+            e.preventDefault();
+            document.getElementById('forgot-password-modal').classList.remove('hidden');
+        };
+        window.closeForgotPasswordModal = () => {
+            document.getElementById('forgot-password-modal').classList.add('hidden');
+            document.getElementById('reset-error').classList.add('hidden');
+            document.getElementById('reset-success').classList.add('hidden');
+            document.getElementById('reset-email-input').value = '';
+        };
+
+        document.getElementById('forgot-password-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-send-reset');
+            const email = document.getElementById('reset-email-input').value;
+            const errDiv = document.getElementById('reset-error');
+            const successDiv = document.getElementById('reset-success');
+
+            errDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
+            btn.disabled = true;
+
+            try {
+                await requestPasswordReset(email);
+                successDiv.classList.remove('hidden');
+            } catch (error) {
+                errDiv.textContent = error.message;
+                errDiv.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('login-error');
+            const emailVal = document.getElementById('login-email').value;
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Verifying...';
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            try {
+                const user = await loginUser(emailVal, document.getElementById('login-password').value);
+
+                await supabase.rpc('claim_admin_role');
+
+                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+                const role = profile ? (profile.role).toLowerCase().trim() : 'student';
+
+                const { data: dbRoles } = await supabase.from('admin_roles').select('name');
+                const dbAdminRoles = (dbRoles || []).map(r => String(r.name).toLowerCase().trim());
+
+                const staticAdminRoles = [
+                    'owner', 'admin', 'master admin', 'leader supervisor',
+                    'content manager', 'team reviewer', 'project reviewer', 'support'
+                ];
+
+                if (staticAdminRoles.includes(role) || dbAdminRoles.includes(role)) {
+                    window.location.href = "../admin/html/admin-dash.html";
+                } else if (role === 'leader') {
+                    window.location.href = "leader-dash.html";
+                } else {
+                    window.location.href = "student-dash.html";
+                }
+
+            } catch (error) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+                if (error.message === 'email_not_confirmed') {
+                    err.innerHTML = `
+                        <div class="flex flex-col items-center gap-2">
+                            <span>Email address is not verified yet!</span>
+                            <button type="button" id="btn-resend" class="text-xs text-b-hl-light underline hover:text-white transition-colors">
+                                Didn't receive the email? Resend verification link
+                            </button>
+                        </div>
+                    `;
+                    err.classList.remove('hidden');
+
+                    document.getElementById('btn-resend').addEventListener('click', async function() {
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
+                        this.disabled = true;
+                        try {
+                            await resendVerification(emailVal);
+                            this.innerHTML = 'Sent! Please check your inbox.';
+                            this.classList.remove('text-b-hl-light', 'underline');
+                            this.classList.add('text-green-400', 'font-bold', 'no-underline');
+                        } catch (resendErr) {
+                            this.innerHTML = 'Failed to send. Please try again later.';
+                            console.error(resendErr);
+                        }
+                    });
+                } else {
+                    err.textContent = error.message;
+                    err.classList.remove('hidden');
+                }
+            }
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const err = document.getElementById('signup-error');
+            const isChecked = document.getElementById('terms-checkbox').checked;
+            const trackValue = document.getElementById('signup-track').value;
+            if (!trackValue) {
+                err.textContent = "Please select a technical track before continuing.";
+                err.classList.remove('hidden');
+                return;
+            }
+            if (!isChecked) {
+                err.textContent = "You must agree to the Terms of Service and Privacy Policy first.";
+                err.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-signup');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Creating account...';
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            const personalInfo = {
+                fullName: document.getElementById('signup-name').value,
+                photoURL: document.getElementById('signup-photo')?.value
+            };
+            const academicInfo = {
+                governorate: document.getElementById('signup-gov')?.value || "Not Specified",
+                university: document.getElementById('signup-uni')?.value || "Not Specified",
+                faculty: document.getElementById('signup-faculty')?.value || "Engineering",
+                department: document.getElementById('signup-dept')?.value || "Electronics",
+                year: document.getElementById('signup-year')?.value || "Prep",
+                track: trackValue
+            };
+
+            try {
+                const result = await registerUser(
+                    document.getElementById('signup-email').value,
+                    document.getElementById('signup-password').value,
+                    personalInfo,
+                    academicInfo
+                );
+
+                if (result.verificationRequired) {
+                    const emailDisplay = document.getElementById('success-email-display');
+                    if (emailDisplay) emailDisplay.innerText = document.getElementById('signup-email').value;
+                    document.getElementById('success-modal').classList.remove('hidden');
+                }
+
+            } catch (error) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
                 err.textContent = error.message;
                 err.classList.remove('hidden');
             }
-        }
-    });
-
-
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const err = document.getElementById('signup-error');
-        const isChecked = document.getElementById('terms-checkbox').checked;
-        const trackValue = document.getElementById('signup-track').value;
-                if (!trackValue) {
-            err.textContent = "⚠️ الرجاء اختيار المسار التقني (Track) قبل المتابعة.";
-            err.classList.remove('hidden');
-            return;
-        }
-        if (!isChecked) {
-            err.textContent = "⚠️ يجب الموافقة على شروط الاستخدام وسياسة الخصوصية أولاً.";
-            err.classList.remove('hidden');
-            return; 
-        }
-
-        const btn = document.getElementById('btn-signup'); 
-        const originalText = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
-        btn.disabled = true;
-        err.classList.add('hidden');
-
-        const personalInfo = {
-            fullName: document.getElementById('signup-name').value,
-            photoURL: document.getElementById('signup-photo')?.value
-        };
-        const academicInfo = {
-            governorate: document.getElementById('signup-gov')?.value || "Not Specified",
-            university: document.getElementById('signup-uni')?.value || "Not Specified",
-            faculty: document.getElementById('signup-faculty')?.value || "Engineering",
-            department: document.getElementById('signup-dept')?.value || "Electronics",
-            year: document.getElementById('signup-year')?.value || "Prep",
-            track: trackValue 
-        };
-
-        try {
-            const result = await registerUser(
-                document.getElementById('signup-email').value,
-                document.getElementById('signup-password').value,
-                personalInfo,
-                academicInfo
-            );
-            
-            if (result.verificationRequired) {
-                const emailDisplay = document.getElementById('success-email-display');
-                if (emailDisplay) emailDisplay.innerText = document.getElementById('signup-email').value;
-                document.getElementById('success-modal').classList.remove('hidden');
-            }
-
-        } catch (error) {
-            btn.innerHTML = originalText;
-            btn.disabled = false; // إعادة تفعيل الزر في حالة حدوث خطأ
-            err.textContent = error.message;
-            err.classList.remove('hidden');
-        }
-    });
-
-</script>
-<script type="module" src="../js/pwa-handler.js"></script>
+        });
+    </script>
+    <script type="module" src="../js/pwa-handler.js"></script>
 </body>
 </html>

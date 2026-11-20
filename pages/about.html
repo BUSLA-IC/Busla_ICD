@@ -1,113 +1,102 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="page_title">عن موقع بوصلة</title>
+    <title>About ZDC | Zagazig Digital Community</title>
+    <meta name="description" content="Learn about ZDC (Zagazig Digital Community), our mission in Digital IC Design education, our founding team, contributors, and mentors.">
     <link rel="stylesheet" href="../css/tailwind.min.css">
     <script src="../js/custom-dialogs.js"></script>
-          <link rel="icon" type="image/jpg" href="../assets/icons/BUSLA-icon.png">
+    <link rel="icon" type="image/png" href="../assets/icons/zdc-icon-192.png">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 
     <style>
-        * {
-            font-family: 'Cairo', sans-serif;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        
-        /* RTL/LTR specific font adjustments could go here if needed */
-        html[lang="en"] * {
-            /* Example: font-family: 'Inter', sans-serif; if you want a different font for English */
+        h1, h2, h3, .font-display {
+            font-family: 'Outfit', sans-serif;
         }
 
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }
         }
-        
+
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 0 20px rgba(34, 196, 93, 0.3); }
             50% { box-shadow: 0 0 40px rgba(34, 196, 93, 0.6); }
         }
-        
+
         .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .stagger-1 { animation-delay: 0.1s; }
         .stagger-2 { animation-delay: 0.2s; }
         .stagger-3 { animation-delay: 0.3s; }
         .stagger-4 { animation-delay: 0.4s; }
-        
+
         .gradient-text {
             background: linear-gradient(135deg, #22C45D 0%, #006A67 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .gradient-border {
             position: relative;
             background: linear-gradient(#111111, #111111) padding-box,
                         linear-gradient(135deg, #006A67, #22C45D) border-box;
             border: 2px solid transparent;
         }
-        
+
         .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-hover:hover { transform: translateY(-8px); }
         .expert-card { transition: all 0.3s ease; }
         .expert-card:hover { transform: scale(1.05); }
         .modal-backdrop { backdrop-filter: blur(8px); }
-        
+
         .scrollbar-thin::-webkit-scrollbar { width: 8px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: #1a1a1a; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #006A67; border-radius: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #22C45D; }
     </style>
-
-    </head> 
-<body class="antialiased bg-b-bg text-b-text font-cairo">
+</head>
+<body class="antialiased bg-b-bg text-b-text">
     <!-- Header -->
     <header class="bg-b-surface shadow-2xl border-b border-b-border sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
         <nav class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                
+
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="../index.html" class="text-3xl font-bold text-b-primary hover:text-b-hl-light transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                        <img src="../assets/icons/BUSLA-icon.png" class="w-10 h-10 object-contain" alt="لوجو بوصلة">
-                        <span class="gradient-text" data-i18n="logo">بوصلة</span>
+                    <a href="../index.html" class="text-3xl font-extrabold font-display text-b-primary hover:text-b-hl-light transition-all duration-300 hover:scale-105 flex items-center gap-3">
+                        <img src="../assets/icons/zdc-icon-192.png" class="w-10 h-10 rounded-xl object-contain" alt="ZDC Logo">
+                        <span class="gradient-text">ZDC</span>
                     </a>
                 </div>
 
-                <div class="hidden lg:flex lg:items-center lg:gap-1">
-                    <a href="../index.html" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface" data-i18n="nav_home">الرئيسية</a>
-                    <a href="../index.html#roadmap" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface" data-i18n="nav_roadmap">المسار</a>
-                    <a href="../index.html#courses" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">الدورات</a>
-                    <a href="../index.html#tools" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface" data-i18n="nav_tools">الأدوات</a>
-                    <a href="../index.html#references" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface" data-i18n="nav_resources">المكتبة العلمية</a>
-                    <a href="../index.html#experts" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface" data-i18n="nav_experts">نصائح الخبراء</a>
-                    <a href="about.html" class="text-white font-semibold bg-b-surface px-3 py-2 rounded-lg border-b-2 border-b-primary" aria-current="page" data-i18n="nav_about">عن الموقع</a>
-                    
-                    <!-- Language Switcher -->
-                    <button id="lang-toggle-desktop" class="mr-4 px-3 py-1 rounded border border-b-border hover:border-b-primary hover:text-white text-gray-400 transition-colors">
-                        English
-                    </button>
+                <div class="hidden lg:flex lg:items-center lg:gap-1 font-medium text-sm">
+                    <a href="../index.html" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Home</a>
+                    <a href="../index.html#roadmap" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Roadmap</a>
+                    <a href="../index.html#courses" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Courses</a>
+                    <a href="../index.html#tools" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Tools</a>
+                    <a href="../index.html#references" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Library</a>
+                    <a href="../index.html#experts" class="text-gray-400 hover:text-b-hl-light transition-all duration-300 px-3 py-2 rounded-lg hover:bg-b-surface">Experts</a>
+                    <a href="about.html" class="text-white font-semibold bg-b-surface px-3 py-2 rounded-lg border-b-2 border-b-primary" aria-current="page">About</a>
                 </div>
 
                 <div class="flex items-center lg:hidden gap-3">
-                     <!-- Mobile Lang Switcher -->
-                     <button id="lang-toggle-mobile" class="px-2 py-1 text-sm rounded border border-b-border hover:border-b-primary hover:text-white text-gray-400 transition-colors">
-                        EN
-                    </button>
-
                     <button id="mobile-menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-b-surface focus:outline-none focus:ring-2 focus:ring-inset focus:ring-b-primary transition-all">
-                        <span class="sr-only">فتح القائمة الرئيسية</span>
+                        <span class="sr-only">Open main menu</span>
                         <i data-feather="menu" class="block h-6 w-6" id="icon-open"></i>
                         <i data-feather="x" class="hidden h-6 w-6" id="icon-close"></i>
                     </button>
@@ -117,124 +106,114 @@
 
         <div class="lg:hidden hidden bg-b-surface border-t border-b-border" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="../index.html" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all" data-i18n="nav_home">الرئيسية</a>
-                <a href="../index.html#roadmap" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all" data-i18n="nav_roadmap">المسار</a>
-                <a href="../index.html#courses" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">الدورات</a>
-                <a href="../index.html#tools" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all" data-i18n="nav_tools">الأدوات</a>
-                <a href="../index.html#references" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all" data-i18n="nav_resources">المكتبة العلمية</a>
-                <a href="../index.html#experts" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all" data-i18n="nav_experts">نصائح الخبراء</a>
-                <a href="about.html" class="bg-b-surface text-white block px-3 py-3 rounded-md text-base font-medium border-r-4 border-b-primary" aria-current="page" data-i18n="nav_about">عن الموقع</a>
+                <a href="../index.html" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Home</a>
+                <a href="../index.html#roadmap" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Roadmap</a>
+                <a href="../index.html#courses" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Courses</a>
+                <a href="../index.html#tools" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Tools</a>
+                <a href="../index.html#references" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Library</a>
+                <a href="../index.html#experts" class="text-gray-400 hover:bg-b-surface hover:text-white block px-3 py-3 rounded-md text-base font-medium transition-all">Experts</a>
+                <a href="about.html" class="bg-b-surface text-white block px-3 py-3 rounded-md text-base font-medium border-l-4 border-b-primary" aria-current="page">About</a>
             </div>
         </div>
     </header>
 
-    <!-- المحتوى الرئيسي -->
-    <main class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-7xl px-2.5 sm:px-6 lg:px-8 py-6 sm:py-12 md:py-20">
 
         <!-- Hero Section -->
         <section class="mb-24 text-center animate-fade-in-up relative">
             <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-b-primary opacity-5 rounded-full blur-3xl -z-10"></div>
-            
+
             <div class="inline-block mb-8 animate-float">
-                <div class="w-24 h-24 bg-gradient-to-br from-b-primary to-b-hl-light rounded-full flex items-center justify-center shadow-2xl" style="animation: pulse-glow 2s infinite;">
-                    <i data-feather="info" class="w-12 h-12 text-white"></i>
+                <div class="w-24 h-24 bg-gradient-to-br from-b-primary to-b-hl-light rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden border border-white/10" style="animation: pulse-glow 2s infinite;">
+                    <img src="../assets/icons/zdc-icon-192.png" alt="ZDC" class="w-full h-full object-contain p-2">
                 </div>
             </div>
-            
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 gradient-text leading-tight" data-i18n="hero_title">
-                عن بوصلة
+
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-4 gradient-text leading-tight">
+                About ZDC
             </h1>
-            
+            <p class="text-sm font-mono uppercase tracking-[0.25em] text-teal-400 mb-8">Zagazig Digital Community</p>
+
             <div class="max-w-4xl mx-auto gradient-border rounded-3xl p-1 shadow-2xl">
                 <div class="bg-b-surface rounded-3xl p-8 md:p-12">
                     <p class="text-xl md:text-2xl text-gray-300 leading-relaxed mb-6">
-                        <span data-i18n="hero_text_1">في عالم الـ</span>
-                        <span class="text-b-hl-light font-bold">Digital IC Design</span>
-                        <span data-i18n="hero_text_2">، المعلومة موجودة لكنها مبعثرة.</span>
+                        In the world of <span class="text-b-hl-light font-bold">Digital IC Design</span>, knowledge exists everywhere—but it is often fragmented and hard to navigate.
                     </p>
                     <div class="w-20 h-1 bg-gradient-to-r from-b-primary to-b-hl-light mx-auto mb-6 rounded-full"></div>
                     <p class="text-lg md:text-xl text-gray-400 leading-relaxed">
-                        <span class="text-b-hl-green font-bold text-2xl" data-i18n="logo">بوصلة</span>
-                        <span data-i18n="hero_desc">
-                            وُجد ليكون المرشد. هدفنا ليس فقط تجميع المصادر، بل تنظيمها في مسار واضح، خطوة بخطوة، يبدأ معك من الصفر ويأخذ بيدك حتى تصل إلى مستوى متقدم.
-                        </span>
+                        <span class="text-b-hl-green font-bold text-2xl">ZDC</span> was built to be your engineering compass. Our goal is not just to gather references, but to organize them into a clear, step-by-step curriculum that takes you from fundamentals to real silicon-ready projects.
                     </p>
                 </div>
             </div>
         </section>
 
-        <!-- قسم: منشئ الموقع -->
+        <!-- Creator Section -->
         <section class="mb-28 animate-fade-in-up stagger-1">
             <div class="text-center mb-16">
                 <div class="inline-flex items-center gap-3 mb-4 bg-b-surface px-6 py-3 rounded-full border border-b-border">
                     <i data-feather="star" class="w-6 h-6 text-b-hl-yellow"></i>
-                    <h2 class="text-3xl md:text-4xl font-bold text-white" data-i18n="creator_title">منشئ الموقع</h2>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">Platform Founder</h2>
                 </div>
-                <p class="text-gray-400 mt-4 text-lg" data-i18n="creator_subtitle">العقل المدبر وراء بوصلة</p>
+                <p class="text-gray-400 mt-4 text-lg">The engineer who architected and launched ZDC</p>
             </div>
-            
-            <div id="creator-container" class="flex justify-center">
-                <!-- سيتم ملء هذا الكارت بواسطة JavaScript -->
-            </div>
+
+            <div id="creator-container" class="flex justify-center"></div>
         </section>
 
-        <!-- قسم: المساهمون الرئيسيون -->
+        <!-- Core Contributors Section -->
         <section class="mb-28 animate-fade-in-up stagger-2">
             <div class="text-center mb-16">
                 <div class="inline-flex items-center gap-3 mb-4 bg-b-surface px-6 py-3 rounded-full border border-b-border">
                     <i data-feather="users" class="w-6 h-6 text-b-hl-light"></i>
-                    <h2 class="text-3xl md:text-4xl font-bold text-white" data-i18n="team_title">فريق العمل</h2>
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">Core Team &amp; Contributors</h2>
                 </div>
-                <p class="text-gray-400 mt-4 text-lg" data-i18n="team_subtitle">الأشخاص الذين ساهموا في بناء وإثراء محتوى بوصلة</p>
+                <p class="text-gray-400 mt-4 text-lg">The engineers who built, structured, and enriched the ZDC platform</p>
                 <div class="w-32 h-1 bg-gradient-to-r from-transparent via-b-hl-light to-transparent mx-auto mt-6 rounded-full"></div>
             </div>
-            
-            <div id="contributors-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-8 max-w-6xl mx-auto">
-                <!-- سيتم ملء الكروت هنا بواسطة JavaScript -->
-            </div>
+
+            <div id="contributors-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-6xl mx-auto"></div>
         </section>
 
-        <!-- قسم: الأساتذة والخبراء -->
+        <!-- Professors & Experts Section -->
         <section class="mb-28 animate-fade-in-up stagger-3">
             <div class="text-center mb-16">
                 <div class="inline-flex items-center gap-3 mb-4 bg-gradient-to-r from-b-surface to-b-bg px-6 py-3 rounded-full border border-b-hl-green">
                     <i data-feather="award" class="w-6 h-6 text-b-hl-green"></i>
-                    <h2 class="text-3xl md:text-4xl font-bold text-b-hl-green" data-i18n="experts_title">شكر خاص للأساتذة والخبراء</h2>
+                    <h2 class="text-3xl md:text-4xl font-bold text-b-hl-green">Special Thanks to Professors &amp; Experts</h2>
                 </div>
-                <p class="text-gray-400 mt-4 text-lg" data-i18n="experts_subtitle">الذين قدموا علمهم وخبرتهم لإثراء المجتمع التعليمي</p>
+                <p class="text-gray-400 mt-4 text-lg">Educators and industry engineers who generously shared their knowledge with the community</p>
                 <div class="w-32 h-1 bg-gradient-to-r from-transparent via-b-hl-green to-transparent mx-auto mt-6 rounded-full"></div>
             </div>
-            
-            <div id="experts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
-                <!-- سيتم ملء الكروت هنا بواسطة JavaScript -->
-            </div>
+
+            <div id="experts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-6xl mx-auto"></div>
         </section>
 
-        <!-- قسم: رسالة شكر -->
+        <!-- Acknowledgments Section -->
         <section class="text-center max-w-5xl mx-auto animate-fade-in-up stagger-4">
             <div class="gradient-border rounded-3xl p-1 shadow-2xl">
                 <div class="bg-gradient-to-br from-b-surface via-b-bg to-b-surface rounded-3xl p-10 md:p-16 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-b-primary opacity-5 rounded-full -mr-32 -mt-32"></div>
                     <div class="absolute bottom-0 left-0 w-64 h-64 bg-b-hl-light opacity-5 rounded-full -ml-32 -mb-32"></div>
-                    
+
                     <div class="relative z-10">
                         <div class="inline-block mb-8">
-                            <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+                            <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
                                 <i data-feather="heart" class="w-10 h-10 text-white"></i>
                             </div>
                         </div>
-                        
-                        <h2 class="text-4xl md:text-5xl font-bold mb-8 gradient-text" data-i18n="thanks_title">شكر وتقدير</h2>
-                        
+
+                        <h2 class="text-4xl md:text-5xl font-bold mb-8 gradient-text">Acknowledgments</h2>
+
                         <div class="space-y-6 text-lg md:text-xl text-gray-300 leading-relaxed">
-                            <p data-i18n="thanks_msg_1">
-                                هذا العمل لم يكن ليظهر للنور لولا فضل الله أولاً، ثم جهود ومساهمات كل شخص مذكور في هذه الصفحة.
+                            <p>
+                                This platform would not have come to life without the dedication, generosity, and collaborative spirit of every person recognized on this page.
                             </p>
-                            <p data-i18n="thanks_msg_2">
-                                كل الشكر والتقدير لكل من ساهم بوقته، معرفته، أو حتى بكلمة تشجيعية.
+                            <p>
+                                Thank you to everyone who contributed their time, technical expertise, course notes, or words of encouragement.
                             </p>
                             <p class="text-2xl font-bold text-b-hl-light">
-                                <span data-i18n="thanks_msg_3">بوصلة هو نتاج جهد جماعي نأمل أن يكون علماً ينتفع به</span> 🌟
+                                ZDC is the result of a collective community effort built for lasting impact.
                             </p>
                         </div>
                     </div>
@@ -249,11 +228,11 @@
         <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
             <div class="text-center">
                 <div class="flex justify-center items-center gap-2 mb-4">
-                    <i data-feather="heart" class="w-5 h-5 text-red-500 animate-pulse"></i>
-                    <p class="text-gray-400" data-i18n="footer_love">صُنع بكل حب لمساعدة الطلاب</p>
+                    <i data-feather="heart" class="w-5 h-5 text-red-500"></i>
+                    <p class="text-gray-400">Built with passion to empower engineering students</p>
                 </div>
                 <p class="text-gray-500 text-sm">
-                    &copy; <span id="current-year"></span> <span data-i18n="footer_rights">منصة بوصلة | تم إنشاؤه بواسطة</span> 
+                    &copy; <span id="current-year"></span> ZDC — Zagazig Digital Community | Created by
                     <a href="https://www.linkedin.com/in/ahmed-m-attia-757aa6292/" target="_blank" rel="noopener noreferrer" class="text-b-primary hover:text-b-hl-light transition-all font-semibold">
                         Ahmed M. Attia
                     </a>
@@ -262,18 +241,17 @@
         </div>
     </footer>
 
-    <!-- النافذة العائمة (Modal) -->
+    <!-- Modal -->
     <div id="modal-overlay" class="fixed inset-0 w-full h-full z-[100] bg-black bg-opacity-90 modal-backdrop hidden items-center justify-center p-4 transition-all duration-300 opacity-0">
         <div id="modal-content" class="bg-b-surface border-2 border-b-primary w-full max-w-3xl rounded-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto scrollbar-thin transform scale-95 transition-all duration-300">
-            <button id="modal-close-btn" class="absolute top-6 left-6 rtl:left-6 rtl:right-auto ltr:right-6 ltr:left-auto w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full flex items-center justify-center text-2xl font-bold transition-all z-10 shadow-2xl hover:scale-110">
-                ×
+            <button id="modal-close-btn" class="absolute top-6 right-6 w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full flex items-center justify-center text-2xl font-bold transition-all z-10 shadow-2xl hover:scale-110">
+                &times;
             </button>
-            
-            <div id="modal-body" class="p-8 md:p-12">
-                <!-- المحتوى الديناميكي يوضع هنا -->
-            </div>
+
+            <div id="modal-body" class="p-8 md:p-12"></div>
         </div>
     </div>
- <script src="../js/about.js"></script>
+
+    <script src="../js/about.js"></script>
 </body>
 </html>

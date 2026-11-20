@@ -2,6 +2,7 @@ import { supabase } from './supabase-config.js';
 import { mergeCurriculumLinks, getAttachmentsForTarget } from './curriculum-links-core.js';
 import { fetchAllCurriculumLinks } from './curriculum-links-service.js';
 import { computeRoadmapLayout, buildRoadmapEdgeGeometry } from './roadmap-layout-core.js';
+import { parseProjectLinks } from './quiz-prompt-core.js';
 
 function getAssetPrefix() {
     const loc = window.location.pathname;
@@ -80,7 +81,7 @@ export async function initInteractiveRoadmap(role = 'student') {
         try {
             const { data: tracks, error } = await supabase.from('tracks').select('id, name').eq('is_active', true);
             if (!error && tracks) {
-                selector.innerHTML = '<option value="">اختر المسار (Select Track)...</option>' + 
+                selector.innerHTML = '<option value="">Select Track...</option>' + 
                     tracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
             }
         } catch (e) {
@@ -115,7 +116,7 @@ function setupRoadmapHTML(container) {
     const trackSelectorHtml = hasSelector ? '' : `
         <div class="flex-1 min-w-0" id="roadmap-track-selector-wrapper">
             <select id="roadmap-track-selector" class="w-full bg-black/50 border border-white/10 text-xs text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
-                <option value="">اختر المسار التعليمي...</option>
+                <option value="">Select a learning track...</option>
             </select>
         </div>`;
 
@@ -132,25 +133,25 @@ function setupRoadmapHTML(container) {
                     <div class="relative shrink-0" id="rm-export-wrapper">
                         <button id="rm-export-btn"
                                 class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-white hover:border-white/25 transition-all">
-                            <i class="fas fa-download text-[10px]"></i> تصدير
+                            <i class="fas fa-download text-[10px]"></i> Export
                         </button>
                         <div id="rm-export-menu"
-                             class="hidden absolute left-0 top-full mt-1 z-50 bg-[#0e0e0e] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[160px]">
+                             class="hidden absolute right-0 top-full mt-1 z-50 bg-[#0e0e0e] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[170px]">
                             <button onclick="window._rmExport('svg')"
-                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                                <i class="fas fa-bezier-curve text-cyan-400"></i> تصدير SVG
+                                    class="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-bezier-curve text-cyan-400"></i> Export SVG
                             </button>
                             <button onclick="window._rmExport('png1')"
-                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                                <i class="fas fa-image text-green-400"></i> PNG — جودة عادية (1x)
+                                    class="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — Standard (1x)
                             </button>
                             <button onclick="window._rmExport('png2')"
-                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                                <i class="fas fa-image text-green-400"></i> PNG — جودة عالية (2x)
+                                    class="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — High (2x)
                             </button>
                             <button onclick="window._rmExport('png4')"
-                                    class="w-full text-right px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                                <i class="fas fa-image text-green-400"></i> PNG — جودة ممتازة (4x)
+                                    class="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                                <i class="fas fa-image text-green-400"></i> PNG — Ultra (4x)
                             </button>
                         </div>
                     </div>
@@ -158,12 +159,12 @@ function setupRoadmapHTML(container) {
  
                 <!-- Legend -->
                 <div class="roadmap-legend">
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-track)"></span><span>مسار</span></div>
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-phase)"></span><span>مرحلة</span></div>
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-course)"></span><span>كورس</span></div>
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-video)"></span><span>درس</span></div>
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-quiz)"></span><span>كويز</span></div>
-                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-project)"></span><span>مشروع</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-track)"></span><span>Track</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-phase)"></span><span>Phase</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-course)"></span><span>Course</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-video)"></span><span>Lesson</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-quiz)"></span><span>Quiz</span></div>
+                    <div class="roadmap-legend-item"><span class="roadmap-legend-dot" style="background:var(--color-project)"></span><span>Project</span></div>
                 </div>
             </div>
 
@@ -331,7 +332,7 @@ async function renderInteractiveRoadmapTree() {
     const selector = document.getElementById('roadmap-track-selector') || document.getElementById('filter-track');
     const trackId = selector ? selector.value : 'all';
     if (!trackId || trackId === 'all') {
-        renderPlaceholder("الرجاء اختيار مسار محدد (Track) لعرض الخريطة التفاعلية.");
+        renderPlaceholder("Please select a specific Track to display the interactive roadmap.");
         return;
     }
 
@@ -340,7 +341,7 @@ async function renderInteractiveRoadmapTree() {
     if (!nodesContainer || !svgLayer) return;
 
     // Show loading
-    nodesContainer.innerHTML = '<div class="text-center py-20 text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-4"></i><br>جاري رسم شجرة المنهج...</div>';
+    nodesContainer.innerHTML = '<div class="text-center py-20 text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-4"></i><br>Building curriculum roadmap...</div>';
     svgLayer.innerHTML = '';
 
     // Fetch and structure raw graph data
@@ -349,7 +350,7 @@ async function renderInteractiveRoadmapTree() {
     }
     const graphData = currentGraphData;
     if (!graphData || graphData.phases.length === 0) {
-        renderPlaceholder("لا توجد مراحل (Phases) مضافة في هذا المسار حالياً.");
+        renderPlaceholder("No phases have been added to this track yet.");
         return;
     }
 
@@ -372,8 +373,8 @@ async function renderInteractiveRoadmapTree() {
             fitRoadmapToScreen();
             updateMinimap();
 
-            // 🔄 استرجاع آخر نود محددة في شجرة المنهج
-            const rememberedNodeId = localStorage.getItem('busla_roadmap_active_node_id');
+            // Restore last selected node in the curriculum roadmap
+            const rememberedNodeId = localStorage.getItem('zdc_roadmap_active_node_id') || localStorage.getItem('busla_roadmap_active_node_id');
             if (rememberedNodeId) {
                 const targetNode = computedNodes.find(n => n.id === rememberedNodeId);
                 if (targetNode) {
@@ -400,7 +401,7 @@ function renderPlaceholder(msg) {
                     <i class="fas fa-map-signs"></i>
                 </div>
                 <h3 class="font-bold text-sm sm:text-lg text-white mb-1.5 sm:mb-2">${msg}</h3>
-                <p class="text-[11px] sm:text-xs text-gray-400 leading-relaxed">الرجاء اختيار أحد المسارات التعليمية المتاحة مثل (Digital IC Design) من القائمة المنسدلة أعلاه لبدء تصفح خريطة التعلم التفاعلية.</p>
+                <p class="text-[11px] sm:text-xs text-gray-400 leading-relaxed">Select one of the available engineering tracks (such as Digital IC Design) from the dropdown above to explore the interactive curriculum tree.</p>
             </div>
         `;
         overlay.classList.remove('hidden');
@@ -528,8 +529,8 @@ function buildGraphStructure(data) {
             type: 'course',
             title: course.title,
             description: course.description,
-            instructor: course.created_by || 'Busla Team',
-            duration: course['Module_Time'] || course['Module Time'] || 'غير محدد',
+            instructor: course.created_by || 'ZDC Team',
+            duration: course['Module_Time'] || course['Module Time'] || 'Unspecified',
             phaseId: course.phase_id,
             trackId: data.track.id,
             difficulty: course.type || 'Intermediate',
@@ -679,7 +680,7 @@ function buildGraphStructure(data) {
                     baseXp: mat.base_xp || 10,
                     status: getMaterialStatus(mat),
                     difficulty: courseNode.difficulty,
-                    author: mat.author || 'Busla Team',
+                    author: mat.author || 'ZDC Team',
                     rawItem: mat,
                     isCollapsed: false,
                     isHidden: isMatHidden,
@@ -767,11 +768,11 @@ function buildGraphStructure(data) {
                     isCourseAttachment: true,
                     type: 'document',
                     title: doc.title,
-                    duration: doc.estimated_reading_time ? `${doc.estimated_reading_time} دقيقة` : null,
+                    duration: doc.estimated_reading_time ? `${doc.estimated_reading_time} min` : null,
                     baseXp: doc.xp_reward || 10,
                     status: userProgress.completedMats.has(`doc_${doc.id}`) ? 'completed' : 'current',
                     difficulty: courseNode.difficulty,
-                    author: 'Busla Team',
+                    author: 'ZDC Team',
                     rawItem: doc,
                     isCollapsed: false,
                     isHidden: isMatHidden,
@@ -980,7 +981,7 @@ function renderHtmlNodes() {
             let matBtn = '';
             if (hasMaterials) {
                 const icon = node.isCollapsed ? 'fa-list' : 'fa-chevron-right';
-                const tip = node.isCollapsed ? 'عرض الدروس والمحتويات' : 'إخفاء الدروس والمحتويات';
+                const tip = node.isCollapsed ? 'Show lessons & materials' : 'Hide lessons & materials';
                 const color = node.isCollapsed ? '#9ca3af' : 'var(--color-course)';
                 const bg = node.isCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(34,196,93,0.15)';
                 const border = node.isCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(34,196,93,0.3)';
@@ -999,7 +1000,7 @@ function renderHtmlNodes() {
             let relBtn = '';
             if (hasRelated) {
                 const icon = node.isRelatedCollapsed ? 'fa-sitemap' : 'fa-chevron-left';
-                const tip = node.isRelatedCollapsed ? 'عرض الكورسات المرتبطة' : 'إخفاء الكورسات المرتبطة';
+                const tip = node.isRelatedCollapsed ? 'Show related courses' : 'Hide related courses';
                 const color = node.isRelatedCollapsed ? '#9ca3af' : 'var(--color-track)';
                 const bg = node.isRelatedCollapsed ? 'rgba(255,255,255,0.07)' : 'rgba(0,245,255,0.15)';
                 const border = node.isRelatedCollapsed ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,245,255,0.3)';
@@ -1020,7 +1021,7 @@ function renderHtmlNodes() {
 
         // ── Info button (ⓘ) — top-right of every node ──
         const infoBtn = `
-            <button class="rm-info-btn" title="عرض التفاصيل"
+            <button class="rm-info-btn" title="View Details"
                     onclick="event.stopPropagation(); window._rmShowInfo('${node.id}')"
                     style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
                            background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
@@ -1184,11 +1185,11 @@ function getNodeInnerHtml(node) {
     // Status Badge/Icon
     let statusBadge = '';
     if (node.status === 'completed') {
-        statusBadge = `<i class="fas fa-check-circle text-green-500 text-sm ml-2"></i>`;
+        statusBadge = `<i class="fas fa-check-circle text-green-500 text-sm mr-2"></i>`;
     } else if (node.status === 'current') {
-        statusBadge = `<i class="fas fa-play-circle text-yellow-500 text-sm ml-2"></i>`;
+        statusBadge = `<i class="fas fa-play-circle text-yellow-500 text-sm mr-2"></i>`;
     } else if (node.status === 'locked') {
-        statusBadge = `<i class="fas fa-lock text-gray-500 text-xs ml-2"></i>`;
+        statusBadge = `<i class="fas fa-lock text-gray-500 text-xs mr-2"></i>`;
     }
 
     if (node.type === 'track') {
@@ -1197,14 +1198,14 @@ function getNodeInnerHtml(node) {
                 <div class="w-10 h-10 rounded-xl bg-[#006A67]/20 flex items-center justify-center border border-[#006A67]/30 text-[#00F5FF] leading-none">
                     <i class="fas ${icon} text-lg leading-none"></i>
                 </div>
-                <div class="flex-1 min-w-0 text-right">
-                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">مسار تعليمي</span>
+                <div class="flex-1 min-w-0 text-left">
+                    <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Learning Track</span>
                     <h4 class="font-bold text-white text-sm line-clamp-2 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
-                <span>المراحل: ${node.phasesCount}</span>
-                <span class="text-[#00F5FF] font-bold">إكمال: ${node.completionRate}%</span>
+                <span>Phases: ${node.phasesCount}</span>
+                <span class="text-[#00F5FF] font-bold">Completion: ${node.completionRate}%</span>
             </div>
         `;
     }
@@ -1212,7 +1213,7 @@ function getNodeInnerHtml(node) {
     if (node.type === 'phase') {
         const isCollapsed = node.isCollapsed;
         const toggleIcon = isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up';
-        const toggleText = isCollapsed ? `عرض الكورسات (${node.coursesCount})` : 'إخفاء الكورسات';
+        const toggleText = isCollapsed ? `Show Courses (${node.coursesCount})` : 'Hide Courses';
         const toggleBg = isCollapsed ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25' : 'bg-white/10 text-white border-white/20 hover:bg-white/20';
 
         return `
@@ -1220,13 +1221,13 @@ function getNodeInnerHtml(node) {
                 <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400 leading-none">
                     <i class="fas ${icon} text-lg leading-none"></i>
                 </div>
-                <div class="flex-1 min-w-0 text-right">
-                    <span class="text-[9px] text-blue-400 font-bold uppercase tracking-widest block mb-0.5">المرحلة ${node.orderIndex}</span>
+                <div class="flex-1 min-w-0 text-left">
+                    <span class="text-[9px] text-blue-400 font-bold uppercase tracking-widest block mb-0.5">Phase ${node.orderIndex}</span>
                     <h4 class="font-bold text-white text-sm line-clamp-2 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
                 </div>
             </div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-white/5 pt-2">
-                <span class="text-[10px] text-gray-400 font-semibold">الكورسات: <strong class="text-blue-400 font-bold">${node.coursesCount || 0}</strong></span>
+                <span class="text-[10px] text-gray-400 font-semibold">Courses: <strong class="text-blue-400 font-bold">${node.coursesCount || 0}</strong></span>
                 <button onclick="event.stopPropagation(); window._roadmapTogglePhaseCollapse('${node.id}')"
                         class="phase-collapse-btn inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-bold ${toggleBg} cursor-pointer transition-all hover:scale-105 active:scale-95">
                     <span>${toggleText}</span>
@@ -1250,10 +1251,10 @@ function getNodeInnerHtml(node) {
         if (currentRole === 'leader') {
             leaderToggleBtn = `
                 <button onclick="event.stopPropagation(); window.leaderToggleCourseActivation('${node.dbId}', ${!isPlanActive})"
-                        title="${isPlanActive ? 'إلغاء تفعيل الكورس للفريق' : 'تفعيل الكورس للفريق'}"
+                        title="${isPlanActive ? 'Deactivate course for squad' : 'Activate course for squad'}"
                         class="leader-toggle-btn inline-flex items-center gap-1 text-[9px] px-2 h-5 rounded font-bold transition-all hover:scale-105 active:scale-95 ${isPlanActive ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40' : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-teal-500/20 hover:text-teal-300 hover:border-teal-500/30'}">
                     <i class="fas ${isPlanActive ? 'fa-unlock' : 'fa-lock'} text-[8px]"></i>
-                    <span>${isPlanActive ? 'مفعّل' : 'تفعيل'}</span>
+                    <span>${isPlanActive ? 'Active' : 'Enable'}</span>
                 </button>
             `;
         }
@@ -1261,12 +1262,12 @@ function getNodeInnerHtml(node) {
         return `
             <div class="flex items-center justify-between gap-2 mb-2">
                 <div class="flex items-center gap-1.5">
-                    <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">كورس</span>
+                    <span class="inline-flex items-center justify-center text-[9px] px-2 h-5 rounded bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest font-bold leading-none">Course</span>
                     ${totalItems > 0 ? `
                         <button onclick="event.stopPropagation(); window._roadmapToggleCollapse('${node.id}')"
                                 class="course-collapse-btn inline-flex items-center gap-1 text-[8px] px-1.5 h-5 rounded font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${isCollapsed ? 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/15' : 'bg-green-500/20 text-green-300 border border-green-500/30'}">
                             <i class="fas ${isCollapsed ? 'fa-folder' : 'fa-folder-open'}"></i>
-                            ${isCollapsed ? 'المحتوى' : 'مفتوح'}
+                            ${isCollapsed ? 'Content' : 'Open'}
                         </button>
                     ` : ''}
                 </div>
@@ -1275,17 +1276,17 @@ function getNodeInnerHtml(node) {
                     ${statusBadge}
                 </div>
             </div>
-            <h4 class="font-bold text-white text-sm line-clamp-2 text-right mb-2.5 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
+            <h4 class="font-bold text-white text-sm line-clamp-2 text-left mb-2.5 leading-normal pb-1 break-words" dir="auto" title="${node.title}">${node.title}</h4>
             <div class="grid grid-cols-3 gap-1.5 text-[9px] text-gray-400 border-t border-white/5 pt-2 text-center">
-                <div class="${node.videosCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-play text-blue-400 ml-0.5"></i> ${node.videosCount}</div>
-                <div class="${node.quizzesCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-clipboard-question text-purple-400 ml-0.5"></i> ${node.quizzesCount}</div>
-                <div class="${node.projectsCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-code-branch text-orange-400 ml-0.5"></i> ${node.projectsCount}</div>
+                <div class="${node.videosCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-play text-blue-400 mr-0.5"></i> ${node.videosCount}</div>
+                <div class="${node.quizzesCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-clipboard-question text-purple-400 mr-0.5"></i> ${node.quizzesCount}</div>
+                <div class="${node.projectsCount > 0 ? 'text-gray-300 font-semibold' : 'text-gray-600'}"><i class="fas fa-code-branch text-orange-400 mr-0.5"></i> ${node.projectsCount}</div>
             </div>
         `;
     }
 
     if (node.type === 'document') {
-        const docLabel = 'مستند تعليمي';
+        const docLabel = 'Document';
         const docColor = 'text-cyan-400';
         const docBg    = 'bg-cyan-500/10';
         const docBorder= 'border-cyan-500/25';
@@ -1300,15 +1301,15 @@ function getNodeInnerHtml(node) {
                         <span class="text-[8px] font-bold uppercase tracking-wider ${docColor}">${docLabel} (${node.docType || node.rawItem?.document_type || 'PDF'})</span>
                         ${statusBadge}
                     </div>
-                    <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-right pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
-                    ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : node.rawItem?.estimated_reading_time ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.rawItem.estimated_reading_time} دقيقة</span>` : ''}
+                    <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-left pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
+                    ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-left">${node.duration}</span>` : node.rawItem?.estimated_reading_time ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-left">${node.rawItem.estimated_reading_time} min</span>` : ''}
                 </div>
             </div>
         `;
     }
 
     // For videos, quizzes, and projects (materials)
-    const typeLabel = node.type === 'video' ? 'درس فيديو' : node.type === 'quiz' ? 'اختبار' : 'مشروع عملي';
+    const typeLabel = node.type === 'video' ? 'Video Lesson' : node.type === 'quiz' ? 'Quiz' : 'Project';
     const typeColor = node.type === 'video' ? 'text-gray-300' : node.type === 'quiz' ? 'text-purple-400' : 'text-orange-400';
     const typeBg    = node.type === 'video' ? 'bg-gray-500/10' : node.type === 'quiz' ? 'bg-purple-500/10' : 'bg-orange-500/10';
     const typeBorder= node.type === 'video' ? 'border-gray-500/20' : node.type === 'quiz' ? 'border-purple-500/25' : 'border-orange-500/25';
@@ -1323,8 +1324,8 @@ function getNodeInnerHtml(node) {
                     <span class="text-[8px] font-bold uppercase tracking-wider ${typeColor}">${typeLabel}</span>
                     ${statusBadge}
                 </div>
-                <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-right pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
-                ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-right">${node.duration}</span>` : ''}
+                <p class="font-semibold text-white text-xs leading-normal line-clamp-2 text-left pb-1 break-words" dir="auto" title="${node.title}">${node.title}</p>
+                ${node.duration ? `<span class="text-[9px] text-gray-500 mt-0.5 block text-left">${node.duration}</span>` : ''}
             </div>
         </div>
     `;
@@ -1393,7 +1394,7 @@ function closeInfoPanel() {
  * Builds the HTML content for the info panel for any node type
  */
 function buildInfoPanelHTML(node) {
-    const typeLabels = { track: 'مسار', phase: 'مرحلة', course: 'كورس', video: 'فيديو', quiz: 'كويز', project: 'مشروع' };
+    const typeLabels = { track: 'Track', phase: 'Phase', course: 'Course', video: 'Video', quiz: 'Quiz', project: 'Project', document: 'Document' };
     const typeColors = {
         track: 'var(--color-track)', phase: 'var(--color-phase)',
         course: 'var(--color-course)', video: 'var(--color-video)',
@@ -1416,19 +1417,19 @@ function buildInfoPanelHTML(node) {
         </div>`;
 
     // ── Basic Info ──
-    html += `<div class="rm-panel-section-title">البيانات الأساسية</div>`;
-    html += row('المعرّف (ID)', node.dbId, true);
-    html += row('النوع', label);
-    html += row('الترتيب', node.orderIndex ?? '—');
-    html += row('الحالة', node.status ?? '—');
+    html += `<div class="rm-panel-section-title">Basic Information</div>`;
+    html += row('ID', node.dbId, true);
+    html += row('Type', label);
+    html += row('Order', node.orderIndex ?? '—');
+    html += row('Status', node.status ?? '—');
 
     // ── Type-specific ──
-    html += `<div class="rm-panel-section-title">بيانات خاصة بالنوع</div>`;
+    html += `<div class="rm-panel-section-title">Details</div>`;
 
     if (node.type === 'track') {
-        html += row('عدد المراحل', node.phasesCount);
-        html += row('نسبة الإكمال', node.completionRate ? `${Math.round(node.completionRate)}%` : '—');
-        html += row('الوصف', node.description || '—');
+        html += row('Phases', node.phasesCount);
+        html += row('Completion', node.completionRate ? `${Math.round(node.completionRate)}%` : '—');
+        html += row('Description', node.description || '—');
     }
 
     if (node.type === 'phase') {
@@ -1436,26 +1437,26 @@ function buildInfoPanelHTML(node) {
         const pVids = pCourses.reduce((s, c) => s + (c.videosCount || 0), 0);
         const pQz  = pCourses.reduce((s, c) => s + (c.quizzesCount || 0), 0);
         const pPr  = pCourses.reduce((s, c) => s + (c.projectsCount || 0), 0);
-        html += row('عدد الكورسات', pCourses.length);
-        html += row('المدة الكلية', node.time || '—');
-        html += row('عدد الفيديوهات', pVids);
-        html += row('عدد الكويزات', pQz);
-        html += row('عدد المشاريع', pPr);
-        html += row('الوصف', node.description || '—');
+        html += row('Courses', pCourses.length);
+        html += row('Total Duration', node.time || '—');
+        html += row('Videos', pVids);
+        html += row('Quizzes', pQz);
+        html += row('Projects', pPr);
+        html += row('Description', node.description || '—');
     }
 
     if (node.type === 'course') {
-        html += row('الوصف', node.description || '—');
-        html += row('المحاضر', node.instructor);
-        html += row('المدة', node.duration);
-        html += row('المستوى', node.difficulty);
-        html += row('عدد الفيديوهات', node.videosCount);
-        html += row('عدد الكويزات', node.quizzesCount);
-        html += row('عدد المشاريع', node.projectsCount);
+        html += row('Description', node.description || '—');
+        html += row('Instructor', node.instructor);
+        html += row('Duration', node.duration);
+        html += row('Level', node.difficulty);
+        html += row('Videos', node.videosCount);
+        html += row('Quizzes', node.quizzesCount);
+        html += row('Projects', node.projectsCount);
         if (node.rawItem?.playlist_url) {
             html += `<div class="rm-panel-row">
-                <span class="rm-panel-key">قائمة التشغيل</span>
-                <a href="${node.rawItem.playlist_url}" target="_blank" class="rm-panel-val text-cyan-400 hover:underline truncate">رابط ↗</a>
+                <span class="rm-panel-key">Playlist</span>
+                <a href="${node.rawItem.playlist_url}" target="_blank" class="rm-panel-val text-cyan-400 hover:underline truncate">Open ↗</a>
             </div>`;
         }
         if (node.rawItem?.thumbnail_url) {
@@ -1469,33 +1470,33 @@ function buildInfoPanelHTML(node) {
         const raw = node.rawItem || {};
         const ytId = extractYouTubeId(raw.video_id);
         const vidUrl = raw.url || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : '');
-        html += row('الرابط', vidUrl ? `<a href="${vidUrl}" target="_blank" class="text-cyan-400 hover:underline">رابط ↗</a>` : '—');
-        html += row('المدة', node.duration);
-        html += row('المؤلف', node.author);
-        html += row('الترتيب', raw.order_index ?? '—');
+        html += row('Link', vidUrl ? `<a href="${vidUrl}" target="_blank" class="text-cyan-400 hover:underline">Open ↗</a>` : '—');
+        html += row('Duration', node.duration);
+        html += row('Author', node.author);
+        html += row('Order', raw.order_index ?? '—');
     }
 
     if (node.type === 'quiz') {
         const raw = node.rawItem || {};
-        html += row('عدد الأسئلة', raw.questions_count ?? '—');
-        html += row('الدرجة', raw.total_score ?? '—');
-        html += row('درجة النجاح', raw.passing_score ?? '—');
-        html += row('وقت الحل', raw.time_limit ? `${raw.time_limit} د` : '—');
+        html += row('Questions', raw.questions_count ?? '—');
+        html += row('Total Score', raw.total_score ?? '—');
+        html += row('Passing Score', raw.passing_score ?? '—');
+        html += row('Time Limit', raw.time_limit ? `${raw.time_limit} min` : '—');
     }
 
     if (node.type === 'project') {
         const raw = node.rawItem || {};
-        html += row('الوصف', node.description || '—');
-        html += row('الدرجة', raw.total_score ?? '—');
-        html += row('الملفات المطلوبة', raw.required_files || '—');
+        html += row('Description', node.description || '—');
+        html += row('Total Score', raw.total_score ?? '—');
+        html += row('Required Files', raw.required_files || '—');
     }
 
     // ── Relationships tree ──
-    html += `<div class="rm-panel-section-title">العلاقات</div>`;
+    html += `<div class="rm-panel-section-title">Relationships</div>`;
     const trackNode  = computedNodes.find(n => n.type === 'track');
     const buildLink  = (n, indent = 0) =>
         `<div class="flex items-center gap-1 py-0.5 cursor-pointer hover:text-cyan-300 transition-all text-xs text-gray-300"
-              style="padding-right:${indent * 12}px" data-jump-node="${n.id}">
+              style="padding-left:${indent * 12}px" data-jump-node="${n.id}">
             ${'└──'.padStart(indent > 0 ? 3 : 0)} <i class="fas ${ICONS[n.type] || 'fa-circle'} text-[9px]" style="color:${typeColors[n.type]||'#9ca3af'}"></i>
             <span class="truncate">${n.title}</span>
          </div>`;
@@ -1528,7 +1529,7 @@ function buildInfoPanelHTML(node) {
 
     // ── Raw DB fields ──
     if (node.rawItem && Object.keys(node.rawItem).length > 0) {
-        html += `<div class="rm-panel-section-title">قاعدة البيانات (Raw)</div>`;
+        html += `<div class="rm-panel-section-title">Raw Database Fields</div>`;
         Object.entries(node.rawItem).forEach(([k, v]) => {
             if (v === null || v === undefined) return;
             const display = typeof v === 'object' ? JSON.stringify(v).slice(0, 80) : String(v).slice(0, 120);
@@ -1552,7 +1553,7 @@ function initExportGlobals() {
         // Close dropdown & show loading
         menu?.classList.add('hidden');
         const origHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-[10px]"></i> جاري التصدير...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-[10px]"></i> Exporting...';
         btn.disabled = true;
 
         try {
@@ -1567,7 +1568,7 @@ function initExportGlobals() {
             }
         } catch (err) {
             console.error('Export error:', err);
-            alert('حدث خطأ أثناء التصدير: ' + err.message);
+            alert('Export failed: ' + err.message);
         } finally {
             btn.innerHTML = origHTML;
             btn.disabled = false;
@@ -1663,7 +1664,7 @@ async function exportAsSvg() {
 
     // Embed all document stylesheets for styling foreignObjects and paths
     const styleEl = document.createElementNS(ns, 'style');
-    let cssText = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');\n`;
+    let cssText = `@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');\n`;
     try {
         for (const sheet of document.styleSheets) {
             try {
@@ -1747,7 +1748,7 @@ async function exportAsSvg() {
     const serializer = new XMLSerializer();
     const svgStr = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(root);
     const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-    _rmDownload(blob, 'roadmap-busla.svg');
+    _rmDownload(blob, 'roadmap-zdc.svg');
 }
 
 /** Export as PNG using html2canvas, cropped to tree bounds */
@@ -1757,12 +1758,12 @@ async function exportAsPng(scale = 1) {
             const s = document.createElement('script');
             s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
             s.onload = resolve;
-            s.onerror = () => reject(new Error('فشل تحميل مكتبة html2canvas'));
+            s.onerror = () => reject(new Error('Failed to load html2canvas library'));
             document.head.appendChild(s);
         });
     }
 
-    // Wait for web fonts (Cairo, FontAwesome, etc.) to fully render
+    // Wait for web fonts (Plus Jakarta Sans, Outfit, FontAwesome, etc.) to fully render
     if (document.fonts) {
         try {
             await document.fonts.ready;
@@ -1772,7 +1773,7 @@ async function exportAsPng(scale = 1) {
     }
 
     const canvas = document.getElementById('roadmap-canvas');
-    if (!canvas) throw new Error('لم يتم العثور على الكانفاس');
+    if (!canvas) throw new Error('Roadmap canvas not found');
 
     // Suppress noisy browser extension errors during html2canvas temporary iframe creation (e.g. video speed extensions)
     const extErrorHandler = (e) => {
@@ -1887,7 +1888,7 @@ async function exportAsPng(scale = 1) {
         });
 
         const blob = await new Promise(res => h2c.toBlob(res, 'image/png'));
-        _rmDownload(blob, `roadmap-busla-${scale}x.png`);
+        _rmDownload(blob, `roadmap-zdc-${scale}x.png`);
     } finally {
         // 3. Restore original transform and button display properties
         canvas.style.transform = origTransform;
@@ -1913,7 +1914,7 @@ function _rmDownload(blob, filename) {
 
 function selectNode(node, autoPan = true, openDetails = true) {
     if (node && node.id) {
-        localStorage.setItem('busla_roadmap_active_node_id', node.id);
+        localStorage.setItem('zdc_roadmap_active_node_id', node.id);
     }
     // Remove previous selection states
     document.querySelectorAll('.roadmap-node').forEach(el => el.classList.remove('node-active-selection'));
@@ -2668,17 +2669,18 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
         try {
             if (proj.rubric_json) {
                 const rubric = typeof proj.rubric_json === 'string' ? JSON.parse(proj.rubric_json) : proj.rubric_json;
-                if (Array.isArray(rubric)) {
+                const criteriaList = Array.isArray(rubric) ? rubric : (Array.isArray(rubric?.criteria) ? rubric.criteria : []);
+                if (criteriaList.length > 0) {
                     rubricHtml = `
-                        <div class="border-t border-white/5 pt-4 text-right mb-6">
+                        <div class="border-t border-white/5 pt-4 text-right mb-5">
                             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
                                 <i class="fas fa-list-check text-orange-400 text-xs"></i> معايير التقييم والدرجات (Rubric)
                             </h4>
                             <div class="space-y-2 mt-2">
-                                ${rubric.map(r => `
-                                    <div class="flex justify-between items-center text-xs bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                                        <span class="text-gray-300 font-bold">${r.criterion}</span>
-                                        <span class="text-amber-400 font-mono font-bold">${r.points} نقاط</span>
+                                ${criteriaList.map(r => `
+                                    <div class="flex justify-between items-center text-xs bg-white/5 border border-white/10 p-2.5 rounded-xl gap-2">
+                                        <span class="text-gray-300 font-bold">${r.aspect || r.criterion || ''}</span>
+                                        <span class="text-amber-400 font-mono font-bold shrink-0">${r.points || 0} نقاط</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2688,6 +2690,26 @@ export function renderNodeDetailsPanel(node, forceOpenSheet = true) {
             }
         } catch (e) {
             console.error("Error parsing rubric:", e);
+        }
+
+        const projLinks = parseProjectLinks(proj.requirements_url);
+        if (projLinks.length > 0) {
+            const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            rubricHtml = `
+                <div class="border-t border-white/5 pt-4 text-right mb-4">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2 justify-end">
+                        <i class="fas fa-link text-cyan-400 text-xs"></i> روابط ومرفقات المشروع
+                    </h4>
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        ${projLinks.map(l => `
+                            <a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-orange-500/15 border border-white/10 hover:border-orange-400/35 text-xs font-bold text-gray-200 transition-all">
+                                <i class="fas fa-external-link-alt text-orange-400 text-[10px]"></i>
+                                <span>${esc(l.title)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` + rubricHtml;
         }
 
         bodyHtml = `

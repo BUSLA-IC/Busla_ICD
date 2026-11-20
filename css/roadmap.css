@@ -1,6 +1,6 @@
 /* ============================================================================
-   BUSLA LMS - Interactive Learning Roadmap CSS
-   Design: Glassmorphism, Neon Glow, and Dark/Teal Theme
+   ZDC LMS - Interactive Learning Roadmap CSS
+   Design: Glassmorphism, Precision Accents, and Dark/Teal Theme
    ============================================================================ */
 
 :root {
@@ -73,7 +73,7 @@
     transform-origin: 0 0 !important;
     will-change: transform;
     direction: ltr !important; /* CRITICAL: Mathematical coordinates must be strictly LTR */
-    text-align: right;
+    text-align: left;
 }
 
 .roadmap-nodes-layer {
@@ -220,9 +220,9 @@
     cursor: pointer;
     z-index: 2;
     transform: translate(-50%, -50%);
-    direction: rtl;
-    text-align: right;
-    font-family: 'Cairo', sans-serif !important;
+    direction: ltr;
+    text-align: left;
+    font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif !important;
     letter-spacing: normal !important;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;

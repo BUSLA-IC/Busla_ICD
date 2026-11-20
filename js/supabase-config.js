@@ -1,5 +1,5 @@
 /**
- * BUSLA LMS - Supabase Configuration & Service Layer
+ * ZDC (Zagazig Digital Community) - Supabase Configuration & Service Layer
  * This file handles all interactions with the Supabase backend.
  * It includes Authentication, Database CRUD, Realtime subscriptions, and Error Handling.
  */
@@ -95,7 +95,7 @@ export const AuthService = {
                 type: 'signup',
                 email: email,
                 options: {
-                    emailRedirectTo: window.location.origin + '/auth.html'
+                    emailRedirectTo: `${window.location.origin}/pages/auth.html`
                 }
             })
         );
@@ -104,7 +104,7 @@ export const AuthService = {
     async resetPassword(email) {
         return handleRequest(
             supabase.auth.resetPasswordForEmail(email, {
-               redirectTo: 'https://buslaicd.vercel.app/reset-password.html'
+                redirectTo: `${window.location.origin}/reset-password.html`
             })
         );
     },
@@ -116,11 +116,11 @@ export const AuthService = {
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 const user = session?.user;
                 if (user) {
-                    // 1. فحص هل له بروفايل أم لا؟
+                    // 1. Check whether user already has a profile
                     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-                    
+
                     if (!profile) {
-                        // 💡 2. الترقية السحرية: قبل أن نجعله طالباً، نبحث في الطلبات المقبولة أولاً
+                        // 2. Check accepted admin applications before defaulting to student
                         const { data: acceptedApp } = await supabase.from('admin_applications')
                             .select('*')
                             .eq('email', user.email)
@@ -128,12 +128,11 @@ export const AuthService = {
                             .maybeSingle();
 
                         if (acceptedApp) {
-                            // ✅ إدراج كـ Admin بكامل بياناته من طلب التقديم بالدور المحدد
                             await supabase.from('profiles').insert([{
                                 id: user.id,
                                 email: acceptedApp.email,
                                 full_name: acceptedApp.full_name,
-                                role: acceptedApp.role || 'admin', // 👑 الترقية
+                                role: acceptedApp.role || 'admin',
                                 university: acceptedApp.university,
                                 faculty: acceptedApp.faculty,
                                 department: acceptedApp.department,
@@ -142,7 +141,6 @@ export const AuthService = {
                                 track: acceptedApp.track
                             }]);
 
-                            // إدراج الصلاحيات المخصصة إن وجدت لربطها بالحساب الجديد
                             if (acceptedApp.custom_permissions && acceptedApp.custom_permissions.length > 0) {
                                 const insertRows = acceptedApp.custom_permissions.map(permId => ({
                                     admin_id: user.id,
@@ -151,7 +149,6 @@ export const AuthService = {
                                 await supabase.from('admin_permissions').upsert(insertRows, { onConflict: 'admin_id,permission_id' });
                             }
                         } else {
-                            // ❌ إدراج كـ Student عادي (إذا لم يكن في الطلبات المقبولة)
                             await supabase.from('profiles').insert([{
                                 id: user.id,
                                 email: user.email,
@@ -463,19 +460,17 @@ export const StorageService = {
     }
 };
 
-// 💡 معالج تلقائي للصور والروابط الخارجية (LinkedIn, Imgur, etc.) لتفادي خطأ 403 Forbidden وتوفير صورة بديلة
+// Automatic fallback handler for external image hosts (LinkedIn, Imgur, etc.)
 if (typeof document !== 'undefined') {
     const handleExternalImage = (img) => {
         if (!img) return;
 
-        // 1. تفعيل no-referrer للمصادر الخارجية لمنع حظر الـ Referer
         if (img.src && (img.src.includes('licdn.com') || img.src.includes('imgur.com') || img.src.includes('googleusercontent.com'))) {
             if (img.referrerPolicy !== 'no-referrer') {
                 img.referrerPolicy = 'no-referrer';
             }
         }
 
-        // 2. معالج الأخطاء البديل (في حال انتهاء صلاحية رابط لينكد إن أو خطأ 403 أو رابط مفقود)
         if (!img.dataset.fallbackAttached) {
             img.dataset.fallbackAttached = 'true';
             img.addEventListener('error', function onImgError() {

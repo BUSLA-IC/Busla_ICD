@@ -34,7 +34,7 @@ function createResourceLink(resource) {
         linksHTML = `<div class="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-800">`;
         resource.links.forEach(linkObj => {
             // Fallback for title if missing
-            const label = linkObj.title || "رابط";
+            const label = linkObj.title || "Link";
             const url = linkObj.link;
             // Use specific icon for the sub-link if provided, otherwise based on type
             const type = linkObj.type || 'default';
@@ -57,7 +57,7 @@ function createResourceLink(resource) {
             <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-800">
                  <span class="text-b-hl-yellow text-xs flex items-center gap-1">
                     <i data-feather="search" class="w-3 h-3"></i>
-                    (ابحث بالاسم)
+                    (Search by name)
                 </span>
             </div>
         `;
@@ -85,12 +85,12 @@ function createResourceLink(resource) {
 }
 
 // Creates guidance notes section
-function createGuidanceNotes(guidance, title = "💡 نصيحة البوصلة", iconName = "lightbulb", borderColor = "border-b-primary") {
+function createGuidanceNotes(guidance, title = "ZDC Pro Tip", iconName = "lightbulb", borderColor = "border-b-primary") {
     if (!guidance || guidance.length === 0) return '';
     const guidanceArray = Array.isArray(guidance) ? guidance : [guidance];
 
     let guidanceHTML = `
-        <div class="my-8 p-6 bg-b-surface bg-opacity-80 rounded-xl border-r-4 ${borderColor} shadow-lg">
+        <div class="my-8 p-6 bg-b-surface bg-opacity-80 rounded-xl border-l-4 ${borderColor} shadow-lg">
             <h4 class="text-lg font-bold text-b-hl-light mb-5 flex items-center gap-3">
                 <i data-feather="${iconName}" class="w-6 h-6"></i>
                 <span>${title}</span>
@@ -111,7 +111,7 @@ function createGuidanceNotes(guidance, title = "💡 نصيحة البوصلة",
 
 // Creates modules within a track
 function createModules(modules) {
-    if (!modules || modules.length === 0) return '<p class="text-gray-500 mr-6">لا توجد وحدات محددة لهذا المسار بعد.</p>';
+    if (!modules || modules.length === 0) return '<p class="text-gray-500 ml-6">No modules defined for this track yet.</p>';
     
     let modulesHTML = '<div class="space-y-12">';
     modules.forEach(module => {
@@ -126,28 +126,28 @@ function createModules(modules) {
                         ${module.time ? `
                         <div class="flex items-center text-sm text-gray-400 gap-2">
                             <i data-feather="clock" class="w-4 h-4"></i>
-                            <span>المدة التقريبية: ${module.time}</span>
+                            <span>Estimated Duration: ${module.time}</span>
                         </div>` : ''}
                     </div>
                 </div>
                 
                 ${module.topics ? `
-                <div class="mr-14 mb-6 p-4 bg-b-surface bg-opacity-50 rounded-lg border border-b-border">
+                <div class="ml-14 mb-6 p-4 bg-b-surface bg-opacity-50 rounded-lg border border-b-border">
                     <strong class="text-gray-200 block mb-2 flex items-center gap-2">
                         <i data-feather="list" class="w-4 h-4 text-b-hl-light"></i>
-                        المواضيع الرئيسية:
+                        Key Topics:
                     </strong>
                     <p class="text-gray-400 leading-relaxed">${module.topics}</p>
                 </div>` : ''}
                 
-                ${createGuidanceNotes(module.guidance, "📍 إرشادات الوحدة", "navigation", "border-b-hl-light")}
+                ${createGuidanceNotes(module.guidance, "Module Guidelines", "navigation", "border-b-hl-light")}
 
                 ${module.resources && module.resources.length > 0 ? `
-                <div class="mr-14 mt-8">
+                <div class="ml-14 mt-8">
                     <h5 class="text-lg font-bold text-gray-200 mb-5 flex items-center gap-3">
                         <i data-feather="link" class="w-5 h-5 text-b-hl-light"></i>
-                        <span>المصادر الموصى بها</span>
-                        <span class="text-xs font-normal text-gray-500 bg-b-surface px-3 py-1 rounded-full">${module.resources.length} مصدر</span>
+                        <span>Recommended Resources</span>
+                        <span class="text-xs font-normal text-gray-500 bg-b-surface px-3 py-1 rounded-full">${module.resources.length} resources</span>
                     </h5>
                     <div class="space-y-4">
                         ${module.resources.map(createResourceLink).join('')}
@@ -162,11 +162,11 @@ function createModules(modules) {
 
 // Creates tracks within a phase
 function createTracks(tracks) {
-    if (!tracks || tracks.length === 0) return '<p class="text-gray-500 text-center py-8">لا توجد مسارات محددة لهذه المرحلة بعد.</p>';
+    if (!tracks || tracks.length === 0) return '<p class="text-gray-500 text-center py-8">No tracks defined for this phase yet.</p>';
     
     let tracksHTML = '<div class="space-y-10">';
     tracks.forEach((track, index) => {
-        const parallelText = track.parallelWith ? `<span class="text-sm text-gray-400 font-normal mr-3 bg-b-surface px-3 py-1 rounded-full">بالتوازي مع ${track.parallelWith}</span>` : '';
+        const parallelText = track.parallelWith ? `<span class="text-sm text-gray-400 font-normal ml-3 bg-b-surface px-3 py-1 rounded-full">In parallel with ${track.parallelWith}</span>` : '';
         
         tracksHTML += `
             <div class="border border-b-border rounded-2xl p-8 bg-b-surface shadow-2xl hover:shadow-b-primary/20 transition-all duration-300 hover:border-b-primary">
@@ -213,14 +213,14 @@ async function renderRoadmap() {
             
             const phaseHTML = `
                 <div class="bg-b-surface border border-b-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up ${staggerClass} hover:shadow-b-primary/20 transition-all duration-300 hover:border-b-primary">
-                    <button class="accordion-button w-full flex justify-between items-center p-8 text-right cursor-pointer hover:bg-gradient-to-r ${colors.bg} transition-all duration-300 group" data-target="#content-${phase.id}">
+                    <button class="accordion-button w-full flex justify-between items-center p-8 text-left cursor-pointer hover:bg-gradient-to-r ${colors.bg} transition-all duration-300 group" data-target="#content-${phase.id}">
                         <div class="flex items-start gap-5 flex-grow">
                             <div class="flex-shrink-0">
                                 <div class="w-14 h-14 ${colors.badge} rounded-xl flex items-center justify-center shadow-lg">
                                     <span class="text-2xl font-bold text-white">${index + 1}</span>
                                 </div>
                             </div>
-                            <div class="text-right flex-grow">
+                            <div class="text-left flex-grow">
                                 <h3 class="text-2xl md:text-3xl font-bold text-white mb-3 group-hover:text-b-hl-light transition-colors">${phase.title}</h3>
                                 <div class="flex items-center gap-2 text-sm">
                                     <i data-feather="calendar" class="w-4 h-4 text-b-hl-light"></i>
@@ -228,7 +228,7 @@ async function renderRoadmap() {
                                 </div>
                             </div>
                         </div>
-                        <span class="accordion-icon mr-4 text-gray-400 group-hover:text-b-hl-light transition-colors flex-shrink-0">
+                        <span class="accordion-icon ml-4 text-gray-400 group-hover:text-b-hl-light transition-colors flex-shrink-0">
                             <i data-feather="chevron-down" class="w-7 h-7"></i>
                         </span>
                     </button>
@@ -242,7 +242,7 @@ async function renderRoadmap() {
                                 </div>
                             </div>
                             
-                            ${createGuidanceNotes(phase.guidance, "🎯 إرشادات المرحلة", "target", colors.border)}
+                            ${createGuidanceNotes(phase.guidance, "Phase Guidelines", "target", colors.border)}
                             
                             <div class="mt-10">
                                 ${createTracks(phase.tracks)}
@@ -264,10 +264,10 @@ async function renderRoadmap() {
                 <div class="inline-block mb-6">
                     <i data-feather="alert-circle" class="w-20 h-20 text-red-400 mx-auto"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-red-400 mb-4">⛔ حدث خطأ أثناء تحميل خريطة الطريق</h3>
-                <p class="text-gray-500 mb-4">الرجاء التأكد من وجود ملف <code class="bg-b-surface px-2 py-1 rounded text-sm text-b-primary">roadmap-data.json</code> في المسار الصحيح.</p>
+                <h3 class="text-2xl font-bold text-red-400 mb-4">Error Loading Roadmap</h3>
+                <p class="text-gray-500 mb-4">Please verify that <code class="bg-b-surface px-2 py-1 rounded text-sm text-b-primary">roadmap-data.json</code> exists in the expected path.</p>
                 <button onclick="location.reload()" class="mt-4 px-6 py-3 bg-b-primary hover:bg-b-hl-light text-white rounded-lg transition-colors font-semibold">
-                    إعادة المحاولة
+                    Try Again
                 </button>
             </div>`;
         feather.replace();

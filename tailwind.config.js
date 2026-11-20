@@ -43,8 +43,12 @@ module.exports = {
         'b-text': '#F6F6F6',
       },
       fontFamily: {
-        'cairo': ['Cairo', 'sans-serif'],
+        'sans': ['"Plus Jakarta Sans"', 'Outfit', 'system-ui', 'sans-serif'],
+        'display': ['Outfit', '"Plus Jakarta Sans"', 'sans-serif'],
+        'jakarta': ['"Plus Jakarta Sans"', 'sans-serif'],
+        'cairo': ['"Plus Jakarta Sans"', 'Outfit', 'sans-serif'],
         'outfit': ['Outfit', 'sans-serif'],
+        'mono': ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',

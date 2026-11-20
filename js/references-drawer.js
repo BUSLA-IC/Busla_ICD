@@ -1,7 +1,7 @@
 /**
- * BUSLA LMS - Global References Detail Modal Utility
- * This file dynamically injects a premium center floating modal into the document
- * to display complete reference details, scientific abstract, and analytics.
+ * ZDC (Zagazig Digital Community) - Global References Detail Modal Utility
+ * Dynamically injects a floating modal to display complete reference details,
+ * scientific abstract, and analytics.
  * Accessible globally via window.openReferenceDetailModal(refId).
  */
 
@@ -9,7 +9,7 @@
     // 1. Dynamic path prefix (used only for icon fallbacks if needed)
     let pathPrefix = './';
     const loc = window.location.pathname;
-    if (loc.includes('/admin/html/')) {
+    if (loc.includes('/admin/html/') || loc.includes('/pages/legal/')) {
         pathPrefix = '../../';
     } else if (loc.includes('/pages/') || loc.includes('/admin/')) {
         pathPrefix = '../';
@@ -156,12 +156,12 @@
             <div id="reference-detail-drawer" class="w-full h-full max-h-[85vh] md:max-h-[80vh] lg:max-h-[85vh] max-w-full md:max-w-[85vw] lg:max-w-[75vw] bg-b-surface border border-white/10 rounded-2xl flex flex-col shadow-2xl relative overflow-hidden transition-all duration-300">
                 <!-- Header -->
                 <div class="p-6 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 bg-black/40">
-                    <div class="flex items-center gap-4 text-right">
+                    <div class="flex items-center gap-4 text-left">
                         <div class="w-12 h-16 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                             <img id="refd-logo" src="" alt="cover" class="w-full h-full object-cover">
                         </div>
                         <div class="space-y-1">
-                            <div class="flex flex-wrap items-center gap-2 justify-end md:justify-start">
+                            <div class="flex flex-wrap items-center gap-2 justify-start">
                                 <h2 id="refd-title" class="font-black text-lg md:text-xl text-white tracking-wide">...</h2>
                                 <span id="refd-badge-importance" class="text-[9px] font-black border px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border-teal-500/20">...</span>
                                 <span id="refd-badge-language" class="text-[9px] font-black border px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border-blue-500/20">...</span>
@@ -169,21 +169,21 @@
                             </div>
                             <p id="refd-subtitle" class="text-xs text-gray-400">...</p>
                             <div class="flex flex-wrap gap-2 text-[10px] text-gray-500 font-mono">
-                                <span id="refd-track-name">المسار: جاري التحميل...</span>
+                                <span id="refd-track-name">Track: Loading...</span>
                                 <span>•</span>
-                                <span id="refd-updated-at">تحديث: --/--/----</span>
+                                <span id="refd-updated-at">Updated: --/--/----</span>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
                         <a id="refd-header-read-btn" href="#" target="_blank" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-teal-900/10 shrink-0">
                             <i class="fas fa-eye text-xs"></i>
-                            <span>قراءة أونلاين</span>
+                            <span>Read Online</span>
                         </a>
                         <a id="refd-header-download-btn" href="#" target="_blank" class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 shrink-0">
                             <i class="fas fa-download text-xs text-teal-400"></i>
-                            <span>تحميل PDF</span>
+                            <span>Download PDF</span>
                         </a>
                         <button id="refd-close-btn" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-red-500/10 border border-white/10 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center shrink-0">
                             <i class="fas fa-times text-base"></i>
@@ -193,23 +193,23 @@
 
                 <!-- Tabs Menu -->
                 <div class="flex border-b border-white/5 bg-black/20 shrink-0 overflow-x-auto custom-scroll text-xs md:text-sm font-bold text-gray-400 select-none">
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap active" data-tab="refd-overview">نظرة عامة</button>
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-abstract">الملخص العلمي</button>
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-pubinfo">بيانات النشر</button>
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-links">روابط الوصول</button>
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-curriculum">المسارات المرتبطة</button>
-                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-related">المصادر المشابهة</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap active" data-tab="refd-overview">Overview</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-abstract">Abstract</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-pubinfo">Publication Info</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-links">Access Links</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-curriculum">Linked Tracks</button>
+                    <button class="references-tab-btn flex-1 py-3 px-4 text-center whitespace-nowrap" data-tab="refd-related">Related</button>
                 </div>
 
                 <!-- Loader Area -->
                 <div id="refd-loader" class="absolute inset-0 bg-b-bg/95 z-50 flex flex-col items-center justify-center gap-3">
                     <div class="w-12 h-12 rounded-full border-4 border-white/10 border-t-teal-500 animate-spin"></div>
-                    <p class="text-xs text-gray-400 font-bold">جاري تحميل تفاصيل المرجع...</p>
+                    <p class="text-xs text-gray-400 font-bold">Loading reference details...</p>
                 </div>
 
                 <!-- Modal Body (Dynamic Tab Panes) -->
-                <div class="flex-1 overflow-y-auto custom-scroll p-6 text-right">
-                    
+                <div class="flex-1 overflow-y-auto custom-scroll p-6 text-left">
+
                     <!-- TAB 1: Overview -->
                     <div id="refd-overview" class="refd-tab-pane space-y-6">
                         <div class="flex flex-col lg:flex-row gap-6 items-start">
@@ -218,24 +218,24 @@
                             </div>
                             <div class="flex-1 space-y-4">
                                 <div>
-                                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">تفاصيل المصدر العلمي</h3>
+                                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Reference Details</h3>
                                     <p id="refd-full-desc" class="text-gray-300 text-sm leading-relaxed whitespace-pre-line"></p>
                                 </div>
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <div class="bg-black/20 border border-white/5 p-3 rounded-xl">
-                                        <span class="text-[10px] text-gray-500 block mb-0.5">مستوى الصعوبة</span>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">Difficulty Level</span>
                                         <span id="refd-experience" class="text-xs font-bold text-white">...</span>
                                     </div>
                                     <div class="bg-black/20 border border-white/5 p-3 rounded-xl">
-                                        <span class="text-[10px] text-gray-500 block mb-0.5">نوع المرجع</span>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">Reference Type</span>
                                         <span id="refd-type" class="text-xs font-bold text-teal-400">...</span>
                                     </div>
                                     <div class="bg-black/20 border border-white/5 p-3 rounded-xl">
-                                        <span class="text-[10px] text-gray-500 block mb-0.5">سنة النشر</span>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">Publication Year</span>
                                         <span id="refd-year" class="text-xs font-bold text-white font-mono">...</span>
                                     </div>
                                     <div class="bg-black/20 border border-white/5 p-3 rounded-xl">
-                                        <span class="text-[10px] text-gray-500 block mb-0.5">المؤلف الرئيسي</span>
+                                        <span class="text-[10px] text-gray-500 block mb-0.5">Lead Author</span>
                                         <span id="refd-author" class="text-xs font-bold text-white">...</span>
                                     </div>
                                 </div>
@@ -243,9 +243,9 @@
                         </div>
 
                         <div id="refd-why-read-div" class="bg-teal-500/5 border border-teal-500/10 p-5 rounded-2xl space-y-2 hidden">
-                            <h4 class="text-xs font-bold text-teal-400 flex items-center gap-1.5 justify-end">
-                                <span>لماذا ننصح بقراءة هذا المرجع؟</span>
+                            <h4 class="text-xs font-bold text-teal-400 flex items-center gap-1.5 justify-start">
                                 <i class="fas fa-lightbulb"></i>
+                                <span>Why Read This Reference?</span>
                             </h4>
                             <p id="refd-why-read" class="text-gray-300 text-xs leading-relaxed"></p>
                         </div>
@@ -253,18 +253,18 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Takeaways -->
                             <div id="refd-takeaways-div" class="bg-black/20 border border-white/5 p-5 rounded-2xl flex flex-col h-full hidden">
-                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-end">
-                                    <span>أهم النقاط المستفادة (Key Takeaways)</span>
+                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-start">
                                     <i class="fas fa-check-circle text-emerald-400"></i>
+                                    <span>Key Takeaways</span>
                                 </h4>
                                 <ul id="refd-takeaways-list" class="space-y-2 text-xs text-gray-300 list-none"></ul>
                             </div>
-                            
+
                             <!-- Learning Benefits -->
                             <div id="refd-benefits-div" class="bg-black/20 border border-white/5 p-5 rounded-2xl flex flex-col h-full hidden">
-                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-end">
-                                    <span>ماذا ستتعلم من قراءته؟</span>
+                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-start">
                                     <i class="fas fa-graduation-cap text-blue-400"></i>
+                                    <span>What You Will Learn</span>
                                 </h4>
                                 <ul id="refd-benefits-list" class="space-y-2 text-xs text-gray-300 list-none"></ul>
                             </div>
@@ -274,9 +274,9 @@
                     <!-- TAB 2: Abstract -->
                     <div id="refd-abstract" class="refd-tab-pane hidden space-y-6">
                         <div class="space-y-3">
-                            <h3 class="text-sm font-bold text-white border-b border-white/5 pb-2 flex items-center gap-1.5 justify-end">
-                                <span>الملخص العلمي والبحثي للمصدر (Scientific Abstract)</span>
-                                <i class="fas fa-quote-right text-teal-500"></i>
+                            <h3 class="text-sm font-bold text-white border-b border-white/5 pb-2 flex items-center gap-1.5 justify-start">
+                                <i class="fas fa-quote-left text-teal-500"></i>
+                                <span>Scientific Abstract</span>
                             </h3>
                             <p id="refd-abstract-text" class="text-gray-300 text-xs leading-relaxed font-serif text-justify ltr-text bg-black/30 border border-white/5 p-6 rounded-2xl whitespace-pre-line select-text"></p>
                         </div>
@@ -284,18 +284,18 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Key Ideas -->
                             <div id="refd-ideas-div" class="bg-black/20 border border-white/5 p-5 rounded-2xl hidden">
-                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-end">
-                                    <span>الأفكار والمحاور الرئيسية</span>
+                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-start">
                                     <i class="fas fa-layer-group text-purple-400"></i>
+                                    <span>Core Concepts</span>
                                 </h4>
                                 <ul id="refd-ideas-list" class="space-y-2 text-xs text-gray-300 list-none"></ul>
                             </div>
 
                             <!-- Prerequisites -->
                             <div id="refd-prereqs-div" class="bg-black/20 border border-white/5 p-5 rounded-2xl hidden">
-                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-end">
-                                    <span>المتطلبات السابقة الموصى بها</span>
+                                <h4 class="text-xs font-bold text-gray-400 border-b border-white/5 pb-2 mb-3 flex items-center gap-1.5 justify-start">
                                     <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                                    <span>Recommended Prerequisites</span>
                                 </h4>
                                 <ul id="refd-prereqs-list" class="space-y-2 text-xs text-gray-300 list-none"></ul>
                             </div>
@@ -305,50 +305,50 @@
                     <!-- TAB 3: Publication info -->
                     <div id="refd-pubinfo" class="refd-tab-pane hidden space-y-6">
                         <div class="bg-black/20 border border-white/10 rounded-2xl overflow-hidden shadow-lg">
-                            <div class="p-4 bg-white/5 border-b border-white/5 text-xs font-bold text-white">بيانات النشر والتوثيق الأكاديمي</div>
+                            <div class="p-4 bg-white/5 border-b border-white/5 text-xs font-bold text-white">Academic Publication Metadata</div>
                             <div class="divide-y divide-white/5 text-xs">
                                 <div class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المؤلف الرئيسي</span>
+                                    <span class="text-gray-500 font-bold">Lead Author</span>
                                     <span id="refd-pub-author" class="col-span-2 text-white font-semibold">...</span>
                                 </div>
                                 <div id="refd-pub-contrib-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المشاركون</span>
+                                    <span class="text-gray-500 font-bold">Contributors</span>
                                     <span id="refd-pub-contributors" class="col-span-2 text-white">...</span>
                                 </div>
                                 <div id="refd-pub-publisher-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">الناشر</span>
+                                    <span class="text-gray-500 font-bold">Publisher</span>
                                     <span id="refd-pub-publisher" class="col-span-2 text-white">...</span>
                                 </div>
                                 <div id="refd-pub-inst-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المؤسسة / المنظمة</span>
+                                    <span class="text-gray-500 font-bold">Institution / Organization</span>
                                     <span id="refd-pub-institution" class="col-span-2 text-white">...</span>
                                 </div>
                                 <div id="refd-pub-univ-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">الجامعة</span>
+                                    <span class="text-gray-500 font-bold">University</span>
                                     <span id="refd-pub-university" class="col-span-2 text-white">...</span>
                                 </div>
                                 <div id="refd-pub-journal-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المجلة العلمية</span>
+                                    <span class="text-gray-500 font-bold">Journal</span>
                                     <span id="refd-pub-journal" class="col-span-2 text-white italic">...</span>
                                 </div>
                                 <div id="refd-pub-conf-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المؤتمر العلمي</span>
+                                    <span class="text-gray-500 font-bold">Conference</span>
                                     <span id="refd-pub-conference" class="col-span-2 text-white">...</span>
                                 </div>
                                 <div id="refd-pub-edition-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">الطبعة / الإصدار</span>
+                                    <span class="text-gray-500 font-bold">Edition / Version</span>
                                     <span id="refd-pub-edition" class="col-span-2 text-white font-mono">...</span>
                                 </div>
                                 <div id="refd-pub-doi-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">المعرف الرقمي DOI</span>
+                                    <span class="text-gray-500 font-bold">DOI</span>
                                     <span id="refd-pub-doi" class="col-span-2 text-teal-400 font-mono select-text">...</span>
                                 </div>
                                 <div id="refd-pub-isbn-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">ISBN الرقم القياسي للكتاب</span>
+                                    <span class="text-gray-500 font-bold">ISBN</span>
                                     <span id="refd-pub-isbn" class="col-span-2 text-white font-mono select-text">...</span>
                                 </div>
                                 <div id="refd-pub-issn-div" class="grid grid-cols-3 p-4">
-                                    <span class="text-gray-500 font-bold">ISSN الرقم القياسي للدورية</span>
+                                    <span class="text-gray-500 font-bold">ISSN</span>
                                     <span id="refd-pub-issn" class="col-span-2 text-white font-mono select-text">...</span>
                                 </div>
                             </div>
@@ -359,8 +359,8 @@
                     <div id="refd-links" class="refd-tab-pane hidden space-y-6">
                         <div class="bg-black/30 border border-white/10 p-5 rounded-2xl space-y-3">
                             <h4 class="text-xs font-bold text-gray-400 flex items-center justify-between border-b border-white/5 pb-2 mb-2">
-                                <button onclick="window.copyReferenceCitation()" class="px-2.5 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 rounded border border-teal-500/20 hover:border-teal-500/30 text-[10px] font-bold transition-all flex items-center gap-1"><i class="far fa-copy"></i> نسخ الاقتباس Citation</button>
-                                <span class="flex items-center gap-1">روابط تصفح وتحميل المرجع <i class="fas fa-link text-teal-400"></i></span>
+                                <span class="flex items-center gap-1.5"><i class="fas fa-link text-teal-400"></i> Direct Access & Download Links</span>
+                                <button onclick="window.copyReferenceCitation()" class="px-2.5 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 rounded border border-teal-500/20 hover:border-teal-500/30 text-[10px] font-bold transition-all flex items-center gap-1"><i class="far fa-copy"></i> Copy Citation</button>
                             </h4>
                             <div id="refd-links-buttons-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                 <!-- Populated in JS -->
@@ -368,7 +368,7 @@
                         </div>
 
                         <!-- Citation box -->
-                        <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-1.5 text-right">
+                        <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-1.5 text-left">
                             <span class="text-[9px] text-gray-500 font-bold block">IEEE Citation Format</span>
                             <p id="refd-citation-preview" class="text-[11px] font-mono text-gray-300 ltr-text text-left select-all bg-black/50 p-2.5 rounded border border-white/5"></p>
                         </div>
@@ -377,21 +377,21 @@
                     <!-- TAB 5: Curriculum -->
                     <div id="refd-curriculum" class="refd-tab-pane hidden space-y-6">
                         <div class="bg-black/30 border border-white/10 p-5 rounded-2xl space-y-4">
-                            <div id="refd-curr-tracks-div" class="space-y-2 hidden text-right">
-                                <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-end">المسارات الأكاديمية المرتبطة <i class="fas fa-graduation-cap text-teal-500"></i></h4>
-                                <div id="refd-curr-tracks-list" class="flex flex-wrap gap-2 justify-end"></div>
+                            <div id="refd-curr-tracks-div" class="space-y-2 hidden text-left">
+                                <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-start"><i class="fas fa-graduation-cap text-teal-500"></i> Linked Engineering Tracks</h4>
+                                <div id="refd-curr-tracks-list" class="flex flex-wrap gap-2 justify-start"></div>
                             </div>
-                            
-                            <div id="refd-curr-courses-div" class="space-y-2 hidden text-right">
-                                <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-end">الكورسات المرتبطة <i class="fas fa-book text-blue-400"></i></h4>
-                                <div id="refd-curr-courses-list" class="flex flex-wrap gap-2 justify-end"></div>
+
+                            <div id="refd-curr-courses-div" class="space-y-2 hidden text-left">
+                                <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-start"><i class="fas fa-book text-blue-400"></i> Linked Courses</h4>
+                                <div id="refd-curr-courses-list" class="flex flex-wrap gap-2 justify-start"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- TAB 6: Related References -->
                     <div id="refd-related" class="refd-tab-pane hidden space-y-4">
-                        <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-end mb-4">مراجع ومصادر تعلم مشابهة موصى بها <i class="fas fa-project-diagram text-teal-400"></i></h4>
+                        <h4 class="text-xs font-bold text-gray-400 flex items-center gap-1.5 justify-start mb-4"><i class="fas fa-project-diagram text-teal-400"></i> Recommended Similar References</h4>
                         <div id="refd-related-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Populated in JS -->
                         </div>
@@ -487,11 +487,11 @@
             // C. Map basic fields to DOM
             document.getElementById('refd-title').textContent = ref.title;
             document.getElementById('refd-subtitle').textContent = `${ref.type} • ${ref.experience_level || 'Beginner'}`;
-            document.getElementById('refd-full-desc').textContent = ref.full_description || ref.short_description || 'لا يوجد وصف تفصيلي متوفر لهذا المرجع حالياً.';
-            
+            document.getElementById('refd-full-desc').textContent = ref.full_description || ref.short_description || 'No detailed description is currently available for this reference.';
+
             const coverEl = document.getElementById('refd-logo');
             const bodyCoverEl = document.getElementById('refd-body-cover');
-            const defaultCover = pathPrefix + 'assets/icons/BUSLA-icon.png';
+            const defaultCover = pathPrefix + 'assets/icons/zdc-icon-192.png';
             coverEl.src = ref.cover_url || defaultCover;
             coverEl.onerror = () => { coverEl.src = defaultCover; };
             bodyCoverEl.src = ref.cover_url || defaultCover;
@@ -500,19 +500,19 @@
             document.getElementById('refd-experience').textContent = ref.experience_level || 'Beginner';
             document.getElementById('refd-type').textContent = ref.type;
             document.getElementById('refd-year').textContent = ref.publication_year || '---';
-            document.getElementById('refd-author').textContent = ref.author || 'مؤلف غير معروف';
+            document.getElementById('refd-author').textContent = ref.author || 'Unknown Author';
 
             // D. Set header badges & links
             document.getElementById('refd-badge-importance').textContent = ref.importance || 'Optional';
             document.getElementById('refd-badge-language').textContent = ref.language || 'English';
 
-            let statusText = 'مسودة';
+            let statusText = 'Draft';
             let statusClass = 'bg-gray-500/10 text-gray-400 border-gray-500/20';
             if (ref.status === 'Published') {
-                statusText = 'منشور';
+                statusText = 'Published';
                 statusClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
             } else if (ref.status === 'Hidden') {
-                statusText = 'مخفي';
+                statusText = 'Hidden';
                 statusClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
             }
             const statusEl = document.getElementById('refd-badge-status');
@@ -520,10 +520,10 @@
             statusEl.className = `text-[9px] font-black border px-2 py-0.5 rounded-full uppercase tracking-wider ${statusClass}`;
 
             const trackNames = await getTrackNames(ref.track_ids);
-            document.getElementById('refd-track-name').textContent = trackNames.length > 0 ? `المسار: ${trackNames.join('، ')}` : 'مرجع عام';
+            document.getElementById('refd-track-name').textContent = trackNames.length > 0 ? `Track: ${trackNames.join(', ')}` : 'General Reference';
 
-            const updatedAt = ref.updated_at ? new Date(ref.updated_at).toLocaleDateString('ar-EG') : 'غير متوفر';
-            document.getElementById('refd-updated-at').textContent = `تحديث: ${updatedAt}`;
+            const updatedAt = ref.updated_at ? new Date(ref.updated_at).toLocaleDateString('en-US') : 'N/A';
+            document.getElementById('refd-updated-at').textContent = `Updated: ${updatedAt}`;
 
             // E. Read Online & Download Buttons
             const readBtn = document.getElementById('refd-header-read-btn');
@@ -561,8 +561,8 @@
                 takeawaysDiv.classList.remove('hidden');
                 takeaways.forEach(t => {
                     const li = document.createElement('li');
-                    li.className = 'flex items-start gap-2 justify-end mb-1.5';
-                    li.innerHTML = `<span>${t}</span> <i class="fas fa-check text-emerald-400 mt-1 text-xs shrink-0"></i>`;
+                    li.className = 'flex items-start gap-2 justify-start mb-1.5';
+                    li.innerHTML = `<i class="fas fa-check text-emerald-400 mt-1 text-xs shrink-0"></i><span>${t}</span>`;
                     takeawaysList.appendChild(li);
                 });
             } else {
@@ -577,8 +577,8 @@
                 benefitsDiv.classList.remove('hidden');
                 benefits.forEach(b => {
                     const li = document.createElement('li');
-                    li.className = 'flex items-start gap-2 justify-end mb-1.5';
-                    li.innerHTML = `<span>${b}</span> <i class="fas fa-book-reader text-blue-400 mt-1 text-xs shrink-0"></i>`;
+                    li.className = 'flex items-start gap-2 justify-start mb-1.5';
+                    li.innerHTML = `<i class="fas fa-book-reader text-blue-400 mt-1 text-xs shrink-0"></i><span>${b}</span>`;
                     benefitsList.appendChild(li);
                 });
             } else {
@@ -586,8 +586,8 @@
             }
 
             // G. Abstract & Key Ideas & Prereqs
-            document.getElementById('refd-abstract-text').textContent = ref.abstract || 'No abstract text is available for this reference. You can read it directly from the links tab.';
-            
+            document.getElementById('refd-abstract-text').textContent = ref.abstract || 'No abstract text is available for this reference. You can read it directly from the Access Links tab.';
+
             const ideasDiv = document.getElementById('refd-ideas-div');
             const ideasList = document.getElementById('refd-ideas-list');
             ideasList.innerHTML = '';
@@ -596,8 +596,8 @@
                 ideasDiv.classList.remove('hidden');
                 ideas.forEach(id => {
                     const li = document.createElement('li');
-                    li.className = 'flex items-start gap-2 justify-end mb-1.5';
-                    li.innerHTML = `<span>${id}</span> <i class="fas fa-lightbulb text-purple-400 mt-1 text-xs shrink-0"></i>`;
+                    li.className = 'flex items-start gap-2 justify-start mb-1.5';
+                    li.innerHTML = `<i class="fas fa-lightbulb text-purple-400 mt-1 text-xs shrink-0"></i><span>${id}</span>`;
                     ideasList.appendChild(li);
                 });
             } else {
@@ -612,8 +612,8 @@
                 prereqsDiv.classList.remove('hidden');
                 prereqs.forEach(p => {
                     const li = document.createElement('li');
-                    li.className = 'flex items-start gap-2 justify-end mb-1.5';
-                    li.innerHTML = `<span>${p}</span> <i class="fas fa-exclamation-triangle text-amber-500 mt-1 text-xs shrink-0"></i>`;
+                    li.className = 'flex items-start gap-2 justify-start mb-1.5';
+                    li.innerHTML = `<i class="fas fa-exclamation-triangle text-amber-500 mt-1 text-xs shrink-0"></i><span>${p}</span>`;
                     prereqsList.appendChild(li);
                 });
             } else {
@@ -621,7 +621,7 @@
             }
 
             // H. Publication Data mapping
-            document.getElementById('refd-pub-author').textContent = ref.author || 'مؤلف غير معروف';
+            document.getElementById('refd-pub-author').textContent = ref.author || 'Unknown Author';
             
             const contribDiv = document.getElementById('refd-pub-contrib-div');
             if (ref.contributors && ref.contributors.length > 0) {
@@ -713,28 +713,28 @@
                 a.href = url;
                 a.target = '_blank';
                 a.onclick = () => window.trackRefClick(ref.id);
-                a.className = `p-3 rounded-xl font-bold text-xs flex items-center justify-between border transition-all ${colorClasses}`;
-                a.innerHTML = `<i class="fas fa-chevron-left text-[10px] opacity-60"></i><span class="text-right">${text}</span><i class="${icon} text-base shrink-0"></i>`;
+                a.className = `p-3 rounded-xl font-bold text-xs flex items-center justify-between gap-2 border transition-all ${colorClasses}`;
+                a.innerHTML = `<i class="${icon} text-base shrink-0"></i><span class="text-left flex-1">${text}</span><i class="fas fa-chevron-right text-[10px] opacity-60"></i>`;
                 linksGrid.appendChild(a);
             };
 
-            addLinkBtn(ref.read_online_url, 'تصفح وقراءة المصدر مباشرة', 'fas fa-book-open', 'bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30 text-teal-400');
-            addLinkBtn(ref.download_pdf_url, 'تحميل ملف PDF المرجع', 'fas fa-file-pdf', 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-400');
-            addLinkBtn(ref.ieee_url, 'تصفح على موقع IEEE Xplore', 'fas fa-university', 'bg-[#00629B]/10 hover:bg-[#00629B]/20 border-[#00629B]/30 text-[#00629B]');
-            addLinkBtn(ref.springer_url, 'تصفح على موقع Springer Link', 'fas fa-external-link-alt', 'bg-[#001E3C]/10 hover:bg-[#001E3C]/20 border-[#001E3C]/30 text-[#001E3C]');
-            addLinkBtn(ref.acm_url, 'تصفح في مكتبة ACM الرقمية', 'fas fa-graduation-cap', 'bg-[#002F6C]/10 hover:bg-[#002F6C]/20 border-[#002F6C]/30 text-[#002F6C]');
-            addLinkBtn(ref.sciencedirect_url, 'تصفح على موقع ScienceDirect', 'fas fa-journal-whills', 'bg-[#FF6600]/10 hover:bg-[#FF6600]/20 border-[#FF6600]/30 text-[#FF6600]');
-            addLinkBtn(ref.github_url, 'مستودع الكود والمشاريع GitHub', 'fab fa-github', 'bg-white/5 hover:bg-white/10 border-white/10 text-white');
-            addLinkBtn(ref.official_source_url, 'رابط المصدر الرسمي للمرجع', 'fas fa-link', 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-400');
+            addLinkBtn(ref.read_online_url, 'Read Online Directly', 'fas fa-book-open', 'bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30 text-teal-400');
+            addLinkBtn(ref.download_pdf_url, 'Download Reference PDF', 'fas fa-file-pdf', 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-400');
+            addLinkBtn(ref.ieee_url, 'View on IEEE Xplore', 'fas fa-university', 'bg-[#00629B]/10 hover:bg-[#00629B]/20 border-[#00629B]/30 text-[#38bdf8]');
+            addLinkBtn(ref.springer_url, 'View on Springer Link', 'fas fa-external-link-alt', 'bg-[#001E3C]/10 hover:bg-[#001E3C]/20 border-[#001E3C]/30 text-blue-300');
+            addLinkBtn(ref.acm_url, 'View in ACM Digital Library', 'fas fa-graduation-cap', 'bg-[#002F6C]/10 hover:bg-[#002F6C]/20 border-[#002F6C]/30 text-blue-300');
+            addLinkBtn(ref.sciencedirect_url, 'View on ScienceDirect', 'fas fa-journal-whills', 'bg-[#FF6600]/10 hover:bg-[#FF6600]/20 border-[#FF6600]/30 text-[#FF6600]');
+            addLinkBtn(ref.github_url, 'GitHub Code & Projects', 'fab fa-github', 'bg-white/5 hover:bg-white/10 border-white/10 text-white');
+            addLinkBtn(ref.official_source_url, 'Official Source Link', 'fas fa-link', 'bg-white/5 hover:bg-white/10 border-white/10 text-gray-400');
 
             if (linksGrid.children.length === 0) {
-                linksGrid.innerHTML = '<div class="col-span-full text-center text-xs text-gray-500 py-3">لا توجد روابط وصول خارجية مسجلة لهذا المرجع.</div>';
+                linksGrid.innerHTML = '<div class="col-span-full text-center text-xs text-gray-500 py-3">No external access links are registered for this reference.</div>';
             }
 
             // J. Build IEEE Citation
             const authorText = ref.author || 'Unknown';
             const yearText = ref.publication_year ? ` (${ref.publication_year})` : '';
-            const publisherText = ref.publisher || ref.journal || ref.university || 'Busla Lib';
+            const publisherText = ref.publisher || ref.journal || ref.university || 'ZDC Library';
             const doiText = ref.doi ? `, doi: ${ref.doi}` : '';
             activeCitationText = `${authorText}, "${ref.title}", ${publisherText}${yearText}${doiText}.`;
             document.getElementById('refd-citation-preview').textContent = activeCitationText;
@@ -825,17 +825,17 @@
                     card.className = 'flex items-center gap-3 p-3 bg-white/5 border border-white/5 hover:border-teal-500/50 rounded-xl cursor-pointer transition-all';
                     card.innerHTML = `
                         <img src="${sim.cover_url || defaultCover}" class="w-8 h-12 rounded object-cover shadow" onerror="this.src='${defaultCover}'">
-                        <div class="flex-1 text-right min-w-0">
+                        <div class="flex-1 text-left min-w-0">
                             <p class="text-xs font-bold text-white truncate">${sim.title}</p>
-                            <p class="text-[10px] text-gray-400 mt-1 truncate">${sim.author || 'مؤلف غير معروف'} • ${sim.publication_year || '---'}</p>
+                            <p class="text-[10px] text-gray-400 mt-1 truncate">${sim.author || 'Unknown Author'} • ${sim.publication_year || '---'}</p>
                             <span class="inline-block text-[9px] text-teal-400 bg-teal-500/5 px-2 py-0.5 rounded border border-teal-500/10 mt-1">${sim.type}</span>
                         </div>
-                        <i class="fas fa-chevron-left text-[10px] text-gray-500 shrink-0"></i>
+                        <i class="fas fa-chevron-right text-[10px] text-gray-500 shrink-0"></i>
                     `;
                     relatedList.appendChild(card);
                 });
             } else {
-                relatedList.innerHTML = '<div class="col-span-full text-center text-xs text-gray-500 py-3">لا توجد مراجع مشابهة أو مقترحة حالياً.</div>';
+                relatedList.innerHTML = '<div class="col-span-full text-center text-xs text-gray-500 py-3">No similar references are currently suggested.</div>';
             }
 
         } catch (err) {
@@ -864,9 +864,9 @@
         if (!activeCitationText) return;
         navigator.clipboard.writeText(activeCitationText).then(() => {
             if (typeof window.showToast === 'function') {
-                window.showToast("تم نسخ الاقتباس العلمي بنجاح", "success");
+                window.showToast("Citation copied to clipboard", "success");
             } else {
-                alert("تم نسخ الاقتباس العلمي بنجاح");
+                alert("Citation copied to clipboard");
             }
         }).catch(err => {
             console.error("Failed to copy citation:", err);

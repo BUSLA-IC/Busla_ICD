@@ -1,10 +1,10 @@
 /**
- * BUSLA LMS - Progressive Web App Service Worker (sw.js)
+ * ZDC (Zagazig Digital Community) - Progressive Web App Service Worker (sw.js)
  * Architecture: STRICT Network-First with Zero-Stale-Data Guarantee
  * Desktop & Mobile Support with Instant Auto-Updates
  */
 
-const CACHE_VERSION = 'busla-pwa-v1.0.3';
+const CACHE_VERSION = 'zdc-pwa-v2.0.0';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 
@@ -13,11 +13,11 @@ const PRECACHE_ASSETS = [
     './index.html',
     './manifest.webmanifest',
     './css/roadmap.css',
-    './assets/icons/icon-192.png',
-    './assets/icons/icon-512.png',
-    './assets/icons/icon-maskable-512.png',
-    './assets/icons/BUSLA-icon.png',
-    './assets/icons/1.png',
+    './assets/icons/zdc-icon-192.png',
+    './assets/icons/zdc-icon-512.png',
+    './assets/icons/zdc-icon-maskable-512.png',
+    './assets/icons/zdc-icon.png',
+    './assets/icons/apple-touch-icon.png',
     './js/custom-dialogs.js',
     './js/omni-search.js',
     './js/pwa-handler.js'
@@ -90,7 +90,7 @@ self.addEventListener('activate', (event) => {
             return self.clients.matchAll().then((clients) => {
                 clients.forEach((client) => {
                     client.postMessage({
-                        type: 'BUSLA_SW_ACTIVATED',
+                        type: 'ZDC_SW_ACTIVATED',
                         version: CACHE_VERSION
                     });
                 });

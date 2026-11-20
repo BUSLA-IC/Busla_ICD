@@ -11,7 +11,7 @@ import { TEAM_RANKS_DATA } from './team-badges-data.js';
 // ==========================================
 // 1. GLOBAL STATE & CONFIGURATION
 // ==========================================
-const CACHE_KEY = 'busla_lms_v6_supa';
+const CACHE_KEY = 'zdc_lms_v6_supa';
 
 let currentUser = null;
 let currentTeam = null;
@@ -83,38 +83,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 });
-// ==========================================
-// 💡 قاموس ترجمة أسماء الجامعات المطور (مضاد للأخطاء)
-// ==========================================
+// University display name mapper
 window.translateUni = (val) => {
-    if (!val || val === 'null' || val === 'undefined') return 'غير محدد';
+    if (!val || val === 'null' || val === 'undefined') return 'Not specified';
     
-    // تنظيف النص من المسافات الزائدة
     const cleanVal = String(val).trim();
     
     const uniTranslations = {
-        "Zagazig": "جامعة الزقازيق", "Cairo": "جامعة القاهرة", "Alexandria": "جامعة الإسكندرية",
-        "Ain Shams": "جامعة عين شمس", "Mansoura": "جامعة المنصورة", "Assiut": "جامعة أسيوط",
-        "Tanta": "جامعة طنطا", "Helwan": "جامعة حلوان", "Minya": "جامعة المنيا",
-        "Monufia": "جامعة المنوفية", "Suez Canal": "جامعة قناة السويس", "South Valley": "جامعة جنوب الوادي",
-        "Beni Suef": "جامعة بني سويف", "Fayoum": "جامعة الفيوم", "Benha": "جامعة بنها",
-        "Kafrelsheikh": "جامعة كفر الشيخ", "Sohag": "جامعة سوهاج", "Port Said": "جامعة بورسعيد",
-        "Damanhour": "جامعة دمنهور", "Aswan": "جامعة أسوان", "Damietta": "جامعة دمياط",
-        "Suez": "جامعة السويس", "Sadat City": "جامعة مدينة السادات", "Arish": "جامعة العريش",
-        "Luxor": "جامعة الأقصر", "Al-Azhar": "جامعة الأزهر", "Zewail City": "مدينة زويل للعلوم والتكنولوجيا",
-        "E-JUST": "الجامعة المصرية اليابانية (E-JUST)", "AUC": "الجامعة الأمريكية", "GUC": "الجامعة الألمانية",
-        "BUE": "الجامعة البريطانية", "MUST": "جامعة مصر للعلوم", "MIU": "جامعة مصر الدولية",
-        "Other": "جامعة أخرى / معهد"
+        "Zagazig": "Zagazig University", "Cairo": "Cairo University", "Alexandria": "Alexandria University",
+        "Ain Shams": "Ain Shams University", "Mansoura": "Mansoura University", "Assiut": "Assiut University",
+        "Tanta": "Tanta University", "Helwan": "Helwan University", "Minya": "Minya University",
+        "Monufia": "Monufia University", "Suez Canal": "Suez Canal University", "South Valley": "South Valley University",
+        "Beni Suef": "Beni-Suef University", "Fayoum": "Fayoum University", "Benha": "Benha University",
+        "Kafrelsheikh": "Kafrelsheikh University", "Sohag": "Sohag University", "Port Said": "Port Said University",
+        "Damanhour": "Damanhour University", "Aswan": "Aswan University", "Damietta": "Damietta University",
+        "Suez": "Suez University", "Sadat City": "University of Sadat City", "Arish": "Arish University",
+        "Luxor": "Luxor University", "Al-Azhar": "Al-Azhar University", "Zewail City": "Zewail City of Science & Technology",
+        "E-JUST": "Egypt-Japan University (E-JUST)", "AUC": "The American University in Cairo (AUC)", "GUC": "German University in Cairo (GUC)",
+        "BUE": "The British University in Egypt (BUE)", "MUST": "Misr University for Science & Technology", "MIU": "Misr International University",
+        "Other": "Other University / Institute"
     };
 
-    // 1. بحث متطابق تماماً
     if (uniTranslations[cleanVal]) return uniTranslations[cleanVal];
     
-    // 2. بحث يتجاهل حالة الأحرف (لو الداتابيز فيها zagazig أو ZAGAZIG)
     const key = Object.keys(uniTranslations).find(k => k.toLowerCase() === cleanVal.toLowerCase());
     if (key) return uniTranslations[key];
 
-    // 3. لو القيمة مجهولة أو مسجلة أصلاً بالعربي في الداتابيز، رجعها زي ما هي
     return cleanVal;
 };
 function setupEventListeners() {
@@ -155,14 +149,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 
     if (menuBtn) {
         menuBtn.addEventListener('click', () => {
-            sidebar.classList.remove('translate-x-full'); 
+            sidebar.classList.remove('-translate-x-full'); 
             overlay.classList.remove('hidden'); 
         });
     }
 
     if (overlay) {
         overlay.addEventListener('click', () => {
-            sidebar.classList.add('translate-x-full'); 
+            sidebar.classList.add('-translate-x-full'); 
             overlay.classList.add('hidden'); 
         });
     }
@@ -212,11 +206,10 @@ async function initDashboard(uid) {
 
         if (!teamId) {
             console.warn("User has no team.");
-            // 💡 الحل هنا: إنشاء كائن فريق افتراضي فارغ لمنع الانهيار
             currentTeam = {
                 id: null,
                 team_id: null,
-                name: 'لا يوجد فريق',
+                name: 'No Team',
                 courses_plan: [],
                 weekly_tasks: [],
                 members: [],
@@ -224,12 +217,11 @@ async function initDashboard(uid) {
                 leader_id: null
             };
 
-            // 🚀 التعديل الجديد: تشغيل فلتر التراكات للطالب الذي ليس لديه فريق
             const noTeamView = document.getElementById('no-team-view');
             if (noTeamView) noTeamView.classList.remove('hidden');
             
             if (typeof initExploreTrackFilter === 'function') {
-                initExploreTrackFilter(); // تجهيز التراكات وتحديد تراك الطالب التلقائي
+                initExploreTrackFilter();
             }
 
         } else {
@@ -241,7 +233,7 @@ async function initDashboard(uid) {
 
             if (teamError || !teamData) {
                 console.error("Team fetch failed", teamError);
-                currentTeam = { id: null, team_id: null, name: 'فريق غير معروف', courses_plan: [], weekly_tasks: [], members: [] };
+                currentTeam = { id: null, team_id: null, name: 'Unknown Team', courses_plan: [], weekly_tasks: [], members: [] };
             } else {
                 currentTeam = teamData;
                 currentTeam.team_id = teamData.id; 
@@ -307,19 +299,16 @@ async function initDashboard(uid) {
         }, 1500);   
     } catch (e) {
         console.error("Init Error:", e);
-        showToast("خطأ في تحميل البيانات", "error");
+        showToast("Error loading dashboard data", "error");
     }
 }
 
-// =========================================
-// 💡 دالة لتهيئة فلتر التراكات الخاص بخريطة التعلم (للطالب)
-// =========================================
+// Initialize roadmap track filter for student
 window.initRoadmapTrackFilter = async () => {
     const selector = document.getElementById('roadmap-track-selector');
     if (!selector) return;
 
     try {
-        // 1. جلب البيانات (Fetch): جلب المسارات المفعلة من قاعدة البيانات
         const { data: tracks, error } = await supabase
             .from('tracks')
             .select('id, name')
@@ -328,8 +317,7 @@ window.initRoadmapTrackFilter = async () => {
             
         if (error) throw error;
 
-        // 2. تعبئة القائمة (Populate): بناء خيارات القائمة المنسدلة
-        let html = '<option value="all" class="font-bold text-b-primary">🌍 كل المسارات (All Tracks)</option>';
+        let html = '<option value="all" class="font-bold text-b-primary">All Tracks</option>';
         if (tracks && tracks.length > 0) {
             tracks.forEach(t => {
                 html += `<option value="${t.id}">${t.name}</option>`;
@@ -337,11 +325,9 @@ window.initRoadmapTrackFilter = async () => {
         }
         selector.innerHTML = html;
 
-        // 3. الذكاء التلقائي (Auto-Select): اختيار مسار الطالب المسجل حالياً
         const userTrack = currentUserData?.track || currentUserData?.track_id || currentUserData?.specialization;
         
         if (userTrack) {
-            // البحث عن المسار سواء كان مخزن كـ ID أو كاسم (مثل Digital IC Design)
             const matchedTrack = tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
             if (matchedTrack) {
                 selector.value = matchedTrack.id;
@@ -349,7 +335,7 @@ window.initRoadmapTrackFilter = async () => {
         }
     } catch (e) {
         console.error("Error loading roadmap tracks:", e);
-        selector.innerHTML = '<option value="all">🌍 كل المسارات</option>';
+        selector.innerHTML = '<option value="all">All Tracks</option>';
     }
 };
 // ==========================================
@@ -418,7 +404,7 @@ allData.courses = rawCourses.map(course => {
                 course_id: course.id, 
                 real_video_count: videoCount,
                 real_total_duration: formatSecondsToTime(totalSeconds),
-                instructor: instructor || "Busla Team",
+                instructor: instructor || "ZDC Team",
                 image_url: course.image_url
             };
         });
@@ -536,30 +522,28 @@ function updateHeaderInfo(user, team) {
     }
 
     // Set User and Team Names
-    const userName = user.full_name || "طالب بوصلة";
-    const teamName = (team && team.name) ? team.name : "بدون فريق";
+    const userName = user.full_name || "ZDC Student";
+    const teamName = (team && team.name) ? team.name : "No Team";
     
     safeText('sidebar-team-name', teamName);
     safeText('header-user-name', userName);
     safeText('my-points', userPoints);
     safeText('stat-team-score', teamPoints);
 
-    // 💡 التعديل الأهم: جلب اسم الليدر الحقيقي بدلاً من اسم الطالب
+    // Fetch actual team leader name
     const leaderNameEl = document.getElementById('sidebar-leader-name');
     if (leaderNameEl) {
         if (!team || !team.leader_id) {
-            leaderNameEl.innerText = "لا يوجد";
+            leaderNameEl.innerText = "None";
         } else {
-            // وضع علامة تحميل مؤقتة حتى يأتي الاسم من قاعدة البيانات
             leaderNameEl.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-500 text-[10px]"></i>';
             
-            // جلب الاسم في الخلفية
             supabase.from('profiles').select('full_name').eq('id', team.leader_id).single()
                 .then(({ data, error }) => {
                     if (!error && data) {
                         leaderNameEl.innerHTML = `${data.full_name}`;
                     } else {
-                        leaderNameEl.innerText = "غير معروف";
+                        leaderNameEl.innerText = "Unknown";
                     }
                 });
         }
@@ -569,21 +553,21 @@ function updateHeaderInfo(user, team) {
     const sidebarLogoEl = document.getElementById('sidebar-team-logo');
     if(sidebarLogoEl) {
         let rawTeamLogo = team ? team.logo_url : null;
-        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/BUSLA-icon.png";
+        sidebarLogoEl.src = rawTeamLogo ? resolveImageUrl(rawTeamLogo, 'team') : "../assets/icons/zdc-icon-192.png";
     }
 
     // Update User Avatar
     const headerAvatarEl = document.getElementById('header-user-avatar');
     if(headerAvatarEl) {
         const rawUserAvatar = user.avatar_url;
-        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/BUSLA-icon.png";
+        headerAvatarEl.src = rawUserAvatar ? resolveImageUrl(rawUserAvatar, 'user') : "../assets/icons/zdc-icon-192.png";
     }
 }
 
 window.closeSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    if (sidebar) sidebar.classList.add('translate-x-full');
+    if (sidebar) sidebar.classList.add('-translate-x-full');
     if (overlay) overlay.classList.add('hidden');
 };
 
@@ -591,7 +575,7 @@ function getRememberedStudentTab() {
     const validTabs = ['overview', 'roadmap', 'squad', 'announcements', 'calendar', 'rank', 'team-rank', 'leaderboard'];
     const hash = window.location.hash ? window.location.hash.substring(1).trim() : '';
     if (hash && validTabs.includes(hash)) return hash;
-    const saved = localStorage.getItem('busla_student_active_tab');
+    const saved = localStorage.getItem('zdc_student_active_tab') || localStorage.getItem('busla_student_active_tab');
     if (saved && validTabs.includes(saved)) return saved;
     return 'overview';
 }
@@ -599,13 +583,11 @@ window.getRememberedStudentTab = getRememberedStudentTab;
 
 window.switchTab = function(id) {
     if (!id) return;
-    // Auto-close sidebar on mobile if open
     if (window.innerWidth < 768) {
         window.closeSidebar();
     }
 
-    // Save active tab state
-    localStorage.setItem('busla_student_active_tab', id);
+    localStorage.setItem('zdc_student_active_tab', id);
     if (window.location.hash !== '#' + id) {
         try { history.replaceState(null, '', '#' + id); } catch(e) {}
     }
@@ -716,16 +698,16 @@ async function renderTeamOverview(tasks) {
                 <div class="w-24 h-24 bg-yellow-500/10 rounded-full flex items-center justify-center text-yellow-500 text-5xl mx-auto mb-6 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
                     <i class="fas fa-users-slash"></i>
                 </div>
-                <h3 class="text-3xl font-black text-white mb-4">أنت لست ضمن أي فريق!</h3>
+                <h3 class="text-3xl font-black text-white mb-4">You Are Not in a Squad Yet!</h3>
                 <p class="text-gray-400 mb-8 text-lg leading-relaxed">
-                    نظام <strong>Busla</strong> مصمم للعمل الجماعي. لتتمكن من رؤية المهام، دراسة الكورسات، وجمع النقاط، يجب عليك الانضمام إلى فريق أو إنشاء فريقك الخاص وقيادته.
+                    <strong>ZDC</strong> is built around collaborative engineering teams. To access weekly missions, study active courses, and earn XP, join an existing squad or create and lead your own.
                 </p>
-                <div class="flex gap-4 justify-center">
+                <div class="flex flex-wrap gap-4 justify-center">
                     <button onclick="switchTab('squad')" class="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/5">
-                        <i class="fas fa-search mr-2"></i> البحث عن فريق
+                        <i class="fas fa-search mr-2"></i> Find a Squad
                     </button>
                     <button onclick="window.location.href = './create-team.html'" class="px-8 py-3 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-b-primary/30 hover:-translate-y-1">
-                        <i class="fas fa-flag mr-2"></i> إنشاء فريق جديد
+                        <i class="fas fa-flag mr-2"></i> Create a New Squad
                     </button>
                 </div>
             </div>
@@ -733,21 +715,19 @@ async function renderTeamOverview(tasks) {
         return;
     }
 
-    // إظهار قسم الكورسات النشطة (في حال كان الطالب لديه فريق)
     if (coursesContainer && coursesContainer.parentElement) {
         coursesContainer.parentElement.classList.remove('hidden');
         container.parentElement.className = "lg:col-span-2 bg-b-surface p-6 rounded-2xl border border-white/10 flex flex-col h-[55vh] shadow-lg";
     }
 
-    // Show loading spinner
     container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-b-primary text-2xl"></i></div>';
 
     if (!tasks || tasks.length === 0) {
         container.innerHTML = `
             <div class="text-center py-12 text-gray-600 bg-white/5 rounded-2xl border border-white/5 border-dashed">
                 <i class="fas fa-clipboard-list text-5xl mb-4 opacity-50"></i>
-                <p>لا توجد مهام معينة حالياً.</p>
-                <p class="text-xs mt-2">يقوم قائد الفريق بتعيين المهام أسبوعياً.</p>
+                <p>No tasks assigned yet.</p>
+                <p class="text-xs mt-2">Your squad leader assigns weekly missions here.</p>
             </div>`;
         return;
     }
@@ -802,15 +782,14 @@ async function renderTeamOverview(tasks) {
             container.innerHTML = `
                 <div class="text-center text-gray-400 py-12 border border-dashed border-white/5 rounded-2xl bg-black/20">
                     <i class="fas fa-check-circle text-green-500 text-4xl mb-3 opacity-80"></i>
-                    <p class="font-bold text-lg text-white">عمل رائع!</p>
-                    <p class="text-sm mt-1">لقد أنجزت جميع المهام المطلوبة منك بنجاح.</p>
+                    <p class="font-bold text-lg text-white">Great Work!</p>
+                    <p class="text-sm mt-1">You have completed all assigned missions for now.</p>
                 </div>`;
             return;
         }
 
         let html = '';
         displayTasks.forEach(task => {
-            // UI configuration based on type
             let typeConfig = { icon: 'fa-play', color: 'text-b-primary', bg: 'bg-b-primary/10', border: 'border-l-b-primary', label: 'Video' };
             if (task.type === 'quiz') typeConfig = { icon: 'fa-clipboard-question', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-l-yellow-500', label: 'Quiz' };
             else if (task.type === 'project') typeConfig = { icon: 'fa-code-branch', color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-l-purple-500', label: 'Project' };
@@ -819,14 +798,14 @@ async function renderTeamOverview(tasks) {
             let opacityClass = 'opacity-100';
 
             if (task.isCompleted) {
-                statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check"></i> مكتملة</span>`;
+                statusBadge = `<span class="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check"></i> Completed</span>`;
                 opacityClass = 'opacity-50 hover:opacity-100'; 
                 typeConfig.border = 'border-l-green-500/50'; 
             } else if (task.isOverdue) {
-                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> متأخرة</span>`;
+                statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-exclamation-triangle"></i> Overdue</span>`;
                 typeConfig.border = 'border-l-red-500'; 
             } else {
-                statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> جارية</span>`;
+                statusBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-clock"></i> Active</span>`;
             }
 
             const taskId = task.id || task.task_id;
@@ -836,14 +815,14 @@ async function renderTeamOverview(tasks) {
                 <a href="course-player.html?id=${encodeURIComponent(task.course_id)}${task.content_id && task.content_id !== 'null' && task.content_id !== 'undefined' ? `&content=${encodeURIComponent(task.content_id)}` : ''}&task_id=${encodeURIComponent(taskId)}" 
                    onclick="event.stopPropagation();"
                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-b-primary text-gray-400 hover:text-white flex items-center justify-center transition-all"
-                   title="فتح المهمة">
+                   title="Open Task">
                     <i class="fas fa-external-link-alt text-xs"></i>
                 </a>
             ` : `
                 <button type="button"
                    onclick="event.stopPropagation(); window.openUnifiedTaskModal('${taskId}')"
                    class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all"
-                   title="عرض تفاصيل المهمة">
+                   title="View Task Details">
                     <i class="fas fa-eye text-xs"></i>
                 </button>
             `;
@@ -851,22 +830,22 @@ async function renderTeamOverview(tasks) {
             html += `
                 <div class="bg-black/40 border border-white/5 border-l-4 ${typeConfig.border} rounded-xl p-4 flex justify-between items-center group hover:bg-white/5 transition-all shadow-sm ${opacityClass}">
                     
-                    <div class="flex items-center gap-4 flex-1 cursor-pointer" onclick="window.openUnifiedTaskModal('${taskId}')">
+                    <div class="flex items-center gap-4 flex-1 cursor-pointer min-w-0" onclick="window.openUnifiedTaskModal('${taskId}')">
                         <div class="w-10 h-10 rounded-xl ${typeConfig.bg} ${typeConfig.color} flex items-center justify-center text-lg shadow-inner shrink-0">
                             <i class="fas ${typeConfig.icon}"></i>
                         </div>
-                        <div class="flex-1 min-w-0 pr-2 text-right">
+                        <div class="flex-1 min-w-0 pr-2 text-left">
                             <h4 class="font-bold text-white text-sm line-clamp-2 leading-snug group-hover:text-b-primary transition-colors" dir="auto" title="${task.title || 'Untitled Task'}">
                                 ${task.title || "Untitled Task"}
                             </h4>
-                            <div class="flex items-center justify-end gap-2 mt-1.5 flex-row-reverse w-full">
+                            <div class="flex items-center justify-start gap-2 mt-1.5 w-full">
                                 <span class="text-[10px] text-gray-400 bg-black px-2 py-0.5 rounded border border-white/5">${typeConfig.label}</span>
                                 ${statusBadge}
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 shrink-0 border-r border-white/10 pr-4 mr-2">
+                    <div class="flex items-center gap-2 shrink-0 border-l border-white/10 pl-4 ml-2">
                         ${actionBtn}
                     </div>
                 </div>
@@ -885,20 +864,19 @@ function renderActiveCourses(activeIds) {
     
     container.innerHTML = '';
 
-    // Filter to only valid courses that actually exist in allData.courses
     const validCourses = (activeIds || []).map(courseId => {
         const courseData = (allData.courses || []).find(c => String(c.id) === String(courseId) || String(c.course_id) === String(courseId));
         return courseData ? { ...courseData, originalCourseId: courseId } : null;
     }).filter(Boolean);
 
     if (validCourses.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed"><p>لا توجد كورسات مفعّلة حالياً.</p></div>`;
+        container.innerHTML = `<div class="text-center py-8 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed"><p>No active courses enrolled yet.</p></div>`;
         return;
     }
 
     validCourses.forEach(courseData => {
         const courseId = courseData.course_id || courseData.id || courseData.originalCourseId;
-        const title = courseData.title || "كورس بدون عنوان";
+        const title = courseData.title || "Untitled Course";
         let img = resolveImageUrl(courseData?.image_url, 'course');
 
         const html = `
@@ -913,7 +891,7 @@ function renderActiveCourses(activeIds) {
                         <i class="fas fa-book-open text-sm"></i>
                     </div>
                     <h4 class="font-bold text-white text-base mb-1 group-hover:text-purple-400 transition-colors line-clamp-2 leading-snug" dir="auto" title="${title}">${title}</h4>
-                    <span class="text-xs text-gray-400">انقر للمتابعة ←</span>
+                    <span class="text-xs text-gray-400">Continue Learning &rarr;</span>
                 </div>
             </a>
         `;
@@ -928,12 +906,12 @@ function renderWeekInfo() {
     const week = getCurrentWeekCycle();
     const now = new Date();
     
-    const daysAr = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    const currentDayName = daysAr[now.getDay()];
+    const daysEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDayName = daysEn[now.getDay()];
 
-    const options = { month: 'long', day: 'numeric' };
-    const startStr = week.start.toLocaleDateString('ar-EG', options);
-    const endStr = week.end.toLocaleDateString('ar-EG', options);
+    const options = { month: 'short', day: 'numeric' };
+    const startStr = week.start.toLocaleDateString('en-US', options);
+    const endStr = week.end.toLocaleDateString('en-US', options);
 
     headerContainer.innerHTML = `
         <div class="flex flex-row justify-between items-center bg-gradient-to-r from-b-primary/20 to-black/30 p-3 sm:p-4 rounded-2xl border border-b-primary/30 mb-4 sm:mb-6 shadow-lg">
@@ -942,13 +920,13 @@ function renderWeekInfo() {
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white text-sm sm:text-lg">الأسبوع الحالي</h3>
-                    <p class="text-[11px] sm:text-sm text-gray-300">من <span class="text-teal-300 font-bold">${startStr}</span> إلى <span class="text-teal-300 font-bold">${endStr}</span></p>
+                    <h3 class="font-bold text-white text-sm sm:text-lg">Current Sprint Week</h3>
+                    <p class="text-[11px] sm:text-sm text-gray-300">From <span class="text-teal-300 font-bold">${startStr}</span> to <span class="text-teal-300 font-bold">${endStr}</span></p>
                 </div>
             </div>
             <div class="shrink-0 text-center">
                 <div class="bg-black/50 px-2.5 sm:px-4 py-1 sm:py-2 rounded-xl border border-white/10 shadow-inner">
-                    <p class="text-[10px] sm:text-xs text-gray-400">اليوم</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400">Today</p>
                     <p class="font-bold text-teal-400 text-xs sm:text-base">${currentDayName}</p>
                 </div>
             </div>
@@ -1036,7 +1014,7 @@ window.unassignTask = (taskId) => {
         }
     };
 
-    window.showCustomConfirm("تأكيد الحذف", confirmMessage, performDeletion);
+    window.showCustomConfirm("Confirm Deletion", confirmMessage, performDeletion);
 };
 
 
@@ -1117,7 +1095,7 @@ window.showDetails = (type, id, parentTitle = "") => {
     
     const typeLabel = type === 'phase' ? 'Educational Phase' : (item.type || 'Course');
     setText('detail-type', typeLabel);
-    setText('detail-instructor', item.instructor || "Busla Team");
+    setText('detail-instructor', item.instructor || "ZDC Team");
     
     const realDur = item.real_total_duration && item.real_total_duration !== "00:00:00" ? item.real_total_duration : "00:00:00";
     setText('detail-duration', realDur);
@@ -1159,20 +1137,19 @@ window.showDetails = (type, id, parentTitle = "") => {
     } else {
         toggleArea.classList.remove('hidden');
         
-        // 💡 تم تطبيق دالة الحماية (formatExternalUrl) هنا أيضاً
         toggleArea.innerHTML = `
             <div class="flex gap-3">
                 <a href="course-player.html?id=${id}" class="flex-1 bg-b-primary hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                    <i class="fas fa-play"></i> فتح الكورس
+                    <i class="fas fa-play"></i> Open Course
                 </a>
                 ${item.playlist_id ? `
-                <a href="${window.formatExternalUrl(item.playlist_id)}" target="_blank" class="w-12 h-12 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl transition-all flex items-center justify-center border border-white/10" title="المصدر الخارجي">
+                <a href="${window.formatExternalUrl(item.playlist_id)}" target="_blank" class="w-12 h-12 bg-white/5 hover:bg-white/10 text-gray-300 font-bold rounded-xl transition-all flex items-center justify-center border border-white/10" title="External Resource">
                     <i class="fas fa-external-link-alt"></i>
                 </a>
                 ` : ''}
             </div>
             ${!(currentTeam?.courses_plan || []).includes(String(id)) ? `
-                <p class="text-[10px] text-yellow-500 mt-2 text-center"><i class="fas fa-lock mr-1"></i> الكورس غير مفعل من قِبل الليدر، لكن يمكنك مشاهدته.</p>
+                <p class="text-[10px] text-yellow-500 mt-2 text-center"><i class="fas fa-lock mr-1"></i> Not enabled by your squad leader yet, but you can still preview it.</p>
             ` : ''}
         `;
     }
@@ -1225,8 +1202,8 @@ async function renderSquad() {
 
         let containerHtml = '';
         membersData.forEach((member, index) => {
-            const university = member.university || "غير محدد";
-            const name = member.full_name || "عضو مجهول";
+            const university = window.translateUni ? window.translateUni(member.university) : (member.university || "Not specified");
+            const name = member.full_name || "Unknown Member";
             const photo = resolveImageUrl(member.avatar_url, 'user');
             const points = member.total_xp || 0;
             const rankData = getRankDataForMember(points);
@@ -1235,32 +1212,32 @@ async function renderSquad() {
 
             containerHtml += `
             <div class="group flex items-center justify-between bg-b-surface/80 hover:bg-white/5 border border-white/5 hover:border-white/15 rounded-2xl p-3 sm:p-4 md:p-5 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/40">
-                <div class="absolute right-0 top-0 bottom-0 w-1 sm:w-1.5 bg-gradient-to-b ${index === 0 ? 'from-yellow-400 to-yellow-600' : index === 1 ? 'from-gray-300 to-gray-500' : index === 2 ? 'from-amber-600 to-amber-800' : 'from-b-primary/40 to-transparent'} opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute left-0 top-0 bottom-0 w-1 sm:w-1.5 bg-gradient-to-b ${index === 0 ? 'from-yellow-400 to-yellow-600' : index === 1 ? 'from-gray-300 to-gray-500' : index === 2 ? 'from-amber-600 to-amber-800' : 'from-b-primary/40 to-transparent'} opacity-80 group-hover:opacity-100 transition-opacity"></div>
                 
-                <div class="flex items-center gap-2.5 sm:gap-4 md:gap-5 flex-1 min-w-0 pr-1 sm:pr-2">
+                <div class="flex items-center gap-2.5 sm:gap-4 md:gap-5 flex-1 min-w-0 pl-1 sm:pl-2">
                     <div class="hidden md:flex items-center justify-center w-8 text-2xl font-black text-white/15 font-mono group-hover:text-white/30 transition-colors shrink-0">
                         #${index + 1}
                     </div>
                     <div class="relative shrink-0">
                         <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full p-[2px] transition-transform duration-300 group-hover:scale-105" style="background: linear-gradient(135deg, ${rankData.stage_color || '#00F5FF'}, transparent);">
-                            <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'" alt="Avatar">
+                            <img src="${photo}" class="w-full h-full rounded-full object-cover border-2 border-black bg-black" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'" alt="Avatar">
                         </div>
-                        <div class="absolute -bottom-1 -left-1 sm:-bottom-1.5 sm:-left-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#00F5FF'}] shadow-md z-10 p-0.5" title="المستوى ${rankData.level}">
+                        <div class="absolute -bottom-1 -right-1 sm:-bottom-1.5 sm:-right-1.5 w-5 h-5 sm:w-6 sm:h-6 bg-b-dark rounded-full flex items-center justify-center border border-[${rankData.stage_color || '#00F5FF'}] shadow-md z-10 p-0.5" title="Level ${rankData.level}">
                             <img src="../assets/user-badge/lv${rankData.level}.png" class="w-full h-full object-contain">
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0 text-right space-y-0.5 sm:space-y-1">
+                    <div class="flex-1 min-w-0 text-left space-y-0.5 sm:space-y-1">
                         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                             <h4 class="text-white font-bold text-sm sm:text-base md:text-lg truncate tracking-tight max-w-[130px] sm:max-w-[200px] md:max-w-none">
                                 ${name}
                             </h4>
                             ${isLeader ? `
                                 <span class="px-2 py-0.5 bg-yellow-500/15 text-yellow-400 text-[10px] sm:text-xs rounded-full border border-yellow-500/30 font-bold inline-flex items-center gap-1 shrink-0">
-                                    <i class="fas fa-crown text-[9px]"></i> الليدر
+                                    <i class="fas fa-crown text-[9px]"></i> Leader
                                 </span>` : ''}
                             ${isMe && !isLeader ? `
                                 <span class="px-2 py-0.5 bg-b-primary/10 text-b-primary text-[10px] sm:text-xs rounded-full border border-b-primary/20 font-bold shrink-0">
-                                    أنت
+                                    You
                                 </span>` : ''}
                         </div>
                         <div class="text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: ${rankData.stage_color}">
@@ -1274,7 +1251,7 @@ async function renderSquad() {
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0 pl-1">
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0 pr-1">
                     <div class="text-center bg-black/30 sm:bg-white/5 border border-white/5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl">
                         <span class="block text-[8px] sm:text-[9px] text-gray-400 uppercase font-mono tracking-wider">XP</span>
                         <span class="font-mono font-black text-xs sm:text-sm md:text-base text-b-primary">${points.toLocaleString()}</span>
@@ -1285,21 +1262,20 @@ async function renderSquad() {
         container.innerHTML = containerHtml;
     } catch (e) {
         console.error("Squad Render Error:", e);
-        container.innerHTML = '<p class="text-red-500 text-center py-4">فشل في تحميل أعضاء الفريق.</p>';
+        container.innerHTML = '<p class="text-red-500 text-center py-4">Failed to load squad members.</p>';
     }
 }
 
-// 2. مغادرة الفريق (احتفاظ بالطالب بنقاطه، وخصمها من الفريق)
+// Leave current squad (retain personal XP, deduct contributed squad score)
 window.leaveCurrentTeam = () => {
     window.showCustomConfirm(
-        "مغادرة الفريق",
-        "هل أنت متأكد من مغادرة الفريق؟ ستحتفظ بنقاطك وإنجازاتك الشخصية، ولكن سيتم حذف مساهماتك من نقاط الفريق.",
+        "Leave Squad",
+        "Are you sure you want to leave this squad? You will keep your personal XP and achievements, while your squad score contributions will be removed from the team.",
         async () => {
         try {
             const teamId = currentTeam.team_id;
             const myId = currentUser.id;
 
-            // 1. حساب النقاط التي ساهم بها الطالب في هذا الفريق
             const { data: logs } = await supabase.from('team_score_logs')
                 .select('amount, id')
                 .eq('team_id', teamId)
@@ -1311,26 +1287,23 @@ window.leaveCurrentTeam = () => {
                 logs.forEach(l => { totalContributed += l.amount; logIds.push(l.id); });
             }
 
-            // 2. خصم النقاط من رصيد الفريق الكلي
             if (totalContributed > 0) {
                 const { data: teamInfo } = await supabase.from('teams').select('total_score').eq('id', teamId).single();
                 const newTeamScore = Math.max(0, (teamInfo?.total_score || 0) - totalContributed);
                 await supabase.from('teams').update({ total_score: newTeamScore }).eq('id', teamId);
                 
-                // 3. حذف سجلات المساهمة
                 await supabase.from('team_score_logs').delete().in('id', logIds);
             }
 
-            // 4. إزالة الطالب من الفريق في البروفايل (دون المساس بـ total_xp الخاص به)
             const { error: profileError } = await supabase.from('profiles').update({ team_id: null }).eq('id', myId);
             if (profileError) throw profileError;
 
-            showToast("تم مغادرة الفريق بنجاح. بياناتك الشخصية محفوظة.", "success");
+            showToast("Left squad successfully. Your personal progress is preserved.", "success");
             setTimeout(() => window.location.reload(), 1500);
 
         } catch (error) {
             console.error("Leave Team Error:", error);
-            showToast("حدث خطأ أثناء المغادرة.", "error");
+            showToast("An error occurred while leaving the squad.", "error");
         }
     });
 };
@@ -1367,7 +1340,7 @@ async function checkPendingInvitesBadge() {
 window.openStudentInvites = async () => {
     document.getElementById('student-invites-modal').classList.remove('hidden');
     const container = document.getElementById('student-invites-list');
-    container.innerHTML = '<div class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+    container.innerHTML = '<div class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin"></i> Loading invitations...</div>';
     
     try {
         const { data: invites, error } = await supabase.from('team_invitations')
@@ -1378,7 +1351,7 @@ window.openStudentInvites = async () => {
         if (error) throw error;
 
         if (!invites || invites.length === 0) {
-            container.innerHTML = '<div class="text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed">لا توجد دعوات معلقة.</div>';
+            container.innerHTML = '<div class="text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-white/5 border-dashed">No pending invitations.</div>';
             return;
         }
 
@@ -1387,38 +1360,35 @@ window.openStudentInvites = async () => {
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-purple-500/20 text-purple-500 rounded-lg flex items-center justify-center"><i class="fas fa-flag"></i></div>
                     <div>
-                        <h4 class="font-bold text-white text-sm">${inv.team_snapshot?.name || 'فريق'}</h4>
-                        <p class="text-[10px] text-gray-400 mt-1">بواسطة القائد: ${inv.team_snapshot?.leader_name || 'غير معروف'}</p>
+                        <h4 class="font-bold text-white text-sm">${inv.team_snapshot?.name || 'Squad'}</h4>
+                        <p class="text-[10px] text-gray-400 mt-1">Leader: ${inv.team_snapshot?.leader_name || 'Unknown'}</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="window.viewTeamDetails('${inv.from_team_id}', '${inv.id}', 'invite')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-bold transition-all border border-white/10">التفاصيل والرد</button>
+                    <button onclick="window.viewTeamDetails('${inv.from_team_id}', '${inv.id}', 'invite')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-bold transition-all border border-white/10">Details & Respond</button>
                 </div>
             </div>
         `).join('');
 
     } catch (e) {
         console.error(e);
-        container.innerHTML = '<p class="text-red-500 text-center py-4">خطأ في جلب الدعوات.</p>';
+        container.innerHTML = '<p class="text-red-500 text-center py-4">Failed to load invitations.</p>';
     }
 };
 window.openTeamBrowser = async () => {
     document.getElementById('team-browser-modal').classList.remove('hidden');
     const tbody = document.getElementById('teams-browser-list');
     
-    // 💡 تم تعديل colspan إلى 6 لتناسب عدد الأعمدة الجديد
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl text-purple-500 mb-2 block"></i> جاري جلب الفرق...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl text-purple-500 mb-2 block"></i> Loading squads...</td></tr>';
     
     const trackFilterDropdown = document.getElementById('team-track-filter');
     
     try {
-        // 1. جلب التراكات من الداتابيز لملء الفلتر بشكل ديناميكي
         const { data: tracksData, error: tracksError } = await supabase.from('tracks').select('id, name').eq('is_active', true);
         const tracks = tracksData || [];
 
-        // 2. بناء خيارات الفلتر وتحديد مسار الطالب التلقائي
         if (trackFilterDropdown) {
-            let html = '<option value="all">🌍 كل المسارات</option>';
+            let html = '<option value="all">All Tracks</option>';
             tracks.forEach(t => {
                 html += `<option value="${t.id}">${t.name}</option>`;
             });
@@ -1440,7 +1410,6 @@ window.openTeamBrowser = async () => {
         if(searchInput) searchInput.value = "";
         if(uniFilter) uniFilter.value = "all";
 
-        // 3. جلب الفرق من الداتابيز
         const { data: teams, error } = await supabase
             .from('teams')
             .select(`
@@ -1451,32 +1420,27 @@ window.openTeamBrowser = async () => {
             
         if (error) throw error;
         
-        // 4. معالجة البيانات وتحويل الـ ID إلى اسم التراك الفعلي
         allSystemTeams = teams.map(t => {
             const leaderData = Array.isArray(t.leader) ? t.leader[0] : t.leader;
             const membersData = Array.isArray(t.members) ? t.members : [];
-
-            // البحث عن اسم التراك باستخدام الـ ID المخزن في جدول الفرق
             const teamTrackObj = tracks.find(tr => String(tr.id) === String(t.specialization));
-
-            // إذا لم يجد مطابقة (بسبب أن specialization هو NULL في الداتابيز)، سيعرض 'غير محدد'
-            const actualTrackName = teamTrackObj ? teamTrackObj.name : 'غير محدد';
+            const actualTrackName = teamTrackObj ? teamTrackObj.name : 'Unspecified';
 
             return {
                 ...t,
                 memberCount: membersData.length,
-                leaderName: leaderData?.full_name || 'غير معروف',
+                leaderName: leaderData?.full_name || 'Unknown',
                 leaderAvatar: leaderData?.avatar_url || null,
                 leaderTrack: actualTrackName,
-                trackId: t.specialization, // 💡 هذا السطر ضروري جداً لكي تعمل دالة الفلترة (filterTeams)
-                university: leaderData?.university || (t.university || 'غير محدد')
+                trackId: t.specialization,
+                university: leaderData?.university || (t.university || 'Unspecified')
             };
         });
 
         window.filterTeams(); 
     } catch(e) {
         console.error("Team Browser Error:", e);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">فشل تحميل قائمة الفرق</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-10">Failed to load squads list.</td></tr>';
     }
 };
 window.filterTeams = () => {
@@ -1486,36 +1450,31 @@ window.filterTeams = () => {
 
     const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
     const uniVal = uniFilter ? uniFilter.value : 'all';
-    const trackVal = trackFilter ? trackFilter.value : 'all'; // 💡 trackVal هو الـ ID
+    const trackVal = trackFilter ? trackFilter.value : 'all';
 
     const tbody = document.getElementById('teams-browser-list');
     if(!tbody) return;
     tbody.innerHTML = '';
 
-    // 💡 الفلترة الشاملة
     const filtered = allSystemTeams.filter(t => {
-        // حماية من הـ undefined
         const teamName = (t.name || '').toLowerCase();
         const leaderName = (t.leaderName || '').toLowerCase();
 
         const matchSearch = teamName.includes(searchVal) || leaderName.includes(searchVal);
         const matchUni = (uniVal === 'all' || !uniVal) ? true : (t.university === uniVal);
-        
-        // 💡 الحل الجذري للفلترة: نقارن الـ ID بالـ ID (باستخدام trackId أو specialization)
         const matchTrack = (trackVal === 'all' || !trackVal) ? true : (String(t.trackId) === trackVal || String(t.specialization) === trackVal);
 
         return matchSearch && matchUni && matchTrack;
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">لا توجد فرق مطابقة للبحث</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-500">No squads match your search.</td></tr>`;
         return;
     }
 
-    // 💡 رسم الجدول
     filtered.forEach(t => {
         const logo = resolveImageUrl(t.logo_url, 'team');
-        const displayUni = window.translateUni ? window.translateUni(t.university) : (t.university || 'غير محدد');
+        const displayUni = window.translateUni ? window.translateUni(t.university) : (t.university || 'Unspecified');
         const leaderAvatar = resolveImageUrl(t.leaderAvatar, 'user');
         
         const maxMembers = t.max_members || 5;
@@ -1551,7 +1510,7 @@ window.filterTeams = () => {
                 </td>
                 <td class="p-4 text-center">
                     <button onclick="window.viewTeamDetails('${t.id}', null, 'browser')" class="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 font-bold px-4 py-2 rounded-lg text-xs transition-colors border border-blue-500/30">
-                        <i class="fas fa-info-circle ml-1"></i> التفاصيل
+                        <i class="fas fa-info-circle mr-1"></i> Details
                     </button>
                 </td>
             </tr>
@@ -1601,21 +1560,18 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
         document.getElementById('tdm-members-count').innerText = `${mems?.length || 0}/5`;
         document.getElementById('tdm-members-badge').innerText = mems?.length || 0;
         
-        document.getElementById('tdm-leader-name').innerText = teamData.profiles?.full_name || 'غير معروف';
-        // 💡 تحديث وعرض اسم التخصص (Track) في نافذة التفاصيل
+        document.getElementById('tdm-leader-name').innerText = teamData.profiles?.full_name || 'Unknown';
         const trackNameEl = document.getElementById('tdm-track-name');
         if (trackNameEl) {
-            trackNameEl.innerText = 'جاري التحميل...'; // رسالة مؤقتة لتأكيد عمل الكود
+            trackNameEl.innerText = 'Loading...';
             
-            let finalTrackName = 'غير محدد';
+            let finalTrackName = 'Unspecified';
 
-            // 1. نحاول سحب الاسم الجاهز من المصفوفة الخاصة بالجدول (للسرعة)
             const cachedTeam = (typeof allSystemTeams !== 'undefined' ? allSystemTeams : []).find(t => t.id === teamId);
             
-            if (cachedTeam && cachedTeam.leaderTrack && cachedTeam.leaderTrack !== 'غير محدد') {
+            if (cachedTeam && cachedTeam.leaderTrack && cachedTeam.leaderTrack !== 'Unspecified') {
                 finalTrackName = cachedTeam.leaderTrack;
             } 
-            // 2. لو لم نجده، نجلب الاسم مباشرة من قاعدة البيانات بناءً على ID التخصص المخزن في الفريق
             else if (teamData.specialization) {
                 try {
                     const { data: trackInfo } = await window.supabase
@@ -1632,19 +1588,17 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
                 }
             }
             
-            // تعيين الاسم النهائي في واجهة الـ HTML
             trackNameEl.innerText = finalTrackName;
         }
         const tdmLeaderUni = document.getElementById('tdm-leader-uni');
         if (tdmLeaderUni) {
             tdmLeaderUni.innerText = window.translateUni(teamData.profiles?.university);
         }
-        // 3. 💡 رسم الكورسات المفعلة بالصور والأسماء
         const coursesPlan = teamData.courses_plan || [];
         const coursesCont = document.getElementById('tdm-courses-list');
         
         if (coursesPlan.length === 0) {
-            coursesCont.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-dashed border-white/10">لم يقم الليدر بتفعيل أي كورسات بعد.</div>';
+            coursesCont.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-dashed border-white/10">No courses have been activated by the leader yet.</div>';
         } else {
             coursesCont.innerHTML = coursesPlan.map(cid => {
                 const cInfo = (allData?.courses || []).find(c => String(c.id) === String(cid));
@@ -1656,7 +1610,7 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
                         <div class="min-w-0 flex-1">
                             <h5 class="text-sm font-bold text-white truncate" title="${cInfo.title}">${cInfo.title}</h5>
                             <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1.5">
-                                <span class="bg-black/50 px-1.5 rounded"><i class="fas fa-video text-blue-400"></i> ${cInfo.real_video_count || 0} درس</span>
+                                <span class="bg-black/50 px-1.5 rounded"><i class="fas fa-video text-blue-400"></i> ${cInfo.real_video_count || 0} Lessons</span>
                                 <span class="bg-black/50 px-1.5 rounded font-mono text-gray-500">${cInfo.module_time || ''}</span>
                             </p>
                         </div>
@@ -1665,7 +1619,6 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
             }).join('');
         }
 
-        // 4. رسم قائمة الأعضاء (السايدبار)
         if(mems && mems.length > 0){
             document.getElementById('tdm-members-list').innerHTML = mems.map((m) => {
                 const isLeader = m.id === teamData.leader_id;
@@ -1684,7 +1637,7 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
                                 <span class="text-[10px] px-1.5 py-0.5 rounded border mt-0.5 inline-block" style="color:${mRank.stage_color}; border-color:${mRank.stage_color}40; background-color:${mRank.stage_color}10">${mRank.title}</span>
                             </div>
                         </div>
-                        <div class="text-left shrink-0 pl-2">
+                        <div class="text-right shrink-0 pr-2">
                             <span class="block text-sm font-black font-mono text-white group-hover:text-b-primary transition-colors">${(m.total_xp || 0).toLocaleString()}</span>
                             <span class="text-[9px] text-gray-500 uppercase tracking-widest">XP</span>
                         </div>
@@ -1692,14 +1645,14 @@ window.viewTeamDetails = async (teamId, inviteId = null, context = 'browse') => 
                 `;
             }).join('');
         } else {
-            document.getElementById('tdm-members-list').innerHTML = '<p class="text-xs text-gray-500 text-center py-10">لا يوجد أعضاء.</p>';
+            document.getElementById('tdm-members-list').innerHTML = '<p class="text-xs text-gray-500 text-center py-10">No members yet.</p>';
         }
-const actionCont = document.getElementById('tdm-action-container');
+        const actionCont = document.getElementById('tdm-action-container');
         if (context === 'invite') {
             actionCont.innerHTML = `
                 <div class="flex flex-col sm:flex-row gap-3 w-full">
-                    <button onclick="window.acceptTeamInvite('${inviteId}', '${teamId}')" class="px-8 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all flex items-center justify-center gap-2"><i class="fas fa-check"></i> قبول الدعوة</button>
-                    <button onclick="window.rejectTeamInvite('${inviteId}')" class="px-8 py-3.5 bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 font-bold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-2"><i class="fas fa-times"></i> رفض</button>
+                    <button onclick="window.acceptTeamInvite('${inviteId}', '${teamId}')" class="px-8 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all flex items-center justify-center gap-2"><i class="fas fa-check"></i> Accept Invite</button>
+                    <button onclick="window.rejectTeamInvite('${inviteId}')" class="px-8 py-3.5 bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 font-bold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-2"><i class="fas fa-times"></i> Decline</button>
                 </div>
             `;
         } else {
@@ -1708,16 +1661,15 @@ const actionCont = document.getElementById('tdm-action-container');
             const isFull = (mems?.length || 0) >= 5;
 
             if (hasApplied) {
-                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-clock"></i> طلبك قيد المراجعة لدى الليدر</div>`;
+                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-clock"></i> Your request is pending leader review</div>`;
             } else if (isFull) {
-                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-ban"></i> عذراً، الفريق مكتمل</div>`;
+                actionCont.innerHTML = `<div class="px-8 py-3.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-bold text-sm flex items-center justify-center gap-2 w-full shadow-inner cursor-not-allowed"><i class="fas fa-ban"></i> Sorry, this squad is full</div>`;
             } else {
-                // 💡 التعديل هنا: إضافة حقل كتابة السبب
                 actionCont.innerHTML = `
                     <div class="flex flex-col gap-2 w-full md:w-80">
-                        <textarea id="join-reason-input" placeholder="لماذا تريد الانضمام وماذا ستقدم للفريق؟" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:border-b-primary outline-none resize-none h-16 transition-colors"></textarea>
+                        <textarea id="join-reason-input" placeholder="Why do you want to join and what will you contribute to this squad?" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:border-b-primary outline-none resize-none h-16 transition-colors"></textarea>
                         <button onclick="window.applyForTeam('${teamId}', '${teamData.name}')" class="w-full px-6 py-3 bg-b-primary hover:bg-teal-700 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(0,106,103,0.4)] transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
-                            <i class="fas fa-paper-plane"></i> إرسال الطلب
+                            <i class="fas fa-paper-plane"></i> Submit Request
                         </button>
                     </div>
                 `;
@@ -1725,7 +1677,7 @@ const actionCont = document.getElementById('tdm-action-container');
         }
     } catch(e) {
         console.error(e);
-        showToast("فشل جلب تفاصيل الفريق", "error");
+        showToast("Failed to load squad details", "error");
     }
 };
 
@@ -1769,50 +1721,47 @@ window.updateInvitesBadge = () => {
 // 💡 دالة قبول الدعوة
 // ==========================================
 window.acceptTeamInvite = async (inviteId) => {
-    if (window.isProcessingInvite) return; // 💡 تم التوحيد
+    if (window.isProcessingInvite) return;
     window.isProcessingInvite = true;
 
     const ev = window.event;
     const clickedBtn = ev ? (ev.currentTarget || ev.target.closest('button')) : null;
     let buttonsContainer = clickedBtn ? clickedBtn.parentElement : null;
     
-    // 1. تجميد الأزرار وعمل تأثير التحميل
     if (buttonsContainer) {
         buttonsContainer.querySelectorAll('button').forEach(btn => btn.disabled = true);
     }
-    if (clickedBtn) clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري القبول...';
+    if (clickedBtn) clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
 
     try {
         const { data: invite, error: fetchErr } = await supabase.from('team_invitations').select('*').eq('id', inviteId).single();
         if (fetchErr || !invite || invite.status !== 'pending') {
-            if (typeof showToast === 'function') showToast("عذراً، هذه الدعوة لم تعد صالحة.", "warning");
-            throw new Error("الدعوة غير صالحة");
+            if (typeof showToast === 'function') showToast("Sorry, this invitation is no longer valid.", "warning");
+            throw new Error("Invalid invitation");
         }
 
-        // 2. التنفيذ الفعلي
         await supabase.from('profiles').update({ team_id: invite.from_team_id }).eq('id', currentUserData.id);
         await supabase.from('team_invitations').update({ status: 'accepted' }).eq('id', inviteId);
         
         await supabase.from('system_notifications').insert([{
-            title: `🎉 طالب جديد انضم لفريقك!`,
-            content: `لقد وافق الطالب (${currentUserData?.full_name || 'طالب'}) على دعوتك وانضم رسمياً إلى فريقك!`,
+            title: `New Member Joined Your Squad!`,
+            content: `${currentUserData?.full_name || 'A student'} accepted your invitation and officially joined your squad!`,
             type: 'achievement',
             target_leader_id: invite.from_leader_id,
             is_read: false
         }]);
         
-        // 💡 تحديث الباج فوراً لإعطاء إحساس بالسرعة
         window.updateInvitesBadge();
 
-        if (typeof showToast === 'function') showToast("تم الانضمام بنجاح!", "success");
-        setTimeout(() => location.reload(), 1000); // ريفريش للدخول للفريق
+        if (typeof showToast === 'function') showToast("Joined squad successfully!", "success");
+        setTimeout(() => location.reload(), 1000);
 
     } catch (e) {
-        console.error("خطأ أثناء القبول:", e);
+        console.error("Accept invite error:", e);
         if (buttonsContainer) {
             buttonsContainer.querySelectorAll('button').forEach(btn => btn.disabled = false);
         }
-        if (clickedBtn) clickedBtn.innerHTML = '<i class="fas fa-check-circle"></i> قبول الدعوة';
+        if (clickedBtn) clickedBtn.innerHTML = '<i class="fas fa-check-circle"></i> Accept Invite';
     } finally {
         window.isProcessingInvite = false;
     }
@@ -1824,61 +1773,53 @@ window.rejectTeamInvite = async (inviteId) => {
 
     const ev = window.event;
     const btn = ev ? (ev.currentTarget || ev.target.closest('button')) : null;
-    const originalText = btn ? btn.innerHTML : 'رفض';
+    const originalText = btn ? btn.innerHTML : 'Decline';
     let rowToRemove = btn ? (btn.closest('tr') || btn.closest('.border-b') || btn.closest('.flex')) : null;
 
     if (btn) {
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفض...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Declining...';
         btn.style.pointerEvents = 'none';
     }
 
     try {
-        // 1. الرفض في الداتا بيز
         await supabase.from('team_invitations').update({ status: 'rejected' }).eq('id', inviteId);
 
-        // 2. إرسال إشعار لليدر
         supabase.from('team_invitations').select('from_leader_id').eq('id', inviteId).single()
             .then(({data}) => {
                 if (data && data.from_leader_id) {
                     supabase.from('system_notifications').insert([{
-                        title: `⚠️ اعتذار عن الدعوة`,
-                        content: `قام الطالب (${currentUserData?.full_name || 'طالب'}) برفض دعوتك للانضمام إلى الفريق.`,
+                        title: `Invitation Declined`,
+                        content: `${currentUserData?.full_name || 'A student'} declined your invitation to join the squad.`,
                         type: 'warning',
                         target_leader_id: data.from_leader_id,
                         is_read: false
                     }]).then();
                 }
-            }).catch(e => console.log("تجاهل"));
+            }).catch(() => {});
 
-        // ==========================================
-        // 💡 3. إغلاق النوافذ (تم الحل: يستهدف الـ Modals فقط ولن يمس السايد بار)
-        // ==========================================
         document.querySelectorAll('[id*="modal"]').forEach(modal => {
-            // استثناء صريح للتأكد من عدم المساس بالقوائم الجانبية
             if (!modal.id.includes('sidebar') && !modal.id.includes('menu') && !modal.classList.contains('hidden')) {
                 modal.classList.add('hidden');
             }
         });
 
-        // 4. إزالة السطر من الشاشة فوراً
         if (rowToRemove) {
             const listContainer = rowToRemove.parentElement;
             rowToRemove.remove();
             
             if (listContainer && listContainer.children.length === 0) {
-                listContainer.innerHTML = '<div class="text-center py-10 text-gray-500">لا توجد دعوات معلقة حالياً.</div>';
+                listContainer.innerHTML = '<div class="text-center py-10 text-gray-500">No pending invitations right now.</div>';
             }
         }
 
-        // 5. تحديث الباج السحري
         if (typeof window.updateInvitesBadge === 'function') window.updateInvitesBadge();
 
-        if (typeof showToast === 'function') showToast("تم الرفض بنجاح.", "info");
+        if (typeof showToast === 'function') showToast("Invitation declined.", "info");
         if (typeof window.loadStudentNotifications === 'function') window.loadStudentNotifications();
         
     } catch (err) {
-        console.error("خطأ:", err);
-        if (typeof showToast === 'function') showToast("حدث خطأ أثناء الرفض", "error");
+        console.error("Reject invite error:", err);
+        if (typeof showToast === 'function') showToast("Error declining invitation", "error");
         if (btn) {
             btn.innerHTML = originalText;
             btn.style.pointerEvents = 'auto';
@@ -1889,7 +1830,7 @@ window.rejectTeamInvite = async (inviteId) => {
 };
 
 function getRankObject(points, dataSet) {
-    if(!dataSet || dataSet.length === 0) return { title: 'مبتدئ', stage_color: '#888', level: 1 };
+    if(!dataSet || dataSet.length === 0) return { title: 'Beginner', stage_color: '#888', level: 1 };
     let rankObj = dataSet[0];
     for (let i = 0; i < dataSet.length; i++) {
         if (points >= dataSet[i].points_required) rankObj = dataSet[i];
@@ -1916,7 +1857,7 @@ function renderCalendarTab() {
     
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
-    const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     monthTitle.innerText = `${monthNames[month]} ${year}`;
 
     let currentDate = new Date(year, month, 1);
@@ -1934,8 +1875,8 @@ function renderCalendarTab() {
         weekEnd.setDate(weekStart.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
 
-        const startStr = weekStart.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
-        const endStr = weekEnd.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+        const startStr = weekStart.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        const endStr = weekEnd.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
         const weekTasks = tasks.filter(t => {
             const taskDue = t.due_date ? new Date(t.due_date) : new Date(t.created_at || t.start_date);
@@ -1956,22 +1897,22 @@ function renderCalendarTab() {
                         <span class="text-sm sm:text-base font-black leading-tight">${i + 1}</span>
                     </div>
                     
-                    <div class="min-w-0 text-right">
+                    <div class="min-w-0 text-left">
                         <div class="flex items-center gap-2">
                             <h4 class="font-bold text-white text-xs sm:text-sm truncate">${startStr} - ${endStr}</h4>
-                            ${isCurrent ? `<span class="bg-b-primary/20 text-b-primary text-[9px] font-bold px-1.5 py-0.5 rounded border border-b-primary/30 shrink-0 animate-pulse">الحالي</span>` : ''}
+                            ${isCurrent ? `<span class="bg-b-primary/20 text-b-primary text-[9px] font-bold px-1.5 py-0.5 rounded border border-b-primary/30 shrink-0">Current</span>` : ''}
                         </div>
                         <div class="text-[10px] sm:text-xs text-gray-400 mt-0.5 flex items-center gap-2">
                             <span class="flex items-center gap-1 ${weekTasks.length > 0 ? 'text-teal-300 font-semibold' : 'text-gray-500'}">
                                 <i class="fas fa-tasks text-[9px] sm:text-[10px]"></i>
-                                <span>${weekTasks.length} مهام</span>
+                                <span>${weekTasks.length} Tasks</span>
                             </span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
-                    <i class="fas fa-chevron-left text-[10px] sm:text-xs group-hover:-translate-x-0.5 transition-transform"></i>
+                    <i class="fas fa-chevron-right text-[10px] sm:text-xs group-hover:translate-x-0.5 transition-transform"></i>
                 </div>
             </div>
         `;
@@ -2006,8 +1947,8 @@ window.openWeekDetails = (startIso, endIso) => {
         return d >= startDate && d <= endDate;
     });
 
-    if(headerTitle) headerTitle.innerText = `الخطة الأسبوعية (${startDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})} - ${endDate.toLocaleDateString('ar-EG', {day:'numeric', month:'numeric'})})`;
-    if(headerPoints) headerPoints.innerText = `${tasks.length} مهام`; 
+    if(headerTitle) headerTitle.innerText = `Weekly Plan (${startDate.toLocaleDateString('en-US', {day:'numeric', month:'short'})} - ${endDate.toLocaleDateString('en-US', {day:'numeric', month:'short'})})`;
+    if(headerPoints) headerPoints.innerText = `${tasks.length} Tasks`; 
 
     if (tasks.length === 0) {
         container.innerHTML = `
@@ -2015,20 +1956,20 @@ window.openWeekDetails = (startIso, endIso) => {
                 <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
                     <i class="fas fa-mug-hot text-2xl"></i>
                 </div>
-                <p class="font-bold">لا توجد مهام معينة في هذا الأسبوع</p>
+                <p class="font-bold">No tasks assigned for this week</p>
             </div>`;
     } else {
         container.innerHTML = tasks.map(t => {
             let icon = 'fa-play-circle text-b-primary';
-            let typeName = 'فيديو';
+            let typeName = 'Video';
             
             if (t.type === 'quiz') { 
                 icon = 'fa-clipboard-question text-yellow-500'; 
-                typeName = 'كويز'; 
+                typeName = 'Quiz'; 
             }
             if (t.type === 'project') { 
                 icon = 'fa-laptop-code text-purple-500'; 
-                typeName = 'مشروع'; 
+                typeName = 'Project'; 
             }
 
             return `
@@ -2041,15 +1982,15 @@ window.openWeekDetails = (startIso, endIso) => {
                     <i class="fas ${icon} text-base sm:text-xl group-hover:scale-110 transition-transform"></i>
                 </div>
                 
-                <div class="flex-1 min-w-0 text-right">
+                <div class="flex-1 min-w-0 text-left">
                     <div class="flex items-center justify-between gap-2 mb-0.5">
-                        <h4 class="text-xs sm:text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate" title="${t.title || 'بدون عنوان'}">${t.title || 'بدون عنوان'}</h4>
+                        <h4 class="text-xs sm:text-sm font-bold text-white group-hover:text-b-primary transition-colors truncate" title="${t.title || 'Untitled'}">${t.title || 'Untitled'}</h4>
                         <span class="text-[9px] sm:text-[10px] text-gray-400 font-mono uppercase tracking-widest bg-black px-1.5 py-0.5 rounded border border-white/5 shrink-0">${typeName}</span>
                     </div>
                 </div>
                 
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-b-primary/20 transition-all shrink-0">
-                    <i class="fas fa-chevron-left text-[10px] sm:text-xs"></i>
+                    <i class="fas fa-chevron-right text-[10px] sm:text-xs"></i>
                 </div>
             </div>
             `;
@@ -2073,7 +2014,7 @@ window.openCalendarTask = (taskId) => {
             const closeBtn = modal.querySelector('.fa-times')?.closest('button');
             
             if (closeBtn) {
-                closeBtn.innerHTML = '<i class="fas fa-arrow-right text-lg"></i>';
+                closeBtn.innerHTML = '<i class="fas fa-arrow-left text-lg"></i>';
                 
                 closeBtn.onclick = (e) => {
                     e.preventDefault();
@@ -2151,8 +2092,8 @@ function updateModalContent(task, details, type) {
         description = details.description || details.note || task.description || "No description.";
         description = String(description);
 
-        let authorName = details.author || "Team";
-        if (!details.author || details.author === "Busla Team") {
+        let authorName = details.author || "ZDC Team";
+        if (!details.author || details.author === "Busla Team" || details.author === "ZDC Team") {
              const courseInfo = getCourseInfoById(task.course_id);
              if (courseInfo && courseInfo.instructor) authorName = courseInfo.instructor;
         }
@@ -2259,12 +2200,11 @@ function formatDuration(rawTime) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
             if (idMatch && idMatch[1]) {
-                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
                 return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
         }
@@ -2342,7 +2282,7 @@ function showToast(msg, type='info') {
 
 
 // ==========================================
-// 🔔 نظام الإشعارات المتقدم للطالب
+// Advanced Student Notifications Center
 // ==========================================
 
 let studentNotifsCache = [];
@@ -2360,23 +2300,21 @@ window.loadStudentNotifications = async () => {
 
         const filterSelect = document.getElementById('student-notif-filter');
         if (!teamId && filterSelect) {
-            filterSelect.innerHTML = `<option value="admin">رسائل الإدارة والدعوات</option>`;
+            filterSelect.innerHTML = `<option value="admin">Admin Messages & Invites</option>`;
         } else if (filterSelect && filterSelect.options.length <= 1) {
             filterSelect.innerHTML = `
-                <option value="all">عرض الكل</option>
-                <option value="team">إشعارات الفريق العامة</option>
-                <option value="personal">مخصصة لي فقط</option>
-                <option value="admin">رسائل الإدارة</option>
+                <option value="all">Show All</option>
+                <option value="team">Squad Announcements</option>
+                <option value="personal">Personal Only</option>
+                <option value="admin">Admin Messages</option>
             `;
         }
 
-        // جلب البيانات
         if (teamId) {
-            // الطالب داخل فريق: يجلب إشعارات الفريق، ورسائل الإدارة الموجهة للفريق، ورسائل الإدارة الموجهة له شخصياً!
             const { data: teamPosts } = await supabase.from('team_posts').select('*').eq('team_id', teamId).order('created_at', { ascending: false });
             const { data: adminMsgs } = await supabase.from('system_notifications')
                 .select('*')
-                .or(`target_team_id.eq.${teamId},target_leader_id.eq.${myId}`) // 🎯 تم إضافة استعلام رسائله الشخصية
+                .or(`target_team_id.eq.${teamId},target_leader_id.eq.${myId}`)
                 .order('created_at', { ascending: false });
 
             if (teamPosts) {
@@ -2388,7 +2326,7 @@ window.loadStudentNotifications = async () => {
                             ...post,
                             _sourceType: 'leader', _targetLevel: isTargetAll ? 'team' : 'personal',
                             _icon: 'fa-bullhorn', _color: isTargetAll ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-                            _badgeText: isTargetAll ? 'إشعار فريق' : 'مخصص لك'
+                            _badgeText: isTargetAll ? 'Squad Notice' : 'For You'
                         });
                     }
                 });
@@ -2399,15 +2337,14 @@ window.loadStudentNotifications = async () => {
                     const isPersonal = msg.target_leader_id === myId;
                     combined.push({
                         id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
-                        creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/BUSLA-icon.png',
+                        creator_name: 'ZDC Administration', creator_avatar: '../assets/icons/zdc-icon-192.png',
                         _sourceType: 'admin', _targetLevel: isPersonal ? 'personal' : 'admin', 
                         _icon: 'fa-server', _color: 'text-red-400 bg-red-500/10 border-red-500/20', 
-                        _badgeText: isPersonal ? 'رسالة خاصة' : 'رسالة إدارة'
+                        _badgeText: isPersonal ? 'Private Message' : 'Admin Notice'
                     });
                 });
             }
         } else {
-            // 🎯 الطالب بدون فريق: نجلب الرسائل العامة والرسائل المخصصة له (مثل الدعوات) بأمان
             const { data: globalAdminMsgs } = await supabase.from('system_notifications')
                 .select('*')
                 .is('target_team_id', null)
@@ -2415,16 +2352,15 @@ window.loadStudentNotifications = async () => {
 
             if (globalAdminMsgs) {
                 globalAdminMsgs.forEach(msg => {
-                    // تصفية الرسائل لتشمل العامة للجميع أو الموجهة له شخصياً
                     if (msg.target_leader_id === null || msg.target_leader_id === myId) {
                         const isPersonal = msg.target_leader_id === myId;
                         combined.push({
                             id: msg.id, title: msg.title, content: msg.content, created_at: msg.created_at, seen_by: msg.seen_by || [],
-                            creator_name: 'إدارة بوصلة', creator_avatar: '../assets/icons/BUSLA-icon.png',
+                            creator_name: 'ZDC Administration', creator_avatar: '../assets/icons/zdc-icon-192.png',
                             _sourceType: 'admin', _targetLevel: 'admin', 
                             _icon: isPersonal ? 'fa-envelope' : 'fa-server', 
                             _color: isPersonal ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20', 
-                            _badgeText: isPersonal ? 'دعوة / رسالة خاصة' : 'إعلان عام منصة'
+                            _badgeText: isPersonal ? 'Invite / Private Message' : 'Platform Announcement'
                         });
                     }
                 });
@@ -2441,8 +2377,6 @@ window.loadStudentNotifications = async () => {
     }
 };
 
-
-
 window.filterStudentNotifications = () => {
     const isArchiveView = document.getElementById('student-archive-section') && !document.getElementById('student-archive-section').classList.contains('hidden');
     const filterEl = document.getElementById('student-notif-filter');
@@ -2457,10 +2391,9 @@ window.filterStudentNotifications = () => {
 
     let activePosts = [];
     let archivedPosts = [];
-    let unreadCount = 0; // 💡 حساب عدد الإشعارات غير المقروءة
+    let unreadCount = 0;
 
     studentNotifsCache.forEach(post => {
-        // 💡 1. حساب القراءة والجرس أولاً (لكي نحسب الإشعارات المخبأة في الفلتر أيضاً)
         let seenData = null;
         if (post.seen_by && Array.isArray(post.seen_by)) {
             seenData = post.seen_by.find(item => typeof item === 'object' ? item.uid === myId : item === myId);
@@ -2469,7 +2402,6 @@ window.filterStudentNotifications = () => {
         
         if (!hasSeen) unreadCount++;
 
-        // 💡 2. تطبيق الفلترة والبحث للواجهة
         if (filterType !== 'all' && post._targetLevel !== filterType) return;
         if (query && !post.title.toLowerCase().includes(query) && !post.content.toLowerCase().includes(query)) return;
 
@@ -2483,19 +2415,18 @@ window.filterStudentNotifications = () => {
         }
 
         post._hasSeen = hasSeen;
-        post._seenAt = (hasSeen && typeof seenData === 'object' && seenData.seen_at) ? new Date(seenData.seen_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        post._seenAt = (hasSeen && typeof seenData === 'object' && seenData.seen_at) ? new Date(seenData.seen_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
         if (isArchived) archivedPosts.push(post);
         else activePosts.push(post);
     });
 
-    // 💡 3. تحديث جرس التنبيهات في الهيدر
     const bellBadge = document.getElementById('global-notif-badge');
     if (bellBadge) {
         if (unreadCount > 0) {
             bellBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
             bellBadge.classList.remove('hidden');
-            bellBadge.classList.add('flex'); // التأكد من ظهوره كفليكس
+            bellBadge.classList.add('flex');
         } else {
             bellBadge.classList.add('hidden');
             bellBadge.classList.remove('flex');
@@ -2506,27 +2437,25 @@ window.filterStudentNotifications = () => {
     renderStudentNotifsTable(archivedPosts, 'student-archive-tbody', true);
 };
 
-// 3. رسم الجداول
 function renderStudentNotifsTable(posts, tbodyId, isArchive) {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
 
     if (posts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500 italic">لا توجد إشعارات هنا.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500 italic">No notifications found here.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = posts.map(post => {
-        const dateStr = new Date(post.created_at).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+        const dateStr = new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         
-        // تصميم حالة القراءة
         const seenBadge = post._hasSeen 
-            ? `<span class="text-green-400 text-xs font-bold"><i class="fas fa-check-double"></i> ${isArchive && post._seenAt ? post._seenAt : 'مقروء'}</span>`
-            : `<span class="bg-b-primary/20 text-b-primary border border-b-primary/30 px-3 py-1 rounded-full text-[10px] font-bold animate-pulse">جديد</span>`;
+            ? `<span class="text-green-400 text-xs font-bold"><i class="fas fa-check-double"></i> ${isArchive && post._seenAt ? post._seenAt : 'Read'}</span>`
+            : `<span class="bg-b-primary/20 text-b-primary border border-b-primary/30 px-3 py-1 rounded-full text-[10px] font-bold">New</span>`;
 
         return `
         <tr class="hover:bg-white/5 transition-colors cursor-pointer group" onclick="window.openStudentPostDetail('${post.id}')">
-            <td class="p-4 pr-6">
+            <td class="p-4 pl-6">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${post._color}">
                         <i class="fas ${post._icon}"></i>
@@ -2542,7 +2471,7 @@ function renderStudentNotifsTable(posts, tbodyId, isArchive) {
             <td class="p-4 text-center text-xs text-gray-400 font-mono">${dateStr}</td>
             <td class="p-4 text-center text-xs text-gray-300">
                 <div class="flex items-center justify-center gap-2">
-                    <img src="${post.creator_avatar && post.creator_avatar !== 'null' ? post.creator_avatar : '../assets/icons/BUSLA-icon.png'}" class="w-6 h-6 rounded-full object-cover bg-black">
+                    <img src="${post.creator_avatar && post.creator_avatar !== 'null' ? post.creator_avatar : '../assets/icons/zdc-icon-192.png'}" class="w-6 h-6 rounded-full object-cover bg-black">
                     ${post.creator_name}
                 </div>
             </td>
@@ -2552,31 +2481,25 @@ function renderStudentNotifsTable(posts, tbodyId, isArchive) {
     }).join('');
 }
 
-// 4. التبديل بين النشط والأرشيف
 window.toggleStudentArchive = (showArchive) => {
     document.getElementById('student-active-section').classList.toggle('hidden', showArchive);
     document.getElementById('student-archive-section').classList.toggle('hidden', !showArchive);
-    window.filterStudentNotifications(); // إعادة التصفية
+    window.filterStudentNotifications();
 };
 
-
-// ==========================================
-// دالة عرض التفاصيل (بدون أزرار الدعوات المزعجة)
-// ==========================================
 window.openStudentPostDetail = async (postId) => {
     const post = studentNotifsCache.find(p => p.id === postId);
     if (!post) return;
 
     const modal = document.getElementById('student-post-detail-modal');
     const contentBox = document.getElementById('student-modal-content');
-    const dateStr = new Date(post.created_at).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const dateStr = new Date(post.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     
-    const linkHtml = post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> فتح الرابط المرفق</a>` : '';
-    const expiryHtml = post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> الموعد النهائي: ${new Date(post.expiry_date).toLocaleDateString('ar-EG')}</div>` : '';
+    const linkHtml = post.link_url ? `<a href="${post.link_url}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl transition-all font-bold text-sm"><i class="fas fa-external-link-alt"></i> Open Attached Link</a>` : '';
+    const expiryHtml = post.expiry_date ? `<div class="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 py-3 px-4 rounded-xl font-bold text-sm"><i class="far fa-calendar-times"></i> Deadline: ${new Date(post.expiry_date).toLocaleDateString('en-US')}</div>` : '';
 
-    let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/BUSLA-icon.png';
+    let avatar = (post.creator_avatar && post.creator_avatar !== 'null') ? post.creator_avatar : '../assets/icons/zdc-icon-192.png';
 
-    // بناء الواجهة المبسطة والنظيفة
     contentBox.innerHTML = `
         <div class="flex justify-between items-start mb-6 border-b border-white/5 pb-5">
             <div class="flex items-center gap-4">
@@ -2601,7 +2524,6 @@ window.openStudentPostDetail = async (postId) => {
     
     modal.classList.remove('hidden');
 
-// 💡 تسجيل المشاهدة بالوقت والتاريخ ونقل الإشعار للأرشيف فوراً
     if (!post._hasSeen) {
         try {
             const myId = currentUserData.id;
@@ -2610,40 +2532,36 @@ window.openStudentPostDetail = async (postId) => {
             let currentSeenArray = Array.isArray(post.seen_by) ? post.seen_by : [];
             const updatedSeenBy = [...currentSeenArray, newSeenEntry];
 
-            // 1. تحديث الواجهة فوراً (لكي يختفي الإشعار وينطفئ الجرس في نفس اللحظة)
             post.seen_by = updatedSeenBy;
             post._hasSeen = true;
             window.filterStudentNotifications(); 
 
-            // 2. الإرسال لقاعدة البيانات في الخلفية بصمت
             const tableName = post._sourceType === 'leader' ? 'team_posts' : 'system_notifications';
             await supabase.from(tableName).update({ seen_by: updatedSeenBy }).eq('id', post.id);
 
         } catch (e) {
-            console.error("فشل في تسجيل القراءة:", e);
+            console.error("Failed to record read status:", e);
         }
     }
 }; 
-// ==========================================
-// دالة تقديم الطالب للانضمام (مصححة لتعمل مع Toast بسلام)
-// ==========================================
+
 window.applyForTeam = async (teamId, teamName) => {
     try {
         const reasonInput = document.getElementById('join-reason-input');
         const reasonText = reasonInput ? reasonInput.value.trim() : '';
 
-        if(!reasonText) return showToast("يرجى كتابة سبب الانضمام.", "warning");
+        if(!reasonText) return showToast("Please provide a reason for joining.", "warning");
 
         const { data: teamInfo } = await supabase.from('teams').select('requests, leader_id').eq('id', teamId).single();
         const currentReqs = teamInfo?.requests || [];
         
         if (currentReqs.some(r => r.uid === currentUser.id)) {
-            return showToast("لقد قمت بالتقديم مسبقاً على هذا الفريق.", "warning");
+            return showToast("You have already applied to this squad.", "warning");
         }
 
         currentReqs.push({
             uid: currentUser.id,
-            name: currentUserData.full_name || 'طالب',
+            name: currentUserData.full_name || 'Student',
             reason: reasonText, 
             status: 'pending',
             date: new Date().toISOString()
@@ -2651,12 +2569,11 @@ window.applyForTeam = async (teamId, teamName) => {
 
         await supabase.from('teams').update({ requests: currentReqs }).eq('id', teamId);
         
-        // إرسال الإشعار لليدر فقط
         try {
             if (teamInfo && teamInfo.leader_id) {
                 const leaderNotif = {
-                    title: `🔔 طلب انضمام جديد لفريقك`,
-                    content: `قام الطالب (${currentUserData.full_name || 'طالب'}) بإرسال طلب للانضمام إلى فريقك.\n\nسبب الانضمام:\n"${reasonText}"\n\nيرجى التوجه إلى قسم (الطلبات) في لوحة القيادة لمراجعة الطلب وقبوله أو رفضه.`,
+                    title: `New Squad Join Request`,
+                    content: `Student (${currentUserData.full_name || 'Student'}) has requested to join your squad.\n\nReason:\n"${reasonText}"\n\nPlease visit the Requests section in your Leader Dashboard to review and respond.`,
                     type: 'info',
                     target_leader_id: teamInfo.leader_id, 
                     target_team_id: null, 
@@ -2665,46 +2582,41 @@ window.applyForTeam = async (teamId, teamName) => {
                 await supabase.from('system_notifications').insert([leaderNotif]);
             }
         } catch (notifErr) {
-            console.warn("لم يتم إرسال الإشعار لليدر:", notifErr);
+            console.warn("Could not notify leader:", notifErr);
         }
 
-        showToast(`تم إرسال طلب الانضمام لفريق ${teamName} بنجاح!`, "success");
+        showToast(`Join request sent to ${teamName} successfully!`, "success");
         window.closeModal('team-details-modal');
         if(window.viewTeamDetails) window.viewTeamDetails(teamId, null, 'browse');
 
     } catch (e) {
         console.error(e);
-        showToast("فشل في إرسال الطلب", "error");
+        showToast("Failed to submit request", "error");
     }
 };
-
-// قم بحذف دالة handleTeamInvite من ملف الطالب لأننا لم نعد نستخدمها من داخل الإشعار
 
 window.handleTeamInvite = async (inviteId, notifId, action) => {
     try {
         const { data: invite } = await supabase.from('team_invitations').select('*, teams(name)').eq('id', inviteId).single();
         if (!invite || invite.status !== 'pending') {
-            return window.showToast("هذه الدعوة لم تعد صالحة أو تم الرد عليها مسبقاً", "error");
+            return window.showToast("This invitation is no longer valid or was already handled.", "error");
         }
 
         if (action === 'accept') {
-            // 1. تحديث بروفايل الطالب ليدخل الفريق (استخدمنا from_team_id الصحيح)
             await supabase.from('profiles').update({ team_id: invite.from_team_id }).eq('id', currentUserData.id);
-            // 2. تحديث حالة الدعوة
             await supabase.from('team_invitations').update({ status: 'accepted' }).eq('id', inviteId);
             
-            // 3. إرسال إشعار لليدر (استخدمنا from_leader_id الصحيح)
             const leaderNotif = {
-                title: `🎉 ${currentUserData.full_name} قبل دعوتك!`,
-                content: `لقد وافق الطالب (${currentUserData.full_name}) على دعوتك وانضم رسمياً إلى فريقك! راجع قائمة أعضاء الفريق للترحيب به.`,
+                title: `${currentUserData.full_name} Accepted Your Invite!`,
+                content: `Student (${currentUserData.full_name}) accepted your invitation and officially joined your squad! Check your Squad tab to welcome them.`,
                 type: 'achievement',
-                target_leader_id: invite.from_leader_id, // 🎯 تم التصحيح
+                target_leader_id: invite.from_leader_id,
                 target_team_id: null,
                 is_read: false
             };
             await supabase.from('system_notifications').insert([leaderNotif]);
             
-            window.showToast("تهانينا! لقد انضممت للفريق بنجاح", "success");
+            window.showToast("Congratulations! You joined the squad successfully.", "success");
             window.closeStudentPostDetail();
             setTimeout(() => location.reload(), 1500); 
 
@@ -2712,16 +2624,16 @@ window.handleTeamInvite = async (inviteId, notifId, action) => {
             await supabase.from('team_invitations').update({ status: 'rejected' }).eq('id', inviteId);
             
             const leaderNotif = {
-                title: `⚠️ ${currentUserData.full_name} اعتذر عن الدعوة`,
-                content: `للأسف، قام الطالب (${currentUserData.full_name}) برفض دعوتك للانضمام إلى الفريق في الوقت الحالي.`,
+                title: `${currentUserData.full_name} Declined Your Invite`,
+                content: `Student (${currentUserData.full_name}) declined your invitation to join the squad at this time.`,
                 type: 'warning',
-                target_leader_id: invite.from_leader_id, // 🎯 تم التصحيح
+                target_leader_id: invite.from_leader_id,
                 target_team_id: null,
                 is_read: false
             };
             await supabase.from('system_notifications').insert([leaderNotif]);
             
-            window.showToast("تم رفض الدعوة.", "info");
+            window.showToast("Invitation declined.", "info");
             
             await supabase.from('system_notifications').update({ is_read: true }).eq('id', notifId);
             window.closeStudentPostDetail();
@@ -2730,32 +2642,25 @@ window.handleTeamInvite = async (inviteId, notifId, action) => {
 
     } catch (e) {
         console.error("Invite Error:", e);
-        window.showToast("حدث خطأ أثناء معالجة الدعوة", "error");
+        window.showToast("Error processing invitation", "error");
     }
 };
 
 window.closeStudentPostDetail = () => {
     document.getElementById('student-post-detail-modal').classList.add('hidden');
-    window.filterStudentNotifications(); // إعادة الرسم للتأكد من نقل الإشعار للأرشيف لو لزم الأمر
+    window.filterStudentNotifications();
 };
 
-
-
-// ==========================================
-// 💡 نظام الإشعارات المنبثقة (Global Toast)
-// ==========================================
+// Global Toast Notification System
 window.showToast = (msg, type = 'info') => {
-    // 1. البحث عن حاوية الإشعارات أو إنشائها إذا لم تكن موجودة
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        // تثبيت الحاوية في أسفل اليسار
-        container.className = 'fixed bottom-6 left-6 z-[9999] flex flex-col gap-3 pointer-events-none';
+        container.className = 'fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none';
         document.body.appendChild(container);
     }
 
-    // 2. إنشاء الإشعار وتحديد ألوانه بناءً على النوع
     const toast = document.createElement('div');
     const colorClass = type === 'success' ? 'border-green-500 text-green-400' 
                      : type === 'error'   ? 'border-red-500 text-red-400' 
@@ -2765,7 +2670,6 @@ window.showToast = (msg, type = 'info') => {
                     : type === 'error'   ? 'fa-exclamation-circle' 
                     : 'fa-info-circle';
 
-    // تصميم زجاجي أنيق متوافق مع هوية بوصلة
     toast.className = `bg-black/80 px-6 py-4 rounded-xl border-l-4 ${colorClass} shadow-2xl backdrop-blur-md flex items-center gap-3 animate-[slideIn_0.3s_ease-out] transition-opacity duration-300`;
     
     toast.innerHTML = `
@@ -2773,35 +2677,29 @@ window.showToast = (msg, type = 'info') => {
         <span class="text-white text-sm font-bold">${msg}</span>
     `;
 
-    // 3. إضافة الإشعار للشاشة
     container.appendChild(toast);
 
-    // 4. إخفاء الإشعار تلقائياً بعد 3 ثوانٍ
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 };
 
-// أنيميشن الدخول (لو مش موجود في الـ Tailwind Config)
 const style = document.createElement('style');
 style.innerHTML = `
     @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
+        from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
 `;
 document.head.appendChild(style);
 
-// =========================================================
-// 💡 تهيئة فلتر المسارات لصفحة استكشاف الفرق
-// =========================================================
+// Initialize track filter for Squad Explorer
 async function initExploreTrackFilter() {
     const filterSelect = document.getElementById('explore-track-filter');
     if (!filterSelect) return;
 
     try {
-        // 1. جلب المسارات المفعلة من الداتابيز
         const { data: tracks, error } = await supabase
             .from('tracks')
             .select('id, name')
@@ -2810,8 +2708,7 @@ async function initExploreTrackFilter() {
 
         if (error) throw error;
 
-        // 2. بناء الـ HTML الخاص بالقائمة
-        let html = '<option value="all" class="font-bold text-b-primary">🌍 كل المسارات (All Tracks)</option>';
+        let html = '<option value="all" class="font-bold text-b-primary">All Tracks</option>';
         if (tracks && tracks.length > 0) {
             tracks.forEach(t => {
                 html += `<option value="${t.id}">${t.name}</option>`;
@@ -2819,26 +2716,22 @@ async function initExploreTrackFilter() {
         }
         filterSelect.innerHTML = html;
 
-        // 3. الذكاء هنا: تحديد مسار الطالب التلقائي
-        // تأكد من اسم الحقل المحفوظ في بروفايل الطالب (track أو track_id)
         const userTrack = currentUserData?.track || currentUserData?.track_id; 
         
         if (userTrack) {
-            // نبحث هل المسار موجود بالـ ID أو بالاسم
             const matchedTrack = tracks.find(t => String(t.id) === String(userTrack) || t.name === userTrack);
             if (matchedTrack) {
-                filterSelect.value = matchedTrack.id; // تحديد الخيار تلقائياً
+                filterSelect.value = matchedTrack.id;
             }
         }
 
-        // 4. استدعاء دالة رسم الفرق بناءً على الفلتر الجديد
         if (typeof window.openTeamBrowser === 'function') {
             window.openTeamBrowser();
         }
 
     } catch (err) {
         console.error("Error loading track filter:", err);
-        filterSelect.innerHTML = '<option value="all">كل المسارات</option>';
+        filterSelect.innerHTML = '<option value="all">All Tracks</option>';
     }
 }
 

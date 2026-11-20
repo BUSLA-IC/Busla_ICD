@@ -5,6 +5,7 @@ import {
     resolveTargetPlayableItem,
 } from './curriculum-links-core.js';
 import { fetchCourseCurriculumLinks } from './curriculum-links-service.js';
+import { parseProjectLinks } from './quiz-prompt-core.js';
 
 // ==========================================
 // 1. CONFIGURATION & GLOBAL STATE
@@ -129,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isDocMode = rawContent && rawContent.startsWith('doc_');
 
     if (!courseId && !isPreview && !isDocMode) {
-        showToast("المهمة أو الكورس غير محدد بشكل صحيح", "warning");
+        showToast("Task or course parameter is invalid", "warning");
         setTimeout(() => window.location.href = "student-dash.html", 2000);
         return;
     }
@@ -252,7 +253,7 @@ function setupEventListeners() {
                 if (icon) {
                     icon.className = 'fas fa-expand text-xs md:text-sm';
                 }
-                showToast("تم إلغاء وضع ملء الشاشة", "info");
+                showToast("Exited fullscreen mode", "info");
             }
         } else {
             // Check if typing in search input
@@ -311,7 +312,7 @@ async function getCourseTitleForPreview(type, refId) {
     } catch (e) {
         console.error("Error fetching course title for preview:", e);
     }
-    return "عام / غير مرتبط بكورس";
+    return "General / Unlinked";
 }
 
 function showPreviewBanner() {
@@ -326,11 +327,11 @@ function showPreviewBanner() {
         banner.innerHTML = `
             <div class="flex items-center gap-2 mx-auto">
                 <i class="fas fa-eye animate-pulse text-yellow-500"></i>
-                <span>وضع المعاينة (Preview Mode) - لن يتم حفظ أي بيانات أو محاولات في قاعدة البيانات</span>
+                <span>Preview Mode — No data or attempts will be saved to the database</span>
             </div>
             <button onclick="window.goBackToDashboard()" class="bg-yellow-500 text-black hover:bg-yellow-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow shrink-0">
                 <i class="fas fa-arrow-left"></i>
-                الخروج من المعاينة
+                Exit Preview
             </button>
         `;
         mainEl.insertBefore(banner, mainEl.firstChild);
@@ -432,7 +433,7 @@ async function initPlayer() {
         }
 
         if (!course && !isPreview) {
-            showToast("لم يتم العثور على الكورس المطلوب", "error");
+            showToast("Requested course was not found", "error");
             setTimeout(() => window.location.href = "student-dash.html", 2000);
             return;
         }
@@ -576,9 +577,9 @@ async function initPlayer() {
             }
         }
 
-        // 🔄 استرجاع آخر عنصر كان مفتوحاً في هذا الكورس (فيديو، كويز، مشروع، مستند)
+        // Restore last opened item in this course (video, quiz, project, document)
         if (!targetContentId && courseId) {
-            const savedContentId = localStorage.getItem(`busla_course_last_content_${courseId}`);
+            const savedContentId = localStorage.getItem(`zdc_course_last_content_${courseId}`) || localStorage.getItem(`busla_course_last_content_${courseId}`);
             if (savedContentId) {
                 targetContentId = cleanParam(savedContentId);
             }
@@ -737,13 +738,11 @@ async function renderSidebar() {
         return String(currKey) === String(candKey);
     };
 
-    // 💡 المسار الافتراضي للفيديوهات (لكي يعمل بشكل طبيعي مع الكورسات القديمة بدون سكاشن)
+    // Default container for lessons without sections
     let currentSectionBody = container;
 
     courseContents.forEach((item, index) => {
-        // =====================================
-        // 💡 1. رسم العناوين (Sections)
-        // =====================================
+        // 1. Render Sections
         if (item.type === 'section') {
             const sectionId = `section-${item.content_id}`;
 
@@ -764,8 +763,8 @@ async function renderSidebar() {
 
             const sectionHTML = `
                 <div class="mt-4 mb-2 animate-fade-in">
-                    <button onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-l from-b-surface to-black border border-white/10 hover:border-b-primary/50 rounded-xl transition-all group shadow-md">
-                        <span class="font-bold text-white text-sm group-hover:text-b-primary transition-colors flex items-center gap-3 text-right leading-tight">
+                    <button onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-r from-b-surface to-black border border-white/10 hover:border-b-primary/50 rounded-xl transition-all group shadow-md">
+                        <span class="font-bold text-white text-sm group-hover:text-b-primary transition-colors flex items-center gap-3 text-left leading-tight">
                             <div class="w-7 h-7 rounded-lg bg-b-primary/20 text-b-primary flex items-center justify-center text-xs border border-b-primary/30 shrink-0">
                                 <i class="fas fa-folder-open"></i>
                             </div>
@@ -775,7 +774,7 @@ async function renderSidebar() {
                             <i class="fas fa-chevron-down text-xs transition-transform duration-300 ${shouldBeOpen ? 'rotate-180' : ''}" id="icon-${sectionId}"></i>
                         </div>
                     </button>
-                    <div id="body-${sectionId}" class="section-body mt-3 space-y-1.5 transition-all overflow-hidden ${shouldBeOpen ? '' : 'hidden'} pr-4 border-r-2 border-white/5 mr-3">
+                    <div id="body-${sectionId}" class="section-body mt-3 space-y-1.5 transition-all overflow-hidden ${shouldBeOpen ? '' : 'hidden'} pl-4 border-l-2 border-white/5 ml-3">
                     </div>
                 </div>
             `;
@@ -783,9 +782,7 @@ async function renderSidebar() {
             currentSectionBody = document.getElementById(`body-${sectionId}`);
         }
 
-        // =====================================
-        // 💡 2. رسم الدروس أو المستندات
-        // =====================================
+        // 2. Render Lesson or Document
         const isCompleted = isContentCompleted(item);
         const isChild = currentSectionBody !== container;
 
@@ -795,9 +792,7 @@ async function renderSidebar() {
         if (isCompleted) completedCount++;
         mainIndex++;
 
-        // =====================================
-        // 💡 3. رسم كافة المرفقات المرتبطة بهذا الدرس (مستندات، كويزات، مشاريع — بدون حد أقصى)
-        // =====================================
+        // 3. Render Lesson Attachments
         const att = lessonAttMap[item.content_id];
         if (att) {
             (att.documents || []).forEach(docItem => {
@@ -823,9 +818,7 @@ async function renderSidebar() {
         }
     });
 
-    // =====================================
-    // 💡 4. رسم المرفقات والاختبارات والمشاريع المرتبطة بالكورس ككل (Course-level)
-    // =====================================
+    // 4. Render Course-Level Attachments & Assessments
     const allCourseAttachments = [
         ...(courseAtt.documents || []),
         ...(courseAtt.quizzes || []),
@@ -839,12 +832,12 @@ async function renderSidebar() {
 
         const courseAttHtml = `
             <div class="mt-5 mb-2 animate-fade-in" data-testid="course-level-attachments-section">
-                <button type="button" onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-l from-b-primary/15 to-black/70 border border-b-primary/30 hover:border-b-primary/60 rounded-xl transition-all group shadow-md">
-                    <span class="font-bold text-white text-xs group-hover:text-teal-300 transition-colors flex items-center gap-2.5 text-right leading-tight">
+                <button type="button" onclick="window.togglePlaylistSection('${sectionId}')" class="w-full flex justify-between items-center p-3 bg-gradient-to-r from-b-primary/15 to-black/70 border border-b-primary/30 hover:border-b-primary/60 rounded-xl transition-all group shadow-md">
+                    <span class="font-bold text-white text-xs group-hover:text-teal-300 transition-colors flex items-center gap-2.5 text-left leading-tight">
                         <div class="w-7 h-7 rounded-lg bg-b-primary/20 text-teal-300 flex items-center justify-center text-xs border border-b-primary/30 shrink-0">
                             <i class="fas fa-layer-group"></i>
                         </div>
-                        <span>مرفقات وتقييمات الكورس (${allCourseAttachments.length})</span>
+                        <span>Course Attachments & Assessments (${allCourseAttachments.length})</span>
                     </span>
                     <div class="w-7 h-7 shrink-0 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                         <i class="fas fa-chevron-down text-xs transition-transform duration-300 ${shouldBeOpen ? 'rotate-180' : ''}" id="icon-${sectionId}"></i>
@@ -869,7 +862,7 @@ async function renderSidebar() {
     updateProgressBar(completedCount, totalItemsCount);
 }
 
-// 💡 دالة لفتح وإغلاق مجلدات السكاشن
+// Toggle section folders
 window.togglePlaylistSection = (sectionId) => {
     const body = document.getElementById(`body-${sectionId}`);
     const icon = document.getElementById(`icon-${sectionId}`);
@@ -891,11 +884,11 @@ function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
 
     let icon = "fa-play";
     let typeColor = "text-gray-400";
-    let typeLabel = "فيديو";
+    let typeLabel = "Video";
 
-    if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; typeLabel = "كويز"; }
-    if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; typeLabel = "مشروع"; }
-    if (item.type === 'document') { icon = "fa-file-pdf"; typeColor = "text-cyan-400"; typeLabel = "مستند"; }
+    if (item.type === 'quiz') { icon = "fa-clipboard-question"; typeColor = "text-yellow-500"; typeLabel = "Quiz"; }
+    if (item.type === 'project') { icon = "fa-laptop-code"; typeColor = "text-purple-500"; typeLabel = "Project"; }
+    if (item.type === 'document') { icon = "fa-file-pdf"; typeColor = "text-cyan-400"; typeLabel = "Document"; }
 
     const isLocked = isContentLocked(item);
     let iconHtml = '';
@@ -916,11 +909,10 @@ function renderSidebarItem(container, item, indexStr, isCompleted, isChild) {
     const activeClasses = isActive 
         ? "bg-b-primary/20 border border-b-primary/50 shadow-[0_0_15px_rgba(0,106,103,0.15)]" 
         : "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10";
-    const childClasses = isChild ? "mr-5 ml-2 scale-[0.98] border-r-2 border-r-white/10" : "";
+    const childClasses = isChild ? "ml-5 mr-2 scale-[0.98] border-l-2 border-l-white/10" : "";
     
-    const connectorHtml = isChild ? `<div class="absolute -right-3 top-1/2 w-3 h-[2px] bg-white/10"></div>` : '';
+    const connectorHtml = isChild ? `<div class="absolute -left-3 top-1/2 w-3 h-[2px] bg-white/10"></div>` : '';
     
-    // Support document indexing consistently
     const displayTitle = isChild ? item.title : `<span class="text-gray-500 font-mono mr-1">${indexStr}.</span> ${item.title}`;
 
     const safeEncodedItem = encodeURIComponent(JSON.stringify(item)).replace(/'/g, "%27");
@@ -950,7 +942,7 @@ window.switchContentObj = async (encodedItemStr) => {
         const item = JSON.parse(decodeURIComponent(encodedItemStr));
         
         if (isContentLocked(item)) {
-            showToast("هذا المحتوى مغلق. يرجى إكمال المحتوى السابق أولاً.", "warning");
+            showToast("This content is locked. Please complete the previous item first.", "warning");
             return;
         }
 
@@ -969,7 +961,7 @@ window.switchContentObj = async (encodedItemStr) => {
 // 5. CONTENT LOADING & ROUTING
 // ==========================================
 async function loadContent(item) {
-    // 💡 1. الإغلاق التلقائي للقائمة في الموبايل
+    // 1. Auto-close sidebar on mobile
     if (window.innerWidth < 1024) {
         const sidebar = document.getElementById('right-sidebar');
         if (sidebar && sidebar.classList.contains('translate-x-0')) {
@@ -1015,12 +1007,12 @@ async function loadContent(item) {
 
     currentContent = item;
 
-    // 🔄 حفظ آخر محتوى نشط في الذاكرة وتحديث رابط الصفحة
+    // Save last active item to localStorage and update URL
     if (item && item.content_id) {
         if (courseId) {
-            localStorage.setItem(`busla_course_last_content_${courseId}`, item.content_id);
+            localStorage.setItem(`zdc_course_last_content_${courseId}`, item.content_id);
         }
-        localStorage.setItem('busla_last_played_course', courseId || '');
+        localStorage.setItem('zdc_last_played_course', courseId || '');
         try {
             const url = new URL(window.location.href);
             url.searchParams.set('content', item.content_id);
@@ -1046,7 +1038,7 @@ async function loadContent(item) {
     isCurrentContentCompleted = !!completedCheck;
     maxWatchedSeconds = 0;
 
-    // 💡 3. الكود الخاص بك (الممتاز) لتشغيل المشغل
+    // 3. Launch appropriate content player
     if (item.type === 'video' || item.type === 'section') {
         document.getElementById('view-video')?.classList.remove('hidden');
         document.getElementById('video-header')?.classList.remove('hidden');
@@ -1146,11 +1138,11 @@ function setupIframeControls(isCompleted) {
     if (isCompleted) {
         btnIframeComplete.disabled = true;
         btnIframeComplete.className = "px-6 py-2.5 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30 font-bold text-sm cursor-not-allowed flex items-center gap-2";
-        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>تم إكمال مشاهدة الفيديو بنجاح</span>';
+        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>Video Completed</span>';
     } else {
         btnIframeComplete.disabled = false;
         btnIframeComplete.className = "px-6 py-2.5 rounded-xl bg-b-primary text-white font-bold text-sm hover:bg-teal-600 transition flex items-center gap-2 shadow-lg cursor-pointer";
-        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>تأكيد مشاهدة الفيديو والحصول على النقاط</span>';
+        btnIframeComplete.innerHTML = '<i class="fas fa-check-circle"></i> <span>Mark Video Complete & Claim XP</span>';
         btnIframeComplete.onclick = async () => {
             const points = currentContent.base_xp || 10;
             await markContentComplete(currentContent.content_id, points, 'video');
@@ -1586,33 +1578,33 @@ async function showQuizLandingPage(quiz) {
             </div>
             <div>
                 <h2 class="text-2xl font-bold text-white mb-2">${quiz.title}</h2>
-                <p class="text-gray-400 text-sm leading-relaxed">${quiz.description || 'لا يوجد وصف متاح للاختبار.'}</p>
+                <p class="text-gray-400 text-sm leading-relaxed">${quiz.description || 'No description provided for this quiz.'}</p>
             </div>
-            <div class="grid grid-cols-2 gap-3 text-right">
+            <div class="grid grid-cols-2 gap-3 text-left">
                 <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-                    <span class="text-[10px] text-gray-500 font-bold mb-1">المادة / الكورس</span>
-                    <span class="text-white font-bold text-sm truncate" title="${courseTitle}"><i class="fas fa-book text-yellow-500 ml-1 text-xs"></i> ${courseTitle}</span>
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">Course / Subject</span>
+                    <span class="text-white font-bold text-sm truncate" title="${courseTitle}"><i class="fas fa-book text-yellow-500 mr-1 text-xs"></i> ${courseTitle}</span>
                 </div>
                 <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-                    <span class="text-[10px] text-gray-500 font-bold mb-1">عدد الأسئلة</span>
-                    <span class="text-white font-bold text-sm"><i class="fas fa-list-ol text-yellow-500 ml-1 text-xs"></i> ${qCount} أسئلة</span>
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">Questions</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-list-ol text-yellow-500 mr-1 text-xs"></i> ${qCount} Questions</span>
                 </div>
                 <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-                    <span class="text-[10px] text-gray-500 font-bold mb-1">المحاولات المسموحة</span>
-                    <span class="text-white font-bold text-sm"><i class="fas fa-redo text-yellow-500 ml-1 text-xs"></i> ${maxAttempts} محاولات</span>
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">Allowed Attempts</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-redo text-yellow-500 mr-1 text-xs"></i> ${maxAttempts} Attempts</span>
                 </div>
                 <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between">
-                    <span class="text-[10px] text-gray-500 font-bold mb-1">النقاط القصوى</span>
-                    <span class="text-white font-bold text-sm"><i class="fas fa-trophy text-yellow-500 ml-1 text-xs"></i> ${maxXP} XP</span>
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">Max XP</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-trophy text-yellow-500 mr-1 text-xs"></i> ${maxXP} XP</span>
                 </div>
                 <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col justify-between col-span-2">
-                    <span class="text-[10px] text-gray-500 font-bold mb-1">نسبة النجاح المطلوبة</span>
-                    <span class="text-white font-bold text-sm"><i class="fas fa-check-circle text-yellow-500 ml-1 text-xs"></i> %${passingScore}</span>
+                    <span class="text-[10px] text-gray-500 font-bold mb-1">Passing Score</span>
+                    <span class="text-white font-bold text-sm"><i class="fas fa-check-circle text-yellow-500 mr-1 text-xs"></i> ${passingScore}%</span>
                 </div>
             </div>
             <button onclick="window.retryQuiz()" class="w-full py-4 rounded-xl bg-yellow-600 hover:bg-yellow-700 text-white font-bold transition-all shadow-lg shadow-yellow-900/20 flex items-center justify-center gap-2 text-base">
                 <i class="fas fa-play text-sm"></i>
-                <span>بدء الاختبار (Start Quiz)</span>
+                <span>Start Quiz</span>
             </button>
         </div>
     `;
@@ -1757,8 +1749,8 @@ function renderCurrentQuestion() {
         <div class="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
             <button onclick="window.prevQuestion()" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 disabled:opacity-50" ${currentQuizState.currentIndex === 0 ? 'disabled' : ''}>Previous</button>
             ${currentQuizState.currentIndex === total - 1 ? 
-                `<button type="button" id="btn-submit-quiz-action" onclick="window.submitQuiz()" class="px-8 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105"><i class="fas fa-paper-plane"></i> <span>تسليم الإجابات (Submit Answers)</span></button>` : 
-                `<button type="button" onclick="window.nextQuestion()" class="px-6 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all">Next Question <i class="fas fa-chevron-left text-xs mr-1"></i></button>`
+                `<button type="button" id="btn-submit-quiz-action" onclick="window.submitQuiz()" class="px-8 py-3 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105"><i class="fas fa-paper-plane"></i> <span>Submit Answers</span></button>` : 
+                `<button type="button" onclick="window.nextQuestion()" class="px-6 py-2.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold transition-all">Next Question <i class="fas fa-chevron-right text-xs ml-1"></i></button>`
             }
         </div>
     `;
@@ -1811,16 +1803,16 @@ window.submitQuiz = async () => {
     if (totalQuestions === 0) return;
 
     if (Object.keys(currentQuizState.userAnswers).length < totalQuestions) {
-        return showToast("يرجى الإجابة على جميع الأسئلة قبل التسليم.", "warning");
+        return showToast("Please answer all questions before submitting.", "warning");
     }
 
     window.showCustomConfirm(
-        "تسليم الاختبار (Submit Quiz)",
-        "هل أنت متأكد من رغبتك في تسليم الإجابات وإنهاء الاختبار؟",
+        "Submit Quiz",
+        "Are you sure you want to submit your answers and finish this quiz?",
         async () => {
             const container = document.getElementById('quiz-questions-container');
             if (container) {
-                container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p class="font-bold text-lg">جاري التصحيح وحفظ النتيجة...</p></div>';
+                container.innerHTML = '<div class="text-center py-20 text-yellow-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p class="font-bold text-lg">Grading and saving your result...</p></div>';
             }
 
             try {
@@ -1848,9 +1840,9 @@ window.submitQuiz = async () => {
                     previewActiveState = null;
 
                     if (passed) {
-                        showToast(`مبروك! اجتزت الاختبار بنسبة ${scorePercent}% وحصلت على ${xpEarned} XP (معاينة)`, "success");
+                        showToast(`Congratulations! You passed with ${scorePercent}% and earned ${xpEarned} XP (Preview)`, "success");
                     } else {
-                        showToast(`للأسف لم تجتز الاختبار. النتيجة: ${scorePercent}% (معاينة)`, "error");
+                        showToast(`You did not pass this attempt. Score: ${scorePercent}% (Preview)`, "error");
                     }
                 } else {
                     const { error: insertErr } = await supabase.from('quiz_attempts').insert([{
@@ -1875,9 +1867,9 @@ window.submitQuiz = async () => {
                     if (passed) {
                         const targetContentId = currentContent?.content_id || `quiz_${currentQuizState.metaData.quiz_id}`;
                         await markContentComplete(targetContentId, xpEarned, 'quiz');
-                        showToast(`مبروك! اجتزت الاختبار بنسبة ${scorePercent}% وحصلت على ${xpEarned} XP`, "success");
+                        showToast(`Congratulations! You passed with ${scorePercent}% and earned ${xpEarned} XP`, "success");
                     } else {
-                        showToast(`للأسف لم تجتز الاختبار. النتيجة: ${scorePercent}%`, "error");
+                        showToast(`You did not pass this attempt. Score: ${scorePercent}%`, "error");
                     }
                 }
 
@@ -1885,7 +1877,7 @@ window.submitQuiz = async () => {
 
             } catch (e) {
                 console.error("Quiz submission error:", e);
-                showToast("حدث خطأ أثناء حفظ النتيجة: " + (e.message || "Unknown error"), "error");
+                showToast("Error saving quiz result: " + (e.message || "Unknown error"), "error");
                 await loadQuizViewer(currentQuizState.metaData.quiz_id);
             }
         },
@@ -1935,19 +1927,19 @@ window.showQuizReview = async (attemptIndex = 0) => {
         <div class="bg-black/40 border ${attemptPassed ? 'border-green-500/50' : 'border-red-500/50'} rounded-2xl p-6 mb-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden">
             <div class="absolute inset-0 opacity-10 ${attemptPassed ? 'bg-green-500' : 'bg-red-500'}"></div>
             <i class="fas ${attemptPassed ? 'fa-medal text-green-400' : 'fa-times-circle text-red-400'} text-5xl mb-4 relative z-10 drop-shadow-lg"></i>
-            <h3 class="text-2xl font-black text-white mb-2 relative z-10">${attemptPassed ? 'عمل رائع! لقد اجتزت الاختبار' : 'لم تجتز الاختبار في هذه المحاولة'}</h3>
+            <h3 class="text-2xl font-black text-white mb-2 relative z-10">${attemptPassed ? 'Great job! You passed the quiz' : 'You did not pass this attempt'}</h3>
             
             <div class="flex flex-wrap justify-center gap-3 mt-4 relative z-10">
                 <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
-                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">الإجابات الصحيحة</p>
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Correct Answers</p>
                     <p class="text-xl font-black text-white">${correctCount} <span class="text-sm text-gray-500 font-normal">/ ${totalQ}</span></p>
                 </div>
                 <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
-                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">النتيجة</p>
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Score</p>
                     <p class="text-xl font-black ${attemptPassed ? 'text-green-400' : 'text-red-400'}">${percentage}%</p>
                 </div>
                 <div class="bg-b-surface border border-white/10 rounded-xl px-5 py-3 shadow-inner">
-                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">النقاط (XP)</p>
+                    <p class="text-[11px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Earned XP</p>
                     <p class="text-xl font-black text-yellow-500">+${earnedXp}</p>
                 </div>
             </div>
@@ -1961,12 +1953,12 @@ window.showQuizReview = async (attemptIndex = 0) => {
                 <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400">
                     <i class="fas fa-history"></i>
                 </div>
-                <span class="text-sm font-bold text-white">سجل المحاولات السابقة:</span>
+                <span class="text-sm font-bold text-white">Previous Attempts:</span>
             </div>
-            <select onchange="window.showQuizReview(this.value)" class="bg-black border border-white/20 rounded-xl text-sm font-bold text-gray-300 px-4 py-2 outline-none focus:border-b-primary transition-colors cursor-pointer dir-rtl">
+            <select onchange="window.showQuizReview(this.value)" class="bg-black border border-white/20 rounded-xl text-sm font-bold text-gray-300 px-4 py-2 outline-none focus:border-b-primary transition-colors cursor-pointer">
                 ${attempts.map((att, idx) => `
                     <option value="${idx}" ${idx === attemptIndex ? 'selected' : ''}>
-                        المحاولة رقم ${attempts.length - idx} &nbsp;—&nbsp; ${att.passed ? 'ناجح ✅' : 'راسب ❌'} &nbsp;(${att.score}%)
+                        Attempt #${attempts.length - idx} — ${att.passed ? 'Passed' : 'Failed'} (${att.score}%)
                     </option>
                 `).join('')}
             </select>
@@ -2017,7 +2009,7 @@ window.showQuizReview = async (attemptIndex = 0) => {
             <div class="mt-5 p-4 bg-blue-900/10 border border-blue-500/20 rounded-xl flex gap-3 items-start">
                 <i class="fas fa-lightbulb text-yellow-400 mt-0.5 text-lg"></i> 
                 <div>
-                    <strong class="block text-xs text-blue-300 mb-1">تلميح لمساعدتك:</strong>
+                    <strong class="block text-xs text-blue-300 mb-1">Helpful Hint:</strong>
                     <span class="text-sm text-blue-100/70 leading-relaxed">${q.hint}</span>
                 </div>
             </div>` : ''}
@@ -2031,12 +2023,12 @@ window.showQuizReview = async (attemptIndex = 0) => {
     if (canRetry) {
         html += `
         <button onclick="window.retryQuiz()" class="px-8 py-3.5 rounded-xl bg-b-primary hover:bg-teal-600 text-white font-bold shadow-lg shadow-teal-900/20 flex items-center gap-2 transform hover:scale-105 transition-all">
-            <i class="fas fa-redo"></i> بدء محاولة جديدة (${maxAttempts - totalAttemptsMade} متبقية)
+            <i class="fas fa-redo"></i> Start New Attempt (${maxAttempts - totalAttemptsMade} remaining)
         </button>`;
     } else if (overallPassed) {
-        html += `<div class="text-green-400 font-bold px-8 py-3.5 border border-green-500/30 rounded-xl bg-green-500/10 flex items-center gap-2"><i class="fas fa-check-circle text-xl"></i> لقد استنفدت جميع المحاولات (النتيجة محسومة)</div>`;
+        html += `<div class="text-green-400 font-bold px-8 py-3.5 border border-green-500/30 rounded-xl bg-green-500/10 flex items-center gap-2"><i class="fas fa-check-circle text-xl"></i> Quiz Passed — Result Finalized</div>`;
     } else {
-        html += `<div class="text-red-400 font-bold px-8 py-3.5 border border-red-500/30 rounded-xl bg-red-500/10 flex items-center gap-2"><i class="fas fa-lock text-xl"></i> لقد استنفدت جميع المحاولات المتاحة</div>`;
+        html += `<div class="text-red-400 font-bold px-8 py-3.5 border border-red-500/30 rounded-xl bg-red-500/10 flex items-center gap-2"><i class="fas fa-lock text-xl"></i> You have used all available attempts</div>`;
     }
 
     html += `</div>`;
@@ -2123,14 +2115,14 @@ async function loadProjectViewer(projectId) {
 
 function renderProjectUI(projectData, submissionData) {
     document.getElementById('project-title').innerText = projectData.title;
-    document.getElementById('project-desc').innerHTML = projectData.description || "لا يوجد وصف.";
+    document.getElementById('project-desc').innerHTML = projectData.description || "No description provided.";
     document.getElementById('project-max-points').innerText = projectData.max_points || 100;
 
     const lessonTag = document.getElementById('project-lesson-tag');
     if (isPreview) {
         getCourseTitleForPreview('project', projectData.id).then(courseTitle => {
             if (lessonTag) {
-                lessonTag.innerText = `الكورس: ${courseTitle}`;
+                lessonTag.innerText = `Course: ${courseTitle}`;
                 lessonTag.classList.remove('hidden');
             }
         });
@@ -2143,10 +2135,10 @@ function renderProjectUI(projectData, submissionData) {
             relatedLesson = courseContents.find(c => String(c.ref_project_id) === String(projectData.id));
         }
         if (relatedLesson) {
-            lessonTag.innerText = `تابع لدرس: ${relatedLesson.title}`;
+            lessonTag.innerText = `Lesson: ${relatedLesson.title}`;
             lessonTag.classList.remove('hidden');
         } else if (currentContent?.is_course_level && courseData?.title) {
-            lessonTag.innerText = `تابع للكورس: ${courseData.title}`;
+            lessonTag.innerText = `Course: ${courseData.title}`;
             lessonTag.classList.remove('hidden');
         } else {
             lessonTag.classList.add('hidden');
@@ -2154,12 +2146,37 @@ function renderProjectUI(projectData, submissionData) {
     }
 
     const reqBtn = document.getElementById('btn-project-requirements');
-    if (projectData.requirements_url) {
-        reqBtn.href = projectData.requirements_url;
-        reqBtn.classList.remove('hidden');
-        reqBtn.classList.add('flex');
-    } else {
-        reqBtn.classList.add('hidden');
+    const reqLinksWrap = document.getElementById('project-requirements-links');
+    const parsedLinks = parseProjectLinks(projectData.requirements_url);
+    if (reqLinksWrap) {
+        if (parsedLinks.length > 0) {
+            const escAttr = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            reqLinksWrap.innerHTML = parsedLinks.map((lnk) => `
+                <a href="${escAttr(lnk.url)}" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-purple-500/15 text-white text-xs md:text-sm font-bold border border-white/10 hover:border-purple-500/35 transition-all inline-flex items-center gap-2">
+                    <i class="fas fa-external-link-alt text-purple-400 text-xs"></i>
+                    <span>${escAttr(lnk.title)}</span>
+                </a>
+            `).join('');
+            reqLinksWrap.classList.remove('hidden');
+            reqLinksWrap.classList.add('flex');
+        } else {
+            reqLinksWrap.innerHTML = '';
+            reqLinksWrap.classList.add('hidden');
+            reqLinksWrap.classList.remove('flex');
+        }
+        if (reqBtn) {
+            reqBtn.classList.add('hidden');
+            reqBtn.classList.remove('flex');
+        }
+    } else if (reqBtn) {
+        if (parsedLinks.length > 0) {
+            reqBtn.href = parsedLinks[0].url;
+            reqBtn.classList.remove('hidden');
+            reqBtn.classList.add('flex');
+        } else {
+            reqBtn.classList.add('hidden');
+            reqBtn.classList.remove('flex');
+        }
     }
 
     renderRubric(projectData.rubric_json, submissionData);
@@ -2179,7 +2196,7 @@ function renderRubric(rubricJson, submissionData) {
             criteria = rubricJson?.criteria || [];
         }
     } catch (e) {
-        container.innerHTML = '<p class="text-gray-500 text-sm">تفاصيل التقييم غير متاحة حالياً.</p>';
+        container.innerHTML = '<p class="text-gray-500 text-sm">Evaluation rubric is currently unavailable.</p>';
         return;
     }
 
@@ -2240,19 +2257,19 @@ function renderSubmissionCard(projectData, submissionData) {
             <div class="text-center">
                 <div class="w-20 h-20 mx-auto bg-black rounded-full flex items-center justify-center border-4 ${percent >= 50 ? 'border-green-500/30' : 'border-red-500/30'} mb-4 relative">
                     <span class="text-2xl font-bold ${gradeColor}">${grade}</span>
-                    <span class="absolute text-[10px] text-gray-500 -bottom-6">من ${max}</span>
+                    <span class="absolute text-[10px] text-gray-500 -bottom-6">of ${max}</span>
                 </div>
-                <h3 class="text-white font-bold text-lg mb-1">تم رصد الدرجة</h3>
-                <p class="text-xs text-gray-400 mb-6">بواسطة: Leader</p>
+                <h3 class="text-white font-bold text-lg mb-1">Graded</h3>
+                <p class="text-xs text-gray-400 mb-6">Reviewed by: Leader</p>
                 
                 ${submissionData.feedback_text ? `
-                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-right mb-6">
-                    <h5 class="text-yellow-500 text-xs font-bold mb-2"><i class="fas fa-comment-alt ml-1"></i> ملاحظات الليدر:</h5>
+                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-left mb-6">
+                    <h5 class="text-yellow-500 text-xs font-bold mb-2"><i class="fas fa-comment-alt mr-1"></i> Leader Feedback:</h5>
                     <p class="text-gray-300 text-sm leading-relaxed">"${submissionData.feedback_text}"</p>
                 </div>` : ''}
 
                 <div class="bg-white/5 rounded-lg p-3 text-xs text-gray-400 break-all border border-white/5">
-                    <i class="fab fa-github mr-1"></i> رابطك: <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">فتح الرابط</a>
+                    <i class="fab fa-github mr-1"></i> Your Link: <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">Open Submission</a>
                 </div>
             </div>
         `;
@@ -2265,20 +2282,20 @@ function renderSubmissionCard(projectData, submissionData) {
                 <div class="w-16 h-16 mx-auto bg-yellow-500/10 rounded-full flex items-center justify-center text-yellow-500 text-2xl mb-4 animate-pulse">
                     <i class="fas fa-clock"></i>
                 </div>
-                <h3 class="text-white font-bold text-lg mb-2">قيد المراجعة</h3>
-                <p class="text-gray-400 text-xs mb-6 px-4">تم استلام مشروعك بنجاح. سيقوم الليدر بمراجعته ورصد الدرجة قريباً.</p>
+                <h3 class="text-white font-bold text-lg mb-2">Under Review</h3>
+                <p class="text-gray-400 text-xs mb-6 px-4">Your project has been received. Your team leader will review and grade it soon.</p>
                 
                 <div class="bg-black/30 rounded-xl p-3 border border-white/5 text-left mb-4">
-                    <p class="text-[10px] text-gray-500 mb-1">تاريخ التسليم</p>
-                    <p class="text-xs text-white font-mono">${new Date(submissionData.submitted_at).toLocaleDateString('ar-EG')}</p>
+                    <p class="text-[10px] text-gray-500 mb-1">Submitted On</p>
+                    <p class="text-xs text-white font-mono">${new Date(submissionData.submitted_at).toLocaleDateString('en-US')}</p>
                 </div>
 
                 <div class="bg-white/5 rounded-lg p-3 text-xs text-gray-400 break-all border border-white/5">
-                    <i class="fas fa-link mr-1"></i> <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">الرابط المرسل</a>
+                    <i class="fas fa-link mr-1"></i> <a href="${submissionData.submission_link}" target="_blank" class="text-blue-400 hover:underline">Submitted Link</a>
                 </div>
                 
                 <button onclick="window.resubmitProject('${projectData.id}')" class="mt-4 text-xs text-gray-500 hover:text-white underline">
-                    هل أرسلت رابط خطأ؟ إعادة التسليم
+                    Submitted the wrong link? Resubmit
                 </button>
             </div>
         `;
@@ -2289,13 +2306,13 @@ function renderSubmissionCard(projectData, submissionData) {
     
     container.innerHTML = `
         <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
-            <i class="fas fa-upload text-purple-500"></i> تسليم المشروع
+            <i class="fas fa-upload text-purple-500"></i> Submit Project
         </h3>
         
         <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4 flex gap-3 items-start">
             <i class="fas fa-info-circle text-blue-400 mt-0.5 text-sm"></i>
             <div>
-                <p class="text-xs text-gray-300 font-bold mb-1">تعليمات التسليم:</p>
+                <p class="text-xs text-gray-300 font-bold mb-1">Submission Guidelines:</p>
                 <p class="text-[11px] text-gray-400 leading-relaxed">${methodText}</p>
             </div>
         </div>
@@ -2303,20 +2320,20 @@ function renderSubmissionCard(projectData, submissionData) {
         <div class="bg-yellow-500/5 border border-yellow-500/10 rounded-xl p-3 mb-6 flex gap-3 items-start">
             <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 text-sm"></i>
             <p class="text-[10px] text-gray-400 leading-relaxed">
-                تأكد من فتح صلاحيات الوصول (Access: Anyone with link) إذا كنت تستخدم Google Drive لتجنب رفض المشروع.
+                Make sure link sharing is enabled ("Anyone with the link") if submitting via Google Drive to avoid rejection.
             </p>
         </div>
 
         <div class="space-y-4">
             <div>
-                <label class="block text-xs text-gray-400 mb-1.5 font-bold">رابط المشروع (URL)</label>
-                <input type="url" id="submission-url" placeholder="https://github.com/... or Drive Link" 
-                       class="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:border-purple-500 outline-none transition-colors dir-ltr">
+                <label class="block text-xs text-gray-400 mb-1.5 font-bold">Project URL</label>
+                <input type="url" id="submission-url" placeholder="https://github.com/... or Google Drive Link" 
+                       class="w-full bg-black border border-white/10 rounded-xl p-3 text-sm text-white focus:border-purple-500 outline-none transition-colors">
             </div>
             
             <button id="btn-submit-project-action" onclick="window.submitProjectAction('${projectData.id}', '${projectData.title}')" 
                     class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
-                <i class="fas fa-paper-plane"></i> إرسال للمراجعة
+                <i class="fas fa-paper-plane"></i> Submit for Review
             </button>
         </div>
     `;
@@ -2328,13 +2345,13 @@ window.submitProjectAction = async (projectId, projectTitle) => {
     const link = input.value.trim();
 
     if (!link || !link.startsWith('http')) {
-        showToast("الرابط غير صالح، تأكد من بدايته بـ http/https", "error");
+        showToast("Invalid URL — please make sure it starts with http:// or https://", "error");
         input.focus();
         return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
     try {
         if (isPreview) {
@@ -2344,7 +2361,7 @@ window.submitProjectAction = async (projectId, projectTitle) => {
                 status: "pending",
                 submitted_at: new Date().toISOString()
             };
-            showToast("تم تسليم المشروع بنجاح (معاينة)!", "success");
+            showToast("Project submitted successfully (Preview)!", "success");
             loadProjectViewer(projectId);
         } else {
             const { error } = await supabase.from('project_submissions').upsert({
@@ -2354,37 +2371,36 @@ window.submitProjectAction = async (projectId, projectTitle) => {
                 status: "pending"
             }, { onConflict: 'user_id,project_id' });
 
-            if (error) throw error; // Stop execution if DB rejects submission
+            if (error) throw error;
 
             await updateTaskStatus('completed'); 
 
-            showToast("تم تسليم المشروع بنجاح!", "success");
+            showToast("Project submitted successfully!", "success");
             loadProjectViewer(projectId);
         }
 
     } catch (e) {
         console.error("Submission Error:", e);
-        showToast("حدث خطأ أثناء التسليم", "error");
+        showToast("An error occurred while submitting", "error");
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> إعادة المحاولة';
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Try Again';
     }
 };
 
 window.resubmitProject = (projectId) => {
     window.showCustomConfirm(
-        "إعادة تسليم المشروع",
-        "هل أنت متأكد من رغبتك في إعادة التسليم؟ سيتم إلغاء وحذف الرابط القديم نهائياً.",
+        "Resubmit Project",
+        "Are you sure you want to resubmit? Your previous submission link will be permanently removed.",
         async () => {
             const container = document.getElementById('submission-card');
-            container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-purple-500 text-3xl"></i><p class="text-gray-400 mt-2 text-sm">جاري إلغاء التسليم السابق...</p></div>';
+            container.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-purple-500 text-3xl"></i><p class="text-gray-400 mt-2 text-sm">Removing previous submission...</p></div>';
 
             try {
                 if (isPreview) {
                     previewProjectSubmission = null;
-                    showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن (معاينة).", "success");
+                    showToast("Previous submission removed. You can submit a new link now (Preview).", "success");
                     loadProjectViewer(projectId);
                 } else {
-                    // Delete old submission
                     const { error } = await supabase
                         .from('project_submissions')
                         .delete()
@@ -2393,15 +2409,14 @@ window.resubmitProject = (projectId) => {
 
                     if (error) throw error;
 
-                    showToast("تم إلغاء التسليم القديم. يمكنك إرسال رابطك الجديد الآن.", "success");
+                    showToast("Previous submission removed. You can submit a new link now.", "success");
                     
-                    // Reload UI from DB directly
                     loadProjectViewer(projectId);
                 }
 
             } catch (error) {
                 console.error("Delete Submission Error:", error);
-                showToast("حدث خطأ أثناء إلغاء التسليم، حاول مرة أخرى.", "error");
+                showToast("Error removing previous submission. Please try again.", "error");
                 loadProjectViewer(projectId);
             }
         }
@@ -2540,12 +2555,12 @@ function updateProgressBar(completedCount, totalCount) {
 function resolveImageUrl(url, type = 'course') {
     try {
         if (!url || url.trim() === "" || url === "null" || url === "undefined") {
-            return '../assets/icons/BUSLA-icon.png';
+            return '../assets/icons/zdc-icon-192.png';
         }
         if (url.includes('drive.google.com') || url.includes('drive.usercontent.google.com')) {
             const idMatch = url.match(/\/d\/([-\w]{25,})/) || url.match(/id=([-\w]{25,})/);
             if (idMatch && idMatch[1]) {
-                // 💡 استخدام السيرفر البديل والرسمي من جوجل المخصص لعرض الصور لتفادي 403
+                // Use Google's direct image endpoint to avoid 403 errors
                 return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
         }
@@ -2568,7 +2583,7 @@ window.showToast = (message, type = 'info') => {
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.className = 'fixed bottom-4 left-4 z-50 flex flex-col gap-2 pointer-events-none';
+        container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none';
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
@@ -2579,7 +2594,7 @@ window.showToast = (message, type = 'info') => {
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateX(-20px)';
+        toast.style.transform = 'translateX(20px)';
         toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
@@ -2615,24 +2630,24 @@ function toggleFullscreen() {
     }
 }
 
-// 💡 دالة إظهار وإخفاء القائمة الجانبية مع تمديد شاشة العرض
+// Toggle left-docked curriculum sidebar and expand main stage on desktop
 window.toggleSidebar = () => {
     const sidebar = document.getElementById('right-sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    const mainContent = document.getElementById('main-content'); // 💡 تم إضافة هذا المتغير
+    const mainContent = document.getElementById('main-content');
     
     if (!sidebar) return;
 
-    // تبديل حالة القائمة (إظهار/إخفاء)
-    sidebar.classList.toggle('translate-x-full');
+    // Toggle slide state for left-docked sidebar
+    sidebar.classList.toggle('-translate-x-full');
     sidebar.classList.toggle('translate-x-0');
     
-    // إظهار/إخفاء الطبقة السوداء في الموبايل
+    // Toggle mobile backdrop overlay
     if (overlay) overlay.classList.toggle('hidden');
 
-    // 💡 الذكاء هنا: تمديد شاشة العرض لتأخذ الشاشة كاملة عند إغلاق القائمة في الديسكتوب
+    // Expand main content to full width when sidebar is closed on desktop
     if (mainContent) {
-        mainContent.classList.toggle('lg:mr-80');
+        mainContent.classList.toggle('lg:ml-80');
         mainContent.classList.toggle('lg:w-[calc(100%-20rem)]');
     }
 };
@@ -2689,15 +2704,15 @@ async function loadCourseRecommendedTools(cId) {
         
         list.innerHTML = data.map(tool => {
             const impBadge = tool.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : tool.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
-            const importanceName = tool.importance === 'Required' ? 'مطلوب' : tool.importance === 'Recommended' ? 'مستحسن' : 'اختياري';
+            const importanceName = tool.importance === 'Required' ? 'Required' : tool.importance === 'Recommended' ? 'Recommended' : 'Optional';
             return `
                 <div onclick="if (typeof window.openToolDetailDrawer === 'function') { window.openToolDetailDrawer('${tool.id}'); } else { window.open('${tool.official_website || '#'}', '_blank'); }" 
-                     class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                     class="w-full text-left text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="w-7 h-7 bg-white/5 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                            <img src="${tool.logo_url || '../assets/icons/BUSLA-icon.png'}" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='../assets/icons/BUSLA-icon.png'">
+                            <img src="${tool.logo_url || '../assets/icons/zdc-icon-192.png'}" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='../assets/icons/zdc-icon-192.png'">
                         </div>
-                        <div class="text-right truncate">
+                        <div class="text-left truncate">
                             <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate">${tool.name}</span>
                             <span class="text-[8px] text-gray-500 block truncate mt-0.5">${tool.type}</span>
                         </div>
@@ -2759,21 +2774,21 @@ async function loadCourseSuggestedReferences(cId, contentId = null) {
         card.classList.remove('hidden');
         card.classList.add('flex');
 
-        const defaultCover = '../assets/icons/BUSLA-icon.png';
+        const defaultCover = '../assets/icons/zdc-icon-192.png';
         
         list.innerHTML = filtered.map(ref => {
             const impBadge = ref.importance === 'Required' ? 'bg-red-500/10 text-red-400 border-red-500/25' : ref.importance === 'Recommended' ? 'bg-teal-500/10 text-teal-400 border-teal-500/25' : 'bg-gray-500/10 text-gray-400 border-gray-500/25';
-            const importanceName = ref.importance === 'Required' ? 'مطلوب' : ref.importance === 'Recommended' ? 'مستحسن' : ref.importance === 'Advanced Reading' ? 'متقدم' : 'اختياري';
+            const importanceName = ref.importance === 'Required' ? 'Required' : ref.importance === 'Recommended' ? 'Recommended' : ref.importance === 'Advanced Reading' ? 'Advanced' : 'Optional';
             return `
                 <div onclick="if (typeof window.openReferenceDetailModal === 'function') { window.openReferenceDetailModal('${ref.id}'); } else { window.open('${ref.read_online_url || ref.download_pdf_url || '#'}', '_blank'); }" 
-                     class="w-full text-right text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
+                     class="w-full text-left text-xs bg-white/5 border border-white/10 hover:border-teal-500/50 hover:bg-white/10 p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-all group">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="w-7 h-10 bg-white/5 rounded border border-white/5 flex items-center justify-center overflow-hidden shrink-0 shadow">
                             <img src="${ref.cover_url || defaultCover}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${defaultCover}'">
                         </div>
-                        <div class="text-right truncate">
+                        <div class="text-left truncate">
                             <span class="text-white font-bold block group-hover:text-teal-400 transition-colors text-[11px] truncate" title="${ref.title}">${ref.title}</span>
-                            <span class="text-[8px] text-gray-500 block truncate mt-0.5">${ref.type} • ${ref.author || 'مؤلف غير معروف'}</span>
+                            <span class="text-[8px] text-gray-500 block truncate mt-0.5">${ref.type} • ${ref.author || 'Unknown Author'}</span>
                         </div>
                     </div>
                     <span class="text-[8px] border px-1.5 py-0.5 rounded font-black shrink-0 ${impBadge}">${importanceName}</span>
@@ -2952,10 +2967,10 @@ async function initDocumentViewer(item) {
                     </div>
                     <div>
                         <h3 class="text-xl font-bold text-white mb-2">${docData.title}</h3>
-                        <p class="text-xs text-gray-400 leading-relaxed">${docData.description || 'هذا العنصر عبارة عن مجلد أو رابط خارجي لا يمكن عرضه مباشرة هنا. اضغط على الزر أدناه لفتحه في نافذة جديدة والبدء في القراءة.'}</p>
+                        <p class="text-xs text-gray-400 leading-relaxed">${docData.description || 'This resource is an external folder or link that cannot be embedded directly. Click the button below to open it in a new tab and start reading.'}</p>
                     </div>
                     <a href="${docData.source_url}" target="_blank" id="btn-open-external-folder" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg flex items-center gap-2">
-                        <i class="fas fa-external-link-alt"></i> فتح المحتوى الخارجي
+                        <i class="fas fa-external-link-alt"></i> Open External Content
                     </a>
                 </div>
             `;
@@ -3035,7 +3050,7 @@ async function initDocumentViewer(item) {
     const container = document.getElementById('pdf-canvas-container');
     if (container) {
         container.innerHTML = `<div class="text-white text-center py-10 flex flex-col items-center gap-4">
-            <i class="fas fa-spinner fa-spin text-3xl text-teal-400"></i> جاري تحميل المستند...
+            <i class="fas fa-spinner fa-spin text-3xl text-teal-400"></i> Loading document...
         </div>`;
     }
 
@@ -3056,7 +3071,7 @@ async function initDocumentViewer(item) {
             document.getElementById('pdf-page-count').innerText = pdfDoc.numPages;
             const docPagesCount = document.getElementById('doc-header-pages-count');
             if (docPagesCount) {
-                docPagesCount.innerHTML = `<i class="fas fa-file-lines mr-1"></i> ${pdfDoc.numPages} صفحة`;
+                docPagesCount.innerHTML = `<i class="fas fa-file-lines mr-1"></i> ${pdfDoc.numPages} pages`;
             }
             if (typeof pdfDoc.getDownloadInfo === 'function') {
                 pdfDoc.getDownloadInfo().then(data => {
@@ -3064,7 +3079,7 @@ async function initDocumentViewer(item) {
                         const sizeInMb = (data.length / (1024 * 1024)).toFixed(2);
                         const fileSizeEl = document.getElementById('doc-header-file-size');
                         if (fileSizeEl) {
-                            fileSizeEl.innerHTML = `<i class="fas fa-weight-hanging mr-1"></i> ${sizeInMb} ميجابايت`;
+                            fileSizeEl.innerHTML = `<i class="fas fa-weight-hanging mr-1"></i> ${sizeInMb} MB`;
                             fileSizeEl.classList.remove('hidden');
                         }
                     }
@@ -3115,7 +3130,7 @@ async function initDocumentViewer(item) {
             document.getElementById('pdf-page-count').innerText = pdfDoc.numPages;
             const docPagesCount = document.getElementById('doc-header-pages-count');
             if (docPagesCount) {
-                docPagesCount.innerHTML = `<i class="fas fa-file-lines mr-1"></i> ${pdfDoc.numPages} صفحة`;
+                docPagesCount.innerHTML = `<i class="fas fa-file-lines mr-1"></i> ${pdfDoc.numPages} pages`;
             }
             if (typeof pdfDoc.getDownloadInfo === 'function') {
                 pdfDoc.getDownloadInfo().then(data => {
@@ -3123,7 +3138,7 @@ async function initDocumentViewer(item) {
                         const sizeInMb = (data.length / (1024 * 1024)).toFixed(2);
                         const fileSizeEl = document.getElementById('doc-header-file-size');
                         if (fileSizeEl) {
-                            fileSizeEl.innerHTML = `<i class="fas fa-weight-hanging mr-1"></i> ${sizeInMb} ميجابايت`;
+                            fileSizeEl.innerHTML = `<i class="fas fa-weight-hanging mr-1"></i> ${sizeInMb} MB`;
                             fileSizeEl.classList.remove('hidden');
                         }
                     }
@@ -3159,9 +3174,9 @@ async function initDocumentViewer(item) {
             console.error("Error loading PDF via pdf.js, attempting fallback to iframe embed:", err);
             
             if (window.location.protocol === 'file:') {
-                showToast("تنبيه: لتشغيل أدوات التمرير التلقائي والزووم، يجب تشغيل المشروع عبر خادم محلي (Local Server مثل Live Server) وليس كملف عادي.", "warning", 8000);
+                showToast("Notice: To use auto-scroll and zoom tools, run the project via a local server instead of opening the file directly.", "warning", 8000);
             } else {
-                showToast("تم تفعيل وضع العرض المدمج للمستند بسبب قيود الوصول (CORS).", "info");
+                showToast("Embedded viewer mode enabled due to cross-origin (CORS) restrictions.", "info");
             }
 
             const isLocal = docData.source_url.includes('localhost') || 
@@ -3192,7 +3207,7 @@ async function renderPdfPages() {
             pageDiv.style.maxWidth = '800px';
             pageDiv.dataset.pageNum = i;
             
-            pageDiv.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> صفحة ${i}</div>`;
+            pageDiv.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> Page ${i}</div>`;
             container.appendChild(pageDiv);
         }
 
@@ -3291,7 +3306,7 @@ async function buildPdfThumbnails() {
         
         const label = document.createElement('div');
         label.className = 'text-[10px] text-gray-500 mt-1';
-        label.innerText = `صفحة ${i}`;
+        label.innerText = `Page ${i}`;
 
         const canvas = document.createElement('canvas');
         canvas.className = 'w-24 h-32 object-contain mx-auto border border-white/10 rounded bg-white';
@@ -3422,13 +3437,13 @@ async function saveDocumentProgress(item, forceCompleted = false) {
             }, { onConflict: 'user_id,material_id' });
 
             const xp = docData.xp_reward || 10;
-            await awardPoints(xp, `قراءة مستند: ${docData.title}`);
+            await awardPoints(xp, `Document read: ${docData.title}`);
 
             if (currentTaskId) {
                 await updateTaskStatus('completed');
             }
             
-            showToast("تهانينا! تم إكمال المستند والحصول على نقاط الـ XP!", "success");
+            showToast("Congratulations! Document completed and XP awarded!", "success");
             renderSidebar();
             renderPdfCompletionBtn(item);
         }
@@ -3658,7 +3673,7 @@ function setupPdfControls(item) {
                     if (docHeader) {
                         docHeader.classList.add('hidden');
                     }
-                    showToast("تم تفعيل وضع ملء الشاشة", "info");
+                    showToast("Fullscreen mode enabled", "info");
                 } else {
                     viewer.style.position = '';
                     viewer.style.top = '';
@@ -3673,7 +3688,7 @@ function setupPdfControls(item) {
                     if (docHeader) {
                         docHeader.classList.remove('hidden');
                     }
-                    showToast("تم إلغاء وضع ملء الشاشة", "info");
+                    showToast("Exited fullscreen mode", "info");
                 }
             }
         };
@@ -3745,7 +3760,7 @@ function setupPdfControls(item) {
                     printWindow.print();
                 };
             } else {
-                showToast("يرجى السماح بالنوافذ المنبثقة لطباعة الملف.", "warning");
+                showToast("Please allow popups to print this document.", "warning");
             }
         };
     }
@@ -3761,7 +3776,7 @@ async function performPdfSearch(query) {
     pdfCurrentSearchIndex = -1;
     
     const resultsEl = document.getElementById('pdf-search-results');
-    if (resultsEl) resultsEl.innerText = 'جاري البحث...';
+    if (resultsEl) resultsEl.innerText = 'Searching...';
 
     const cleanQuery = query.toLowerCase().trim();
 
@@ -3789,10 +3804,10 @@ async function performPdfSearch(query) {
     if (pdfActiveSearchMatches.length > 0) {
         pdfCurrentSearchIndex = 0;
         const totalMatches = pdfActiveSearchMatches.reduce((sum, m) => sum + m.count, 0);
-        if (resultsEl) resultsEl.innerText = `وجدت ${totalMatches} مطابقة في ${pdfActiveSearchMatches.length} صفحات`;
+        if (resultsEl) resultsEl.innerText = `Found ${totalMatches} matches across ${pdfActiveSearchMatches.length} pages`;
         scrollToPage(pdfActiveSearchMatches[0].pageNum);
     } else {
-        if (resultsEl) resultsEl.innerText = 'لا توجد نتائج';
+        if (resultsEl) resultsEl.innerText = 'No results found';
     }
 }
 
@@ -3845,7 +3860,7 @@ function renderPdfCompletionBtn(item) {
     container.innerHTML = '';
 
     if (isCurrentContentCompleted) {
-        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> تم إكمال القراءة ✓</span>`;
+        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> Reading Completed ✓</span>`;
         return;
     }
 
@@ -3856,11 +3871,11 @@ function renderPdfCompletionBtn(item) {
     const triggers = rawTrigger.split(',').map(t => t.trim().toLowerCase());
     
     if (triggers.includes('open')) {
-        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> مكتمل عند الفتح ✓</span>`;
+        container.innerHTML = `<span class="bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-check-circle"></i> Completed on Open ✓</span>`;
     } else if (triggers.includes('mark_complete') || triggers.includes('manual')) {
         const btn = document.createElement('button');
         btn.className = 'bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5';
-        btn.innerHTML = `<i class="fas fa-check"></i> تحديد كمكتمل`;
+        btn.innerHTML = `<i class="fas fa-check"></i> Mark as Complete`;
         btn.onclick = () => saveDocumentProgress(item, true);
         container.appendChild(btn);
     } else {
@@ -3869,12 +3884,12 @@ function renderPdfCompletionBtn(item) {
         if (triggers.includes('pages') || triggers.includes('read_pages')) {
             const total = pdfDoc ? pdfDoc.numPages : 1;
             const reqPages = docData.completion_pages_count || Math.ceil(total * 0.8);
-            textParts.push(`اقرأ ${reqPages} صفحات (تمت قراءة ${pagesViewedSet.size} صفحة)`);
+            textParts.push(`Read ${reqPages} pages (${pagesViewedSet.size} viewed)`);
         }
         
         if (triggers.includes('last_page')) {
             const total = pdfDoc ? pdfDoc.numPages : 1;
-            textParts.push(`الوصول للصفحة الأخيرة ${total} (أنت في ${pdfPageNum})`);
+            textParts.push(`Reach last page ${total} (currently on ${pdfPageNum})`);
         }
         
         if (triggers.includes('time') || triggers.includes('time_spent')) {
@@ -3883,13 +3898,13 @@ function renderPdfCompletionBtn(item) {
             if (remaining > 0) {
                 const minutes = Math.floor(remaining / 60);
                 const seconds = remaining % 60;
-                textParts.push(`قراءة لـ ${minutes}:${seconds < 10 ? '0' : ''}${seconds} إضافية`);
+                textParts.push(`Read for ${minutes}:${seconds < 10 ? '0' : ''}${seconds} more`);
             } else {
-                textParts.push(`اكتمل زمن القراءة المطلوب!`);
+                textParts.push(`Required reading time met!`);
             }
         }
         
-        container.innerHTML = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/25 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-book-open"></i> ${textParts.join(' و ')}</span>`;
+        container.innerHTML = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/25 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fas fa-book-open"></i> ${textParts.join(' & ')}</span>`;
     }
 }
 
@@ -3902,7 +3917,7 @@ function updateDocumentHeader(item, dbProgress = null) {
 
     const courseTitleEl = document.getElementById('doc-header-course-title');
     if (courseTitleEl) {
-        courseTitleEl.innerText = courseData ? courseData.title : "كورس";
+        courseTitleEl.innerText = courseData ? courseData.title : "Course";
     }
 
     const trackTitleEl = document.getElementById('doc-header-track-title');
@@ -3934,17 +3949,17 @@ function updateDocumentHeader(item, dbProgress = null) {
 
     const typeBadge = document.getElementById('doc-header-type-badge');
     if (typeBadge) {
-        typeBadge.innerText = docData.document_type || 'مستند';
+        typeBadge.innerText = docData.document_type || 'Document';
     }
 
     const authorEl = document.getElementById('doc-header-author');
     if (authorEl) {
-        authorEl.innerText = docData.created_by || 'فريق بوصلة';
+        authorEl.innerText = docData.created_by || 'ZDC Team';
     }
 
     const titleEl = document.getElementById('doc-header-title');
     if (titleEl) {
-        titleEl.innerText = docData.title || 'مستند بدون عنوان';
+        titleEl.innerText = docData.title || 'Untitled Document';
     }
 
     const noteContainer = document.getElementById('doc-header-note-container');
@@ -3972,7 +3987,7 @@ function updateDocumentHeader(item, dbProgress = null) {
 
     const pagesCountEl = document.getElementById('doc-header-pages-count');
     if (pagesCountEl) {
-        pagesCountEl.innerHTML = `<i class="fas fa-file-lines mr-1"></i> -- صفحة`;
+        pagesCountEl.innerHTML = `<i class="fas fa-file-lines mr-1"></i> -- pages`;
     }
     const fileSizeEl = document.getElementById('doc-header-file-size');
     if (fileSizeEl) {
@@ -4001,21 +4016,21 @@ function updateDocumentHeaderStatusBadge(item) {
 
     if (isCompleted) {
         statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border bg-green-500/10 text-green-400 border-green-500/20";
-        statusText.innerText = "مكتمل";
+        statusText.innerText = "Completed";
         iconEl.className = "fas fa-check-circle";
     } else if (isLocked) {
         statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border bg-red-500/10 text-red-400 border-red-500/20";
-        statusText.innerText = "مغلق";
+        statusText.innerText = "Locked";
         iconEl.className = "fas fa-lock";
     } else {
         const isStarted = pagesViewedSet.size > 1 || pdfTimeSpent > 5;
         if (isStarted) {
             statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-            statusText.innerText = "قيد القراءة";
+            statusText.innerText = "In Progress";
             iconEl.className = "fas fa-circle-notch animate-spin";
         } else {
             statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border bg-blue-500/10 text-blue-400 border-blue-500/20";
-            statusText.innerText = "جاهز للقراءة";
+            statusText.innerText = "Ready to Read";
             iconEl.className = "fas fa-book-open";
         }
     }
@@ -4149,7 +4164,7 @@ function pausePdfAutoScroll() {
         const icon = playBtn.querySelector('i');
         if (icon) icon.className = 'fas fa-play text-xs md:text-sm';
         const label = playBtn.querySelector('span');
-        if (label) label.innerText = 'تمرير تلقائي';
+        if (label) label.innerText = 'Auto Scroll';
     }
     
     const speedBtn = document.getElementById('pdf-auto-scroll-speed');
@@ -4167,7 +4182,7 @@ function togglePdfAutoScroll() {
             const icon = playBtn.querySelector('i');
             if (icon) icon.className = 'fas fa-pause text-xs md:text-sm';
             const label = playBtn.querySelector('span');
-            if (label) label.innerText = 'إيقاف مؤقت';
+            if (label) label.innerText = 'Pause';
         }
         if (speedBtn) {
             speedBtn.classList.remove('hidden');
@@ -4199,24 +4214,24 @@ async function buildPdfToc() {
     const sidebarContent = document.getElementById('pdf-sidebar-content');
     if (!sidebarContent || !pdfDoc) return;
     
-    sidebarContent.innerHTML = '<div class="text-gray-500 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>جاري تحميل الفهرس...</div>';
+    sidebarContent.innerHTML = '<div class="text-gray-500 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading table of contents...</div>';
     
     try {
         const outline = await pdfDoc.getOutline();
         if (!outline || outline.length === 0) {
-            sidebarContent.innerHTML = '<div class="text-gray-500 text-center py-4">لا يوجد فهرس لهذا المستند</div>';
+            sidebarContent.innerHTML = '<div class="text-gray-500 text-center py-4">No table of contents available</div>';
             return;
         }
         
         sidebarContent.innerHTML = '';
         const listContainer = document.createElement('div');
-        listContainer.className = 'space-y-1 text-right text-xs';
+        listContainer.className = 'space-y-1 text-left text-xs';
         
         function renderItems(outlineItems, depth = 0) {
             outlineItems.forEach(outlineItem => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'py-2 px-2 hover:bg-white/5 hover:text-b-primary rounded cursor-pointer transition-colors truncate flex items-center gap-2';
-                itemDiv.style.paddingRight = `${depth * 12 + 8}px`;
+                itemDiv.style.paddingLeft = `${depth * 12 + 8}px`;
                 
                 const icon = outlineItem.items && outlineItem.items.length > 0 ? '<i class="fas fa-folder-open text-gray-500 text-[10px]"></i>' : '<i class="fas fa-bookmark text-gray-400 text-[8px]"></i>';
                 
@@ -4238,7 +4253,7 @@ async function buildPdfToc() {
         sidebarContent.appendChild(listContainer);
     } catch (err) {
         console.error("Error building TOC:", err);
-        sidebarContent.innerHTML = '<div class="text-red-500 text-center py-4">فشل تحميل الفهرس</div>';
+        sidebarContent.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load table of contents</div>';
     }
 }
 
